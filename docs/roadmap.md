@@ -4,62 +4,66 @@
 "One Human Corp" is an innovative platform that empowers a single individual to run an entire enterprise by aggregating tools and orchestrating highly specialized AI agents. The user acts as the CEO, and the application provides everything needed to operate in any chosen industry domain. The platform features an extensible framework, allowing seamless integration of new skills, domains, and knowledge bases.
 
 ## Market Research: Small Business Pain Points
-Small businesses currently face numerous challenges. Based on recent market research, here are the top pain points and how One Human Corp directly addresses them:
+Small businesses currently face numerous challenges in today's competitive landscape. Based on market research, here are the top pain points and how One Human Corp directly addresses them:
 
-1. **Financial Constraints & Cash Flow**: Small businesses struggle with high overhead, inflation, and cash flow management.
-   - *Solution*: One Human Corp drastically reduces overhead by utilizing AI agents for roles that traditionally require full-time salaries, providing enterprise-grade output on a startup budget.
-2. **Talent Shortage & Recruitment**: Finding, hiring, and retaining skilled employees (especially in specialized fields like engineering, marketing, and AI) is difficult and expensive.
-   - *Solution*: On-demand AI employees across various domains provide immediate access to top-tier "talent" without recruitment costs or delays.
-3. **Marketing & Lead Conversion**: Generating leads and effectively converting them into paying customers requires consistent effort, data analysis, and expertise.
-   - *Solution*: Dedicated Marketing and Sales AI agents continuously analyze trends, generate leads, and execute marketing campaigns 24/7.
-4. **Operational Inefficiency**: Adapting to fast-paced technological changes and managing day-to-day operations takes the focus away from strategic growth.
-   - *Solution*: The platform automates mundane tasks and orchestrates complex workflows, allowing the human CEO to focus entirely on high-level strategy and vision.
+1. **Financial Constraints & Cash Flow**: Small businesses struggle with tight budgets, unpredictable markets, high overhead, and managing cash flow.
+   - *Solution*: One Human Corp drastically reduces overhead by utilizing AI agents for roles that traditionally require full-time salaries. You can "hire" exactly the talent you need, when you need it, providing enterprise-grade output on a startup budget.
+2. **Time Management & Operational Inefficiency**: Business owners constantly wear too many hats, juggling long to-do lists and manual processes, leaving little time for strategic planning.
+   - *Solution*: The platform automates mundane tasks and orchestrates complex workflows. Agents work autonomously, allowing the human CEO to focus entirely on high-level strategy and vision instead of day-to-day operations.
+3. **Talent Shortage & Recruitment**: Finding, hiring, and retaining skilled employees (especially in specialized fields like engineering, marketing, and AI) is difficult and expensive.
+   - *Solution*: On-demand AI employees across various domains provide immediate access to top-tier "talent" without recruitment costs, interviews, or delays.
+4. **Marketing, Customer Acquisition & Digital Presence**: Generating leads, effectively converting them, maintaining communication over long sales cycles, and managing an effective online presence (like websites) are major hurdles.
+   - *Solution*: Dedicated Marketing and Sales AI agents continuously analyze trends, generate leads, and execute marketing campaigns 24/7. Technical agents can build and maintain a professional online presence.
+5. **Lack of Strategic Direction**: Operating without a clear roadmap or reacting to problems rather than proactively planning leads to stagnant growth.
+   - *Solution*: With an entire C-suite of AI advisors and directors at their disposal, the CEO receives continuous data-driven insights and strategic recommendations to stay on course.
 
 ## Core Concepts & Framework
-The architecture of One Human Corp is built upon three foundational layers, with the human user securely at the helm:
+The architecture of One Human Corp is built upon foundational layers, with the human user securely at the helm. Let's explore these concepts using our initial rollout domain: **The Software Company**.
 
-1. **Domain Knowledge**: The specific industry or area of operation (e.g., Software Company, Legal Firm, E-commerce). The system is built with a flexible framework so users can easily import new skills, areas, and domain knowledge bases.
-2. **Role**: The required positions within a specific domain. For our initial **Software Company** domain, roles include (but are not limited to):
-   - Product Manager (PM)
-   - Software Engineer (SWE)
-   - Engineering Director
-   - Marketing Manager
-   - Security Engineer
-   - QA Tester
-   - UI/UX Designer
-3. **Organization**: The hierarchical structure defining reporting lines, communication flows, and management. For example, a standard layout might have an Engineering Director managing 3 SWEs, 1 QA Tester, and collaborating with a Product Manager.
+1. **Domain Knowledge**: The specific industry or area of operation. The system is built with a flexible framework so users can always import new skills, areas, and domain knowledge bases (e.g., Legal Firm, Accounting, E-commerce). For our starting point, the domain is a *Software Company*.
+2. **Role**: The required positions within a specific domain. For a Software Company, these roles include:
+   - **Product Manager (PM)**: Defines features, user stories, and acceptance criteria.
+   - **Software Engineer (SWE)**: Writes, tests, and deploys code based on specifications.
+   - **Engineering Director**: Oversees engineering teams, reviews architecture, and ensures technical alignment.
+   - **Marketing Manager**: Handles go-to-market strategies, user acquisition, and branding.
+   - **Security Engineer**: Audits code for vulnerabilities and ensures compliance with security standards.
+   - **QA Tester**: Develops and executes test plans to ensure product quality.
+   - **UI/UX Designer**: Creates wireframes, prototypes, and user interfaces.
+3. **Organization**: The hierarchical structure defining reporting lines, communication flows, and management. This dictates how the company operates.
+   - *Example Layout*: An Engineering Director manages 3 SWEs, 1 QA Tester, and 1 Security Engineer. The Director reports directly to the CEO. Product Managers collaborate cross-functionally with Engineering and Marketing.
 4. **User as CEO**: The human user is always at the top of the hierarchy (CEO). They define the issues, set the company's direction, and oversee operations.
 
 ## Workflow Execution & Collaboration
-When the CEO defines a high-level issue or goal, the AI organization is immediately mobilized:
-- **Virtual Meeting Rooms**: Multiple agents of each role gather in virtual meeting rooms. The CEO can drop in to read transcripts or observe the discussion in real-time.
-- **Scoping & Design**: PMs and UI/UX Designers discuss requirements, define scopes, and create product specs collaboratively.
-- **Implementation**: SWEs and Security Engineers receive the finalized specs, write the code, and ensure security compliance.
+When the CEO defines a high-level issue, goal, or product requirement, the entire AI organization is mobilized collaboratively:
+
+- **Virtual Meeting Rooms**: Multiple agents of each role gather in virtual meeting rooms to discuss strategy. For example, a "Product Kickoff Meeting" might include the PM, UI/UX Designer, and Engineering Director. The CEO can drop in to read transcripts, guide the conversation, or observe the discussion in real-time.
+- **Scoping & Design**: PMs and UI/UX Designers discuss requirements, define scopes, and create detailed product specs collaboratively.
+- **Implementation**: SWEs and Security Engineers receive the finalized specs, write the code, and ensure security compliance. If a Security Engineer flags an issue, they discuss it directly with the SWE to resolve it.
 - **Continuous Alignment**: Agents autonomously iterate on feedback, cross-communicate across departments, and resolve blockers, working together to deliver the final product to the CEO.
 
 ---
 
 ## Technical & Product Roadmap
 
-### Phase 1: Foundation and The "Software Company" Prototype (Q1 - Q2)
+### Phase 1: Foundation and The "Software Company" Prototype
 - **Core Orchestration Engine**: Build the central AI agent communication framework and LLM routing layer.
-- **Virtual Meeting Rooms**: Develop the infrastructure for multi-agent discussions, allowing agents to hold simulated "meetings."
+- **Virtual Meeting Rooms**: Develop the infrastructure for multi-agent discussions, allowing agents to hold simulated "meetings" and exchange context.
 - **Domain #1 - Software Company**:
   - Define the default organizational schema (CEO -> Directors -> PMs / SWEs / etc.).
-  - Implement base prompts and capabilities for the core Software Company roles.
+  - Implement base prompts, context management, and capabilities for the core Software Company roles.
 - **CEO Dashboard (V1)**: Interface for the human user to define goals, view organizational charts, and monitor active virtual meetings and project statuses.
 
-### Phase 2: Collaboration & Tool Integration (Q3)
-- **External Tool Aggregation**: Give agents access to external tools (e.g., GitHub, Jira, Figma APIs, AWS, Vercel).
-- **Advanced Agent Interactions**: Enable conflict resolution among agents (e.g., Security Engineer flagging a SWE's pull request, leading to a discussion and resolution).
-- **Skill Import Framework**: Create the developer API allowing users to upload custom "Skill Packs" or entirely new "Domain Knowledge" modules via JSON/YAML or natural language.
+### Phase 2: Collaboration & Tool Integration
+- **External Tool Aggregation**: Give agents access to the tools they need to do their jobs (e.g., GitHub for SWEs, Jira for PMs, Figma APIs for Designers, AWS/Vercel for deployment).
+- **Advanced Agent Interactions**: Enable complex conflict resolution among agents (e.g., Security Engineer flagging a SWE's pull request, leading to a back-and-forth discussion and resolution without CEO intervention).
+- **Extensible Skill Import Framework**: Create the developer API and user interface allowing users to easily upload custom "Skill Packs," new tools, or entirely new "Domain Knowledge" modules via JSON/YAML or natural language.
 
-### Phase 3: Expansion & Customization (Q4)
-- **New Domains**: Introduce templates for "Digital Marketing Agency" and "Accounting Firm."
-- **Dynamic Reorganization**: Allow the CEO to "hire" or "fire" AI agents, dynamically restructuring the org chart and team sizes to meet current project demands.
-- **Market Launch**: Public beta targeting solopreneurs and small business owners struggling with the pain points identified in our market research.
+### Phase 3: Expansion & Customization
+- **New Domains**: Introduce out-of-the-box templates for other industries, such as a "Digital Marketing Agency" or "Accounting Firm."
+- **Dynamic Reorganization**: Allow the CEO to "hire" or "fire" AI agents, dynamically restructuring the org chart and team sizes to meet current project demands (e.g., spinning up a temporary "Tiger Team" for a specific launch).
+- **Market Launch**: Public beta targeting solopreneurs and small business owners struggling with the pain points identified in our market research (time management, talent shortage, financial constraints).
 
-### Phase 4: Scaling to Enterprise AI Operations (Year 2)
-- **Advanced Autonomous Execution**: Agents become capable of self-healing workflows and long-term background processing without daily CEO input.
+### Phase 4: Scaling to Enterprise AI Operations
+- **Advanced Autonomous Execution**: Agents become capable of self-healing workflows, long-term background processing, and proactive issue identification without daily CEO input.
 - **Marketplace**: Launch a community marketplace for users to buy, sell, and share specialized agents, organizational templates, and custom tool integrations.
-- **Real-time Analytics**: Provide the CEO with deep insights into the performance, cost-efficiency, and output of their AI organization.
+- **Real-time Analytics**: Provide the CEO with deep, actionable insights into the performance, cost-efficiency, and output of their AI organization.
