@@ -1,18 +1,18 @@
 # One Human Corp: Strategic Roadmap
 
 ## Vision
-"One Human Corp" is an innovative platform that empowers a single individual to run an entire enterprise by aggregating tools and orchestrating highly specialized AI agents. The user acts as the CEO, and the application provides everything needed to operate in any chosen industry domain. The platform features an extensible framework, allowing seamless integration of new skills, domains, and knowledge bases.
+"One Human Corp" is an innovative platform that empowers a single individual to run an entire enterprise by aggregating tools and orchestrating highly specialized AI agents. The user acts as the CEO, and the application provides everything needed to operate in any chosen industry domain. The platform features an extensible framework, allowing seamless integration of new skills, domains, and knowledge bases. The goal is simple: if the customer wants to work on an area, we will provide everything they need.
 
 ## Market Research: Small Business Pain Points
-Small businesses currently face numerous challenges in today's competitive landscape. Based on market research, here are the top pain points and how One Human Corp directly addresses them:
+Small businesses currently face numerous challenges in today's competitive landscape. Based on market research into the primary struggles of small business owners online, here are the top pain points and how One Human Corp directly addresses them:
 
-1. **Financial Constraints & Cash Flow**: Small businesses struggle with tight budgets, unpredictable markets, high overhead, and managing cash flow.
-   - *Solution*: One Human Corp drastically reduces overhead by utilizing AI agents for roles that traditionally require full-time salaries. You can "hire" exactly the talent you need, when you need it, providing enterprise-grade output on a startup budget.
-2. **Time Management & Operational Inefficiency**: Business owners constantly wear too many hats, juggling long to-do lists and manual processes, leaving little time for strategic planning.
+1. **Time Management & The Struggle to Do It All**: Business owners constantly wear too many hats, juggling long to-do lists and manual processes, leaving little time for strategic planning.
    - *Solution*: The platform automates mundane tasks and orchestrates complex workflows. Agents work autonomously, allowing the human CEO to focus entirely on high-level strategy and vision instead of day-to-day operations.
-3. **Talent Shortage & Recruitment**: Finding, hiring, and retaining skilled employees (especially in specialized fields like engineering, marketing, and AI) is difficult and expensive.
+2. **Talent Shortage & Recruitment**: Finding, hiring, and retaining skilled employees (especially in specialized fields like engineering, marketing, and AI) is difficult, expensive, and a major operational bottleneck.
    - *Solution*: On-demand AI employees across various domains provide immediate access to top-tier "talent" without recruitment costs, interviews, or delays.
-4. **Marketing, Customer Acquisition & Digital Presence**: Generating leads, effectively converting them, maintaining communication over long sales cycles, and managing an effective online presence (like websites) are major hurdles.
+3. **Scaling Operations**: Growth brings increased complexity, resource constraints, and the need for new systems to handle workloads.
+   - *Solution*: One Human Corp drastically reduces overhead by utilizing AI agents for roles that traditionally require full-time salaries. You can "hire" exactly the talent you need, when you need it, and scale instantly to provide enterprise-grade output on a startup budget.
+4. **Marketing & Customer Acquisition**: Generating leads, effectively converting them, maintaining communication, and managing an effective online presence are major hurdles.
    - *Solution*: Dedicated Marketing and Sales AI agents continuously analyze trends, generate leads, and execute marketing campaigns 24/7. Technical agents can build and maintain a professional online presence.
 5. **Lack of Strategic Direction**: Operating without a clear roadmap or reacting to problems rather than proactively planning leads to stagnant growth.
    - *Solution*: With an entire C-suite of AI advisors and directors at their disposal, the CEO receives continuous data-driven insights and strategic recommendations to stay on course.
@@ -29,9 +29,10 @@ The architecture of One Human Corp is built upon foundational layers, with the h
    - **Security Engineer**: Audits code for vulnerabilities and ensures compliance with security standards.
    - **QA Tester**: Develops and executes test plans to ensure product quality.
    - **UI/UX Designer**: Creates wireframes, prototypes, and user interfaces.
+   - **DevOps Engineer**: Manages CI/CD pipelines, infrastructure, and deployment processes.
 3. **Organization**: The hierarchical structure defining reporting lines, communication flows, and management. This dictates how the company operates.
    - *Example Layout*: An Engineering Director manages 3 SWEs, 1 QA Tester, and 1 Security Engineer. The Director reports directly to the CEO. Product Managers collaborate cross-functionally with Engineering and Marketing.
-4. **User as CEO**: The human user is always at the top of the hierarchy (CEO). They define the issues, set the company's direction, and oversee operations.
+4. **User as CEO**: The human user is always at the top of the hierarchy (CEO). They define the issues, set the company's direction, and oversee all operations.
 
 ## Workflow Execution & Collaboration
 When the CEO defines a high-level issue, goal, or product requirement, the entire AI organization is mobilized collaboratively:
@@ -43,27 +44,54 @@ When the CEO defines a high-level issue, goal, or product requirement, the entir
 
 ---
 
-## Technical & Product Roadmap
+## Detailed Technical & Product Roadmap (12-18 Months)
 
-### Phase 1: Foundation and The "Software Company" Prototype
-- **Core Orchestration Engine**: Build the central AI agent communication framework and LLM routing layer.
-- **Virtual Meeting Rooms**: Develop the infrastructure for multi-agent discussions, allowing agents to hold simulated "meetings" and exchange context.
-- **Domain #1 - Software Company**:
-  - Define the default organizational schema (CEO -> Directors -> PMs / SWEs / etc.).
-  - Implement base prompts, context management, and capabilities for the core Software Company roles.
-- **CEO Dashboard (V1)**: Interface for the human user to define goals, view organizational charts, and monitor active virtual meetings and project statuses.
+### Q1: Foundation & Architecture Proof of Concept (PoC)
+**Goal:** Establish the core orchestration engine and validate the "Software Company" domain with basic AI collaboration.
+*   **Milestone 1.1: Core Agent Orchestration Framework**
+    *   Develop the central event bus for asynchronous agent-to-agent communication.
+    *   Implement basic LLM routing and context management (Memory, State, Context Window).
+    *   Create the "Virtual Meeting Room" protocol allowing 2-3 agents to share a context space and debate solutions.
+*   **Milestone 1.2: "Software Company" Roles Alpha**
+    *   Define the base prompts, constraints, and default behaviors for SWE, PM, and Engineering Director.
+    *   Create the CEO interface (CLI or basic web UI) to issue the first "Issue/Task".
+    *   **Deliverable:** A successful simulation where the CEO asks for a "To-Do List CLI App," the PM specs it, the Director approves the architecture, and the SWE writes the Python code.
 
-### Phase 2: Collaboration & Tool Integration
-- **External Tool Aggregation**: Give agents access to the tools they need to do their jobs (e.g., GitHub for SWEs, Jira for PMs, Figma APIs for Designers, AWS/Vercel for deployment).
-- **Advanced Agent Interactions**: Enable complex conflict resolution among agents (e.g., Security Engineer flagging a SWE's pull request, leading to a back-and-forth discussion and resolution without CEO intervention).
-- **Extensible Skill Import Framework**: Create the developer API and user interface allowing users to easily upload custom "Skill Packs," new tools, or entirely new "Domain Knowledge" modules via JSON/YAML or natural language.
+### Q2: Tool Aggregation & Advanced Workflows
+**Goal:** Give agents the hands to actually *do* the work, rather than just generating text files. Connect the AI to real-world developer tools.
+*   **Milestone 2.1: Essential Tool Integrations**
+    *   **SWE Agents:** GitHub/GitLab integration (read repos, create branches, open/review PRs).
+    *   **PM Agents:** Jira/Linear API integration (create epics, user stories, move tickets).
+    *   **DevOps/SWE:** Vercel/AWS integration for automated deployments.
+*   **Milestone 2.2: Cross-Functional Collaboration & Conflict Resolution**
+    *   Introduce Security Engineer and QA Tester roles.
+    *   Implement advanced workflows where a Security Engineer can review a SWE's PR, flag a vulnerability, and force the SWE to rewrite the code before the Director merges it.
+    *   **Deliverable:** An end-to-end workflow where code is spec'd, written, security-audited, tested, and automatically deployed to a staging environment without CEO intervention.
 
-### Phase 3: Expansion & Customization
-- **New Domains**: Introduce out-of-the-box templates for other industries, such as a "Digital Marketing Agency" or "Accounting Firm."
-- **Dynamic Reorganization**: Allow the CEO to "hire" or "fire" AI agents, dynamically restructuring the org chart and team sizes to meet current project demands (e.g., spinning up a temporary "Tiger Team" for a specific launch).
-- **Market Launch**: Public beta targeting solopreneurs and small business owners struggling with the pain points identified in our market research (time management, talent shortage, financial constraints).
+### Q3: Extensibility & The "Domain Import Framework"
+**Goal:** Transform the application from a rigid "Software Company Simulator" into the flexible "One Human Corp" platform by allowing users to define new industries.
+*   **Milestone 3.1: Extensible Skill & Knowledge API**
+    *   Develop a YAML/JSON schema (or natural language interface) for defining new Domains, Roles, and Org Charts.
+    *   Allow users to upload custom knowledge bases (PDFs, docs, URLs) that agents use via RAG (Retrieval-Augmented Generation) to become experts in specific company procedures.
+*   **Milestone 3.2: Custom Tooling Webhooks**
+    *   Create a "Tool Builder" allowing advanced users to give their agents access to custom APIs (e.g., internal company databases).
+    *   **Deliverable:** Successful user import of a completely new domain, such as a "Digital Marketing Agency," complete with SEO Specialists, Content Writers, and Campaign Managers, using a custom knowledge base.
 
-### Phase 4: Scaling to Enterprise AI Operations
-- **Advanced Autonomous Execution**: Agents become capable of self-healing workflows, long-term background processing, and proactive issue identification without daily CEO input.
-- **Marketplace**: Launch a community marketplace for users to buy, sell, and share specialized agents, organizational templates, and custom tool integrations.
-- **Real-time Analytics**: Provide the CEO with deep, actionable insights into the performance, cost-efficiency, and output of their AI organization.
+### Q4: Dashboard V1 & Closed Beta Launch
+**Goal:** Polish the user experience for the CEO and launch to a select group of small business owners to validate the market research.
+*   **Milestone 4.1: The CEO Dashboard**
+    *   Build a comprehensive React/Next.js dashboard.
+    *   Features: Live Org Chart visualization, active "Virtual Meeting" transcripts, project progress tracking, and an interface for "hiring/firing" AI agents to adjust the org structure dynamically.
+*   **Milestone 4.2: Closed Beta Onboarding**
+    *   Onboard 50-100 solopreneurs and small business owners.
+    *   Provide out-of-the-box templates for "Software Startup," "Marketing Agency," and "E-commerce Operations."
+    *   **Deliverable:** Gather actionable feedback on agent hallucination rates, cost efficiency, and time saved for the CEO.
+
+### Q1-Q2 (Year 2): Enterprise Scaling & Marketplace
+**Goal:** Launch to the public and create an ecosystem around One Human Corp.
+*   **Milestone 5.1: Autonomous Execution & Self-Healing Workflows**
+    *   Implement long-running background tasks where agents monitor production systems and proactively address issues (e.g., Marketing agent notices ad spend ROI dropping and adjusts the campaign automatically).
+*   **Milestone 5.2: The One Human Corp Marketplace**
+    *   Launch a community hub where users can share, buy, and sell specialized agents (e.g., a highly tuned "Stripe API Integration Expert SWE" agent).
+    *   Shareable organization templates and custom tool integrations.
+*   **Deliverable:** Public Launch (V1.0) with a sustainable revenue model and a thriving ecosystem of user-generated domains and agents.
