@@ -18,7 +18,15 @@ Small businesses currently face numerous challenges in today's competitive lands
    - *Solution*: With an entire C-suite of AI advisors and directors at their disposal, the CEO receives continuous data-driven insights and strategic recommendations to stay on course.
 
 ## Core Concepts & Framework
-The architecture of One Human Corp is built upon foundational layers, with the human user securely at the helm. Let's explore these concepts using our initial rollout domain: **The Software Company**.
+The architecture of One Human Corp is built upon foundational layers, utilizing industry-standard and cutting-edge technologies to ensure scalability, security, and extensibility. Let's explore these concepts using our initial rollout domain: **The Software Company**.
+
+### Architecture & Infrastructure
+- **Infrastructure as Code (IaC)**: The system architecture runs on Kubernetes and uses a Custom K8s Operator with Custom Resource Definitions (CRDs) to manage organizational structures (e.g., creating a new department provisions a set of resources).
+- **Tool Aggregation & Standardized Integrations**: The platform utilizes the Model Context Protocol (MCP) for standardized, tool-agnostic integrations, allowing users to easily import new skills and connect to existing software.
+- **Identity Management**: Unified identity management across both human and AI agent team members is handled securely via SPIFFE/SPIRE.
+- **Cost Estimation & Billing Engine**: A specialized engine tracks LLM token usage with model-aware pricing, giving the CEO a transparent view of operational costs (analogous to employee salaries).
+
+### The Four Conceptual Layers
 
 1. **Domain Knowledge**: The specific industry or area of operation. The system is built with a flexible framework so users can always import new skills, areas, and domain knowledge bases (e.g., Legal Firm, Accounting, E-commerce). For our starting point, the domain is a *Software Company*.
 2. **Role**: The required positions within a specific domain. For a Software Company, these roles include:
@@ -47,6 +55,8 @@ When the CEO defines a high-level issue, goal, or product requirement, the entir
 
 ### Phase 1: Foundation and The "Software Company" Prototype
 - **Core Orchestration Engine**: Build the central AI agent communication framework and LLM routing layer.
+- **Agent Interaction Protocol**: Implement asynchronous pub/sub architecture for inter-agent communication, allowing seamless data exchange and collaboration.
+- **Cost Estimation & Billing Engine**: Implement the foundational logic for tracking LLM token usage and pricing.
 - **Virtual Meeting Rooms**: Develop the infrastructure for multi-agent discussions, allowing agents to hold simulated "meetings" and exchange context.
 - **Domain #1 - Software Company**:
   - Define the default organizational schema (CEO -> Directors -> PMs / SWEs / etc.).
@@ -54,7 +64,9 @@ When the CEO defines a high-level issue, goal, or product requirement, the entir
 - **CEO Dashboard (V1)**: Interface for the human user to define goals, view organizational charts, and monitor active virtual meetings and project statuses.
 
 ### Phase 2: Collaboration & Tool Integration
-- **External Tool Aggregation**: Give agents access to the tools they need to do their jobs (e.g., GitHub for SWEs, Jira for PMs, Figma APIs for Designers, AWS/Vercel for deployment).
+- **External Tool Aggregation via MCP**: Implement the Model Context Protocol (MCP) to give agents standardized access to the tools they need to do their jobs (e.g., GitHub for SWEs, Jira for PMs, Figma APIs for Designers, AWS/Vercel for deployment).
+- **Unified Identity Management**: Integrate SPIFFE/SPIRE to provide secure, verifiable identities for both humans and AI agents.
+- **Kubernetes Operator & CRDs**: Transition organizational structure management to Infrastructure as Code using a custom K8s Operator.
 - **Advanced Agent Interactions**: Enable complex conflict resolution among agents (e.g., Security Engineer flagging a SWE's pull request, leading to a back-and-forth discussion and resolution without CEO intervention).
 - **Extensible Skill Import Framework**: Create the developer API and user interface allowing users to easily upload custom "Skill Packs," new tools, or entirely new "Domain Knowledge" modules via JSON/YAML or natural language.
 
