@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package ohc.common;
+
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  CEO = 1;
+  PRODUCT_MANAGER = 2;
+  SOFTWARE_ENGINEER = 3;
+  ENGINEERING_DIRECTOR = 4;
+  QA_TESTER = 5;
+  SECURITY_ENGINEER = 6;
+  DESIGNER = 7;
+  MARKETING_MANAGER = 8;
+}
+
+enum AgentStatus {
+  STATUS_UNSPECIFIED = 0;
+  IDLE = 1;
+  ACTIVE = 2;
+  IN_MEETING = 3;
+  BLOCKED = 4;
+}

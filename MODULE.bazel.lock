@@ -1,0 +1,21 @@
+{
+  "lockFileVersion": 26,
+  "registryFileHashes": {},
+  "selectedYankedVersions": {},
+  "moduleExtensions": {
+    "@@platforms//host:extension.bzl%host_platform": {
+      "general": {
+        "bzlTransitiveDigest": "ki+ViNNsw5wzWlLR1ybivxA8Y0Ggq28d6KX4aR1s2MI=",
+        "usagesDigest": "wdrgea6VjICFFcM6vpZ3o0rVThx3CyCVwsTmSCeeRxI=",
+        "recordedInputs": [],
+        "generatedRepoSpecs": {
+          "host_platform": {
+            "repoRuleId": "@@platforms//host:extension.bzl%host_platform_repo",
+            "attributes": {}
+          }
+        }
+      }
+    }
+  },
+  "facts": {}
+}
