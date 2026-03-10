@@ -2,9 +2,9 @@
 
 This repository is initialized as a Bazel-based monorepo:
 
-- application and library code lives under `/home/runner/work/mono/mono/srcs`
-- documentation lives under `/home/runner/work/mono/mono/docs`
-- contract definitions live under `/home/runner/work/mono/mono/srcs/proto`
+- application and library code lives under `srcs/`
+- documentation lives under `docs/`
+- contract definitions live under `srcs/proto/`
 
 ## Initial roadmap slice
 
