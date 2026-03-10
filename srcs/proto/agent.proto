@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package ohc.agent;
+
+import "common.proto";
+
+message Agent {
+  string id = 1;
+  ohc.common.Role role = 2;
+  string name = 3;
+  ohc.common.AgentStatus status = 4;
+  string organization_id = 5;
+}
+
+message AgentMessage {
+  string id = 1;
+  string from_agent_id = 2;
+  string to_agent_id = 3;
+  string message_type = 4;
+  string content = 5;
+  string meeting_id = 6;
+  int64 occurred_at_unix = 7;
+}
+
+service AgentOrchestration {
+  rpc RegisterAgent(Agent) returns (Agent);
+  rpc PublishMessage(AgentMessage) returns (AgentMessage);
+}

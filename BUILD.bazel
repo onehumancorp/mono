@@ -1,0 +1,7 @@
+sh_test(
+    name = "go_packages_test",
+    srcs = ["tools/go_test_all.sh"],
+    data = ["go.mod"] + glob(["srcs/**"]),
+)
+
+exports_files(["go.mod"])

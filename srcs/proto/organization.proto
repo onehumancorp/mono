@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package ohc.organization;
+
+import "common.proto";
+
+message Organization {
+  string id = 1;
+  string name = 2;
+  string domain = 3;
+  string ceo_id = 4;
+}
+
+message TeamMember {
+  string id = 1;
+  string organization_id = 2;
+  string name = 3;
+  ohc.common.Role role = 4;
+  string manager_id = 5;
+  bool is_human = 6;
+}
+
+message OrganizationChart {
+  Organization organization = 1;
+  repeated TeamMember members = 2;
+}
+
+service OrganizationService {
+  rpc CreateOrganization(Organization) returns (Organization);
+  rpc GetOrganizationChart(Organization) returns (OrganizationChart);
+}
