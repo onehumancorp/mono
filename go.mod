@@ -1,3 +1,3 @@
 module github.com/onehumancorp/mono
 
-go 1.23.0
+go 1.25

@@ -31,3 +31,21 @@ func TestNewSoftwareCompany(t *testing.T) {
 		t.Fatalf("expected 4 engineering reports, got %d", len(reports))
 	}
 }
+
+func TestMemberByIDNotFound(t *testing.T) {
+	org := NewSoftwareCompany("acme", "Acme Software", "Casey CEO", time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC))
+
+	member, ok := org.MemberByID("missing")
+	if ok {
+		t.Fatalf("expected missing member lookup to fail, got %+v", member)
+	}
+}
+
+func TestMembersByManagerReturnsEmptySliceWhenNoReports(t *testing.T) {
+	org := NewSoftwareCompany("acme", "Acme Software", "Casey CEO", time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC))
+
+	reports := org.MembersByManager("unknown")
+	if len(reports) != 0 {
+		t.Fatalf("expected zero reports, got %d", len(reports))
+	}
+}

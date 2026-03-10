@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
+	"time"
 
 	"github.com/onehumancorp/mono/srcs/billing"
 	"github.com/onehumancorp/mono/srcs/domain"
@@ -23,6 +24,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/org", server.handleOrg)
 	mux.HandleFunc("/api/meetings", server.handleMeetings)
 	mux.HandleFunc("/api/costs", server.handleCosts)
+	mux.HandleFunc("/api/messages", server.handleSendMessage)
 	return mux
 }
 
@@ -57,11 +59,37 @@ func (s *Server) handleIndex(w http.ResponseWriter, _ *http.Request) {
   <div class="card">
     <h2>Active Meetings</h2>
     <p>{{len .Meetings}} meeting(s)</p>
+    {{range .Meetings}}
+    <h3>{{.ID}}</h3>
+    <ul>
+      {{range .Transcript}}
+      <li>{{.FromAgent}} → {{.ToAgent}}: {{.Content}}</li>
+      {{else}}
+      <li>No messages yet.</li>
+      {{end}}
+    </ul>
+    {{end}}
   </div>
   <div class="card">
     <h2>Cost Summary</h2>
     <p>Total cost: ${{printf "%.6f" .Summary.TotalCostUSD}}</p>
     <p>Total tokens: {{.Summary.TotalTokens}}</p>
+    <ul>
+    {{range .Summary.Agents}}
+      <li>{{.AgentID}} — ${{printf "%.6f" .CostUSD}} ({{.TokenUsed}} tokens)</li>
+    {{end}}
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Send Message</h2>
+    <form method="post" action="/api/messages">
+      <label>From Agent <input name="fromAgent" value="pm-1"></label><br>
+      <label>To Agent <input name="toAgent" value="swe-1"></label><br>
+      <label>Meeting ID <input name="meetingId" value="kickoff"></label><br>
+      <label>Message Type <input name="messageType" value="task"></label><br>
+      <label>Content <input name="content" value="Review the roadmap"></label><br>
+      <button type="submit">Send Message</button>
+    </form>
   </div>
 </body>
 </html>`))
@@ -83,6 +111,35 @@ func (s *Server) handleMeetings(w http.ResponseWriter, _ *http.Request) {
 
 func (s *Server) handleCosts(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, s.tracker.Summary(s.org.ID))
+}
+
+func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form payload", http.StatusBadRequest)
+		return
+	}
+
+	message := orchestration.Message{
+		ID:         "web-" + time.Now().UTC().Format("20060102150405.000000000"),
+		FromAgent:  r.FormValue("fromAgent"),
+		ToAgent:    r.FormValue("toAgent"),
+		Type:       r.FormValue("messageType"),
+		Content:    r.FormValue("content"),
+		MeetingID:  r.FormValue("meetingId"),
+		OccurredAt: time.Now().UTC(),
+	}
+
+	if err := s.hub.Publish(message); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func writeJSON(w http.ResponseWriter, value any) {
