@@ -43,6 +43,9 @@ func TestNewDemoHandlerServesDashboard(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), "Send Message") {
 		t.Fatalf("expected interactive message form in dashboard HTML")
 	}
+	if !strings.Contains(rec.Body.String(), "Role Playbooks") {
+		t.Fatalf("expected role playbooks in dashboard HTML")
+	}
 }
 
 func TestRunUsesDefaultAddress(t *testing.T) {
