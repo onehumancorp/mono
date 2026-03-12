@@ -61,6 +61,12 @@ func TestServerServesDashboardEndpoints(t *testing.T) {
 	if !strings.Contains(string(body), "Send Message") {
 		t.Fatalf("expected interactive message form in HTML body")
 	}
+	if !strings.Contains(string(body), "Project Status") {
+		t.Fatalf("expected project status panel in HTML body")
+	}
+	if !strings.Contains(string(body), "PM — IN_MEETING") {
+		t.Fatalf("expected agent status details in HTML body")
+	}
 
 	for _, path := range []string{"/api/org", "/api/meetings", "/api/costs"} {
 		resp, err := http.Get(server.URL + path)
@@ -196,5 +202,29 @@ func TestWriteJSONSetsContentTypeAndBody(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), `"status":"ok"`) {
 		t.Fatalf("expected JSON body, got %s", rec.Body.String())
+	}
+}
+
+func TestSummarizeStatusesReturnsOrderedCounts(t *testing.T) {
+	statuses := summarizeStatuses([]orchestration.Agent{
+		{ID: "a", Status: orchestration.StatusInMeeting},
+		{ID: "b", Status: orchestration.StatusActive},
+		{ID: "c", Status: orchestration.StatusInMeeting},
+	})
+
+	if len(statuses) != 4 {
+		t.Fatalf("expected 4 status buckets, got %d", len(statuses))
+	}
+	if statuses[0].Status != orchestration.StatusActive || statuses[0].Count != 1 {
+		t.Fatalf("unexpected active bucket: %+v", statuses[0])
+	}
+	if statuses[1].Status != orchestration.StatusBlocked || statuses[1].Count != 0 {
+		t.Fatalf("unexpected blocked bucket: %+v", statuses[1])
+	}
+	if statuses[2].Status != orchestration.StatusIdle || statuses[2].Count != 0 {
+		t.Fatalf("unexpected idle bucket: %+v", statuses[2])
+	}
+	if statuses[3].Status != orchestration.StatusInMeeting || statuses[3].Count != 2 {
+		t.Fatalf("unexpected in-meeting bucket: %+v", statuses[3])
 	}
 }

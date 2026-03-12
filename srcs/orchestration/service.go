@@ -2,6 +2,7 @@ package orchestration
 
 import (
 	"errors"
+	"sort"
 	"sync"
 	"time"
 )
@@ -144,4 +145,19 @@ func (h *Hub) Meetings() []MeetingRoom {
 	}
 
 	return meetings
+}
+
+func (h *Hub) Agents() []Agent {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	agents := make([]Agent, 0, len(h.agents))
+	for _, agent := range h.agents {
+		agents = append(agents, agent)
+	}
+	sort.Slice(agents, func(i, j int) bool {
+		return agents[i].ID < agents[j].ID
+	})
+
+	return agents
 }

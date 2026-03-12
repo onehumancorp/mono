@@ -15,7 +15,7 @@ The first implemented slice focuses on the Phase 1 foundation from `docs/roadmap
 - Software Company default organization schema
 - in-memory agent orchestration and virtual meeting rooms
 - model-aware token cost tracking
-- a small CEO dashboard HTTP interface with a message form for user interaction
+- a small CEO dashboard HTTP interface with org chart, project status, meeting, cost, and message form views
 
 ## Running tests
 

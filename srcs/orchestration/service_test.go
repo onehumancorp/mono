@@ -127,3 +127,23 @@ func TestMeetingLookupMiss(t *testing.T) {
 		t.Fatalf("expected missing meeting lookup to fail")
 	}
 }
+
+func TestAgentsReturnsSortedSnapshot(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "b", Name: "B", Role: "SWE", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "a", Name: "A", Role: "PM", OrganizationID: "org-1"})
+
+	agents := hub.Agents()
+	if len(agents) != 2 {
+		t.Fatalf("expected 2 agents, got %d", len(agents))
+	}
+	if agents[0].ID != "a" || agents[1].ID != "b" {
+		t.Fatalf("expected sorted agent IDs, got %+v", agents)
+	}
+
+	agents[0].Name = "mutated"
+	original, _ := hub.Agent("a")
+	if original.Name != "A" {
+		t.Fatalf("expected agent snapshot mutation not to affect hub, got %+v", original)
+	}
+}

@@ -17,6 +17,18 @@ type Server struct {
 	tracker *billing.Tracker
 }
 
+type statusCount struct {
+	Status orchestration.Status
+	Count  int
+}
+
+var statusOrder = []orchestration.Status{
+	orchestration.StatusActive,
+	orchestration.StatusBlocked,
+	orchestration.StatusIdle,
+	orchestration.StatusInMeeting,
+}
+
 func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker) http.Handler {
 	server := &Server{org: org, hub: hub, tracker: tracker}
 	mux := http.NewServeMux()
@@ -29,6 +41,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 }
 
 func (s *Server) handleIndex(w http.ResponseWriter, _ *http.Request) {
+	agents := s.hub.Agents()
 	page := template.Must(template.New("dashboard").Parse(`<!doctype html>
 <html lang="en">
 <head>
@@ -53,6 +66,20 @@ func (s *Server) handleIndex(w http.ResponseWriter, _ *http.Request) {
     <ul>
     {{range .Org.Members}}
       <li>{{.Name}} — {{.Role}}</li>
+    {{end}}
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Project Status</h2>
+    <p>Registered agents: {{len .Agents}}</p>
+    <ul>
+    {{range .Statuses}}
+      <li>{{.Status}} — {{.Count}}</li>
+    {{end}}
+    </ul>
+    <ul>
+    {{range .Agents}}
+      <li>{{.Name}} — {{.Status}}</li>
     {{end}}
     </ul>
   </div>
@@ -96,6 +123,8 @@ func (s *Server) handleIndex(w http.ResponseWriter, _ *http.Request) {
 
 	_ = page.Execute(w, map[string]any{
 		"Org":      s.org,
+		"Agents":   agents,
+		"Statuses": summarizeStatuses(agents),
 		"Meetings": s.hub.Meetings(),
 		"Summary":  s.tracker.Summary(s.org.ID),
 	})
@@ -145,4 +174,26 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 func writeJSON(w http.ResponseWriter, value any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(value)
+}
+
+func summarizeStatuses(agents []orchestration.Agent) []statusCount {
+	counts := map[orchestration.Status]int{
+		orchestration.StatusIdle:      0,
+		orchestration.StatusActive:    0,
+		orchestration.StatusInMeeting: 0,
+		orchestration.StatusBlocked:   0,
+	}
+	for _, agent := range agents {
+		counts[agent.Status]++
+	}
+
+	statuses := make([]statusCount, 0, len(counts))
+	for _, status := range statusOrder {
+		statuses = append(statuses, statusCount{
+			Status: status,
+			Count:  counts[status],
+		})
+	}
+
+	return statuses
 }
