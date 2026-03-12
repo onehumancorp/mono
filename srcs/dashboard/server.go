@@ -70,6 +70,15 @@ func (s *Server) handleIndex(w http.ResponseWriter, _ *http.Request) {
     </ul>
   </div>
   <div class="card">
+    <h2>Role Playbooks</h2>
+    {{range .Org.RoleProfiles}}
+    <h3>{{.Role}}</h3>
+    <p>{{.BasePrompt}}</p>
+    <p><strong>Capabilities:</strong> {{range $index, $capability := .Capabilities}}{{if $index}}, {{end}}{{$capability}}{{end}}</p>
+    <p><strong>Context Inputs:</strong> {{range $index, $input := .ContextInputs}}{{if $index}}, {{end}}{{$input}}{{end}}</p>
+    {{end}}
+  </div>
+  <div class="card">
     <h2>Project Status</h2>
     <p>Registered agents: {{len .Agents}}</p>
     <ul>

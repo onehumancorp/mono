@@ -64,6 +64,12 @@ func TestServerServesDashboardEndpoints(t *testing.T) {
 	if !strings.Contains(string(body), "Project Status") {
 		t.Fatalf("expected project status panel in HTML body")
 	}
+	if !strings.Contains(string(body), "Role Playbooks") {
+		t.Fatalf("expected role playbooks panel in HTML body")
+	}
+	if !strings.Contains(string(body), "Context Inputs:") {
+		t.Fatalf("expected role playbook context inputs in HTML body")
+	}
 	if !strings.Contains(string(body), "PM — IN_MEETING") {
 		t.Fatalf("expected agent status details in HTML body")
 	}
@@ -96,6 +102,9 @@ func TestHandleOrgReturnsJSONPayload(t *testing.T) {
 	}
 	if org.ID != "org-1" || org.Domain != "software_company" {
 		t.Fatalf("unexpected org payload: %+v", org)
+	}
+	if _, ok := org.RoleProfile(domain.RoleSoftwareEngineer); !ok {
+		t.Fatalf("expected role profile data in org payload")
 	}
 }
 
