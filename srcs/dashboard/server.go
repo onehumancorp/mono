@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
-	"sort"
 	"time"
 
 	"github.com/onehumancorp/mono/srcs/billing"
@@ -21,6 +20,13 @@ type Server struct {
 type statusCount struct {
 	Status orchestration.Status
 	Count  int
+}
+
+var statusOrder = []orchestration.Status{
+	orchestration.StatusActive,
+	orchestration.StatusBlocked,
+	orchestration.StatusIdle,
+	orchestration.StatusInMeeting,
 }
 
 func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker) http.Handler {
@@ -182,20 +188,12 @@ func summarizeStatuses(agents []orchestration.Agent) []statusCount {
 	}
 
 	statuses := make([]statusCount, 0, len(counts))
-	for _, status := range []orchestration.Status{
-		orchestration.StatusIdle,
-		orchestration.StatusActive,
-		orchestration.StatusInMeeting,
-		orchestration.StatusBlocked,
-	} {
+	for _, status := range statusOrder {
 		statuses = append(statuses, statusCount{
 			Status: status,
 			Count:  counts[status],
 		})
 	}
-	sort.SliceStable(statuses, func(i, j int) bool {
-		return statuses[i].Status < statuses[j].Status
-	})
 
 	return statuses
 }
