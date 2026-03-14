@@ -1,0 +1,11 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+sh_test(
+    name = "deploy_artifacts_test",
+    srcs = ["tests/deploy_artifacts_test.sh"],
+    data = glob([
+        "docker/**/*",
+        "helm/ohc/**",
+        "docker-compose.yml",
+    ]),
+)

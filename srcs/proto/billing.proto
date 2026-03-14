@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package ohc.billing;
 
+option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/billing;billingpb";
+
 message TokenUsage {
   string agent_id = 1;
   string organization_id = 2;
@@ -17,6 +19,13 @@ message CostSummary {
   double total_cost_usd = 2;
   int64 total_tokens = 3;
   double projected_monthly_usd = 4;
+  repeated AgentCostSummary agents = 5;
+}
+
+message AgentCostSummary {
+  string agent_id = 1;
+  double cost_usd = 2;
+  int64 token_used = 3;
 }
 
 service BillingService {

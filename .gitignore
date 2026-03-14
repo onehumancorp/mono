@@ -33,3 +33,7 @@ go.work.sum
 
 # Bazel outputs
 bazel-*
+
+# Frontend artifacts
+srcs/frontend/node_modules/
+srcs/frontend/dist/

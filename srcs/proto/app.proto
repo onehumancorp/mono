@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package ohc.api.v1;
+
+option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/api/v1;apiv1";
+
+import "agent.proto";
+import "billing.proto";
+import "organization.proto";
+
+message MeetingRoom {
+  string id = 1;
+  repeated string participants = 2;
+  repeated ohc.agent.AgentMessage transcript = 3;
+}
+
+message DashboardSnapshot {
+  ohc.organization.Organization organization = 1;
+  repeated ohc.agent.Agent agents = 2;
+  repeated MeetingRoom meetings = 3;
+  ohc.billing.CostSummary cost_summary = 4;
+}
+
+message GetDashboardRequest {
+  string organization_id = 1;
+}
+
+message PostMessageRequest {
+  ohc.agent.AgentMessage message = 1;
+}
+
+message PostMessageResponse {
+  DashboardSnapshot snapshot = 1;
+}
+
+service DashboardService {
+  rpc GetDashboard(GetDashboardRequest) returns (DashboardSnapshot);
+  rpc PostMessage(PostMessageRequest) returns (PostMessageResponse);
+}

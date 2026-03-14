@@ -128,6 +128,21 @@ func TestMeetingLookupMiss(t *testing.T) {
 	}
 }
 
+func TestMeetingsReturnsSnapshot(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "a", Name: "A", Role: "PM", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "b", Name: "B", Role: "SWE", OrganizationID: "org-1"})
+	hub.OpenMeeting("kickoff", []string{"a", "b"})
+
+	meetings := hub.Meetings()
+	if len(meetings) != 1 {
+		t.Fatalf("expected 1 meeting, got %d", len(meetings))
+	}
+	if meetings[0].ID != "kickoff" {
+		t.Fatalf("unexpected meeting snapshot: %+v", meetings[0])
+	}
+}
+
 func TestAgentsReturnsSortedSnapshot(t *testing.T) {
 	hub := NewHub()
 	hub.RegisterAgent(Agent{ID: "b", Name: "B", Role: "SWE", OrganizationID: "org-1"})

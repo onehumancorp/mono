@@ -1,9 +1,0 @@
-exports_files([
-    "defs.bzl",
-    "proto.bzl",
-])
-
-toolchain_type(name = "toolchain_type")
-
-filegroup(name = "autodetecting_toolchain")
-filegroup(name = "autodetecting_toolchain_nonstrict")

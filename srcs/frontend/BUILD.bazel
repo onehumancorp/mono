@@ -1,0 +1,26 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+filegroup(
+    name = "srcs",
+    srcs = glob(
+        [
+            "src/**",
+            "*.json",
+            "*.html",
+            "*.ts",
+        ],
+        exclude = [
+            "node_modules/**",
+            "dist/**",
+        ],
+    ),
+)
+
+sh_test(
+    name = "frontend_layout_test",
+    srcs = ["tests/layout_test.sh"],
+    data = [
+        ":srcs",
+        "package.json",
+    ],
+)

@@ -1,17 +1,44 @@
-load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
 
-sh_test(
-    name = "proto_layout_test",
-    srcs = ["proto_layout_test.sh"],
-    data = [
-        "agent.proto",
-        "billing.proto",
-        "common.proto",
-        "organization.proto",
+proto_library(
+    name = "common_proto",
+    srcs = ["common.proto"],
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = "agent_proto",
+    srcs = ["agent.proto"],
+    deps = [":common_proto"],
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = "organization_proto",
+    srcs = ["organization.proto"],
+    deps = [":common_proto"],
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = "billing_proto",
+    srcs = ["billing.proto"],
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
+    name = "app_proto",
+    srcs = ["app.proto"],
+    deps = [
+        ":agent_proto",
+        ":billing_proto",
+        ":organization_proto",
     ],
+    visibility = ["//visibility:public"],
 )
 
 exports_files([
+    "app.proto",
     "agent.proto",
     "billing.proto",
     "common.proto",

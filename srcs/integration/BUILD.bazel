@@ -1,0 +1,13 @@
+load("@rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "frontend_backend_test",
+    srcs = ["frontend_backend_test.go"],
+    deps = [
+        "//srcs/billing",
+        "//srcs/dashboard",
+        "//srcs/domain",
+        "//srcs/frontend/server:server_lib",
+        "//srcs/orchestration",
+    ],
+)

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/onehumancorp/mono/srcs/billing"
@@ -33,11 +35,78 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	server := &Server{org: org, hub: hub, tracker: tracker}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", server.handleIndex)
+  mux.HandleFunc("/app", server.handleApp)
+  if dist := frontendDistPath(); dist != "" {
+    mux.Handle("/app/", http.StripPrefix("/app/", http.FileServer(http.Dir(dist))))
+  } else {
+    mux.HandleFunc("/app/", server.handleApp)
+  }
 	mux.HandleFunc("/api/org", server.handleOrg)
 	mux.HandleFunc("/api/meetings", server.handleMeetings)
 	mux.HandleFunc("/api/costs", server.handleCosts)
 	mux.HandleFunc("/api/messages", server.handleSendMessage)
 	return mux
+}
+
+func frontendDistPath() string {
+  if fromEnv := os.Getenv("MONO_FRONTEND_DIST"); fromEnv != "" {
+    if hasFrontendIndex(fromEnv) {
+      return fromEnv
+    }
+  }
+
+  candidates := []string{
+    "srcs/frontend/dist",
+    "../srcs/frontend/dist",
+    "../../srcs/frontend/dist",
+  }
+
+  for _, candidate := range candidates {
+    if hasFrontendIndex(candidate) {
+      return candidate
+    }
+  }
+
+  return ""
+}
+
+func hasFrontendIndex(dir string) bool {
+  info, err := os.Stat(filepath.Join(dir, "index.html"))
+  if err != nil {
+    return false
+  }
+  return !info.IsDir()
+}
+
+func (s *Server) handleApp(w http.ResponseWriter, r *http.Request) {
+ 	if dist := frontendDistPath(); dist != "" {
+    http.ServeFile(w, r, filepath.Join(dist, "index.html"))
+    return
+  }
+
+  w.Header().Set("Content-Type", "text/html; charset=utf-8")
+  w.WriteHeader(http.StatusOK)
+  _, _ = w.Write([]byte(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>One Human Corp Frontend</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; background: #0f172a; color: #e2e8f0; }
+    .card { background: #1e293b; padding: 1rem 1.25rem; border-radius: 12px; }
+    code { background: #334155; padding: 0.1rem 0.3rem; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>React Frontend Route</h1>
+    <p>No production build found at <code>srcs/frontend/dist</code>.</p>
+    <p>Run <code>cd srcs/frontend && npm install && npm run build</code> and refresh this page.</p>
+    <p>For local development, run <code>npm run dev</code> in <code>srcs/frontend</code>.</p>
+  </div>
+</body>
+</html>`))
 }
 
 func (s *Server) handleIndex(w http.ResponseWriter, _ *http.Request) {

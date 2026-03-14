@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package ohc.common;
 
+option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/common;commonpb";
+
 enum Role {
   ROLE_UNSPECIFIED = 0;
   CEO = 1;
