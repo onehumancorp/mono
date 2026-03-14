@@ -149,7 +149,7 @@ export function App() {
             <button
               key={key}
               type="button"
-              className={`nav-item${activeNav === key ? " active" : ""}`}
+              className={["nav-item", activeNav === key && "active"].filter(Boolean).join(" ")}
               onClick={() => { setActiveNav(key); }}
               aria-current={activeNav === key ? "page" : undefined}
             >
