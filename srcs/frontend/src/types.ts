@@ -49,3 +49,23 @@ export type CostSummary = {
   totalCostUSD: number;
   agents: AgentCost[];
 };
+
+export type StatusBucket = {
+  status: string;
+  count: number;
+};
+
+export type DashboardSnapshot = {
+  organization: Organization;
+  meetings: MeetingRoom[];
+  costs: CostSummary;
+  agents: {
+    id: string;
+    name: string;
+    role: string;
+    organizationId: string;
+    status: string;
+  }[];
+  statuses: StatusBucket[];
+  updatedAt: string;
+};

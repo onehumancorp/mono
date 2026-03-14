@@ -2,10 +2,13 @@ package dashboard
 
 import (
 	"encoding/json"
+	"errors"
 	"html/template"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/onehumancorp/mono/srcs/billing"
@@ -14,14 +17,28 @@ import (
 )
 
 type Server struct {
+	mu      sync.RWMutex
 	org     domain.Organization
 	hub     *orchestration.Hub
 	tracker *billing.Tracker
 }
 
 type statusCount struct {
-	Status orchestration.Status
-	Count  int
+	Status orchestration.Status `json:"status"`
+	Count  int                  `json:"count"`
+}
+
+type dashboardSnapshot struct {
+	Organization domain.Organization         `json:"organization"`
+	Meetings     []orchestration.MeetingRoom `json:"meetings"`
+	Costs        billing.Summary             `json:"costs"`
+	Agents       []orchestration.Agent       `json:"agents"`
+	Statuses     []statusCount               `json:"statuses"`
+	UpdatedAt    time.Time                   `json:"updatedAt"`
+}
+
+type seedRequest struct {
+	Scenario string `json:"scenario"`
 }
 
 var statusOrder = []orchestration.Status{
@@ -35,58 +52,60 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	server := &Server{org: org, hub: hub, tracker: tracker}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", server.handleIndex)
-  mux.HandleFunc("/app", server.handleApp)
-  if dist := frontendDistPath(); dist != "" {
-    mux.Handle("/app/", http.StripPrefix("/app/", http.FileServer(http.Dir(dist))))
-  } else {
-    mux.HandleFunc("/app/", server.handleApp)
-  }
+	mux.HandleFunc("/app", server.handleApp)
+	if dist := frontendDistPath(); dist != "" {
+		mux.Handle("/app/", http.StripPrefix("/app/", http.FileServer(http.Dir(dist))))
+	} else {
+		mux.HandleFunc("/app/", server.handleApp)
+	}
+	mux.HandleFunc("/api/dashboard", server.handleDashboard)
 	mux.HandleFunc("/api/org", server.handleOrg)
 	mux.HandleFunc("/api/meetings", server.handleMeetings)
 	mux.HandleFunc("/api/costs", server.handleCosts)
 	mux.HandleFunc("/api/messages", server.handleSendMessage)
+	mux.HandleFunc("/api/dev/seed", server.handleDevSeed)
 	return mux
 }
 
 func frontendDistPath() string {
-  if fromEnv := os.Getenv("MONO_FRONTEND_DIST"); fromEnv != "" {
-    if hasFrontendIndex(fromEnv) {
-      return fromEnv
-    }
-  }
+	if fromEnv := os.Getenv("MONO_FRONTEND_DIST"); fromEnv != "" {
+		if hasFrontendIndex(fromEnv) {
+			return fromEnv
+		}
+	}
 
-  candidates := []string{
-    "srcs/frontend/dist",
-    "../srcs/frontend/dist",
-    "../../srcs/frontend/dist",
-  }
+	candidates := []string{
+		"srcs/frontend/dist",
+		"../srcs/frontend/dist",
+		"../../srcs/frontend/dist",
+	}
 
-  for _, candidate := range candidates {
-    if hasFrontendIndex(candidate) {
-      return candidate
-    }
-  }
+	for _, candidate := range candidates {
+		if hasFrontendIndex(candidate) {
+			return candidate
+		}
+	}
 
-  return ""
+	return ""
 }
 
 func hasFrontendIndex(dir string) bool {
-  info, err := os.Stat(filepath.Join(dir, "index.html"))
-  if err != nil {
-    return false
-  }
-  return !info.IsDir()
+	info, err := os.Stat(filepath.Join(dir, "index.html"))
+	if err != nil {
+		return false
+	}
+	return !info.IsDir()
 }
 
 func (s *Server) handleApp(w http.ResponseWriter, r *http.Request) {
- 	if dist := frontendDistPath(); dist != "" {
-    http.ServeFile(w, r, filepath.Join(dist, "index.html"))
-    return
-  }
+	if dist := frontendDistPath(); dist != "" {
+		http.ServeFile(w, r, filepath.Join(dist, "index.html"))
+		return
+	}
 
-  w.Header().Set("Content-Type", "text/html; charset=utf-8")
-  w.WriteHeader(http.StatusOK)
-  _, _ = w.Write([]byte(`<!doctype html>
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -110,7 +129,7 @@ func (s *Server) handleApp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleIndex(w http.ResponseWriter, _ *http.Request) {
-	agents := s.hub.Agents()
+	snapshot := s.snapshot()
 	page := template.Must(template.New("dashboard").Parse(`<!doctype html>
 <html lang="en">
 <head>
@@ -200,24 +219,34 @@ func (s *Server) handleIndex(w http.ResponseWriter, _ *http.Request) {
 </html>`))
 
 	_ = page.Execute(w, map[string]any{
-		"Org":      s.org,
-		"Agents":   agents,
-		"Statuses": summarizeStatuses(agents),
-		"Meetings": s.hub.Meetings(),
-		"Summary":  s.tracker.Summary(s.org.ID),
+		"Org":      snapshot.Organization,
+		"Agents":   snapshot.Agents,
+		"Statuses": snapshot.Statuses,
+		"Meetings": snapshot.Meetings,
+		"Summary":  snapshot.Costs,
 	})
 }
 
 func (s *Server) handleOrg(w http.ResponseWriter, _ *http.Request) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	writeJSON(w, s.org)
 }
 
 func (s *Server) handleMeetings(w http.ResponseWriter, _ *http.Request) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	writeJSON(w, s.hub.Meetings())
 }
 
 func (s *Server) handleCosts(w http.ResponseWriter, _ *http.Request) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	writeJSON(w, s.tracker.Summary(s.org.ID))
+}
+
+func (s *Server) handleDashboard(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, s.snapshot())
 }
 
 func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
@@ -241,12 +270,131 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 		OccurredAt: time.Now().UTC(),
 	}
 
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if err := s.hub.Publish(message); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	if strings.Contains(r.Header.Get("Accept"), "application/json") {
+		writeJSON(w, s.snapshotLocked())
+		return
+	}
+
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (s *Server) handleDevSeed(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var payload seedRequest
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+
+	org, hub, tracker, err := seededScenario(payload.Scenario, time.Now().UTC())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	s.mu.Lock()
+	s.org = org
+	s.hub = hub
+	s.tracker = tracker
+	snapshot := s.snapshotLocked()
+	s.mu.Unlock()
+
+	writeJSON(w, snapshot)
+}
+
+func (s *Server) snapshot() dashboardSnapshot {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.snapshotLocked()
+}
+
+func (s *Server) snapshotLocked() dashboardSnapshot {
+	agents := s.hub.Agents()
+	return dashboardSnapshot{
+		Organization: s.org,
+		Meetings:     s.hub.Meetings(),
+		Costs:        s.tracker.Summary(s.org.ID),
+		Agents:       agents,
+		Statuses:     summarizeStatuses(agents),
+		UpdatedAt:    time.Now().UTC(),
+	}
+}
+
+func seededScenario(name string, now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
+	scenario := name
+	if scenario == "" {
+		scenario = "launch-readiness"
+	}
+
+	if scenario != "launch-readiness" {
+		return domain.Organization{}, nil, nil, errors.New("unsupported seed scenario")
+	}
+
+	org := domain.NewSoftwareCompany("demo", "Demo Software Company", "Human CEO", now.UTC())
+	hub := orchestration.NewHub()
+	hub.RegisterAgent(orchestration.Agent{ID: "pm-1", Name: "Product Manager", Role: "PRODUCT_MANAGER", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "swe-1", Name: "Software Engineer", Role: "SOFTWARE_ENGINEER", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "ux-1", Name: "Design Lead", Role: "DESIGNER", OrganizationID: org.ID})
+	hub.OpenMeeting("launch-readiness", []string{"pm-1", "swe-1", "ux-1"})
+
+	_ = hub.Publish(orchestration.Message{
+		ID:         "seed-1",
+		FromAgent:  "pm-1",
+		ToAgent:    "swe-1",
+		Type:       "task",
+		Content:    "Ship the reliability checklist before launch.",
+		MeetingID:  "launch-readiness",
+		OccurredAt: now.Add(-4 * time.Minute),
+	})
+	_ = hub.Publish(orchestration.Message{
+		ID:         "seed-2",
+		FromAgent:  "ux-1",
+		ToAgent:    "pm-1",
+		Type:       "status",
+		Content:    "Design QA pass completed with no blockers.",
+		MeetingID:  "launch-readiness",
+		OccurredAt: now.Add(-2 * time.Minute),
+	})
+
+	tracker := billing.NewTracker(billing.DefaultCatalog)
+	_, _ = tracker.Track(billing.Usage{
+		AgentID:          "pm-1",
+		OrganizationID:   org.ID,
+		Model:            "gpt-4o-mini",
+		PromptTokens:     1200,
+		CompletionTokens: 400,
+		OccurredAt:       now.Add(-10 * time.Minute),
+	})
+	_, _ = tracker.Track(billing.Usage{
+		AgentID:          "swe-1",
+		OrganizationID:   org.ID,
+		Model:            "gpt-4o",
+		PromptTokens:     2600,
+		CompletionTokens: 900,
+		OccurredAt:       now.Add(-8 * time.Minute),
+	})
+	_, _ = tracker.Track(billing.Usage{
+		AgentID:          "ux-1",
+		OrganizationID:   org.ID,
+		Model:            "gpt-4o-mini",
+		PromptTokens:     900,
+		CompletionTokens: 300,
+		OccurredAt:       now.Add(-6 * time.Minute),
+	})
+
+	return org, hub, tracker, nil
 }
 
 func writeJSON(w http.ResponseWriter, value any) {

@@ -14,11 +14,18 @@ message MeetingRoom {
   repeated ohc.agent.AgentMessage transcript = 3;
 }
 
+message StatusCount {
+  string status = 1;
+  uint32 count = 2;
+}
+
 message DashboardSnapshot {
   ohc.organization.Organization organization = 1;
   repeated ohc.agent.Agent agents = 2;
   repeated MeetingRoom meetings = 3;
   ohc.billing.CostSummary cost_summary = 4;
+  repeated StatusCount statuses = 5;
+  string updated_at = 6;
 }
 
 message GetDashboardRequest {
@@ -33,7 +40,16 @@ message PostMessageResponse {
   DashboardSnapshot snapshot = 1;
 }
 
+message SeedDashboardRequest {
+  string scenario = 1;
+}
+
+message SeedDashboardResponse {
+  DashboardSnapshot snapshot = 1;
+}
+
 service DashboardService {
   rpc GetDashboard(GetDashboardRequest) returns (DashboardSnapshot);
   rpc PostMessage(PostMessageRequest) returns (PostMessageResponse);
+  rpc SeedDashboard(SeedDashboardRequest) returns (SeedDashboardResponse);
 }

@@ -1,4 +1,4 @@
-import type { CostSummary, MeetingRoom, Organization } from "./types";
+import type { CostSummary, DashboardSnapshot, MeetingRoom, Organization } from "./types";
 
 async function getJSON<T>(path: string): Promise<T> {
   const response = await fetch(path);
@@ -13,16 +13,10 @@ export function fetchOrganization(): Promise<Organization> {
 }
 
 export function fetchMeetings(): Promise<MeetingRoom[]> {
-  return getJSON<MeetingRoom[]>("/api/meetings").then((meetings) =>
-    meetings.map((meeting) => ({
-      ...meeting,
-      transcript: meeting.transcript ?? [],
-    }))
-  );
+  return getJSON<MeetingRoom[]>("/api/meetings").then(normalizeMeetings);
 }
 
-export async function fetchCosts(): Promise<CostSummary> {
-  const response = await getJSON<Record<string, unknown>>("/api/costs");
+function normalizeCosts(response: Record<string, unknown>): CostSummary {
   const agents = Array.isArray(response.agents) ? response.agents : [];
 
   return {
@@ -41,6 +35,63 @@ export async function fetchCosts(): Promise<CostSummary> {
   };
 }
 
+function normalizeMeetings(meetings: MeetingRoom[]): MeetingRoom[] {
+  return meetings.map((meeting) => ({
+    ...meeting,
+    transcript: meeting.transcript ?? [],
+  }));
+}
+
+export async function fetchCosts(): Promise<CostSummary> {
+  const response = await getJSON<Record<string, unknown>>("/api/costs");
+  return normalizeCosts(response);
+}
+
+export async function fetchDashboard(): Promise<DashboardSnapshot> {
+  const response = await getJSON<Record<string, unknown>>("/api/dashboard");
+  const rawOrganization = (response.organization ?? {}) as Record<string, unknown>;
+  const rawMeetings = Array.isArray(response.meetings)
+    ? (response.meetings as MeetingRoom[])
+    : [];
+  const rawCosts = (response.costs ?? {}) as Record<string, unknown>;
+  const rawAgents = Array.isArray(response.agents) ? response.agents : [];
+  const rawStatuses = Array.isArray(response.statuses) ? response.statuses : [];
+
+  return {
+    organization: {
+      id: String(rawOrganization.id ?? ""),
+      name: String(rawOrganization.name ?? ""),
+      domain: String(rawOrganization.domain ?? ""),
+      members: Array.isArray(rawOrganization.members)
+        ? (rawOrganization.members as Organization["members"])
+        : [],
+      roleProfiles: Array.isArray(rawOrganization.roleProfiles)
+        ? (rawOrganization.roleProfiles as Organization["roleProfiles"])
+        : [],
+    },
+    meetings: normalizeMeetings(rawMeetings),
+    costs: normalizeCosts(rawCosts),
+    agents: rawAgents.map((agent) => {
+      const value = agent as Record<string, unknown>;
+      return {
+        id: String(value.id ?? ""),
+        name: String(value.name ?? ""),
+        role: String(value.role ?? ""),
+        organizationId: String(value.organizationId ?? value.organizationID ?? ""),
+        status: String(value.status ?? ""),
+      };
+    }),
+    statuses: rawStatuses.map((status) => {
+      const value = status as Record<string, unknown>;
+      return {
+        status: String(value.status ?? "UNKNOWN"),
+        count: Number(value.count ?? 0),
+      };
+    }),
+    updatedAt: String(response.updatedAt ?? new Date().toISOString()),
+  };
+}
+
 export async function sendMessage(form: {
   fromAgent: string;
   toAgent: string;
@@ -53,6 +104,7 @@ export async function sendMessage(form: {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "application/json",
     },
     body: params.toString(),
     redirect: "follow",
