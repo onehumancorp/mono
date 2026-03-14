@@ -1,0 +1,26 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "ohc_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/onehumancorp/mono/srcs/cmd/ohc",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//srcs/billing",
+        "//srcs/dashboard",
+        "//srcs/domain",
+        "//srcs/orchestration",
+    ],
+)
+
+go_binary(
+    name = "ohc",
+    embed = [":ohc_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "ohc_test",
+    srcs = ["main_test.go"],
+    embed = [":ohc_lib"],
+)

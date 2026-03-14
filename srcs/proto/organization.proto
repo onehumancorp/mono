@@ -2,13 +2,25 @@ syntax = "proto3";
 
 package ohc.organization;
 
+option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/organization;organizationpb";
+
 import "common.proto";
+
+message RoleProfile {
+  ohc.common.Role role = 1;
+  string base_prompt = 2;
+  repeated string capabilities = 3;
+  repeated string context_inputs = 4;
+}
 
 message Organization {
   string id = 1;
   string name = 2;
   string domain = 3;
   string ceo_id = 4;
+  int64 created_at_unix = 5;
+  repeated TeamMember members = 6;
+  repeated RoleProfile role_profiles = 7;
 }
 
 message TeamMember {

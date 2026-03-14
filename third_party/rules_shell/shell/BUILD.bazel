@@ -1,4 +1,0 @@
-exports_files([
-    "sh_binary.bzl",
-    "sh_test.bzl",
-])

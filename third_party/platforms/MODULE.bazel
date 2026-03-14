@@ -1,4 +1,0 @@
-module(name = "platforms")
-
-host_platform = use_extension("//host:extension.bzl", "host_platform")
-use_repo(host_platform, "host_platform")

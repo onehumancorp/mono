@@ -3,66 +3,16 @@ module(
     version = "0.1.0",
 )
 
-bazel_dep(name = "bazel_skylib", version = "1.6.1")
+bazel_dep(name = "rules_go", version = "0.60.0")
+bazel_dep(name = "gazelle", version = "0.47.0")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "rules_cc", version = "0.0.9")
-bazel_dep(name = "rules_python", version = "0.24.0")
+bazel_dep(name = "protobuf", version = "34.0.bcr.1")
+bazel_dep(name = "rules_python", version = "1.7.0")
 bazel_dep(name = "rules_shell", version = "0.6.1")
 
-local_path_override(
-    module_name = "apple_support",
-    path = "third_party/apple_support",
-)
-
-local_path_override(
-    module_name = "bazel_skylib",
-    path = "third_party/bazel_skylib",
-)
-
-local_path_override(
-    module_name = "buildozer",
-    path = "third_party/buildozer",
-)
-
-local_path_override(
-    module_name = "platforms",
-    path = "third_party/platforms",
-)
-
-local_path_override(
-    module_name = "protobuf",
-    path = "third_party/protobuf",
-)
-
-local_path_override(
-    module_name = "rules_cc",
-    path = "third_party/rules_cc",
-)
-
-local_path_override(
-    module_name = "rules_java",
-    path = "third_party/rules_java",
-)
-
-local_path_override(
-    module_name = "rules_license",
-    path = "third_party/rules_license",
-)
-
-local_path_override(
-    module_name = "rules_python",
-    path = "third_party/rules_python",
-)
-
-local_path_override(
-    module_name = "rules_shell",
-    path = "third_party/rules_shell",
-)
-
-local_path_override(
-    module_name = "zlib",
-    path = "third_party/zlib",
-)
+go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.download(version = "1.25.0")
 
 platforms_host = use_extension("@platforms//host:extension.bzl", "host_platform")
 use_repo(platforms_host, "host_platform")

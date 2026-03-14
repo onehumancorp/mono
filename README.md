@@ -22,3 +22,16 @@ The first implemented slice focuses on the Phase 1 foundation from `docs/roadmap
 ```bash
 bazelisk test //...
 ```
+
+## Frontend (React)
+
+The repository now includes a React-only frontend scaffold in `srcs/frontend`.
+
+```bash
+cd srcs/frontend
+npm install
+npm run dev
+```
+
+The dev server proxies `/api/*` requests to `http://localhost:8080`, so run the
+Go dashboard backend in parallel when developing the UI.

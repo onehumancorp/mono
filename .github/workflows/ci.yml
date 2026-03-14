@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check for source changes
+        id: filter
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "*"
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin "${{ github.base_ref }}"
+            DIFF=$(git diff --name-only "origin/${{ github.base_ref }}" HEAD)
+          else
+            DIFF=$(git diff --name-only HEAD~1 HEAD)
+          fi
+
+          SRC_CHANGED=false
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            case "$file" in
+              *.md|*.txt|docs/*|LICENSE) ;;
+              *) SRC_CHANGED=true; break ;;
+            esac
+          done <<< "$DIFF"
+
+          echo "src=$SRC_CHANGED" >> "$GITHUB_OUTPUT"
+
+  bazel-test:
+    needs: changes
+    if: ${{ needs.changes.outputs.src == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Bazel
+        uses: bazel-contrib/setup-bazel@0.18.0
+        with:
+          bazelisk-cache: true
+          disk-cache: ${{ runner.os }}-bazel-disk-${{ hashFiles('**/BUILD', '**/BUILD.bazel', '**/*.bzl', 'WORKSPACE', 'MODULE.bazel', '.bazelrc') }}
+          repository-cache: true
+
+      - name: Test
+        env:
+          BAZEL_DISK_CACHE: ${{ env.BAZEL_DISK_CACHE }}
+          BAZEL_REPOSITORY_CACHE: ${{ env.BAZEL_REPOSITORY_CACHE }}
+        run: |
+          bazelisk test //... \
+            --test_output=errors \
+            --test_summary=terse \
+            --disk_cache="$BAZEL_DISK_CACHE" \
+            --repository_cache="$BAZEL_REPOSITORY_CACHE"
+
+  ci-success:
+    runs-on: ubuntu-latest
+    needs:
+      - changes
+      - bazel-test
+    if: always()
+    steps:
+      - name: Final CI status
+        run: |
+          set -euo pipefail
+          changes_result="${{ needs.changes.result }}"
+          bazel_result="${{ needs.bazel-test.result }}"
+
+          # If no source files changed, bazel-test can be skipped and CI is still green.
+          if [ "$changes_result" = "success" ] && \
+             { [ "$bazel_result" = "success" ] || [ "$bazel_result" = "skipped" ]; }; then
+            echo "CI passed"
+            exit 0
+          fi
+
+           echo "CI failed: changes=$changes_result, bazel-test=$bazel_result"
+          exit 1

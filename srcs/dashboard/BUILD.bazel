@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "dashboard",
+    srcs = ["server.go"],
+    importpath = "github.com/onehumancorp/mono/srcs/dashboard",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//srcs/billing",
+        "//srcs/domain",
+        "//srcs/orchestration",
+    ],
+)
+
+go_test(
+    name = "dashboard_test",
+    srcs = ["server_test.go"],
+    embed = [":dashboard"],
+    deps = [
+        "//srcs/billing",
+        "//srcs/domain",
+        "//srcs/orchestration",
+    ],
+)

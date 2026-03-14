@@ -1,0 +1,11 @@
+backend:
+  image: onehumancorp/mono-backend:latest
+  replicas: 1
+  service:
+    port: 8080
+
+frontend:
+  image: onehumancorp/mono-frontend:latest
+  replicas: 1
+  service:
+    port: 8081

@@ -11,9 +11,15 @@ import (
 	"github.com/onehumancorp/mono/srcs/orchestration"
 )
 
-const defaultAddress = "127.0.0.1:8080"
+const defaultAddress = ":8080"
 
 type listenFunc func(string, http.Handler) error
+
+var (
+	nowUTC        = func() time.Time { return time.Now().UTC() }
+	listenForMain = http.ListenAndServe
+	fatalForMain  = func(v ...any) { log.Fatal(v...) }
+)
 
 func newDemoSystem(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker) {
 	org := domain.NewSoftwareCompany("demo", "Demo Software Company", "Human CEO", now.UTC())
@@ -46,7 +52,7 @@ func run(now time.Time, listen listenFunc, logger *log.Logger) error {
 }
 
 func main() {
-	if err := run(time.Now().UTC(), http.ListenAndServe, log.Default()); err != nil {
-		log.Fatal(err)
+	if err := run(nowUTC(), listenForMain, log.Default()); err != nil {
+		fatalForMain(err)
 	}
 }
