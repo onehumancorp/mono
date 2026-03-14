@@ -1,4 +1,4 @@
-import { fetchCosts, fetchMeetings, fetchOrganization, sendMessage } from "./api";
+import { fetchCosts, fetchDashboard, fetchMeetings, fetchOrganization, sendMessage } from "./api";
 
 describe("api", () => {
   afterEach(() => {
@@ -104,6 +104,55 @@ describe("api", () => {
     await expect(fetchOrganization()).rejects.toThrow("Request failed for /api/org: 500");
   });
 
+  it("fetches dashboard snapshot and normalizes null transcripts", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          organization: {
+            id: "org-1",
+            name: "Demo Software Company",
+            domain: "software_company",
+            members: [],
+            roleProfiles: [],
+          },
+          meetings: [{ id: "launch", transcript: null }],
+          costs: {
+            organizationID: "org-1",
+            totalTokens: 3,
+            totalCostUSD: 1.2,
+            agents: [],
+          },
+          agents: [],
+          statuses: [{ status: "IDLE", count: 1 }],
+          updatedAt: "2026-03-13T00:00:00Z",
+        }),
+      }))
+    );
+
+    await expect(fetchDashboard()).resolves.toEqual({
+      organization: {
+        id: "org-1",
+        name: "Demo Software Company",
+        domain: "software_company",
+        members: [],
+        roleProfiles: [],
+      },
+      meetings: [{ id: "launch", transcript: [] }],
+      costs: {
+        organizationID: "org-1",
+        totalTokens: 3,
+        totalCostUSD: 1.2,
+        agents: [],
+      },
+      agents: [],
+      statuses: [{ status: "IDLE", count: 1 }],
+      updatedAt: "2026-03-13T00:00:00Z",
+    });
+  });
+
   it("sends message with URL encoded body", async () => {
     const fetchMock = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({}) }));
     vi.stubGlobal("fetch", fetchMock);
@@ -120,7 +169,10 @@ describe("api", () => {
       "/api/messages",
       expect.objectContaining({
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+        },
         redirect: "follow",
       })
     );

@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -101,6 +102,31 @@ func TestServerServesDashboardEndpoints(t *testing.T) {
 		if resp.StatusCode != http.StatusOK {
 			t.Fatalf("GET %s returned status %d", path, resp.StatusCode)
 		}
+	}
+}
+
+func TestHandleDashboardReturnsSnapshot(t *testing.T) {
+	_, server := newTestServer(t)
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/api/dashboard")
+	if err != nil {
+		t.Fatalf("GET /api/dashboard returned error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var payload map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode dashboard payload: %v", err)
+	}
+	if payload["organization"] == nil {
+		t.Fatalf("expected organization in snapshot payload")
+	}
+	if payload["meetings"] == nil {
+		t.Fatalf("expected meetings in snapshot payload")
+	}
+	if payload["costs"] == nil {
+		t.Fatalf("expected costs in snapshot payload")
 	}
 }
 
@@ -279,6 +305,104 @@ func TestHandleSendMessagePostsToMeeting(t *testing.T) {
 	meeting, _ := app.hub.Meeting("kickoff")
 	if len(meeting.Transcript) != 1 {
 		t.Fatalf("expected message transcript after post, got %+v", meeting.Transcript)
+	}
+}
+
+func TestHandleSendMessageReturnsJSONWhenRequested(t *testing.T) {
+	_, server := newTestServer(t)
+	defer server.Close()
+
+	form := url.Values{
+		"fromAgent":   {"pm-1"},
+		"toAgent":     {"swe-1"},
+		"meetingId":   {"kickoff"},
+		"messageType": {"task"},
+		"content":     {"Ship with confidence"},
+	}
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/messages", strings.NewReader(form.Encode()))
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("POST /api/messages returned error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if got := resp.Header.Get("Content-Type"); !strings.Contains(got, "application/json") {
+		t.Fatalf("expected JSON content type, got %q", got)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 response, got %d", resp.StatusCode)
+	}
+}
+
+func TestHandleDevSeedResetsServerState(t *testing.T) {
+	_, server := newTestServer(t)
+	defer server.Close()
+
+	body := bytes.NewBufferString(`{"scenario":"launch-readiness"}`)
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/dev/seed", body)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("POST /api/dev/seed returned error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 response, got %d", resp.StatusCode)
+	}
+
+	dashboardResp, err := http.Get(server.URL + "/api/dashboard")
+	if err != nil {
+		t.Fatalf("GET /api/dashboard returned error: %v", err)
+	}
+	defer dashboardResp.Body.Close()
+
+	var payload struct {
+		Organization domain.Organization         `json:"organization"`
+		Meetings     []orchestration.MeetingRoom `json:"meetings"`
+		Agents       []orchestration.Agent       `json:"agents"`
+	}
+	if err := json.NewDecoder(dashboardResp.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode dashboard payload: %v", err)
+	}
+	if payload.Organization.Name != "Demo Software Company" {
+		t.Fatalf("unexpected organization after seed: %+v", payload.Organization)
+	}
+	if len(payload.Meetings) != 1 || payload.Meetings[0].ID != "launch-readiness" {
+		t.Fatalf("unexpected meetings after seed: %+v", payload.Meetings)
+	}
+	if len(payload.Agents) != 3 {
+		t.Fatalf("expected 3 seeded agents, got %d", len(payload.Agents))
+	}
+}
+
+func TestHandleDevSeedRejectsInvalidScenario(t *testing.T) {
+	_, server := newTestServer(t)
+	defer server.Close()
+
+	body := bytes.NewBufferString(`{"scenario":"unknown"}`)
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/dev/seed", body)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("POST /api/dev/seed returned error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400 response, got %d", resp.StatusCode)
 	}
 }
 
