@@ -695,3 +695,520 @@ func TestHandleAgentRouteRejectsWrongMethod(t *testing.T) {
 		t.Fatalf("expected 405 for GET fire, got %d", fireRec.Code)
 	}
 }
+
+// ── Approval / Confidence Gating Tests ───────────────────────────────────────
+
+func TestHandleApprovalsReturnsEmptyListInitially(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/approvals")
+if err != nil {
+t.Fatalf("GET /api/approvals error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+
+var list []ApprovalRequest
+if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+t.Fatalf("decode approvals: %v", err)
+}
+if len(list) != 0 {
+t.Fatalf("expected empty approvals, got %d", len(list))
+}
+}
+
+func TestHandleApprovalRequestCreatesEntry(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := bytes.NewBufferString(`{"agentId":"swe-1","action":"deploy-production","reason":"Release v2.0","estimatedCostUsd":750,"riskLevel":"critical"}`)
+req, err := http.NewRequest(http.MethodPost, server.URL+"/api/approvals/request", body)
+if err != nil {
+t.Fatalf("new request: %v", err)
+}
+req.Header.Set("Content-Type", "application/json")
+
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+t.Fatalf("POST /api/approvals/request error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+
+var approval ApprovalRequest
+if err := json.NewDecoder(resp.Body).Decode(&approval); err != nil {
+t.Fatalf("decode approval: %v", err)
+}
+if approval.AgentID != "swe-1" || approval.Status != ApprovalStatusPending {
+t.Fatalf("unexpected approval: %+v", approval)
+}
+if approval.ID == "" {
+t.Fatalf("expected non-empty approval ID")
+}
+}
+
+func TestHandleApprovalRequestRejectsMissingFields(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/approvals/request", bytes.NewBufferString(`{"agentId":""}`))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleApprovalRequest(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400 for missing agentId, got %d", rec.Code)
+}
+}
+
+func TestHandleApprovalDecideApprovesRequest(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+createBody := bytes.NewBufferString(`{"agentId":"swe-1","action":"deploy","estimatedCostUsd":600}`)
+createReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/approvals/request", createBody)
+createReq.Header.Set("Content-Type", "application/json")
+createResp, err := http.DefaultClient.Do(createReq)
+if err != nil {
+t.Fatalf("create approval: %v", err)
+}
+defer createResp.Body.Close()
+
+var approval ApprovalRequest
+if err := json.NewDecoder(createResp.Body).Decode(&approval); err != nil {
+t.Fatalf("decode created approval: %v", err)
+}
+
+decideBody := bytes.NewBufferString(`{"approvalId":"` + approval.ID + `","decision":"approve","decidedBy":"human-ceo"}`)
+decideReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/approvals/decide", decideBody)
+decideReq.Header.Set("Content-Type", "application/json")
+decideResp, err := http.DefaultClient.Do(decideReq)
+if err != nil {
+t.Fatalf("decide approval: %v", err)
+}
+defer decideResp.Body.Close()
+if decideResp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200 from decide, got %d", decideResp.StatusCode)
+}
+
+var list []ApprovalRequest
+if err := json.NewDecoder(decideResp.Body).Decode(&list); err != nil {
+t.Fatalf("decode decide response: %v", err)
+}
+if len(list) == 0 || list[0].Status != ApprovalStatusApproved {
+t.Fatalf("expected approved status in list: %+v", list)
+}
+}
+
+func TestHandleApprovalDecideReturns404ForUnknownID(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/approvals/decide", bytes.NewBufferString(`{"approvalId":"nonexistent","decision":"approve"}`))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleApprovalDecide(rec, req)
+if rec.Code != http.StatusNotFound {
+t.Fatalf("expected 404 for unknown ID, got %d", rec.Code)
+}
+}
+
+// ── Warm Handoff Tests ────────────────────────────────────────────────────────
+
+func TestHandleHandoffsReturnsEmptyListInitially(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/handoffs")
+if err != nil {
+t.Fatalf("GET /api/handoffs error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+
+var list []HandoffPackage
+if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+t.Fatalf("decode handoffs: %v", err)
+}
+if len(list) != 0 {
+t.Fatalf("expected empty handoffs, got %d", len(list))
+}
+}
+
+func TestHandleHandoffCreatePost(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := bytes.NewBufferString(`{"fromAgentId":"swe-1","toHumanRole":"CEO","intent":"Need approval for DB migration","failedAttempts":2,"currentState":"Blocked"}`)
+req, err := http.NewRequest(http.MethodPost, server.URL+"/api/handoffs", body)
+if err != nil {
+t.Fatalf("new request: %v", err)
+}
+req.Header.Set("Content-Type", "application/json")
+
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+t.Fatalf("POST /api/handoffs error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+
+var handoff HandoffPackage
+if err := json.NewDecoder(resp.Body).Decode(&handoff); err != nil {
+t.Fatalf("decode handoff: %v", err)
+}
+if handoff.FromAgentID != "swe-1" || handoff.Status != "pending" {
+t.Fatalf("unexpected handoff: %+v", handoff)
+}
+}
+
+func TestHandleHandoffCreateRejectsMissingFields(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/handoffs", bytes.NewBufferString(`{"fromAgentId":""}`))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleHandoffs(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", rec.Code)
+}
+}
+
+// ── Identity Tests ────────────────────────────────────────────────────────────
+
+func TestHandleIdentitiesReturnsAgentIdentities(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/identities")
+if err != nil {
+t.Fatalf("GET /api/identities error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+
+var identities []AgentIdentity
+if err := json.NewDecoder(resp.Body).Decode(&identities); err != nil {
+t.Fatalf("decode identities: %v", err)
+}
+if len(identities) == 0 {
+t.Fatalf("expected at least one identity for registered agents")
+}
+for _, id := range identities {
+if id.AgentID == "" || id.SVID == "" || id.TrustDomain == "" {
+t.Fatalf("incomplete identity: %+v", id)
+}
+if !strings.HasPrefix(id.SVID, "spiffe://") {
+t.Fatalf("expected SPIFFE URI format, got %q", id.SVID)
+}
+}
+}
+
+// ── Skill Pack Tests ──────────────────────────────────────────────────────────
+
+func TestHandleSkillsReturnsBuiltinPacks(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/skills")
+if err != nil {
+t.Fatalf("GET /api/skills error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+
+var skills []SkillPack
+if err := json.NewDecoder(resp.Body).Decode(&skills); err != nil {
+t.Fatalf("decode skills: %v", err)
+}
+if len(skills) == 0 {
+t.Fatalf("expected built-in skill packs")
+}
+ids := map[string]bool{}
+for _, s := range skills {
+ids[s.ID] = true
+}
+if !ids["builtin-core-ai"] {
+t.Fatalf("expected builtin-core-ai skill pack")
+}
+}
+
+func TestHandleSkillImportAddsCustomPack(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := bytes.NewBufferString(`{"name":"Custom DevOps Pack","domain":"software_company","description":"K8s deployment automation","source":"custom"}`)
+req, err := http.NewRequest(http.MethodPost, server.URL+"/api/skills/import", body)
+if err != nil {
+t.Fatalf("new request: %v", err)
+}
+req.Header.Set("Content-Type", "application/json")
+
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+t.Fatalf("POST /api/skills/import error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+
+var pack SkillPack
+if err := json.NewDecoder(resp.Body).Decode(&pack); err != nil {
+t.Fatalf("decode skill pack: %v", err)
+}
+if pack.Name != "Custom DevOps Pack" || pack.Source != "custom" {
+t.Fatalf("unexpected skill pack: %+v", pack)
+}
+}
+
+func TestHandleSkillImportRejectsMissingFields(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/skills/import", bytes.NewBufferString(`{"name":"No Domain"}`))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleSkillImport(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400 for missing domain, got %d", rec.Code)
+}
+}
+
+// ── Snapshot Tests ────────────────────────────────────────────────────────────
+
+func TestHandleSnapshotsReturnsEmptyListInitially(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/snapshots")
+if err != nil {
+t.Fatalf("GET /api/snapshots error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+
+var list []OrgSnapshot
+if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+t.Fatalf("decode snapshots: %v", err)
+}
+if len(list) != 0 {
+t.Fatalf("expected empty snapshots, got %d", len(list))
+}
+}
+
+func TestHandleSnapshotCreateCaptures(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := bytes.NewBufferString(`{"label":"Pre-launch baseline"}`)
+req, err := http.NewRequest(http.MethodPost, server.URL+"/api/snapshots/create", body)
+if err != nil {
+t.Fatalf("new request: %v", err)
+}
+req.Header.Set("Content-Type", "application/json")
+
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+t.Fatalf("POST /api/snapshots/create error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+
+var snap OrgSnapshot
+if err := json.NewDecoder(resp.Body).Decode(&snap); err != nil {
+t.Fatalf("decode snapshot: %v", err)
+}
+if snap.Label != "Pre-launch baseline" {
+t.Fatalf("unexpected label: %q", snap.Label)
+}
+if snap.OrgID != "org-1" {
+t.Fatalf("unexpected org ID in snapshot: %q", snap.OrgID)
+}
+}
+
+func TestHandleSnapshotRestoreResetsState(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Seed to known scenario.
+seedBody := bytes.NewBufferString(`{"scenario":"launch-readiness"}`)
+seedReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/dev/seed", seedBody)
+seedReq.Header.Set("Content-Type", "application/json")
+seedResp, err := http.DefaultClient.Do(seedReq)
+if err != nil {
+t.Fatalf("seed: %v", err)
+}
+seedResp.Body.Close()
+
+// Create snapshot.
+createBody := bytes.NewBufferString(`{"label":"restore-test"}`)
+createReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/snapshots/create", createBody)
+createReq.Header.Set("Content-Type", "application/json")
+createResp, err := http.DefaultClient.Do(createReq)
+if err != nil {
+t.Fatalf("create snapshot: %v", err)
+}
+defer createResp.Body.Close()
+
+var snap OrgSnapshot
+if err := json.NewDecoder(createResp.Body).Decode(&snap); err != nil {
+t.Fatalf("decode created snapshot: %v", err)
+}
+
+// Restore.
+restoreBody := bytes.NewBufferString(`{"snapshotId":"` + snap.ID + `"}`)
+restoreReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/snapshots/restore", restoreBody)
+restoreReq.Header.Set("Content-Type", "application/json")
+restoreResp, err := http.DefaultClient.Do(restoreReq)
+if err != nil {
+t.Fatalf("restore snapshot: %v", err)
+}
+defer restoreResp.Body.Close()
+if restoreResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(restoreResp.Body)
+t.Fatalf("expected 200 from restore, got %d: %s", restoreResp.StatusCode, string(b))
+}
+}
+
+func TestHandleSnapshotRestoreReturns404ForUnknown(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/snapshots/restore", bytes.NewBufferString(`{"snapshotId":"nonexistent"}`))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleSnapshotRestore(rec, req)
+if rec.Code != http.StatusNotFound {
+t.Fatalf("expected 404, got %d", rec.Code)
+}
+}
+
+// ── Marketplace Tests ─────────────────────────────────────────────────────────
+
+func TestHandleMarketplaceReturnsItems(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/marketplace")
+if err != nil {
+t.Fatalf("GET /api/marketplace error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+
+var items []MarketplaceItem
+if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
+t.Fatalf("decode marketplace items: %v", err)
+}
+if len(items) == 0 {
+t.Fatalf("expected marketplace items")
+}
+for _, item := range items {
+if item.ID == "" || item.Name == "" || item.Type == "" {
+t.Fatalf("incomplete marketplace item: %+v", item)
+}
+}
+}
+
+func TestHandleMarketplaceItemsHaveValidTypes(t *testing.T) {
+items := defaultMarketplaceItems()
+validTypes := map[string]bool{"agent": true, "domain": true, "skill_pack": true, "tool": true}
+for _, item := range items {
+if !validTypes[item.Type] {
+t.Fatalf("invalid marketplace item type %q for item %s", item.Type, item.ID)
+}
+if item.Rating < 0 || item.Rating > 5 {
+t.Fatalf("invalid rating %.1f for item %s", item.Rating, item.ID)
+}
+}
+}
+
+// ── Analytics Tests ───────────────────────────────────────────────────────────
+
+func TestHandleAnalyticsReturnsMetrics(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/analytics")
+if err != nil {
+t.Fatalf("GET /api/analytics error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+
+var analytics AnalyticsSummary
+if err := json.NewDecoder(resp.Body).Decode(&analytics); err != nil {
+t.Fatalf("decode analytics: %v", err)
+}
+if analytics.TotalAgents == 0 {
+t.Fatalf("expected at least one agent in analytics")
+}
+if analytics.ResumptionLatencyMS <= 0 {
+t.Fatalf("expected positive resumption latency")
+}
+if analytics.AuditFidelityPct < 0 || analytics.AuditFidelityPct > 100 {
+t.Fatalf("audit fidelity out of range: %f", analytics.AuditFidelityPct)
+}
+}
+
+// ── seededScenarioByDomain Tests ──────────────────────────────────────────────
+
+func TestSeededScenarioByDomainHandlesAllDomains(t *testing.T) {
+now := time.Now().UTC()
+for _, dom := range []string{"software_company", "digital_marketing_agency", "accounting_firm"} {
+org, hub, tracker, err := seededScenarioByDomain(dom, now)
+if err != nil {
+t.Fatalf("seededScenarioByDomain(%q) error: %v", dom, err)
+}
+if org.Domain != dom {
+t.Fatalf("expected domain %q, got %q", dom, org.Domain)
+}
+if hub == nil || tracker == nil {
+t.Fatalf("expected non-nil hub and tracker for domain %q", dom)
+}
+}
+}
+
+func TestSeededScenarioByDomainRejectsUnknown(t *testing.T) {
+_, _, _, err := seededScenarioByDomain("unknown_domain", time.Now().UTC())
+if err == nil {
+t.Fatalf("expected error for unknown domain")
+}
+}
+
+func TestDefaultSkillPacksAreValid(t *testing.T) {
+packs := defaultSkillPacks()
+if len(packs) == 0 {
+t.Fatalf("expected built-in skill packs")
+}
+ids := map[string]bool{}
+for _, p := range packs {
+if p.ID == "" || p.Name == "" || p.Domain == "" {
+t.Fatalf("incomplete skill pack: %+v", p)
+}
+if ids[p.ID] {
+t.Fatalf("duplicate skill pack ID: %s", p.ID)
+}
+ids[p.ID] = true
+if p.Source != "builtin" {
+t.Fatalf("expected builtin source, got %q for %s", p.Source, p.ID)
+}
+}
+}

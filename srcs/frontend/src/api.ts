@@ -1,4 +1,18 @@
-import type { CostSummary, DashboardSnapshot, DomainInfo, MCPTool, MeetingRoom, Organization } from "./types";
+import type {
+  AnalyticsSummary,
+  AgentIdentity,
+  ApprovalRequest,
+  CostSummary,
+  DashboardSnapshot,
+  DomainInfo,
+  HandoffPackage,
+  MarketplaceItem,
+  MCPTool,
+  MeetingRoom,
+  OrgSnapshot,
+  Organization,
+  SkillPack,
+} from "./types";
 
 async function getJSON<T>(path: string): Promise<T> {
   const response = await fetch(path);
@@ -149,4 +163,91 @@ export function fetchMCPTools(): Promise<MCPTool[]> {
 
 export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
   return postJSON<DashboardSnapshot>("/api/dev/seed", { scenario });
+}
+// ── Approval / Confidence Gating ─────────────────────────────────────────────
+
+export function fetchApprovals(): Promise<ApprovalRequest[]> {
+  return getJSON<ApprovalRequest[]>("/api/approvals");
+}
+
+export function requestApproval(body: {
+  agentId: string;
+  action: string;
+  reason?: string;
+  estimatedCostUsd?: number;
+  riskLevel?: string;
+}): Promise<ApprovalRequest> {
+  return postJSON<ApprovalRequest>("/api/approvals/request", body);
+}
+
+export function decideApproval(
+  approvalId: string,
+  decision: "approve" | "reject",
+  decidedBy?: string,
+): Promise<ApprovalRequest[]> {
+  return postJSON<ApprovalRequest[]>("/api/approvals/decide", { approvalId, decision, decidedBy });
+}
+
+// ── Warm Handoff ──────────────────────────────────────────────────────────────
+
+export function fetchHandoffs(): Promise<HandoffPackage[]> {
+  return getJSON<HandoffPackage[]>("/api/handoffs");
+}
+
+export function createHandoff(body: {
+  fromAgentId: string;
+  toHumanRole?: string;
+  intent: string;
+  failedAttempts?: number;
+  currentState?: string;
+}): Promise<HandoffPackage> {
+  return postJSON<HandoffPackage>("/api/handoffs", body);
+}
+
+// ── Identity Management ───────────────────────────────────────────────────────
+
+export function fetchIdentities(): Promise<AgentIdentity[]> {
+  return getJSON<AgentIdentity[]>("/api/identities");
+}
+
+// ── Skill Packs ───────────────────────────────────────────────────────────────
+
+export function fetchSkillPacks(): Promise<SkillPack[]> {
+  return getJSON<SkillPack[]>("/api/skills");
+}
+
+export function importSkillPack(body: {
+  name: string;
+  domain: string;
+  description?: string;
+  source?: string;
+  author?: string;
+}): Promise<SkillPack> {
+  return postJSON<SkillPack>("/api/skills/import", body);
+}
+
+// ── Snapshots ─────────────────────────────────────────────────────────────────
+
+export function fetchSnapshots(): Promise<OrgSnapshot[]> {
+  return getJSON<OrgSnapshot[]>("/api/snapshots");
+}
+
+export function createSnapshot(label?: string): Promise<OrgSnapshot> {
+  return postJSON<OrgSnapshot>("/api/snapshots/create", { label });
+}
+
+export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> {
+  return postJSON<DashboardSnapshot>("/api/snapshots/restore", { snapshotId });
+}
+
+// ── Marketplace ───────────────────────────────────────────────────────────────
+
+export function fetchMarketplace(): Promise<MarketplaceItem[]> {
+  return getJSON<MarketplaceItem[]>("/api/marketplace");
+}
+
+// ── Real-time Analytics ───────────────────────────────────────────────────────
+
+export function fetchAnalytics(): Promise<AnalyticsSummary> {
+  return getJSON<AnalyticsSummary>("/api/analytics");
 }

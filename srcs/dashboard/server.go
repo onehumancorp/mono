@@ -17,10 +17,14 @@ import (
 )
 
 type Server struct {
-	mu      sync.RWMutex
-	org     domain.Organization
-	hub     *orchestration.Hub
-	tracker *billing.Tracker
+	mu        sync.RWMutex
+	org       domain.Organization
+	hub       *orchestration.Hub
+	tracker   *billing.Tracker
+	approvals []ApprovalRequest
+	handoffs  []HandoffPackage
+	skills    []SkillPack
+	snapshots []OrgSnapshot
 }
 
 type statusCount struct {
@@ -51,6 +55,160 @@ type hireRequest struct {
 // fireRequest carries the ID of the agent to remove.
 type fireRequest struct {
 	AgentID string `json:"agentId"`
+}
+
+// ── Approval / Confidence Gating ─────────────────────────────────────────────
+
+// ApprovalStatus represents the lifecycle state of a guardian-gate request.
+type ApprovalStatus string
+
+const (
+	ApprovalStatusPending  ApprovalStatus = "PENDING"
+	ApprovalStatusApproved ApprovalStatus = "APPROVED"
+	ApprovalStatusRejected ApprovalStatus = "REJECTED"
+)
+
+// ApprovalRequest is created by the Guardian Agent when a high-risk action
+// requires explicit human sign-off.
+type ApprovalRequest struct {
+	ID               string         `json:"id"`
+	AgentID          string         `json:"agentId"`
+	Action           string         `json:"action"`
+	Reason           string         `json:"reason"`
+	EstimatedCostUSD float64        `json:"estimatedCostUsd"`
+	RiskLevel        string         `json:"riskLevel"` // low | medium | high | critical
+	Status           ApprovalStatus `json:"status"`
+	CreatedAt        time.Time      `json:"createdAt"`
+	DecidedAt        *time.Time     `json:"decidedAt,omitempty"`
+	DecidedBy        string         `json:"decidedBy,omitempty"`
+}
+
+type approvalCreateRequest struct {
+	AgentID          string  `json:"agentId"`
+	Action           string  `json:"action"`
+	Reason           string  `json:"reason"`
+	EstimatedCostUSD float64 `json:"estimatedCostUsd"`
+	RiskLevel        string  `json:"riskLevel"`
+}
+
+type approvalDecideRequest struct {
+	ApprovalID string `json:"approvalId"`
+	Decision   string `json:"decision"` // approve | reject
+	DecidedBy  string `json:"decidedBy"`
+}
+
+// ── Warm Handoff ──────────────────────────────────────────────────────────────
+
+// HandoffPackage carries the structured context an agent sends to a human manager
+// when escalating a task it cannot complete autonomously.
+type HandoffPackage struct {
+	ID             string    `json:"id"`
+	FromAgentID    string    `json:"fromAgentId"`
+	ToHumanRole    string    `json:"toHumanRole"`
+	Intent         string    `json:"intent"`
+	FailedAttempts int       `json:"failedAttempts"`
+	CurrentState   string    `json:"currentState"`
+	Status         string    `json:"status"` // pending | acknowledged | resolved
+	CreatedAt      time.Time `json:"createdAt"`
+}
+
+type handoffCreateRequest struct {
+	FromAgentID    string `json:"fromAgentId"`
+	ToHumanRole    string `json:"toHumanRole"`
+	Intent         string `json:"intent"`
+	FailedAttempts int    `json:"failedAttempts"`
+	CurrentState   string `json:"currentState"`
+}
+
+// ── Agent Identity (SPIFFE/SPIRE abstraction) ─────────────────────────────────
+
+// AgentIdentity represents the SPIFFE SVID certificate issued to an agent workload.
+type AgentIdentity struct {
+	AgentID     string    `json:"agentId"`
+	SVID        string    `json:"svid"`
+	TrustDomain string    `json:"trustDomain"`
+	IssuedAt    time.Time `json:"issuedAt"`
+	ExpiresAt   time.Time `json:"expiresAt"`
+}
+
+// ── Extensible Skill Import Framework ────────────────────────────────────────
+
+// SkillPackRole pairs a role name with its override base prompt.
+type SkillPackRole struct {
+	Role       string `json:"role"`
+	BasePrompt string `json:"basePrompt"`
+}
+
+// SkillPack is an importable module that extends or overrides agent capabilities.
+type SkillPack struct {
+	ID          string          `json:"id"`
+	Name        string          `json:"name"`
+	Domain      string          `json:"domain"`
+	Description string          `json:"description"`
+	Source      string          `json:"source"` // builtin | custom | marketplace
+	Author      string          `json:"author,omitempty"`
+	Roles       []SkillPackRole `json:"roles"`
+	ImportedAt  time.Time       `json:"importedAt"`
+}
+
+type skillImportRequest struct {
+	Name        string          `json:"name"`
+	Domain      string          `json:"domain"`
+	Description string          `json:"description"`
+	Source      string          `json:"source"`
+	Author      string          `json:"author,omitempty"`
+	Roles       []SkillPackRole `json:"roles"`
+}
+
+// ── Org Snapshot & Recovery ───────────────────────────────────────────────────
+
+// OrgSnapshot is a point-in-time metadata record of an organization's state.
+type OrgSnapshot struct {
+	ID           string    `json:"id"`
+	Label        string    `json:"label"`
+	OrgID        string    `json:"orgId"`
+	OrgName      string    `json:"orgName"`
+	Domain       string    `json:"domain"`
+	AgentCount   int       `json:"agentCount"`
+	MeetingCount int       `json:"meetingCount"`
+	MessageCount int       `json:"messageCount"`
+	CreatedAt    time.Time `json:"createdAt"`
+}
+
+type snapshotCreateRequest struct {
+	Label string `json:"label"`
+}
+
+type snapshotRestoreRequest struct {
+	SnapshotID string `json:"snapshotId"`
+}
+
+// ── Marketplace ───────────────────────────────────────────────────────────────
+
+// MarketplaceItem describes a community-published asset.
+type MarketplaceItem struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Type        string   `json:"type"` // agent | domain | skill_pack | tool
+	Author      string   `json:"author"`
+	Description string   `json:"description"`
+	Downloads   int      `json:"downloads"`
+	Rating      float64  `json:"rating"`
+	Tags        []string `json:"tags"`
+}
+
+// ── Real-time Analytics ───────────────────────────────────────────────────────
+
+// AnalyticsSummary surfaces operational health metrics.
+type AnalyticsSummary struct {
+	HumanAgentRatio     float64 `json:"humanAgentRatio"`
+	TotalAgents         int     `json:"totalAgents"`
+	TotalHumans         int     `json:"totalHumans"`
+	AuditFidelityPct    float64 `json:"auditFidelityPct"`
+	ResumptionLatencyMS int     `json:"resumptionLatencyMs"`
+	PendingApprovals    int     `json:"pendingApprovals"`
+	ActiveHandoffs      int     `json:"activeHandoffs"`
+	TokenVelocity       int64   `json:"tokenVelocity"`
 }
 
 // MCPTool represents a registered tool in the MCP gateway.
@@ -94,7 +252,15 @@ var statusOrder = []orchestration.Status{
 }
 
 func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker) http.Handler {
-	server := &Server{org: org, hub: hub, tracker: tracker}
+	server := &Server{
+		org:       org,
+		hub:       hub,
+		tracker:   tracker,
+		approvals: []ApprovalRequest{},
+		handoffs:  []HandoffPackage{},
+		skills:    defaultSkillPacks(),
+		snapshots: []OrgSnapshot{},
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", server.handleIndex)
 	mux.HandleFunc("/app", server.handleApp)
@@ -113,6 +279,25 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/domains", server.handleDomains)
 	mux.HandleFunc("/api/mcp/tools", server.handleMCPTools)
 	mux.HandleFunc("/api/dev/seed", server.handleDevSeed)
+	// Phase 2 – Confidence Gating / Guardian Agent
+	mux.HandleFunc("/api/approvals", server.handleApprovals)
+	mux.HandleFunc("/api/approvals/request", server.handleApprovalRequest)
+	mux.HandleFunc("/api/approvals/decide", server.handleApprovalDecide)
+	// Phase 2 – Warm Handoff
+	mux.HandleFunc("/api/handoffs", server.handleHandoffs)
+	// Phase 2 – Unified Identity Management (SPIFFE/SPIRE)
+	mux.HandleFunc("/api/identities", server.handleIdentities)
+	// Phase 2 – Extensible Skill Import Framework
+	mux.HandleFunc("/api/skills", server.handleSkills)
+	mux.HandleFunc("/api/skills/import", server.handleSkillImport)
+	// Phase 4 – Org Snapshot & Recovery
+	mux.HandleFunc("/api/snapshots", server.handleSnapshots)
+	mux.HandleFunc("/api/snapshots/create", server.handleSnapshotCreate)
+	mux.HandleFunc("/api/snapshots/restore", server.handleSnapshotRestore)
+	// Phase 4 – Community Marketplace
+	mux.HandleFunc("/api/marketplace", server.handleMarketplace)
+	// Phase 4 – Real-time Analytics
+	mux.HandleFunc("/api/analytics", server.handleAnalytics)
 	return mux
 }
 
@@ -606,4 +791,517 @@ func summarizeStatuses(agents []orchestration.Agent) []statusCount {
 	}
 
 	return statuses
+}
+
+// ── Approval / Confidence Gating Handlers ─────────────────────────────────────
+
+func (s *Server) handleApprovals(w http.ResponseWriter, r *http.Request) {
+switch r.Method {
+case http.MethodGet:
+s.mu.RLock()
+list := append([]ApprovalRequest(nil), s.approvals...)
+s.mu.RUnlock()
+writeJSON(w, list)
+default:
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+}
+
+func (s *Server) handleApprovalRequest(w http.ResponseWriter, r *http.Request) {
+if r.Method != http.MethodPost {
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+return
+}
+
+var req approvalCreateRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.AgentID == "" || req.Action == "" {
+http.Error(w, "agentId and action are required", http.StatusBadRequest)
+return
+}
+
+now := time.Now().UTC()
+approval := ApprovalRequest{
+ID:               s.org.ID + "-approval-" + now.Format("20060102150405000"),
+AgentID:          req.AgentID,
+Action:           req.Action,
+Reason:           req.Reason,
+EstimatedCostUSD: req.EstimatedCostUSD,
+RiskLevel:        req.RiskLevel,
+Status:           ApprovalStatusPending,
+CreatedAt:        now,
+}
+if approval.RiskLevel == "" {
+if approval.EstimatedCostUSD > 500 {
+approval.RiskLevel = "critical"
+} else if approval.EstimatedCostUSD > 100 {
+approval.RiskLevel = "high"
+} else {
+approval.RiskLevel = "medium"
+}
+}
+
+s.mu.Lock()
+s.approvals = append(s.approvals, approval)
+s.mu.Unlock()
+
+writeJSON(w, approval)
+}
+
+func (s *Server) handleApprovalDecide(w http.ResponseWriter, r *http.Request) {
+if r.Method != http.MethodPost {
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+return
+}
+
+var req approvalDecideRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.ApprovalID == "" || req.Decision == "" {
+http.Error(w, "approvalId and decision are required", http.StatusBadRequest)
+return
+}
+
+var newStatus ApprovalStatus
+switch req.Decision {
+case "approve":
+newStatus = ApprovalStatusApproved
+case "reject":
+newStatus = ApprovalStatusRejected
+default:
+http.Error(w, "decision must be 'approve' or 'reject'", http.StatusBadRequest)
+return
+}
+
+now := time.Now().UTC()
+s.mu.Lock()
+found := false
+for i, a := range s.approvals {
+if a.ID == req.ApprovalID {
+s.approvals[i].Status = newStatus
+s.approvals[i].DecidedAt = &now
+s.approvals[i].DecidedBy = req.DecidedBy
+found = true
+break
+}
+}
+s.mu.Unlock()
+
+if !found {
+http.Error(w, "approval not found", http.StatusNotFound)
+return
+}
+
+s.mu.RLock()
+list := append([]ApprovalRequest(nil), s.approvals...)
+s.mu.RUnlock()
+writeJSON(w, list)
+}
+
+// ── Warm Handoff Handlers ─────────────────────────────────────────────────────
+
+func (s *Server) handleHandoffs(w http.ResponseWriter, r *http.Request) {
+switch r.Method {
+case http.MethodGet:
+s.mu.RLock()
+list := append([]HandoffPackage(nil), s.handoffs...)
+s.mu.RUnlock()
+writeJSON(w, list)
+case http.MethodPost:
+var req handoffCreateRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.FromAgentID == "" || req.Intent == "" {
+http.Error(w, "fromAgentId and intent are required", http.StatusBadRequest)
+return
+}
+now := time.Now().UTC()
+handoff := HandoffPackage{
+ID:             s.org.ID + "-handoff-" + now.Format("20060102150405000"),
+FromAgentID:    req.FromAgentID,
+ToHumanRole:    req.ToHumanRole,
+Intent:         req.Intent,
+FailedAttempts: req.FailedAttempts,
+CurrentState:   req.CurrentState,
+Status:         "pending",
+CreatedAt:      now,
+}
+s.mu.Lock()
+s.handoffs = append(s.handoffs, handoff)
+s.mu.Unlock()
+writeJSON(w, handoff)
+default:
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+}
+
+// ── Identity Management Handler ───────────────────────────────────────────────
+
+func (s *Server) handleIdentities(w http.ResponseWriter, _ *http.Request) {
+s.mu.RLock()
+agents := s.hub.Agents()
+org := s.org
+s.mu.RUnlock()
+
+now := time.Now().UTC()
+identities := make([]AgentIdentity, 0, len(agents))
+for _, agent := range agents {
+identities = append(identities, AgentIdentity{
+AgentID:     agent.ID,
+SVID:        "spiffe://onehumancorp.io/" + org.ID + "/" + agent.ID,
+TrustDomain: "onehumancorp.io",
+IssuedAt:    now,
+ExpiresAt:   now.Add(24 * time.Hour),
+})
+}
+writeJSON(w, identities)
+}
+
+// ── Skill Pack Handlers ───────────────────────────────────────────────────────
+
+func (s *Server) handleSkills(w http.ResponseWriter, _ *http.Request) {
+s.mu.RLock()
+list := append([]SkillPack(nil), s.skills...)
+s.mu.RUnlock()
+writeJSON(w, list)
+}
+
+func (s *Server) handleSkillImport(w http.ResponseWriter, r *http.Request) {
+if r.Method != http.MethodPost {
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+return
+}
+
+var req skillImportRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.Name == "" || req.Domain == "" {
+http.Error(w, "name and domain are required", http.StatusBadRequest)
+return
+}
+
+now := time.Now().UTC()
+source := req.Source
+if source == "" {
+source = "custom"
+}
+pack := SkillPack{
+ID:          s.org.ID + "-skill-" + now.Format("20060102150405000"),
+Name:        req.Name,
+Domain:      req.Domain,
+Description: req.Description,
+Source:      source,
+Author:      req.Author,
+Roles:       req.Roles,
+ImportedAt:  now,
+}
+if pack.Roles == nil {
+pack.Roles = []SkillPackRole{}
+}
+
+s.mu.Lock()
+s.skills = append(s.skills, pack)
+s.mu.Unlock()
+
+writeJSON(w, pack)
+}
+
+// ── Snapshot Handlers ─────────────────────────────────────────────────────────
+
+func (s *Server) handleSnapshots(w http.ResponseWriter, _ *http.Request) {
+s.mu.RLock()
+list := append([]OrgSnapshot(nil), s.snapshots...)
+s.mu.RUnlock()
+writeJSON(w, list)
+}
+
+func (s *Server) handleSnapshotCreate(w http.ResponseWriter, r *http.Request) {
+if r.Method != http.MethodPost {
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+return
+}
+
+var req snapshotCreateRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+
+s.mu.Lock()
+meetings := s.hub.Meetings()
+agents := s.hub.Agents()
+msgCount := 0
+for _, m := range meetings {
+msgCount += len(m.Transcript)
+}
+now := time.Now().UTC()
+label := req.Label
+if label == "" {
+label = "Snapshot " + now.Format("2006-01-02 15:04")
+}
+snap := OrgSnapshot{
+ID:           s.org.ID + "-snap-" + now.Format("20060102150405000"),
+Label:        label,
+OrgID:        s.org.ID,
+OrgName:      s.org.Name,
+Domain:       s.org.Domain,
+AgentCount:   len(agents),
+MeetingCount: len(meetings),
+MessageCount: msgCount,
+CreatedAt:    now,
+}
+s.snapshots = append(s.snapshots, snap)
+s.mu.Unlock()
+
+writeJSON(w, snap)
+}
+
+func (s *Server) handleSnapshotRestore(w http.ResponseWriter, r *http.Request) {
+if r.Method != http.MethodPost {
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+return
+}
+
+var req snapshotRestoreRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.SnapshotID == "" {
+http.Error(w, "snapshotId is required", http.StatusBadRequest)
+return
+}
+
+s.mu.RLock()
+var target *OrgSnapshot
+for i, snap := range s.snapshots {
+if snap.ID == req.SnapshotID {
+target = &s.snapshots[i]
+break
+}
+}
+s.mu.RUnlock()
+
+if target == nil {
+http.Error(w, "snapshot not found", http.StatusNotFound)
+return
+}
+
+org, hub, tracker, err := seededScenarioByDomain(target.Domain, time.Now().UTC())
+if err != nil {
+http.Error(w, err.Error(), http.StatusBadRequest)
+return
+}
+
+s.mu.Lock()
+s.org = org
+s.hub = hub
+s.tracker = tracker
+snapshot := s.snapshotLocked()
+s.mu.Unlock()
+
+writeJSON(w, snapshot)
+}
+
+// seededScenarioByDomain re-seeds an org from its domain identifier.
+func seededScenarioByDomain(dom string, now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
+switch dom {
+case "software_company":
+return seededLaunchReadiness(now)
+case "digital_marketing_agency":
+return seededDigitalMarketing(now)
+case "accounting_firm":
+return seededAccounting(now)
+default:
+return domain.Organization{}, nil, nil, errors.New("unsupported domain for restore")
+}
+}
+
+// ── Marketplace Handler ───────────────────────────────────────────────────────
+
+func (s *Server) handleMarketplace(w http.ResponseWriter, _ *http.Request) {
+writeJSON(w, defaultMarketplaceItems())
+}
+
+// ── Analytics Handler ─────────────────────────────────────────────────────────
+
+func (s *Server) handleAnalytics(w http.ResponseWriter, _ *http.Request) {
+s.mu.RLock()
+agents := s.hub.Agents()
+org := s.org
+summary := s.tracker.Summary(org.ID)
+pendingApprovals := 0
+for _, a := range s.approvals {
+if a.Status == ApprovalStatusPending {
+pendingApprovals++
+}
+}
+activeHandoffs := 0
+for _, h := range s.handoffs {
+if h.Status == "pending" {
+activeHandoffs++
+}
+}
+s.mu.RUnlock()
+
+totalHumans := 0
+for _, m := range org.Members {
+if m.IsHuman {
+totalHumans++
+}
+}
+totalAgents := len(agents)
+
+var ratio float64
+if totalHumans > 0 {
+ratio = float64(totalAgents) / float64(totalHumans)
+}
+
+meetings := s.hub.Meetings()
+totalMsgs := 0
+auditedMsgs := 0
+agentSet := map[string]bool{}
+for _, a := range agents {
+agentSet[a.ID] = true
+}
+for _, m := range meetings {
+for _, msg := range m.Transcript {
+totalMsgs++
+if agentSet[msg.FromAgent] {
+auditedMsgs++
+}
+}
+}
+auditFidelity := 100.0
+if totalMsgs > 0 {
+auditFidelity = float64(auditedMsgs) / float64(totalMsgs) * 100
+}
+
+writeJSON(w, AnalyticsSummary{
+HumanAgentRatio:     ratio,
+TotalAgents:         totalAgents,
+TotalHumans:         totalHumans,
+AuditFidelityPct:    auditFidelity,
+ResumptionLatencyMS: 4800,
+PendingApprovals:    pendingApprovals,
+ActiveHandoffs:      activeHandoffs,
+TokenVelocity:       summary.TotalTokens,
+})
+}
+
+// ── Default Data Factories ────────────────────────────────────────────────────
+
+func defaultSkillPacks() []SkillPack {
+now := time.Now().UTC()
+return []SkillPack{
+{
+ID:          "builtin-core-ai",
+Name:        "Core AI Skills",
+Domain:      "all",
+Description: "Foundational reasoning, summarization, and context management capabilities shared by all agents.",
+Source:      "builtin",
+Roles: []SkillPackRole{
+{Role: "ALL", BasePrompt: "You are a highly capable AI agent. Summarize long discussions before passing context to the next agent."},
+},
+ImportedAt: now,
+},
+{
+ID:          "builtin-software-dev",
+Name:        "Software Development Mastery",
+Domain:      "software_company",
+Description: "Advanced engineering skills: clean code, TDD, security-first development, and CI/CD automation.",
+Source:      "builtin",
+Roles: []SkillPackRole{
+{Role: "SOFTWARE_ENGINEER", BasePrompt: "Write well-tested, secure, and maintainable code. Follow TDD practices."},
+{Role: "QA_TESTER", BasePrompt: "Design comprehensive test suites covering edge cases and regressions."},
+},
+ImportedAt: now,
+},
+{
+ID:          "builtin-marketing-automation",
+Name:        "Marketing Automation Suite",
+Domain:      "digital_marketing_agency",
+Description: "Data-driven growth hacking, SEO optimization, and paid media management at scale.",
+Source:      "builtin",
+Roles: []SkillPackRole{
+{Role: "GROWTH_AGENT", BasePrompt: "Identify high-value acquisition channels using data. Run A/B tests continuously."},
+},
+ImportedAt: now,
+},
+{
+ID:          "builtin-financial-ops",
+Name:        "Financial Operations Pack",
+Domain:      "accounting_firm",
+Description: "GAAP-compliant bookkeeping, tax optimization, and audit preparation.",
+Source:      "builtin",
+Roles: []SkillPackRole{
+{Role: "BOOKKEEPER", BasePrompt: "Maintain double-entry books with 100% accuracy. Reconcile all accounts daily."},
+},
+ImportedAt: now,
+},
+}
+}
+
+func defaultMarketplaceItems() []MarketplaceItem {
+return []MarketplaceItem{
+{
+ID:          "mkt-tiger-team",
+Name:        "Tiger Team Sprint Pack",
+Type:        "skill_pack",
+Author:      "OneHumanCorp",
+Description: "Spin up a temporary 5-agent strike force for a time-boxed launch sprint.",
+Downloads:   1420,
+Rating:      4.8,
+Tags:        []string{"sprint", "launch", "team"},
+},
+{
+ID:          "mkt-ecommerce-domain",
+Name:        "E-Commerce Operations Domain",
+Type:        "domain",
+Author:      "Community",
+Description: "Full e-commerce organization with catalog, inventory, customer support, and growth roles.",
+Downloads:   892,
+Rating:      4.6,
+Tags:        []string{"ecommerce", "retail", "domain"},
+},
+{
+ID:          "mkt-crm-integration",
+Name:        "CRM Intelligence Pack",
+Type:        "tool",
+Author:      "SalesStack",
+Description: "Bi-directional Salesforce / HubSpot sync for Sales and Growth agents.",
+Downloads:   2100,
+Rating:      4.9,
+Tags:        []string{"crm", "sales", "integration"},
+},
+{
+ID:          "mkt-code-review-agent",
+Name:        "Autonomous Code Review Agent",
+Type:        "agent",
+Author:      "DevBot Labs",
+Description: "Specialized SWE agent trained on your codebase conventions. Reviews PRs for style, correctness, and test coverage.",
+Downloads:   3750,
+Rating:      4.7,
+Tags:        []string{"code-review", "engineering", "agent"},
+},
+{
+ID:          "mkt-guardian-agent",
+Name:        "Guardian Agent Pro",
+Type:        "agent",
+Author:      "SafeOps",
+Description: "Advanced confidence-gating agent with configurable spend thresholds and Slack/email HITL notifications.",
+Downloads:   980,
+Rating:      4.8,
+Tags:        []string{"security", "approval", "hitl"},
+},
+}
 }
