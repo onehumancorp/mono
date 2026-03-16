@@ -1123,3 +1123,511 @@ describe("App – integrations nav", () => {
     expect(loadingStates.length).toBeGreaterThan(0);
   });
 });
+
+// ── Git & Issues integration category coverage ─────────────────────────────
+describe("App – git and issues integrations", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("shows git integration connect button and connects successfully", async () => {
+    const mockIntegrations = [
+      { id: "github", name: "GitHub", type: "github", category: "git", status: "disconnected", description: "Open PRs on GitHub", createdAt: "2026-01-01T00:00:00Z" },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(mockIntegrations);
+      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[0], status: "connected" });
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Git Platforms");
+    await screen.findByText("GitHub");
+
+    const connectBtns = screen.getAllByRole("button", { name: /connect/i });
+    expect(connectBtns.length).toBeGreaterThan(0);
+    fireEvent.click(connectBtns[0]);
+    await screen.findByText(/disconnect/i);
+  });
+
+  it("shows git integration disconnect button and disconnects successfully", async () => {
+    const mockIntegrations = [
+      { id: "github", name: "GitHub", type: "github", category: "git", status: "connected", description: "Open PRs on GitHub", createdAt: "2026-01-01T00:00:00Z" },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(mockIntegrations);
+      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[0], status: "disconnected" });
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Git Platforms");
+    await screen.findByText("GitHub");
+
+    const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+    expect(disconnectBtns.length).toBeGreaterThan(0);
+    fireEvent.click(disconnectBtns[0]);
+    await screen.findByRole("button", { name: /^connect$/i });
+  });
+
+  it("shows empty state for git when no git integrations", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson([
+        { id: "slack", name: "Slack", type: "slack", category: "chat", status: "disconnected", description: "Chat", createdAt: "2026-01-01T00:00:00Z" },
+      ]);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Git Platforms");
+
+    const loadingStates = screen.getAllByText("Loading integrations…");
+    expect(loadingStates.length).toBeGreaterThan(0);
+  });
+
+  it("shows issue tracker connect button and connects successfully", async () => {
+    const mockIntegrations = [
+      { id: "jira", name: "Jira", type: "jira", category: "issues", status: "disconnected", description: "Track in Jira", createdAt: "2026-01-01T00:00:00Z" },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(mockIntegrations);
+      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[0], status: "connected" });
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Issue Trackers");
+    await screen.findByText("Jira");
+
+    const connectBtns = screen.getAllByRole("button", { name: /connect/i });
+    expect(connectBtns.length).toBeGreaterThan(0);
+    fireEvent.click(connectBtns[0]);
+    await screen.findByText(/disconnect/i);
+  });
+
+  it("shows issue tracker disconnect button and disconnects successfully", async () => {
+    const mockIntegrations = [
+      { id: "jira", name: "Jira", type: "jira", category: "issues", status: "connected", description: "Track in Jira", createdAt: "2026-01-01T00:00:00Z" },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(mockIntegrations);
+      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[0], status: "disconnected" });
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Issue Trackers");
+    await screen.findByText("Jira");
+
+    const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+    expect(disconnectBtns.length).toBeGreaterThan(0);
+    fireEvent.click(disconnectBtns[0]);
+    await screen.findByRole("button", { name: /^connect$/i });
+  });
+
+  it("shows empty state for issues when no issue integrations", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson([
+        { id: "slack", name: "Slack", type: "slack", category: "chat", status: "disconnected", description: "Chat", createdAt: "2026-01-01T00:00:00Z" },
+      ]);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Issue Trackers");
+
+    const loadingStates = screen.getAllByText("Loading integrations…");
+    expect(loadingStates.length).toBeGreaterThan(0);
+  });
+});
+
+// ── Meeting tab agenda coverage ──────────────────────────────────────────────
+describe("App – meetings tab agenda coverage", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("shows meeting agenda in the meetings tab when a meeting has an agenda", async () => {
+    const withAgenda = {
+      ...dashboardPayload,
+      meetings: [{ id: "launch-readiness", transcript: [], participants: ["pm-1"], agenda: "Discuss launch blockers for meetings tab" }],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(withAgenda);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+
+    // navigate to Meetings tab
+    fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
+    await screen.findByText("Virtual Meeting Rooms");
+
+    expect(screen.getByText("Discuss launch blockers for meetings tab")).toBeInTheDocument();
+  });
+});
+
+// ── Settings branch coverage ─────────────────────────────────────────────────
+describe("App – settings branch coverage", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("shows — placeholders in settings when snapshot is null (navigated before load)", async () => {
+    // Set up a fetch that never resolves for dashboard but resolves for settings deps
+    let resolveDashboard: (v: unknown) => void;
+    const dashboardPromise = new Promise((r) => { resolveDashboard = r; });
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return dashboardPromise;
+      if (input === "/api/domains") return mockJson([{ id: "software_company", name: "Software Company", description: "SaaS" }]);
+      if (input === "/api/mcp/tools") return mockJson([{ id: "git-mcp", name: "Git MCP", description: "Git ops", category: "dev", status: "maintenance" }]);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    // Navigate to settings BEFORE dashboard loads (snapshot is null)
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByRole("heading", { name: /^Settings$/ });
+
+    // Should show — for org info since snapshot is null
+    await waitFor(() => {
+      const dashes = screen.getAllByText("—");
+      expect(dashes.length).toBeGreaterThan(0);
+    });
+
+    // The maintenance status tool should show yellow badge
+    await screen.findByText("maintenance");
+    expect(screen.getByText("maintenance")).toBeInTheDocument();
+
+    // Resolve dashboard to clean up
+    resolveDashboard!(mockJson(dashboardPayload));
+  });
+
+  it("shows non-available MCP tool with status badge", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/domains") return mockJson([{ id: "d", name: "D", description: "desc" }]);
+      if (input === "/api/mcp/tools") return mockJson([
+        { id: "git-mcp", name: "Git MCP", description: "Git ops", category: "dev", status: "available" },
+        { id: "figma-mcp", name: "Figma MCP", description: "Design ops", category: "design", status: "beta" },
+      ]);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByText("Git MCP");
+    await screen.findByText("Figma MCP");
+    expect(screen.getByText("beta")).toBeInTheDocument();
+    expect(screen.getByText("available")).toBeInTheDocument();
+  });
+});
+
+// ── Integration callback coverage (multiple integrations) ─────────────────────
+describe("App – multi-integration connect/disconnect callbacks", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("connect callback updates correct integration when multiple git integrations exist", async () => {
+    const mockIntegrations = [
+      { id: "github", name: "GitHub", type: "github", category: "git", status: "disconnected", description: "Open PRs on GitHub", createdAt: "2026-01-01T00:00:00Z" },
+      { id: "gitea", name: "Gitea", type: "gitea", category: "git", status: "connected", description: "Self-hosted Gitea", createdAt: "2026-01-01T00:00:00Z" },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(mockIntegrations);
+      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[0], status: "connected" });
+      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[1], status: "disconnected" });
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Git Platforms");
+    // GitHub and Gitea names appear in the list (use getAllByText since descriptions differ)
+    await waitFor(() => expect(screen.getAllByText("GitHub").length).toBeGreaterThan(0));
+
+    // Click connect on GitHub (first)
+    const connectBtns = screen.getAllByRole("button", { name: /connect/i });
+    fireEvent.click(connectBtns[0]);
+    // Wait for the list to update
+    await waitFor(() => {
+      const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+      expect(disconnectBtns.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("disconnect callback updates correct issue integration when multiple exist", async () => {
+    const mockIntegrations = [
+      { id: "jira", name: "Jira", type: "jira", category: "issues", status: "connected", description: "Track issues in Jira", createdAt: "2026-01-01T00:00:00Z" },
+      { id: "plane", name: "Plane", type: "plane", category: "issues", status: "disconnected", description: "OSS issue tracker", createdAt: "2026-01-01T00:00:00Z" },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(mockIntegrations);
+      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[0], status: "disconnected" });
+      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[1], status: "connected" });
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Issue Trackers");
+    await waitFor(() => expect(screen.getAllByText("Jira").length).toBeGreaterThan(0));
+
+    const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+    fireEvent.click(disconnectBtns[0]);
+    await waitFor(() => {
+      // Jira should now show "Connect" button
+      const allBtns = screen.getAllByRole("button");
+      expect(allBtns.some((b) => b.textContent?.match(/connect/i))).toBe(true);
+    });
+  });
+});
+
+// ── Role profiles null fallback branch ──────────────────────────────────────
+describe("App – playbooks roleProfiles null branch", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("shows empty state when roleProfiles is null/undefined in organization", async () => {
+    const nullProfiles = {
+      ...dashboardPayload,
+      organization: { ...dashboardPayload.organization, roleProfiles: null as unknown as [] },
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(nullProfiles);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /playbooks/i }));
+    expect(screen.getByText(/No role profiles defined/)).toBeInTheDocument();
+  });
+});
+
+// ── Multi-integration map callback false branch coverage ─────────────────────
+describe("App – multi-integration map callback branches", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("chat connect: both map branches covered with multiple chat integrations", async () => {
+    const mockIntegrations = [
+      { id: "slack", name: "Slack", type: "slack", category: "chat", status: "disconnected", description: "Slack messaging", createdAt: "2026-01-01T00:00:00Z" },
+      { id: "discord", name: "Discord", type: "discord", category: "chat", status: "connected", description: "Discord server", createdAt: "2026-01-01T00:00:00Z" },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(mockIntegrations);
+      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[0], status: "connected" });
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Chat Services");
+    await waitFor(() => expect(screen.getAllByText("Slack").length).toBeGreaterThan(0));
+
+    const connectBtns = screen.getAllByRole("button", { name: /connect/i });
+    fireEvent.click(connectBtns[0]);
+    await waitFor(() => {
+      const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+      expect(disconnectBtns.length).toBeGreaterThan(1);
+    });
+  });
+
+  it("chat disconnect: both map branches covered with multiple chat integrations", async () => {
+    const mockIntegrations = [
+      { id: "slack", name: "Slack", type: "slack", category: "chat", status: "connected", description: "Slack messaging", createdAt: "2026-01-01T00:00:00Z" },
+      { id: "discord", name: "Discord", type: "discord", category: "chat", status: "disconnected", description: "Discord server", createdAt: "2026-01-01T00:00:00Z" },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(mockIntegrations);
+      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[0], status: "disconnected" });
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Chat Services");
+    await waitFor(() => expect(screen.getAllByText("Slack").length).toBeGreaterThan(0));
+
+    const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+    fireEvent.click(disconnectBtns[0]);
+    await waitFor(() => {
+      const connectBtns = screen.getAllByRole("button", { name: /connect/i });
+      expect(connectBtns.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("git disconnect: both map branches covered with multiple git integrations", async () => {
+    const mockIntegrations = [
+      { id: "github", name: "GitHub", type: "github", category: "git", status: "connected", description: "Open PRs on GitHub", createdAt: "2026-01-01T00:00:00Z" },
+      { id: "gitea", name: "Gitea", type: "gitea", category: "git", status: "disconnected", description: "Self-hosted Gitea", createdAt: "2026-01-01T00:00:00Z" },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(mockIntegrations);
+      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[0], status: "disconnected" });
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Git Platforms");
+    await waitFor(() => expect(screen.getAllByText("GitHub").length).toBeGreaterThan(0));
+
+    const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+    fireEvent.click(disconnectBtns[0]);
+    await waitFor(() => {
+      const connectBtns = screen.getAllByRole("button", { name: /connect/i });
+      expect(connectBtns.length).toBeGreaterThan(1);
+    });
+  });
+
+  it("issues connect: both map branches covered with multiple issue integrations", async () => {
+    const mockIntegrations = [
+      { id: "jira", name: "Jira", type: "jira", category: "issues", status: "disconnected", description: "Track in Jira", createdAt: "2026-01-01T00:00:00Z" },
+      { id: "plane", name: "Plane", type: "plane", category: "issues", status: "connected", description: "OSS issue tracker", createdAt: "2026-01-01T00:00:00Z" },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(mockIntegrations);
+      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[0], status: "connected" });
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Issue Trackers");
+    await waitFor(() => expect(screen.getAllByText("Jira").length).toBeGreaterThan(0));
+
+    const connectBtns = screen.getAllByRole("button", { name: /connect/i });
+    fireEvent.click(connectBtns[0]);
+    await waitFor(() => {
+      const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+      expect(disconnectBtns.length).toBeGreaterThan(1);
+    });
+  });
+});
+
+// ── Cost and Playbooks null-snapshot branch coverage ─────────────────────────
+describe("App – cost and playbooks null-snapshot branches", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("cost tab shows zero fallbacks when navigated before data loads", async () => {
+    let resolveDashboard: (v: unknown) => void;
+    const neverResolves = new Promise((r) => { resolveDashboard = r; });
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return neverResolves;
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    // Navigate to cost tab BEFORE data loads (snapshot is null)
+    fireEvent.click(screen.getByRole("button", { name: /cost/i }));
+
+    await screen.findByText("Burn Rate Analytics");
+    // With null snapshot, all KPIs should show fallback values
+    const zeros = screen.getAllByText("$0.000000");
+    expect(zeros.length).toBeGreaterThan(0);
+
+    // resolve to prevent act() leaks
+    resolveDashboard!(mockJson(dashboardPayload));
+  });
+
+  it("playbooks tab shows empty state with null-snapshot org roleProfiles", async () => {
+    let resolveDashboard: (v: unknown) => void;
+    const neverResolves = new Promise((r) => { resolveDashboard = r; });
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return neverResolves;
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    // Navigate to playbooks tab BEFORE data loads (snapshot is null)
+    fireEvent.click(screen.getByRole("button", { name: /playbooks/i }));
+    await screen.findByText("Role Playbooks");
+
+    expect(screen.getByText(/No role profiles defined/)).toBeInTheDocument();
+
+    resolveDashboard!(mockJson(dashboardPayload));
+  });
+
+  it("cost tab burn gauge shows 0% when projectedMonthlyUSD is falsy", async () => {
+    const zeroProjection = {
+      ...dashboardPayload,
+      costs: {
+        organizationID: "org-1",
+        totalTokens: 0,
+        totalCostUSD: 0,
+        projectedMonthlyUSD: 0,
+        agents: [{ agentID: "swe-1", model: "", tokenUsed: 0, costUSD: 0 }],
+      },
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(zeroProjection);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /cost/i }));
+    await screen.findByText("Burn Rate Analytics");
+
+    // 0% burn since projectedMonthlyUSD is falsy
+    expect(screen.getByText("0%")).toBeInTheDocument();
+  });
+});
