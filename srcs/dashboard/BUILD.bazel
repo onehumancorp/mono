@@ -8,6 +8,7 @@ go_library(
     deps = [
         "//srcs/billing",
         "//srcs/domain",
+        "//srcs/integrations",
         "//srcs/orchestration",
     ],
 )
@@ -19,6 +20,7 @@ go_test(
     deps = [
         "//srcs/billing",
         "//srcs/domain",
+        "//srcs/integrations",
         "//srcs/orchestration",
     ],
 )

@@ -224,7 +224,7 @@ describe("api – new endpoints", () => {
       "/api/agents/hire",
       expect.objectContaining({ method: "POST" })
     );
-    const body = JSON.parse(String((fetchMock.mock.calls[0] as unknown[][])[1]?.body ?? "{}"));
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1]?.body ?? "{}"));
     expect(body).toEqual({ name: "Alice", role: "SOFTWARE_ENGINEER" });
     expect(result.organization.id).toBe("o");
   });
@@ -242,7 +242,7 @@ describe("api – new endpoints", () => {
       "/api/agents/fire",
       expect.objectContaining({ method: "POST" })
     );
-    const body = JSON.parse(String((fetchMock.mock.calls[0] as unknown[][])[1]?.body ?? "{}"));
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1]?.body ?? "{}"));
     expect(body).toEqual({ agentId: "swe-1" });
     expect(result.organization.id).toBe("o");
   });
@@ -282,7 +282,7 @@ describe("api – new endpoints", () => {
       "/api/dev/seed",
       expect.objectContaining({ method: "POST" })
     );
-    const body = JSON.parse(String((fetchMock.mock.calls[0] as unknown[][])[1]?.body ?? "{}"));
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1]?.body ?? "{}"));
     expect(body).toEqual({ scenario: "digital-marketing" });
     expect(result.organization.id).toBe("o");
   });
@@ -340,5 +340,163 @@ describe("api – new endpoints", () => {
     expect(snap.costs.projectedMonthlyUSD).toBeUndefined();
     expect(snap.statuses[0].status).toBe("UNKNOWN");
     expect(snap.statuses[0].count).toBe(0);
+  });
+});
+
+// ── Integration API tests ─────────────────────────────────────────────────────
+
+import {
+  assignIssue,
+  closePullRequest,
+  connectIntegration,
+  createIssue,
+  createPullRequest,
+  disconnectIntegration,
+  fetchChatMessages,
+  fetchIntegrations,
+  fetchIssues,
+  fetchPullRequests,
+  mergePullRequest,
+  sendChatMessage,
+  updateIssueStatus,
+} from "./api";
+
+describe("integration api", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("fetches all integrations", async () => {
+    const list = [{ id: "slack", name: "Slack", type: "slack", category: "chat", status: "disconnected" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => list })));
+    await expect(fetchIntegrations()).resolves.toEqual(list);
+  });
+
+  it("fetches integrations by category", async () => {
+    const list = [{ id: "github", category: "git" }];
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      expect(url).toBe("/api/integrations?category=git");
+      return { ok: true, status: 200, json: async () => list };
+    }));
+    await expect(fetchIntegrations("git")).resolves.toEqual(list);
+  });
+
+  it("connects an integration", async () => {
+    const updated = { id: "slack", status: "connected" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => updated })));
+    await expect(connectIntegration("slack", "https://hooks.slack.com/test")).resolves.toEqual(updated);
+  });
+
+  it("disconnects an integration", async () => {
+    const updated = { id: "slack", status: "disconnected" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => updated })));
+    await expect(disconnectIntegration("slack")).resolves.toEqual(updated);
+  });
+
+  it("fetches chat messages", async () => {
+    const msgs = [{ id: "msg-1", integrationId: "slack", channel: "#eng", fromAgent: "swe-1", content: "hi" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => msgs })));
+    await expect(fetchChatMessages("slack")).resolves.toEqual(msgs);
+  });
+
+  it("fetches all chat messages without filter", async () => {
+    const msgs: unknown[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      expect(url).toBe("/api/integrations/chat/messages");
+      return { ok: true, status: 200, json: async () => msgs };
+    }));
+    await expect(fetchChatMessages()).resolves.toEqual(msgs);
+  });
+
+  it("sends a chat message", async () => {
+    const msg = { id: "msg-1", integrationId: "slack", channel: "#eng", fromAgent: "swe-1", content: "PR ready" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => msg })));
+    const result = await sendChatMessage({ integrationId: "slack", channel: "#eng", fromAgent: "swe-1", content: "PR ready" });
+    expect(result).toEqual(msg);
+  });
+
+  it("sends a chat message with threadId", async () => {
+    const msg = { id: "msg-2", threadId: "t-42" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => msg })));
+    const result = await sendChatMessage({ integrationId: "discord", channel: "general", fromAgent: "pm-1", content: "hi", threadId: "t-42" });
+    expect(result.threadId).toBe("t-42");
+  });
+
+  it("fetches pull requests", async () => {
+    const prs = [{ id: "pr-1", status: "open" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => prs })));
+    await expect(fetchPullRequests("github")).resolves.toEqual(prs);
+  });
+
+  it("fetches all pull requests without filter", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      expect(url).toBe("/api/integrations/git/prs");
+      return { ok: true, status: 200, json: async () => [] };
+    }));
+    await expect(fetchPullRequests()).resolves.toEqual([]);
+  });
+
+  it("creates a pull request", async () => {
+    const pr = { id: "pr-1", status: "open", title: "feat: billing" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => pr })));
+    const result = await createPullRequest({
+      integrationId: "github",
+      repository: "org/repo",
+      title: "feat: billing",
+      sourceBranch: "feature/billing",
+      targetBranch: "main",
+    });
+    expect(result).toEqual(pr);
+  });
+
+  it("merges a pull request", async () => {
+    const pr = { id: "pr-1", status: "merged" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => pr })));
+    await expect(mergePullRequest("pr-1")).resolves.toEqual(pr);
+  });
+
+  it("closes a pull request", async () => {
+    const pr = { id: "pr-1", status: "closed" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => pr })));
+    await expect(closePullRequest("pr-1")).resolves.toEqual(pr);
+  });
+
+  it("fetches issues", async () => {
+    const issues = [{ id: "issue-1", status: "open" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => issues })));
+    await expect(fetchIssues("jira")).resolves.toEqual(issues);
+  });
+
+  it("fetches all issues without filter", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      expect(url).toBe("/api/integrations/issues");
+      return { ok: true, status: 200, json: async () => [] };
+    }));
+    await expect(fetchIssues()).resolves.toEqual([]);
+  });
+
+  it("creates an issue", async () => {
+    const issue = { id: "issue-1", status: "open", priority: "high" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => issue })));
+    const result = await createIssue({
+      integrationId: "jira",
+      project: "PROJ",
+      title: "Billing dashboard",
+      priority: "high",
+    });
+    expect(result).toEqual(issue);
+  });
+
+  it("updates issue status", async () => {
+    const issue = { id: "issue-1", status: "in_progress" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => issue })));
+    await expect(updateIssueStatus("issue-1", "in_progress")).resolves.toEqual(issue);
+  });
+
+  it("assigns an issue", async () => {
+    const issue = { id: "issue-1", assignedTo: "swe-1" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => issue })));
+    await expect(assignIssue("issue-1", "swe-1")).resolves.toEqual(issue);
   });
 });

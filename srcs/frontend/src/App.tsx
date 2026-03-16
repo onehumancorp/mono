@@ -1,7 +1,10 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
+  connectIntegration,
+  disconnectIntegration,
   fetchDashboard,
   fetchDomains,
+  fetchIntegrations,
   fetchMCPTools,
   fireAgent,
   hireAgent,
@@ -12,13 +15,14 @@ import type {
   AgentRuntime,
   DashboardSnapshot,
   DomainInfo,
+  Integration,
   MCPTool,
   MeetingRoom,
   OrganizationMember,
 } from "./types";
 
 type LoadState = "idle" | "loading" | "ready" | "error";
-type NavSection = "overview" | "meetings" | "agents" | "cost" | "playbooks" | "settings";
+type NavSection = "overview" | "meetings" | "agents" | "cost" | "playbooks" | "integrations" | "settings";
 
 function formatCost(value: number): string {
   if (value === 0) return "$0.000000";
@@ -74,6 +78,7 @@ const ICONS: Record<string, string> = {
   agents: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 110 6 3 3 0 010-6zm-7 9a7 7 0 0114 0H2z"/><path d="M14.5 8a2.5 2.5 0 110 5 2.5 2.5 0 010-5zm3.5 9a5.5 5.5 0 00-7-5.33A5.48 5.48 0 0118 17h0z"/></svg>`,
   cost: `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979a1 1 0 001.715-1.029C12.279 4.784 11.232 4 10 4s-2.279.784-2.979 1.95c-.285.475-.507 1-.67 1.55H6a1 1 0 000 2h.013a9.135 9.135 0 000 1h-.013a1 1 0 100 2h.351c.163.55.385 1.075.67 1.55C7.721 15.216 8.768 16 10 16s2.279-.784 2.979-1.95a1 1 0 10-1.715-1.029c-.472.786-.96.979-1.264.979-.304 0-.792-.193-1.264-.979a4.265 4.265 0 01-.264-.521H10a1 1 0 100-2H8.017a7.36 7.36 0 010-1H10a1 1 0 100-2H8.472c.08-.185.167-.36.264-.521z" clip-rule="evenodd"/></svg>`,
   playbooks: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/></svg>`,
+  integrations: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 7H7v6h6V7z"/><path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"/></svg>`,
   settings: `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>`,
 };
 
@@ -207,6 +212,7 @@ export function App() {
   const [agentActionLoading, setAgentActionLoading] = useState(false);
   const [domains, setDomains] = useState<DomainInfo[]>([]);
   const [mcpTools, setMcpTools] = useState<MCPTool[]>([]);
+  const [integrationsList, setIntegrationsList] = useState<Integration[]>([]);
   const [selectedScenario, setSelectedScenario] = useState("launch-readiness");
 
   const [form, setForm] = useState({
@@ -264,6 +270,9 @@ export function App() {
     if (activeNav === "settings") {
       void fetchDomains().then(setDomains).catch(() => { });
       void fetchMCPTools().then(setMcpTools).catch(() => { });
+    }
+    if (activeNav === "integrations") {
+      void fetchIntegrations().then(setIntegrationsList).catch(() => { });
     }
   }, [activeNav]);
 
@@ -334,6 +343,7 @@ export function App() {
     { key: "agents", label: "Agents" },
     { key: "cost", label: "Cost" },
     { key: "playbooks", label: "Playbooks" },
+    { key: "integrations", label: "Integrations" },
     { key: "settings", label: "Settings" },
   ];
 
@@ -964,6 +974,197 @@ export function App() {
               {(snapshot?.organization.roleProfiles ?? []).length === 0 && (
                 <p className="empty-state">No role profiles defined for this domain.</p>
               )}
+            </div>
+          </>
+        )}
+
+        {/* ────────────────── Integrations ────────────────── */}
+        {activeNav === "integrations" && (
+          <>
+            <div className="page-header">
+              <div>
+                <h2 className="page-heading">Integrations</h2>
+                <p className="page-sub">
+                  Connect your AI agents to external services — chat platforms, git hosting, and issue trackers.
+                  All integrations follow the Model Context Protocol (MCP) for zero vendor lock-in.
+                </p>
+              </div>
+            </div>
+
+            {/* Chat Services */}
+            <div className="content-grid">
+              <article className="panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Chat Services</h2>
+                  <span className="chip chip--sm">human ↔ agent messaging</span>
+                </header>
+                <div className="panel-body">
+                  <p className="settings-desc">
+                    Route agent notifications, meeting summaries, and HITL approval requests to your team's chat platform.
+                  </p>
+                  <ul className="tool-list">
+                    {integrationsList
+                      .filter((i) => i.category === "chat")
+                      .map((integ) => (
+                        <li key={integ.id} className="tool-item">
+                          <div className="tool-item__header">
+                            <span className="tool-item__name">{integ.name}</span>
+                            <span className={`tool-badge tool-badge--${integ.status === "connected" ? "green" : "yellow"}`}>
+                              {integ.status}
+                            </span>
+                          </div>
+                          <p className="tool-item__desc">{integ.description}</p>
+                          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                            {integ.status !== "connected" ? (
+                              <button
+                                type="button"
+                                className="btn btn-primary btn--sm"
+                                onClick={() => {
+                                  void connectIntegration(integ.id).then((updated) => {
+                                    setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
+                                  });
+                                }}
+                              >
+                                Connect
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className="btn btn--sm"
+                                onClick={() => {
+                                  void disconnectIntegration(integ.id).then((updated) => {
+                                    setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
+                                  });
+                                }}
+                              >
+                                Disconnect
+                              </button>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    {integrationsList.filter((i) => i.category === "chat").length === 0 && (
+                      <p className="empty-state">Loading integrations…</p>
+                    )}
+                  </ul>
+                </div>
+              </article>
+
+              {/* Git Platforms */}
+              <article className="panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Git Platforms</h2>
+                  <span className="chip chip--sm">PR / MR automation</span>
+                </header>
+                <div className="panel-body">
+                  <p className="settings-desc">
+                    Allow SWE agents to open pull requests on GitHub, GitLab, or your self-hosted Gitea instance automatically.
+                  </p>
+                  <ul className="tool-list">
+                    {integrationsList
+                      .filter((i) => i.category === "git")
+                      .map((integ) => (
+                        <li key={integ.id} className="tool-item">
+                          <div className="tool-item__header">
+                            <span className="tool-item__name">{integ.name}</span>
+                            <span className={`tool-badge tool-badge--${integ.status === "connected" ? "green" : "yellow"}`}>
+                              {integ.status}
+                            </span>
+                          </div>
+                          <p className="tool-item__desc">{integ.description}</p>
+                          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                            {integ.status !== "connected" ? (
+                              <button
+                                type="button"
+                                className="btn btn-primary btn--sm"
+                                onClick={() => {
+                                  void connectIntegration(integ.id).then((updated) => {
+                                    setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
+                                  });
+                                }}
+                              >
+                                Connect
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className="btn btn--sm"
+                                onClick={() => {
+                                  void disconnectIntegration(integ.id).then((updated) => {
+                                    setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
+                                  });
+                                }}
+                              >
+                                Disconnect
+                              </button>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    {integrationsList.filter((i) => i.category === "git").length === 0 && (
+                      <p className="empty-state">Loading integrations…</p>
+                    )}
+                  </ul>
+                </div>
+              </article>
+
+              {/* Issue Trackers */}
+              <article className="panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Issue Trackers</h2>
+                  <span className="chip chip--sm">ticket automation</span>
+                </header>
+                <div className="panel-body">
+                  <p className="settings-desc">
+                    Let PM agents create and manage tickets in Jira, Plane, or GitHub Issues — keeping the backlog in sync automatically.
+                  </p>
+                  <ul className="tool-list">
+                    {integrationsList
+                      .filter((i) => i.category === "issues")
+                      .map((integ) => (
+                        <li key={integ.id} className="tool-item">
+                          <div className="tool-item__header">
+                            <span className="tool-item__name">{integ.name}</span>
+                            <span className={`tool-badge tool-badge--${integ.status === "connected" ? "green" : "yellow"}`}>
+                              {integ.status}
+                            </span>
+                          </div>
+                          <p className="tool-item__desc">{integ.description}</p>
+                          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                            {integ.status !== "connected" ? (
+                              <button
+                                type="button"
+                                className="btn btn-primary btn--sm"
+                                onClick={() => {
+                                  void connectIntegration(integ.id).then((updated) => {
+                                    setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
+                                  });
+                                }}
+                              >
+                                Connect
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className="btn btn--sm"
+                                onClick={() => {
+                                  void disconnectIntegration(integ.id).then((updated) => {
+                                    setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
+                                  });
+                                }}
+                              >
+                                Disconnect
+                              </button>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    {integrationsList.filter((i) => i.category === "issues").length === 0 && (
+                      <p className="empty-state">Loading integrations…</p>
+                    )}
+                  </ul>
+                </div>
+              </article>
             </div>
           </>
         )}

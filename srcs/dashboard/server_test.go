@@ -15,6 +15,7 @@ import (
 
 	"github.com/onehumancorp/mono/srcs/billing"
 	"github.com/onehumancorp/mono/srcs/domain"
+	"github.com/onehumancorp/mono/srcs/integrations"
 	"github.com/onehumancorp/mono/srcs/orchestration"
 )
 
@@ -39,7 +40,7 @@ func newTestServer(t *testing.T) (*Server, *httptest.Server) {
 		t.Fatalf("track returned error: %v", err)
 	}
 
-	app := &Server{org: org, hub: hub, tracker: tracker}
+	app := &Server{org: org, hub: hub, tracker: tracker, integReg: integrations.NewRegistry()}
 	server := httptest.NewServer(NewServer(org, hub, tracker))
 	return app, server
 }
@@ -1210,5 +1211,1024 @@ ids[p.ID] = true
 if p.Source != "builtin" {
 t.Fatalf("expected builtin source, got %q for %s", p.Source, p.ID)
 }
+}
+}
+
+// ── Integration API tests ─────────────────────────────────────────────────────
+
+func TestHandleIntegrationsGET(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/integrations")
+if err != nil {
+t.Fatalf("GET /api/integrations: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var list []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if len(list) == 0 {
+t.Fatal("expected non-empty integration list")
+}
+}
+
+func TestHandleIntegrationsByCategoryQuery(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+for _, cat := range []string{"chat", "git", "issues"} {
+resp, err := http.Get(server.URL + "/api/integrations?category=" + cat)
+if err != nil {
+t.Fatalf("GET /api/integrations?category=%s: %v", cat, err)
+}
+defer resp.Body.Close()
+var list []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+t.Fatalf("decode %s: %v", cat, err)
+}
+if len(list) == 0 {
+t.Errorf("expected integrations for category %q, got none", cat)
+}
+}
+}
+
+func TestHandleIntegrationsMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations", "application/json", strings.NewReader("{}"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIntegrationConnect(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := `{"integrationId":"slack","baseUrl":"https://hooks.slack.com/test"}`
+resp, err := http.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/integrations/connect: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var updated map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&updated); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if updated["status"] != "connected" {
+t.Errorf("expected status connected, got %v", updated["status"])
+}
+}
+
+func TestHandleIntegrationConnectMissingID(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(`{}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIntegrationConnectNotFound(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := `{"integrationId":"nonexistent"}`
+resp, err := http.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusNotFound {
+t.Fatalf("expected 404, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIntegrationConnectMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/integrations/connect")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIntegrationDisconnect(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// connect first
+body := `{"integrationId":"discord","baseUrl":"https://discord.com/api/webhooks/test"}`
+_, _ = http.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(body))
+
+resp, err := http.Post(server.URL+"/api/integrations/disconnect", "application/json", strings.NewReader(`{"integrationId":"discord"}`))
+if err != nil {
+t.Fatalf("POST /api/integrations/disconnect: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var updated map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&updated); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if updated["status"] != "disconnected" {
+t.Errorf("expected status disconnected, got %v", updated["status"])
+}
+}
+
+func TestHandleIntegrationDisconnectMissingID(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/disconnect", "application/json", strings.NewReader(`{}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIntegrationDisconnectNotFound(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/disconnect", "application/json", strings.NewReader(`{"integrationId":"nonexistent"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusNotFound {
+t.Fatalf("expected 404, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIntegrationDisconnectMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/integrations/disconnect")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+// ── Chat handler tests ────────────────────────────────────────────────────────
+
+func TestHandleChatSendAndList(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := `{"integrationId":"slack","channel":"#engineering","fromAgent":"swe-1","content":"PR ready for review"}`
+resp, err := http.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/integrations/chat/send: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var msg map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if msg["integrationId"] != "slack" {
+t.Errorf("expected integrationId slack, got %v", msg["integrationId"])
+}
+
+// Now list messages.
+listResp, err := http.Get(server.URL + "/api/integrations/chat/messages?integrationId=slack")
+if err != nil {
+t.Fatalf("GET chat messages: %v", err)
+}
+defer listResp.Body.Close()
+var msgs []map[string]any
+if err := json.NewDecoder(listResp.Body).Decode(&msgs); err != nil {
+t.Fatalf("decode list: %v", err)
+}
+if len(msgs) != 1 {
+t.Fatalf("expected 1 message, got %d", len(msgs))
+}
+}
+
+func TestHandleChatSendWithThread(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := `{"integrationId":"discord","channel":"general","fromAgent":"pm-1","content":"Meeting summary","threadId":"thread-42"}`
+resp, err := http.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var msg map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if msg["threadId"] != "thread-42" {
+t.Errorf("expected threadId thread-42, got %v", msg["threadId"])
+}
+}
+
+func TestHandleChatSendBadRequest(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Missing required fields.
+body := `{"integrationId":"slack"}`
+resp, err := http.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleChatSendMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/integrations/chat/send")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleChatMessagesMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/chat/messages", "application/json", strings.NewReader("{}"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleChatMessagesAllIntegrations(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Send to slack and discord.
+for _, integ := range []string{"slack", "discord"} {
+body := `{"integrationId":"` + integ + `","channel":"#gen","fromAgent":"swe-1","content":"hello"}`
+http.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body)) //nolint:errcheck
+}
+
+// List all (no filter).
+resp, err := http.Get(server.URL + "/api/integrations/chat/messages")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+var msgs []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&msgs); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if len(msgs) != 2 {
+t.Errorf("expected 2 messages, got %d", len(msgs))
+}
+}
+
+// ── Git PR handler tests ──────────────────────────────────────────────────────
+
+func TestHandlePRCreateAndList(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := `{"integrationId":"github","repository":"onehumancorp/core","title":"feat: billing","sourceBranch":"feature/billing","targetBranch":"main","createdBy":"swe-1"}`
+resp, err := http.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("POST pr/create: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var pr map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&pr); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if pr["status"] != "open" {
+t.Errorf("expected status open, got %v", pr["status"])
+}
+prID, _ := pr["id"].(string)
+
+// List PRs.
+listResp, err := http.Get(server.URL + "/api/integrations/git/prs?integrationId=github")
+if err != nil {
+t.Fatalf("GET prs: %v", err)
+}
+defer listResp.Body.Close()
+var prs []map[string]any
+if err := json.NewDecoder(listResp.Body).Decode(&prs); err != nil {
+t.Fatalf("decode list: %v", err)
+}
+if len(prs) != 1 {
+t.Fatalf("expected 1 PR, got %d", len(prs))
+}
+
+// Merge the PR.
+mergeBody := `{"prId":"` + prID + `"}`
+mergeResp, err := http.Post(server.URL+"/api/integrations/git/pr/merge", "application/json", strings.NewReader(mergeBody))
+if err != nil {
+t.Fatalf("POST pr/merge: %v", err)
+}
+defer mergeResp.Body.Close()
+if mergeResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(mergeResp.Body)
+t.Fatalf("expected 200, got %d: %s", mergeResp.StatusCode, b)
+}
+var merged map[string]any
+if err := json.NewDecoder(mergeResp.Body).Decode(&merged); err != nil {
+t.Fatalf("decode merged: %v", err)
+}
+if merged["status"] != "merged" {
+t.Errorf("expected merged status, got %v", merged["status"])
+}
+}
+
+func TestHandlePRClose(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := `{"integrationId":"github","repository":"repo","title":"title","sourceBranch":"feat","targetBranch":"main"}`
+resp, err := http.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+var pr map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&pr); err != nil {
+t.Fatalf("decode: %v", err)
+}
+prID, _ := pr["id"].(string)
+
+closeBody := `{"prId":"` + prID + `"}`
+closeResp, err := http.Post(server.URL+"/api/integrations/git/pr/close", "application/json", strings.NewReader(closeBody))
+if err != nil {
+t.Fatalf("POST pr/close: %v", err)
+}
+defer closeResp.Body.Close()
+if closeResp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", closeResp.StatusCode)
+}
+var closed map[string]any
+if err := json.NewDecoder(closeResp.Body).Decode(&closed); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if closed["status"] != "closed" {
+t.Errorf("expected closed, got %v", closed["status"])
+}
+}
+
+func TestHandlePRCreateBadRequest(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Missing required title.
+body := `{"integrationId":"github","repository":"repo","sourceBranch":"feat","targetBranch":"main"}`
+resp, err := http.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandlePRCreateMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/integrations/git/pr/create")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+func TestHandlePRMergeMissingID(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/git/pr/merge", "application/json", strings.NewReader(`{}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandlePRMergeNotFound(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/git/pr/merge", "application/json", strings.NewReader(`{"prId":"nonexistent"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandlePRMergeMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/integrations/git/pr/merge")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+func TestHandlePRCloseMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/integrations/git/pr/close")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+func TestHandlePRCloseMissingID(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/git/pr/close", "application/json", strings.NewReader(`{}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandlePRCloseNotFound(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/git/pr/close", "application/json", strings.NewReader(`{"prId":"nonexistent"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandlePRsMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/git/prs", "application/json", strings.NewReader("{}"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+func TestHandlePRsAllIntegrations(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Create PRs for github and gitlab.
+for _, integ := range []string{"github", "gitlab"} {
+body := `{"integrationId":"` + integ + `","repository":"repo","title":"title","sourceBranch":"feat","targetBranch":"main"}`
+http.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body)) //nolint:errcheck
+}
+
+// List all.
+resp, err := http.Get(server.URL + "/api/integrations/git/prs")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+var prs []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&prs); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if len(prs) != 2 {
+t.Errorf("expected 2 PRs, got %d", len(prs))
+}
+}
+
+// ── Issue tracker handler tests ───────────────────────────────────────────────
+
+func TestHandleIssueCreateAndList(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := `{"integrationId":"jira","project":"PROJ","title":"Implement billing dashboard","description":"As a CEO I want costs","createdBy":"pm-1","priority":"high","labels":["billing","dashboard"]}`
+resp, err := http.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("POST issues/create: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var issue map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&issue); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if issue["status"] != "open" {
+t.Errorf("expected status open, got %v", issue["status"])
+}
+if issue["priority"] != "high" {
+t.Errorf("expected priority high, got %v", issue["priority"])
+}
+issueID, _ := issue["id"].(string)
+
+// List issues.
+listResp, err := http.Get(server.URL + "/api/integrations/issues?integrationId=jira")
+if err != nil {
+t.Fatalf("GET issues: %v", err)
+}
+defer listResp.Body.Close()
+var issues []map[string]any
+if err := json.NewDecoder(listResp.Body).Decode(&issues); err != nil {
+t.Fatalf("decode list: %v", err)
+}
+if len(issues) != 1 {
+t.Fatalf("expected 1 issue, got %d", len(issues))
+}
+
+// Update status.
+statusBody := `{"issueId":"` + issueID + `","status":"in_progress"}`
+statusResp, err := http.Post(server.URL+"/api/integrations/issues/status", "application/json", strings.NewReader(statusBody))
+if err != nil {
+t.Fatalf("POST issues/status: %v", err)
+}
+defer statusResp.Body.Close()
+if statusResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(statusResp.Body)
+t.Fatalf("expected 200, got %d: %s", statusResp.StatusCode, b)
+}
+var updated map[string]any
+if err := json.NewDecoder(statusResp.Body).Decode(&updated); err != nil {
+t.Fatalf("decode updated: %v", err)
+}
+if updated["status"] != "in_progress" {
+t.Errorf("expected in_progress, got %v", updated["status"])
+}
+
+// Assign issue.
+assignBody := `{"issueId":"` + issueID + `","assignee":"swe-1"}`
+assignResp, err := http.Post(server.URL+"/api/integrations/issues/assign", "application/json", strings.NewReader(assignBody))
+if err != nil {
+t.Fatalf("POST issues/assign: %v", err)
+}
+defer assignResp.Body.Close()
+if assignResp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", assignResp.StatusCode)
+}
+var assigned map[string]any
+if err := json.NewDecoder(assignResp.Body).Decode(&assigned); err != nil {
+t.Fatalf("decode assigned: %v", err)
+}
+if assigned["assignedTo"] != "swe-1" {
+t.Errorf("expected assignedTo swe-1, got %v", assigned["assignedTo"])
+}
+}
+
+func TestHandleIssueCreateDefaultPriority(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := `{"integrationId":"plane","project":"BACKEND","title":"Fix bug"}`
+resp, err := http.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var issue map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&issue); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if issue["priority"] != "medium" {
+t.Errorf("expected default priority medium, got %v", issue["priority"])
+}
+}
+
+func TestHandleIssueCreateBadRequest(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Missing title.
+body := `{"integrationId":"jira","project":"PROJ"}`
+resp, err := http.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIssueCreateMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/integrations/issues/create")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIssueStatusMissingFields(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/issues/status", "application/json", strings.NewReader(`{"issueId":"x"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIssueStatusNotFound(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/issues/status", "application/json", strings.NewReader(`{"issueId":"nonexistent","status":"done"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusNotFound {
+t.Fatalf("expected 404, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIssueStatusMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/integrations/issues/status")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIssueAssignMissingFields(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/issues/assign", "application/json", strings.NewReader(`{"issueId":"x"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIssueAssignNotFound(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/issues/assign", "application/json", strings.NewReader(`{"issueId":"nonexistent","assignee":"swe-1"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusNotFound {
+t.Fatalf("expected 404, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIssueAssignMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/integrations/issues/assign")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIssuesMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/issues", "application/json", strings.NewReader("{}"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIssuesAllIntegrations(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+for _, integ := range []string{"jira", "plane"} {
+body := `{"integrationId":"` + integ + `","project":"PROJ","title":"issue"}`
+http.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body)) //nolint:errcheck
+}
+
+resp, err := http.Get(server.URL + "/api/integrations/issues")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+var issues []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&issues); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if len(issues) != 2 {
+t.Errorf("expected 2 issues, got %d", len(issues))
+}
+}
+
+func TestHandleIntegrationConnectInvalidJSON(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIntegrationDisconnectInvalidJSON(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/disconnect", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleChatSendInvalidJSON(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandlePRCreateInvalidJSON(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandlePRMergeInvalidJSON(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/git/pr/merge", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandlePRCloseInvalidJSON(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/git/pr/close", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIssueCreateInvalidJSON(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIssueStatusInvalidJSON(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/issues/status", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleIssueAssignInvalidJSON(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/integrations/issues/assign", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestIntegrationDirectHandlers(t *testing.T) {
+app, _ := newTestServer(t)
+
+// Test chat handler method not allowed via direct app.
+rec := httptest.NewRecorder()
+req := httptest.NewRequest(http.MethodPut, "/api/integrations/chat/send", nil)
+app.handleChatSend(rec, req)
+if rec.Code != http.StatusMethodNotAllowed {
+t.Errorf("expected 405 for PUT /chat/send, got %d", rec.Code)
+}
+
+// Test PR list method not allowed.
+rec = httptest.NewRecorder()
+req = httptest.NewRequest(http.MethodDelete, "/api/integrations/git/prs", nil)
+app.handlePullRequests(rec, req)
+if rec.Code != http.StatusMethodNotAllowed {
+t.Errorf("expected 405 for DELETE /git/prs, got %d", rec.Code)
+}
+
+// Test issue list method not allowed.
+rec = httptest.NewRecorder()
+req = httptest.NewRequest(http.MethodPut, "/api/integrations/issues", nil)
+app.handleIssues(rec, req)
+if rec.Code != http.StatusMethodNotAllowed {
+t.Errorf("expected 405 for PUT /issues, got %d", rec.Code)
+}
+}
+
+func TestIntegrationGitHubIssues(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := `{"integrationId":"github-issues","project":"onehumancorp/core","title":"Add test coverage"}`
+resp, err := http.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var issue map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&issue); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if issue["integrationId"] != "github-issues" {
+t.Errorf("expected integrationId github-issues, got %v", issue["integrationId"])
+}
+}
+
+func TestIntegrationGoogleChat(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+body := `{"integrationId":"google-chat","channel":"my-space","fromAgent":"pm-1","content":"Sprint complete"}`
+resp, err := http.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var msg map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if msg["integrationId"] != "google-chat" {
+t.Errorf("expected integrationId google-chat, got %v", msg["integrationId"])
 }
 }

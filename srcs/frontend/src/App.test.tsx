@@ -881,7 +881,11 @@ describe("App – form field coverage", () => {
     // The New Message form on the overview tab — change each field
     fireEvent.change(screen.getByDisplayValue("pm-1"), { target: { value: "ceo-2" } });
     fireEvent.change(screen.getByDisplayValue("swe-1"), { target: { value: "eng-2" } });
-    fireEvent.change(screen.getByDisplayValue("launch-readiness"), { target: { value: "mtg-x" } });
+    // The meetingId input and the meetings-room select both show "launch-readiness";
+    // use getAllByDisplayValue and pick the <input> element (last match).
+    const launchReadinessEls = screen.getAllByDisplayValue("launch-readiness");
+    const meetingIdInput = launchReadinessEls[launchReadinessEls.length - 1];
+    fireEvent.change(meetingIdInput, { target: { value: "mtg-x" } });
     fireEvent.change(screen.getByDisplayValue("task"), { target: { value: "decision" } });
     fireEvent.change(screen.getByDisplayValue("Review launch blockers and owner assignments"), {
       target: { value: "Updated content" },
@@ -1011,3 +1015,111 @@ describe("api – branch coverage", () => {
     expect(snap.updatedAt).not.toBe("undefined");
   });
 });  // closes api – branch coverage describe
+
+describe("App – integrations nav", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("renders integrations nav item", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    expect(screen.getByRole("button", { name: /integrations/i })).toBeInTheDocument();
+  });
+
+  it("shows integrations panel when navigating to Integrations", async () => {
+    const mockIntegrations = [
+      { id: "slack", name: "Slack", type: "slack", category: "chat", status: "disconnected", description: "Send via Slack", createdAt: "2026-01-01T00:00:00Z" },
+      { id: "github", name: "GitHub", type: "github", category: "git", status: "disconnected", description: "Open PRs on GitHub", createdAt: "2026-01-01T00:00:00Z" },
+      { id: "jira", name: "Jira", type: "jira", category: "issues", status: "disconnected", description: "Track in Jira", createdAt: "2026-01-01T00:00:00Z" },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(mockIntegrations);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Chat Services");
+    expect(screen.getByText("Chat Services")).toBeInTheDocument();
+    expect(screen.getByText("Git Platforms")).toBeInTheDocument();
+    expect(screen.getByText("Issue Trackers")).toBeInTheDocument();
+    expect(screen.getByText("Slack")).toBeInTheDocument();
+    expect(screen.getByText("GitHub")).toBeInTheDocument();
+    expect(screen.getByText("Jira")).toBeInTheDocument();
+  });
+
+  it("shows Connect button for disconnected integrations", async () => {
+    const mockIntegrations = [
+      { id: "slack", name: "Slack", type: "slack", category: "chat", status: "disconnected", description: "Send via Slack", createdAt: "2026-01-01T00:00:00Z" },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(mockIntegrations);
+      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[0], status: "connected" });
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Slack");
+
+    const connectBtns = screen.getAllByRole("button", { name: /connect/i });
+    expect(connectBtns.length).toBeGreaterThan(0);
+
+    // click connect for Slack
+    fireEvent.click(connectBtns[0]);
+    await screen.findByText(/disconnect/i);
+  });
+
+  it("shows Disconnect button for connected integrations", async () => {
+    const mockIntegrations = [
+      { id: "slack", name: "Slack", type: "slack", category: "chat", status: "connected", description: "Send via Slack", createdAt: "2026-01-01T00:00:00Z" },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(mockIntegrations);
+      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[0], status: "disconnected" });
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Slack");
+
+    const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+    expect(disconnectBtns.length).toBeGreaterThan(0);
+
+    fireEvent.click(disconnectBtns[0]);
+    await screen.findByRole("button", { name: /^connect$/i });
+  });
+
+  it("shows empty state when no integrations loaded yet", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson([]);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Chat Services");
+
+    const loadingStates = screen.getAllByText("Loading integrations…");
+    expect(loadingStates.length).toBeGreaterThan(0);
+  });
+});

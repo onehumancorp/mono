@@ -187,3 +187,63 @@ export type AnalyticsSummary = {
   activeHandoffs: number;
   tokenVelocity: number;
 };
+
+// ── External Integrations ─────────────────────────────────────────────────────
+
+export type IntegrationCategory = "chat" | "git" | "issues";
+export type IntegrationStatus = "connected" | "disconnected" | "error";
+
+export type Integration = {
+  id: string;
+  name: string;
+  type: string;
+  category: IntegrationCategory;
+  baseUrl?: string;
+  status: IntegrationStatus;
+  description?: string;
+  createdAt: string;
+};
+
+export type ChatMessage = {
+  id: string;
+  integrationId: string;
+  channel: string;
+  fromAgent: string;
+  content: string;
+  threadId?: string;
+  sentAt: string;
+};
+
+export type PullRequestStatus = "open" | "merged" | "closed";
+
+export type PullRequest = {
+  id: string;
+  integrationId: string;
+  repository: string;
+  title: string;
+  body: string;
+  sourceBranch: string;
+  targetBranch: string;
+  url: string;
+  createdByAgent: string;
+  status: PullRequestStatus;
+  createdAt: string;
+};
+
+export type IssueStatus = "open" | "in_progress" | "done" | "closed";
+export type IssuePriority = "low" | "medium" | "high" | "critical";
+
+export type Issue = {
+  id: string;
+  integrationId: string;
+  project: string;
+  title: string;
+  description: string;
+  priority: IssuePriority;
+  status: IssueStatus;
+  assignedTo?: string;
+  labels?: string[];
+  createdByAgent: string;
+  url: string;
+  createdAt: string;
+};

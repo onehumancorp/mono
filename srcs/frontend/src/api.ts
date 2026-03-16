@@ -251,3 +251,90 @@ export function fetchMarketplace(): Promise<MarketplaceItem[]> {
 export function fetchAnalytics(): Promise<AnalyticsSummary> {
   return getJSON<AnalyticsSummary>("/api/analytics");
 }
+
+// ── External Integrations ─────────────────────────────────────────────────────
+
+import type {
+  ChatMessage,
+  Integration,
+  Issue,
+  PullRequest,
+} from "./types";
+
+export function fetchIntegrations(category?: string): Promise<Integration[]> {
+  const q = category ? `?category=${category}` : "";
+  return getJSON<Integration[]>(`/api/integrations${q}`);
+}
+
+export function connectIntegration(integrationId: string, baseUrl?: string): Promise<Integration> {
+  return postJSON<Integration>("/api/integrations/connect", { integrationId, baseUrl });
+}
+
+export function disconnectIntegration(integrationId: string): Promise<Integration> {
+  return postJSON<Integration>("/api/integrations/disconnect", { integrationId });
+}
+
+export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]> {
+  const q = integrationId ? `?integrationId=${integrationId}` : "";
+  return getJSON<ChatMessage[]>(`/api/integrations/chat/messages${q}`);
+}
+
+export function sendChatMessage(body: {
+  integrationId: string;
+  channel: string;
+  fromAgent: string;
+  content: string;
+  threadId?: string;
+}): Promise<ChatMessage> {
+  return postJSON<ChatMessage>("/api/integrations/chat/send", body);
+}
+
+export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]> {
+  const q = integrationId ? `?integrationId=${integrationId}` : "";
+  return getJSON<PullRequest[]>(`/api/integrations/git/prs${q}`);
+}
+
+export function createPullRequest(body: {
+  integrationId: string;
+  repository: string;
+  title: string;
+  body?: string;
+  sourceBranch: string;
+  targetBranch: string;
+  createdBy?: string;
+}): Promise<PullRequest> {
+  return postJSON<PullRequest>("/api/integrations/git/pr/create", body);
+}
+
+export function mergePullRequest(prId: string): Promise<PullRequest> {
+  return postJSON<PullRequest>("/api/integrations/git/pr/merge", { prId });
+}
+
+export function closePullRequest(prId: string): Promise<PullRequest> {
+  return postJSON<PullRequest>("/api/integrations/git/pr/close", { prId });
+}
+
+export function fetchIssues(integrationId?: string): Promise<Issue[]> {
+  const q = integrationId ? `?integrationId=${integrationId}` : "";
+  return getJSON<Issue[]>(`/api/integrations/issues${q}`);
+}
+
+export function createIssue(body: {
+  integrationId: string;
+  project: string;
+  title: string;
+  description?: string;
+  createdBy?: string;
+  priority?: string;
+  labels?: string[];
+}): Promise<Issue> {
+  return postJSON<Issue>("/api/integrations/issues/create", body);
+}
+
+export function updateIssueStatus(issueId: string, status: string): Promise<Issue> {
+  return postJSON<Issue>("/api/integrations/issues/status", { issueId, status });
+}
+
+export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
+  return postJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
+}
