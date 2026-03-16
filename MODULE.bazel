@@ -4,6 +4,14 @@ module(
 )
 
 bazel_dep(name = "rules_go", version = "0.60.0")
+archive_override(
+    module_name = "rules_go",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazel-contrib/rules_go/releases/download/v0.60.0/rules_go-v0.60.0.zip",
+        "https://github.com/bazel-contrib/rules_go/releases/download/v0.60.0/rules_go-v0.60.0.zip",
+    ],
+    integrity = "sha256-htPcj1nSU1JPkzqvLzwFiWywtgX8NbRgwLSwOZlhJMY=",
+)
 bazel_dep(name = "gazelle", version = "0.47.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "platforms", version = "1.0.0")
