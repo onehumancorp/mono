@@ -7,24 +7,24 @@
 Small businesses currently face numerous challenges in today's competitive online landscape. Based on market research, here are the top pain points and how One Human Corp directly addresses them:
 
 1. **Wearing Too Many Hats (Time Management Struggles)**
-   - *Pain Point*: Small business owners often juggle numerous responsibilities, acting as the CEO, accountant, marketer, and IT department all at once. This leads to burnout and a lack of focus on strategic growth.
+   - *Pain Point*: Small business owners often juggle numerous responsibilities, acting as the CEO, accountant, marketer, customer support, and IT department all at once. This leads to burnout and a lack of focus on strategic growth.
    - *Solution*: One Human Corp allows the CEO to delegate tasks to specialized AI agents. The platform automates mundane tasks and orchestrates complex workflows autonomously, allowing the human CEO to focus entirely on high-level strategy and vision instead of day-to-day operations.
 
-2. **Marketing Without a Map & Attracting Customers**
-   - *Pain Point*: Many small businesses struggle with online marketing, customer acquisition, and having a website that generates leads but doesn't convert. There's often a lack of a cohesive digital growth strategy.
-   - *Solution*: Dedicated Marketing, Sales, and UI/UX AI agents continuously analyze trends, generate leads, design high-converting landing pages, and execute targeted marketing campaigns 24/7.
+2. **Accounting Challenges & Overcoming Growing Pains**
+   - *Pain Point*: As a business scales, entry-level accounting software becomes insufficient. Small business owners struggle to manage finances, track inventory, reconcile accounts, and deal with billing operations without dedicated accounting staff.
+   - *Solution*: AI Accounting and Finance Directors continuously track revenue, predict cash flow, reconcile transactions, and manage invoicing to eliminate accounting growing pains.
 
-3. **Financial Strain & Cash Flow Management**
-   - *Pain Point*: Small businesses struggle with tight budgets, unpredictable markets, high overhead, and managing cash flow. Investing in growth or hiring talent is often cost-prohibitive.
-   - *Solution*: One Human Corp drastically reduces overhead by utilizing AI agents for roles that traditionally require full-time salaries. You can "hire" exactly the talent you need, when you need it, providing enterprise-grade output on a startup budget.
+3. **Marketing Without a Map & Attracting Customers**
+   - *Pain Point*: Many small businesses struggle with online marketing, customer acquisition, defining the correct target market, and achieving fast-enough growth. Startups often lack a cohesive digital strategy and struggle to find a product-market fit.
+   - *Solution*: Dedicated Marketing, Sales, and UI/UX AI agents continuously analyze trends, generate leads, design high-converting landing pages, identify product-market fit based on user feedback, and execute targeted marketing campaigns 24/7.
 
-4. **Struggling to Access Meaningful Insights**
-   - *Pain Point*: Business owners need detailed insights into their operations to make informed decisions, but generating reports is often manual and time-consuming.
-   - *Solution*: With an entire C-suite of AI advisors and directors at their disposal, the CEO receives continuous real-time data-driven insights and strategic recommendations to stay on course.
+4. **Lack of Strategic IT Planning & Security**
+   - *Pain Point*: Due to a lack of resources, small businesses often react to tech and data issues rather than having a strategic IT roadmap. Additionally, managing cybersecurity risks, scaling IT infrastructure, and data backup/recovery poses a significant challenge.
+   - *Solution*: An entire engineering and security department (Engineering Directors, DevOps, Security Engineers) continuously manages the "Architecture as Code," ensures secure deployments, handles automatic backups, and mitigates vulnerabilities natively within the framework.
 
 5. **Talent Shortage & Recruitment**
-   - *Pain Point*: Finding, hiring, and retaining skilled employees is difficult, time-consuming, and expensive.
-   - *Solution*: On-demand AI employees across various domains provide immediate access to top-tier "talent" without recruitment costs, interviews, or delays.
+   - *Pain Point*: Finding, hiring, and retaining skilled employees is difficult, time-consuming, and expensive. Building a cohesive team to launch a SaaS product or service takes immense capital and effort.
+   - *Solution*: On-demand AI employees across various domains provide immediate access to top-tier "talent" without recruitment costs, interviews, or delays. The CEO can spin up an entire product development team in minutes.
 
 ## Core Concepts & Framework
 The architecture of One Human Corp is built upon foundational layers, utilizing industry-standard and cutting-edge technologies to ensure scalability, security, and extensibility. Let's explore these concepts using our initial rollout domain: **The Software Company**.
@@ -47,6 +47,8 @@ The architecture of One Human Corp is built upon foundational layers, utilizing 
    - **QA Tester**: Develops and executes test plans to ensure product quality.
    - **UI/UX Designer**: Creates wireframes, prototypes, and user interfaces.
    - **DevOps Engineer**: Manages CI/CD pipelines, cloud infrastructure, and deployment processes.
+   - **Sales Representative**: Manages outbound and inbound leads, negotiates contracts, and drives revenue.
+   - **Customer Support Specialist**: Handles client inquiries, troubleshoots issues, and ensures high customer satisfaction.
 3. **Organization**: The hierarchical structure defining reporting lines, communication flows, and management. This dictates how the company operates.
    - *Example Layout*: An Engineering Director manages 3 SWEs, 1 QA Tester, and 1 Security Engineer. The Director reports directly to the CEO. Product Managers collaborate cross-functionally with Engineering and Marketing.
 4. **User as CEO**: The human user is always at the top of the hierarchy (CEO). They define the issues, set the company's direction, and oversee operations.
@@ -54,41 +56,45 @@ The architecture of One Human Corp is built upon foundational layers, utilizing 
 ## Workflow Execution & Collaboration
 When the CEO defines a high-level issue, goal, or product requirement, the entire AI organization is mobilized collaboratively to work towards the goal:
 
-- **Virtual Meeting Rooms**: Multiple agents of each role gather in virtual meeting rooms to discuss strategy. For example, a "Product Kickoff Meeting" might include the PM, UI/UX Designer, and Engineering Director. The CEO can drop in to read transcripts, guide the conversation, or observe the discussion in real-time.
-- **Scoping & Design**: PMs and UI/UX Designers discuss requirements, define scopes, and create detailed product specs collaboratively.
-- **Implementation**: SWEs and Security Engineers receive the finalized specs, write the code, and ensure security compliance. If a Security Engineer flags an issue, they discuss it directly with the SWE to resolve it.
-- **Continuous Alignment**: Agents autonomously iterate on feedback, cross-communicate across departments, and resolve blockers, working together to deliver the final product to the CEO.
+- **Virtual Meeting Rooms**: Multiple agents of each role gather in virtual meeting rooms to discuss strategy. For example, a "Product Kickoff Meeting" might include the PM, UI/UX Designer, and Engineering Director. The CEO can drop in to read transcripts, guide the conversation, or observe the discussion in real-time. This is where multiple agents of each role discuss with each other to define scopes, design products, and plan implementation. Each agent brings its specific context (e.g., PM brings market needs, SWE brings technical constraints).
+- **Scoping & Design**: Within these meeting rooms, PMs and UI/UX Designers discuss requirements, define the product scopes based on CEO's input, and create detailed product specs and designs collaboratively. They output PRDs (Product Requirement Documents) and wireframes.
+- **Implementation**: SWEs, DevOps, and Security Engineers receive the finalized specs from the design phase. They spin up implementation "rooms" to write the code, set up deployment pipelines, and ensure security compliance. If a Security Engineer flags an issue, they discuss it directly with the SWE in a virtual room to resolve it before code is merged.
+- **Continuous Alignment**: Agents autonomously iterate on feedback, cross-communicate across departments, and resolve blockers, working together to deliver the final product to the CEO. If an implementation hurdle changes the scope, the SWE can request a meeting with the PM to negotiate the feature list.
 
 ---
 
 ## Technical & Product Roadmap
 
-### Phase 1: Foundation and The "Software Company" Prototype
-- **Core Orchestration Engine**: Build the central AI agent communication framework and LLM routing layer.
-- **Agent Interaction Protocol**: Implement asynchronous pub/sub architecture for inter-agent communication, allowing seamless data exchange and collaboration.
-- **Cost Estimation & Billing Engine**: Implement the foundational logic for tracking LLM token usage and pricing.
-- **Virtual Meeting Rooms**: Develop the infrastructure for multi-agent discussions, allowing agents to hold simulated "meetings" and exchange context.
+### Phase 1: Foundation and The "Software Company" Prototype (Q1-Q2)
+*Goal: Establish the core orchestration capability where a human CEO can define a software product idea, and AI agents collaborate to design, scope, and begin implementation.*
+- **Core Orchestration Engine**: Build the central AI agent communication framework and LLM routing layer based on the Model Context Protocol (MCP).
+- **Agent Interaction Protocol**: Implement asynchronous pub/sub architecture for inter-agent communication, allowing seamless data exchange, defining scopes, and collaboration.
+- **Cost Estimation & Billing Engine**: Implement the foundational logic for tracking LLM token usage and dynamic model-aware pricing.
+- **Virtual Meeting Rooms (v1)**: Develop the infrastructure for synchronous multi-agent discussions. This allows an Engineering Director, PM, and SWE to gather in a virtual room, share context, and debate implementation details based on the CEO's goal.
 - **Domain #1 - Software Company**:
-  - Define the default organizational schema (CEO -> Directors -> PMs / SWEs / etc.).
-  - Implement base prompts, context management, and capabilities for the core Software Company roles.
-- **CEO Dashboard (V1)**: Interface for the human user to define goals, view organizational charts, and monitor active virtual meetings and project statuses.
+  - Define the default organizational schema (CEO -> Directors -> PMs / SWEs / Marketing / Sales).
+  - Implement role-specific behavior, context management, and initial capabilities for the core Software Company.
+- **CEO Dashboard (V1)**: Interface for the human user to define issues, view the org chart, oversee virtual meeting transcripts in real-time, and manage the overall product roadmap.
 
-### Phase 2: Collaboration & Tool Integration
-- **External Tool Aggregation**: Implement standard protocols to give agents access to the tools they need to do their jobs (e.g., GitHub for SWEs, Jira for PMs, Figma APIs for Designers, AWS/Vercel for deployment).
-- **Unified Identity Management**: Integrate unified identity issuance to provide secure, verifiable identities for both humans and AI agents.
-- **Infrastructure as Code (IaC)**: Transition organizational structure management to Infrastructure as Code using a custom K8s Operator.
-- **Advanced Agent Interactions**: Enable complex conflict resolution among agents (e.g., Security Engineer flagging a SWE's pull request, leading to a back-and-forth discussion and resolution without CEO intervention).
+### Phase 2: Implementation & Tool Aggregation (Q3)
+*Goal: Connect the AI workforce to external tools so they can actively implement the designs, ship code, run marketing campaigns, and manage accounting.*
+- **External Tool Aggregation via MCP**: Implement standard protocols to give agents read/write access to necessary tools (e.g., GitHub for SWEs, Jira for PMs, Figma for Designers, AWS for DevOps, QuickBooks for Finance Directors).
+- **Automated Implementation Pipelines**: SWE and DevOps agents autonomously trigger CI/CD pipelines, deploy test environments, and present the CEO with a live preview link for approval.
+- **Advanced Agent Interactions & Conflict Resolution**: Enable agents to flag issues (e.g., Security Agent finds a bug in SWE's code) and automatically spin up a dedicated virtual meeting room to resolve the conflict without CEO intervention.
+- **Hybrid Identity Management**: Integrate unified identity issuance (SPIFFE/SPIRE) to provide secure, verifiable identities for both humans and AI agents.
 
-### Phase 3: Extensibility & Expansion
-- **Extensible Skill Import Framework**: Create the developer API and user interface allowing users to easily upload custom "Skill Packs," new tools, or entirely new "Domain Knowledge" modules via JSON/YAML or natural language.
-- **New Domains**: Introduce out-of-the-box templates for other industries, such as a "Digital Marketing Agency" or "Accounting Firm."
-- **Dynamic Reorganization**: Allow the CEO to "hire" or "fire" AI agents, dynamically restructuring the org chart and team sizes to meet current project demands.
-- **Market Launch**: Public beta targeting solopreneurs and small business owners struggling with the pain points identified in our market research.
+### Phase 3: The Extensibility Framework & New Domains (Q4)
+*Goal: Evolve the platform from a hardcoded "Software Company" into a flexible framework where users can import any knowledge, skill, or domain to tackle any market.*
+- **Extensible Skill Import Framework**: Build the core capability for a user to define custom domains. A CEO can upload a JSON/YAML "Skill Pack" or describe the desired business area in natural language (e.g., "I want to start a Legal Consulting firm").
+- **Dynamic Organization Generation**: Based on the imported domain knowledge, the system automatically suggests the required roles, hierarchical layout, and tools needed to operate in that specific industry.
+- **"Hire/Fire" UI**: A dynamic control panel for the CEO to scale departments up or down instantly. If customer support tickets spike, the CEO can allocate more compute to spin up 5 new Customer Support Specialist agents.
+- **New Out-of-the-Box Templates**: Launch templates for "Digital Marketing Agency," "Accounting Firm," and "E-commerce Operations."
 
-### Phase 4: Scaling to Enterprise AI Operations
-- **Advanced Autonomous Execution**: Agents become capable of self-healing workflows, long-term background processing, and proactive issue identification without daily CEO input.
-- **Marketplace**: Launch a community marketplace for users to buy, sell, and share specialized agents, organizational templates, and custom tool integrations.
-- **Real-time Analytics**: Provide the CEO with deep, actionable insights into the performance, cost-efficiency, and output of their AI organization.
+### Phase 4: Scaling, Marketplace, and Enterprise Operations (Future)
+*Goal: Create a thriving ecosystem of plug-and-play AI talent and tools, fully resolving all small business pain points at a massive scale.*
+- **Advanced Autonomous Execution**: Agents become capable of self-healing workflows, analyzing long-term market trends, proactively identifying issues, and suggesting strategic pivots without waiting for a daily prompt from the CEO.
+- **The "One Human Corp" Marketplace**: Launch a community-driven marketplace. Users can buy, sell, and share highly specialized agents (e.g., a "TikTok Virality Expert Agent"), custom organizational templates, and unique tool integrations.
+- **Deep Analytics & Real-Time Auditing**: Provide the CEO with real-time financial tracking, token burn-rate forecasting, and deep actionable insights, completely eliminating the "Lack of Insights" pain point.
 ## One Human Corp: Cloud-Native Hybrid Architecture as Code
 
 This architecture defines the "Hybrid Agentic OS"—a framework where organizational structures, roles, and tool integrations are managed as Infrastructure as Code (IaC). The system is designed to run on a Kubernetes (K8s) cluster, allowing a human CEO to manage an "Alphabet-style" conglomerate. It supports Human-Agent Hybrid Teams, where any role can be filled by a human or an AI agent, and every tool integration follows a standardized interface to ensure zero vendor lock-in.
