@@ -264,7 +264,7 @@ func (r *Registry) SendChatMessage(integrationID, channel, fromAgent, content, t
 	}
 
 	msg := ChatMessage{
-		ID:            integrationID + "-msg-" + now.UTC().Format("20060102150405.000000000"),
+		ID:            generateID(integrationID+"-msg", now),
 		IntegrationID: integrationID,
 		Channel:       channel,
 		FromAgent:     fromAgent,
@@ -316,7 +316,7 @@ func (r *Registry) CreatePullRequest(integrationID, repo, title, body, source, t
 		return PullRequest{}, errors.New("sourceBranch and targetBranch are required")
 	}
 
-	prID := integrationID + "-pr-" + now.UTC().Format("20060102150405.000000000")
+	prID := generateID(integrationID+"-pr", now)
 	pr := PullRequest{
 		ID:             prID,
 		IntegrationID:  integrationID,
@@ -408,7 +408,7 @@ func (r *Registry) CreateIssue(integrationID, project, title, description, creat
 		priority = IssuePriorityMedium
 	}
 
-	issueID := integrationID + "-issue-" + now.UTC().Format("20060102150405.000000000")
+	issueID := generateID(integrationID+"-issue", now)
 	labelsCopy := make([]string, len(labels))
 	copy(labelsCopy, labels)
 	issue := Issue{
@@ -480,6 +480,11 @@ func (r *Registry) findIntegration(id string) (Integration, bool) {
 		}
 	}
 	return Integration{}, false
+}
+
+// generateID produces a namespaced, time-stamped identifier for an activity record.
+func generateID(prefix string, now time.Time) string {
+	return prefix + "-" + now.UTC().Format("20060102150405.000000000")
 }
 
 // defaultIntegrations returns the built-in set of supported external services,
