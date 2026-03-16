@@ -11,7 +11,7 @@ import (
 var (
 	newServerForMain = server.New
 	listenForMain    = http.ListenAndServe
-	fatalForMain     = func(v ...any) { log.Fatal(v...) }
+	fatalForMain     = log.Fatal
 )
 
 func main() {

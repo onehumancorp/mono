@@ -2232,3 +2232,563 @@ if msg["integrationId"] != "google-chat" {
 t.Errorf("expected integrationId google-chat, got %v", msg["integrationId"])
 }
 }
+
+// ── Additional coverage: handleDevSeed ───────────────────────────────────────
+
+func TestHandleDevSeedMethodNotAllowed(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/dev/seed")
+if err != nil {
+t.Fatalf("GET /api/dev/seed error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleDevSeedInvalidJSON(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Post(server.URL+"/api/dev/seed", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
+}
+
+func TestHandleDevSeedDefaultScenario(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// An empty scenario string should default to "launch-readiness".
+resp, err := http.Post(server.URL+"/api/dev/seed", "application/json", strings.NewReader(`{"scenario":""}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+}
+
+// ── Additional coverage: handleHireAgent / handleFireAgent ────────────────────
+
+func TestHandleHireAgentInvalidJSON(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/agents/hire", strings.NewReader("not-json"))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleHireAgent(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", rec.Code)
+}
+}
+
+func TestHandleFireAgentInvalidJSON(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/agents/fire", strings.NewReader("not-json"))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleFireAgent(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", rec.Code)
+}
+}
+
+// ── Additional coverage: handleApprovals ─────────────────────────────────────
+
+func TestHandleApprovalsMethodNotAllowed(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/approvals", bytes.NewBufferString("{}"))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleApprovals(rec, req)
+if rec.Code != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", rec.Code)
+}
+}
+
+// ── Additional coverage: handleApprovalRequest ───────────────────────────────
+
+func TestHandleApprovalRequestMethodNotAllowed(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodGet, "/api/approvals/request", nil)
+rec := httptest.NewRecorder()
+app.handleApprovalRequest(rec, req)
+if rec.Code != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", rec.Code)
+}
+}
+
+func TestHandleApprovalRequestInvalidJSON(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/approvals/request", strings.NewReader("not-json"))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleApprovalRequest(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", rec.Code)
+}
+}
+
+func TestHandleApprovalRequestAutoRiskLevelHigh(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// estimatedCostUsd between 100 and 500 → auto "high" risk.
+body := `{"agentId":"swe-1","action":"deploy-staging","estimatedCostUsd":200}`
+resp, err := http.Post(server.URL+"/api/approvals/request", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var approval ApprovalRequest
+if err := json.NewDecoder(resp.Body).Decode(&approval); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if approval.RiskLevel != "high" {
+t.Errorf("expected risk level 'high', got %q", approval.RiskLevel)
+}
+}
+
+func TestHandleApprovalRequestAutoRiskLevelMedium(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// estimatedCostUsd <= 100 → auto "medium" risk.
+body := `{"agentId":"pm-1","action":"send-email","estimatedCostUsd":5}`
+resp, err := http.Post(server.URL+"/api/approvals/request", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var approval ApprovalRequest
+if err := json.NewDecoder(resp.Body).Decode(&approval); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if approval.RiskLevel != "medium" {
+t.Errorf("expected risk level 'medium', got %q", approval.RiskLevel)
+}
+}
+
+// ── Additional coverage: handleApprovalDecide ────────────────────────────────
+
+func TestHandleApprovalDecideMethodNotAllowed(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodGet, "/api/approvals/decide", nil)
+rec := httptest.NewRecorder()
+app.handleApprovalDecide(rec, req)
+if rec.Code != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", rec.Code)
+}
+}
+
+func TestHandleApprovalDecideInvalidJSON(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/approvals/decide", strings.NewReader("not-json"))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleApprovalDecide(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", rec.Code)
+}
+}
+
+func TestHandleApprovalDecideMissingFields(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/approvals/decide", strings.NewReader(`{"approvalId":""}`))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleApprovalDecide(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", rec.Code)
+}
+}
+
+func TestHandleApprovalDecideRejectDecision(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Create an approval first.
+createBody := `{"agentId":"swe-1","action":"delete-records","estimatedCostUsd":1000}`
+createResp, err := http.Post(server.URL+"/api/approvals/request", "application/json", strings.NewReader(createBody))
+if err != nil {
+t.Fatalf("create: %v", err)
+}
+defer createResp.Body.Close()
+var approval ApprovalRequest
+if err := json.NewDecoder(createResp.Body).Decode(&approval); err != nil {
+t.Fatalf("decode create: %v", err)
+}
+
+// Reject it.
+decideBody := `{"approvalId":"` + approval.ID + `","decision":"reject","decidedBy":"ceo"}`
+decideResp, err := http.Post(server.URL+"/api/approvals/decide", "application/json", strings.NewReader(decideBody))
+if err != nil {
+t.Fatalf("decide: %v", err)
+}
+defer decideResp.Body.Close()
+if decideResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(decideResp.Body)
+t.Fatalf("expected 200, got %d: %s", decideResp.StatusCode, b)
+}
+var list []ApprovalRequest
+if err := json.NewDecoder(decideResp.Body).Decode(&list); err != nil {
+t.Fatalf("decode list: %v", err)
+}
+if len(list) == 0 || list[0].Status != ApprovalStatusRejected {
+t.Fatalf("expected rejected status in list: %+v", list)
+}
+}
+
+func TestHandleApprovalDecideInvalidDecision(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Create an approval first.
+createBody := `{"agentId":"swe-1","action":"do-something"}`
+createResp, err := http.Post(server.URL+"/api/approvals/request", "application/json", strings.NewReader(createBody))
+if err != nil {
+t.Fatalf("create: %v", err)
+}
+defer createResp.Body.Close()
+var approval ApprovalRequest
+if err := json.NewDecoder(createResp.Body).Decode(&approval); err != nil {
+t.Fatalf("decode: %v", err)
+}
+
+// Use invalid decision.
+decideBody := `{"approvalId":"` + approval.ID + `","decision":"maybe"}`
+decideResp, err := http.Post(server.URL+"/api/approvals/decide", "application/json", strings.NewReader(decideBody))
+if err != nil {
+t.Fatalf("decide: %v", err)
+}
+defer decideResp.Body.Close()
+if decideResp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", decideResp.StatusCode)
+}
+}
+
+// ── Additional coverage: handleHandoffs ──────────────────────────────────────
+
+func TestHandleHandoffsMethodNotAllowed(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodDelete, "/api/handoffs", nil)
+rec := httptest.NewRecorder()
+app.handleHandoffs(rec, req)
+if rec.Code != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", rec.Code)
+}
+}
+
+func TestHandleHandoffsPostInvalidJSON(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/handoffs", strings.NewReader("not-json"))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleHandoffs(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", rec.Code)
+}
+}
+
+// ── Additional coverage: handleSkillImport ───────────────────────────────────
+
+func TestHandleSkillImportMethodNotAllowed(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodGet, "/api/skills/import", nil)
+rec := httptest.NewRecorder()
+app.handleSkillImport(rec, req)
+if rec.Code != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", rec.Code)
+}
+}
+
+func TestHandleSkillImportInvalidJSON(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/skills/import", strings.NewReader("not-json"))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleSkillImport(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", rec.Code)
+}
+}
+
+func TestHandleSkillImportDefaultSource(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// No source provided → defaults to "custom".
+body := `{"name":"My Skill Pack","domain":"software_company","description":"Test pack"}`
+resp, err := http.Post(server.URL+"/api/skills/import", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var pack SkillPack
+if err := json.NewDecoder(resp.Body).Decode(&pack); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if pack.Source != "custom" {
+t.Errorf("expected source 'custom', got %q", pack.Source)
+}
+}
+
+// ── Additional coverage: handleSnapshotCreate ────────────────────────────────
+
+func TestHandleSnapshotCreateMethodNotAllowed(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodGet, "/api/snapshots/create", nil)
+rec := httptest.NewRecorder()
+app.handleSnapshotCreate(rec, req)
+if rec.Code != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", rec.Code)
+}
+}
+
+func TestHandleSnapshotCreateInvalidJSON(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/snapshots/create", strings.NewReader("not-json"))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleSnapshotCreate(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", rec.Code)
+}
+}
+
+func TestHandleSnapshotCreateDefaultLabel(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// No label → auto-generated label.
+resp, err := http.Post(server.URL+"/api/snapshots/create", "application/json", strings.NewReader(`{}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var snap OrgSnapshot
+if err := json.NewDecoder(resp.Body).Decode(&snap); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if snap.Label == "" {
+t.Errorf("expected auto-generated label, got empty string")
+}
+}
+
+// ── Additional coverage: handleSnapshotRestore ───────────────────────────────
+
+func TestHandleSnapshotRestoreMethodNotAllowed(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodGet, "/api/snapshots/restore", nil)
+rec := httptest.NewRecorder()
+app.handleSnapshotRestore(rec, req)
+if rec.Code != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", rec.Code)
+}
+}
+
+func TestHandleSnapshotRestoreInvalidJSON(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/snapshots/restore", strings.NewReader("not-json"))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleSnapshotRestore(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", rec.Code)
+}
+}
+
+func TestHandleSnapshotRestoreMissingSnapshotID(t *testing.T) {
+app, _ := newTestServer(t)
+
+req := httptest.NewRequest(http.MethodPost, "/api/snapshots/restore", strings.NewReader(`{}`))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleSnapshotRestore(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", rec.Code)
+}
+}
+
+func TestHandleSnapshotRestoreUnsupportedDomain(t *testing.T) {
+app, _ := newTestServer(t)
+
+// Inject a snapshot with an unsupported domain directly.
+app.snapshots = append(app.snapshots, OrgSnapshot{
+ID:     "bad-snap-1",
+Label:  "Bad Snapshot",
+OrgID:  app.org.ID,
+Domain: "unsupported_domain",
+})
+
+req := httptest.NewRequest(http.MethodPost, "/api/snapshots/restore", strings.NewReader(`{"snapshotId":"bad-snap-1"}`))
+req.Header.Set("Content-Type", "application/json")
+rec := httptest.NewRecorder()
+app.handleSnapshotRestore(rec, req)
+if rec.Code != http.StatusBadRequest {
+t.Fatalf("expected 400 for unsupported domain, got %d", rec.Code)
+}
+}
+
+// ── Additional coverage: handleAnalytics ─────────────────────────────────────
+
+func TestHandleAnalyticsWithApprovalHandoffAndTranscript(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Create a pending approval.
+http.Post(server.URL+"/api/approvals/request", "application/json", //nolint:errcheck
+strings.NewReader(`{"agentId":"pm-1","action":"deploy","estimatedCostUsd":50}`))
+
+// Create a pending handoff.
+http.Post(server.URL+"/api/handoffs", "application/json", //nolint:errcheck
+strings.NewReader(`{"fromAgentId":"swe-1","intent":"need help with deployment"}`))
+
+// Publish a message to the meeting so transcript is non-empty.
+form := url.Values{
+"fromAgent":   {"pm-1"},
+"toAgent":     {"swe-1"},
+"meetingId":   {"kickoff"},
+"messageType": {"task"},
+"content":     {"analytics test message"},
+}
+resp, err := http.PostForm(server.URL+"/api/messages", form)
+if err != nil {
+t.Fatalf("send message: %v", err)
+}
+resp.Body.Close()
+
+// Now fetch analytics.
+analyticsResp, err := http.Get(server.URL + "/api/analytics")
+if err != nil {
+t.Fatalf("GET /api/analytics error: %v", err)
+}
+defer analyticsResp.Body.Close()
+if analyticsResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(analyticsResp.Body)
+t.Fatalf("expected 200, got %d: %s", analyticsResp.StatusCode, b)
+}
+var summary AnalyticsSummary
+if err := json.NewDecoder(analyticsResp.Body).Decode(&summary); err != nil {
+t.Fatalf("decode analytics: %v", err)
+}
+if summary.PendingApprovals != 1 {
+t.Errorf("expected 1 pending approval, got %d", summary.PendingApprovals)
+}
+if summary.ActiveHandoffs != 1 {
+t.Errorf("expected 1 active handoff, got %d", summary.ActiveHandoffs)
+}
+if summary.AuditFidelityPct < 0 || summary.AuditFidelityPct > 100 {
+t.Errorf("expected audit fidelity in [0,100], got %f", summary.AuditFidelityPct)
+}
+}
+
+// ── Additional coverage: handleChatMessages / handlePullRequests / handleIssues ─
+
+func TestHandleChatMessagesEmptyFilter(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// No messages sent → ChatMessages returns nil → should become empty slice.
+resp, err := http.Get(server.URL + "/api/integrations/chat/messages?integrationId=slack")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var msgs []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&msgs); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if msgs == nil {
+t.Errorf("expected empty slice (not nil) in JSON response")
+}
+}
+
+func TestHandlePullRequestsEmptyFilter(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// No PRs created → PullRequests returns nil → should become empty slice.
+resp, err := http.Get(server.URL + "/api/integrations/git/prs?integrationId=github")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var prs []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&prs); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if prs == nil {
+t.Errorf("expected empty slice (not nil) in JSON response")
+}
+}
+
+func TestHandleIssuesEmptyFilter(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// No issues created → Issues returns nil → should become empty slice.
+resp, err := http.Get(server.URL + "/api/integrations/issues?integrationId=jira")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var issues []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&issues); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if issues == nil {
+t.Errorf("expected empty slice (not nil) in JSON response")
+}
+}
