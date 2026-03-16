@@ -40,3 +40,4 @@ srcs/frontend/dist/
 
 # Go build output at repo root
 /ohc
+/frontend

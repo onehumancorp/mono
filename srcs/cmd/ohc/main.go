@@ -16,9 +16,9 @@ const defaultAddress = ":8080"
 type listenFunc func(string, http.Handler) error
 
 var (
-	nowUTC        = func() time.Time { return time.Now().UTC() }
+	nowUTC        = time.Now
 	listenForMain = http.ListenAndServe
-	fatalForMain  = func(v ...any) { log.Fatal(v...) }
+	fatalForMain  = log.Fatal
 )
 
 func newDemoSystem(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker) {
@@ -52,7 +52,7 @@ func run(now time.Time, listen listenFunc, logger *log.Logger) error {
 }
 
 func main() {
-	if err := run(nowUTC(), listenForMain, log.Default()); err != nil {
+	if err := run(nowUTC().UTC(), listenForMain, log.Default()); err != nil {
 		fatalForMain(err)
 	}
 }
