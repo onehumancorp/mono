@@ -162,3 +162,70 @@ func TestAgentsReturnsSortedSnapshot(t *testing.T) {
 		t.Fatalf("expected agent snapshot mutation not to affect hub, got %+v", original)
 	}
 }
+
+func TestFireAgentRemovesFromHubAndInbox(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "a", Name: "A", Role: "PM", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "b", Name: "B", Role: "SWE", OrganizationID: "org-1"})
+	hub.OpenMeeting("m1", []string{"a", "b"})
+	_ = hub.Publish(Message{
+		ID:        "msg-1",
+		FromAgent: "a",
+		ToAgent:   "b",
+		Type:      EventTask,
+		Content:   "do work",
+		MeetingID: "m1",
+	})
+
+	hub.FireAgent("b")
+
+	if _, ok := hub.Agent("b"); ok {
+		t.Fatalf("expected fired agent to be removed from hub")
+	}
+	if inbox := hub.Inbox("b"); len(inbox) != 0 {
+		t.Fatalf("expected inbox cleared after firing, got %d messages", len(inbox))
+	}
+	if agents := hub.Agents(); len(agents) != 1 {
+		t.Fatalf("expected 1 agent remaining, got %d", len(agents))
+	}
+}
+
+func TestOpenMeetingWithAgendaPreservesAgendaField(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "pm", Name: "PM", Role: "PRODUCT_MANAGER", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "swe", Name: "SWE", Role: "SOFTWARE_ENGINEER", OrganizationID: "org-1"})
+
+	meeting := hub.OpenMeetingWithAgenda("sprint-kickoff", "Plan Q2 features and assign owners", []string{"pm", "swe"})
+
+	if meeting.Agenda != "Plan Q2 features and assign owners" {
+		t.Fatalf("expected agenda to be preserved, got %q", meeting.Agenda)
+	}
+	if meeting.ID != "sprint-kickoff" {
+		t.Fatalf("expected meeting ID sprint-kickoff, got %q", meeting.ID)
+	}
+	if len(meeting.Participants) != 2 {
+		t.Fatalf("expected 2 participants, got %d", len(meeting.Participants))
+	}
+
+	stored, ok := hub.Meeting("sprint-kickoff")
+	if !ok {
+		t.Fatalf("expected meeting to be stored in hub")
+	}
+	if stored.Agenda != "Plan Q2 features and assign owners" {
+		t.Fatalf("expected stored agenda to match, got %q", stored.Agenda)
+	}
+}
+
+func TestEventTypeConstantsAreDefined(t *testing.T) {
+	types := []string{
+		EventTask, EventStatus, EventHandoff,
+		EventCodeReviewed, EventTestsFailed, EventTestsPassed,
+		EventSpecApproved, EventBlockerRaised, EventBlockerCleared,
+		EventPRCreated, EventPRMerged, EventDesignReviewed, EventApprovalNeeded,
+	}
+	for _, ev := range types {
+		if ev == "" {
+			t.Fatalf("expected all event type constants to be non-empty")
+		}
+	}
+}

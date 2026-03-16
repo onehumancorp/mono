@@ -1,4 +1,4 @@
-import { fetchCosts, fetchDashboard, fetchMeetings, fetchOrganization, sendMessage } from "./api";
+import { fetchCosts, fetchDashboard, fetchDomains, fetchMCPTools, fetchMeetings, fetchOrganization, fireAgent, hireAgent, seedScenario, sendMessage } from "./api";
 
 describe("api", () => {
   afterEach(() => {
@@ -198,5 +198,147 @@ describe("api", () => {
         content: "x",
       })
     ).rejects.toThrow("Failed to send message: 400");
+  });
+});
+
+describe("api – new endpoints", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  const dashSnap = {
+    organization: { id: "o", name: "N", domain: "d", members: [], roleProfiles: [] },
+    meetings: [],
+    costs: { organizationID: "o", totalTokens: 0, totalCostUSD: 0, agents: [] },
+    agents: [],
+    statuses: [],
+    updatedAt: "2026-01-01T00:00:00Z",
+  };
+
+  it("hireAgent posts to /api/agents/hire and returns dashboard snapshot", async () => {
+    const fetchMock = vi.fn(async () => ({ ok: true, status: 200, json: async () => dashSnap }));
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await hireAgent("Alice", "SOFTWARE_ENGINEER");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/agents/hire",
+      expect.objectContaining({ method: "POST" })
+    );
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as unknown[][])[1]?.body ?? "{}"));
+    expect(body).toEqual({ name: "Alice", role: "SOFTWARE_ENGINEER" });
+    expect(result.organization.id).toBe("o");
+  });
+
+  it("hireAgent throws on non-OK response", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 422, json: async () => ({}) })));
+    await expect(hireAgent("X", "Y")).rejects.toThrow("422");
+  });
+
+  it("fireAgent posts to /api/agents/fire and returns dashboard snapshot", async () => {
+    const fetchMock = vi.fn(async () => ({ ok: true, status: 200, json: async () => dashSnap }));
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await fireAgent("swe-1");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/agents/fire",
+      expect.objectContaining({ method: "POST" })
+    );
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as unknown[][])[1]?.body ?? "{}"));
+    expect(body).toEqual({ agentId: "swe-1" });
+    expect(result.organization.id).toBe("o");
+  });
+
+  it("fireAgent throws on non-OK response", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) })));
+    await expect(fireAgent("nobody")).rejects.toThrow("404");
+  });
+
+  it("fetchDomains returns domain list", async () => {
+    const domains = [{ id: "software_company", name: "Software Company", description: "SaaS" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => domains })));
+    await expect(fetchDomains()).resolves.toEqual(domains);
+  });
+
+  it("fetchDomains throws on non-OK response", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}) })));
+    await expect(fetchDomains()).rejects.toThrow("500");
+  });
+
+  it("fetchMCPTools returns tools list", async () => {
+    const tools = [{ id: "git-mcp", name: "Git MCP", description: "Git", category: "dev", status: "available" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => tools })));
+    await expect(fetchMCPTools()).resolves.toEqual(tools);
+  });
+
+  it("fetchMCPTools throws on non-OK response", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 503, json: async () => ({}) })));
+    await expect(fetchMCPTools()).rejects.toThrow("503");
+  });
+
+  it("seedScenario posts scenario name and returns dashboard snapshot", async () => {
+    const fetchMock = vi.fn(async () => ({ ok: true, status: 200, json: async () => dashSnap }));
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await seedScenario("digital-marketing");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/dev/seed",
+      expect.objectContaining({ method: "POST" })
+    );
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as unknown[][])[1]?.body ?? "{}"));
+    expect(body).toEqual({ scenario: "digital-marketing" });
+    expect(result.organization.id).toBe("o");
+  });
+
+  it("seedScenario throws on non-OK response", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 400, json: async () => ({}) })));
+    await expect(seedScenario("bad")).rejects.toThrow("400");
+  });
+
+  it("fetchDashboard normalizes projectedMonthlyUSD field", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          organization: { id: "o", name: "N", domain: "d", ceoId: "ceo-1", members: [], roleProfiles: [] },
+          meetings: [],
+          costs: {
+            organizationID: "o",
+            totalTokens: 0,
+            totalCostUSD: 1.5,
+            projectedMonthlyUSD: 45.0,
+            agents: [],
+          },
+          agents: [{ id: "a1", name: "Alice", role: "PM", organizationID: "o", status: "ACTIVE" }],
+          statuses: [],
+          updatedAt: "2026-03-01T00:00:00Z",
+        }),
+      }))
+    );
+    const snap = await fetchDashboard();
+    expect(snap.costs.projectedMonthlyUSD).toBe(45.0);
+    expect(snap.organization.ceoId).toBe("ceo-1");
+    expect(snap.agents[0].id).toBe("a1");
+  });
+
+  it("fetchDashboard handles missing optional fields gracefully", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          organization: { id: "o2", name: "X", domain: "d2" },
+          costs: {},
+          agents: [{}],
+          statuses: [{}],
+        }),
+      }))
+    );
+    const snap = await fetchDashboard();
+    expect(snap.organization.members).toEqual([]);
+    expect(snap.organization.roleProfiles).toEqual([]);
+    expect(snap.costs.projectedMonthlyUSD).toBeUndefined();
+    expect(snap.statuses[0].status).toBe("UNKNOWN");
+    expect(snap.statuses[0].count).toBe(0);
   });
 });

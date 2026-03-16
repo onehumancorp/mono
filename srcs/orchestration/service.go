@@ -16,6 +16,23 @@ const (
 	StatusBlocked   Status = "BLOCKED"
 )
 
+// Event type constants for the asynchronous pub/sub agent interaction protocol.
+const (
+	EventTask           = "task"
+	EventStatus         = "status"
+	EventHandoff        = "handoff"
+	EventCodeReviewed   = "CodeReviewed"
+	EventTestsFailed    = "TestsFailed"
+	EventTestsPassed    = "TestsPassed"
+	EventSpecApproved   = "SpecApproved"
+	EventBlockerRaised  = "BlockerRaised"
+	EventBlockerCleared = "BlockerCleared"
+	EventPRCreated      = "PRCreated"
+	EventPRMerged       = "PRMerged"
+	EventDesignReviewed = "DesignReviewed"
+	EventApprovalNeeded = "ApprovalNeeded"
+)
+
 type Agent struct {
 	ID             string `json:"id"`
 	Name           string `json:"name"`
@@ -36,6 +53,7 @@ type Message struct {
 
 type MeetingRoom struct {
 	ID           string    `json:"id"`
+	Agenda       string    `json:"agenda,omitempty"`
 	Participants []string  `json:"participants"`
 	Transcript   []Message `json:"transcript"`
 }
@@ -87,6 +105,31 @@ func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 	}
 
 	return meeting
+}
+
+// OpenMeetingWithAgenda creates a meeting room with an explicit agenda descriptor.
+func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) MeetingRoom {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	meeting := MeetingRoom{ID: id, Agenda: agenda, Participants: append([]string(nil), participants...)}
+	h.meetings[id] = meeting
+	for _, participant := range participants {
+		agent := h.agents[participant]
+		agent.Status = StatusInMeeting
+		h.agents[participant] = agent
+	}
+
+	return meeting
+}
+
+// FireAgent removes an agent from the hub and clears their inbox.
+func (h *Hub) FireAgent(id string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	delete(h.agents, id)
+	delete(h.inbox, id)
 }
 
 func (h *Hub) Publish(message Message) error {

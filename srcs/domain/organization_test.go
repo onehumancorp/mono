@@ -69,3 +69,53 @@ func TestRoleProfileNotFound(t *testing.T) {
 		t.Fatalf("expected missing role profile lookup to fail, got %+v", profile)
 	}
 }
+
+func TestNewDigitalMarketingAgency(t *testing.T) {
+	now := time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC)
+	org := NewDigitalMarketingAgency("mkt-1", "Apex Digital", "Alex CEO", now)
+
+	if org.Domain != "digital_marketing_agency" {
+		t.Fatalf("expected domain digital_marketing_agency, got %s", org.Domain)
+	}
+	if len(org.Members) == 0 {
+		t.Fatalf("expected non-empty members list")
+	}
+	if len(org.RoleProfiles) == 0 {
+		t.Fatalf("expected non-empty role profiles")
+	}
+	ceo, ok := org.MemberByID(org.CEOID)
+	if !ok || !ceo.IsHuman || ceo.Role != RoleCEO {
+		t.Fatalf("expected human CEO member, got %+v", ceo)
+	}
+	if _, ok := org.RoleProfile(RoleGrowthAgent); !ok {
+		t.Fatalf("expected growth agent role profile")
+	}
+	if _, ok := org.RoleProfile(RoleSEOSpecialist); !ok {
+		t.Fatalf("expected SEO specialist role profile")
+	}
+}
+
+func TestNewAccountingFirm(t *testing.T) {
+	now := time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC)
+	org := NewAccountingFirm("acc-1", "Summit CPA", "Jordan CEO", now)
+
+	if org.Domain != "accounting_firm" {
+		t.Fatalf("expected domain accounting_firm, got %s", org.Domain)
+	}
+	if len(org.Members) == 0 {
+		t.Fatalf("expected non-empty members list")
+	}
+	ceo, ok := org.MemberByID(org.CEOID)
+	if !ok || !ceo.IsHuman {
+		t.Fatalf("expected human CEO, got %+v", ceo)
+	}
+	if _, ok := org.RoleProfile(RoleBookkeeper); !ok {
+		t.Fatalf("expected bookkeeper role profile")
+	}
+	if _, ok := org.RoleProfile(RoleTaxSpecialist); !ok {
+		t.Fatalf("expected tax specialist role profile")
+	}
+	if _, ok := org.RoleProfile(RoleAuditManager); !ok {
+		t.Fatalf("expected audit manager role profile")
+	}
+}
