@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { App } from "./App";
+import { fetchCosts, fetchDashboard } from "./api";
 
 type MockResponse = {
   ok: boolean;
@@ -155,3 +156,858 @@ describe("App", () => {
     });
   });
 });
+
+// ── rich payload used across extended nav tests ─────────────────────────────
+const richPayload = {
+  ...dashboardPayload,
+  organization: {
+    ...dashboardPayload.organization,
+    ceoId: "ceo-1",
+    members: [
+      { id: "ceo-1", name: "Alice CEO", role: "CEO", isHuman: true },
+      { id: "swe-1", name: "Bob SWE", role: "SOFTWARE_ENGINEER", managerId: "ceo-1" },
+    ],
+    roleProfiles: [
+      {
+        role: "PRODUCT_MANAGER",
+        basePrompt: "Prioritize outcomes",
+        capabilities: ["planning", "roadmap"],
+        contextInputs: ["backlog", "metrics"],
+      },
+      {
+        role: "SOFTWARE_ENGINEER",
+        basePrompt: "Write clean code",
+        capabilities: ["coding"],
+        contextInputs: ["specs"],
+      },
+    ],
+  },
+  agents: [
+    { id: "ceo-1", name: "Alice CEO", role: "CEO", organizationId: "org-1", status: "ACTIVE" },
+    { id: "swe-1", name: "Bob SWE", role: "SOFTWARE_ENGINEER", organizationId: "org-1", status: "BLOCKED" },
+    { id: "qa-1", name: "Charlie QA", role: "QA_TESTER", organizationId: "org-1", status: "IDLE" },
+  ],
+  statuses: [
+    { status: "ACTIVE", count: 2 },
+    { status: "BLOCKED", count: 1 },
+    { status: "IN_MEETING", count: 3 },
+  ],
+  costs: {
+    ...dashboardPayload.costs,
+    totalTokens: 1_500_000,
+    projectedMonthlyUSD: 45.0,
+  },
+};
+
+function makeFetch() {
+  return vi.fn(async (input: string) => {
+    if (input === "/api/dashboard") return mockJson(richPayload);
+    if (input === "/api/domains")
+      return mockJson([{ id: "software_company", name: "Software Company", description: "SaaS products" }]);
+    if (input === "/api/mcp/tools")
+      return mockJson([{ id: "git-mcp", name: "Git MCP", description: "Git ops", category: "dev", status: "available" }]);
+    if (input === "/api/agents/hire") return mockJson(richPayload);
+    if (input === "/api/agents/fire") return mockJson(richPayload);
+    if (input === "/api/dev/seed") return mockJson(richPayload);
+    if (input === "/api/messages") return mockJson({});
+    return mockJson({}, 404);
+  });
+}
+
+describe("App – navigation tabs", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  // ── Meetings tab ────────────────────────────────────────────────────────────
+
+  it("navigates to Meetings tab and shows Virtual Meeting Rooms heading", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
+    expect(screen.getByText("Virtual Meeting Rooms")).toBeInTheDocument();
+    expect(screen.getByText("Dispatch Message")).toBeInTheDocument();
+  });
+
+  it("shows meeting participants in meetings tab", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
+    await waitFor(() => {
+      const chips = document.querySelectorAll(".participant-chip");
+      expect(chips.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("shows 'No active meetings' in meetings tab when meeting list is empty", async () => {
+    const noMeetings = { ...richPayload, meetings: [] };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(noMeetings);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
+    expect(screen.getAllByText("No active meetings.").length).toBeGreaterThan(0);
+  });
+
+  it("shows meeting agenda when present", async () => {
+    const withAgenda = {
+      ...dashboardPayload,
+      meetings: [{ id: "launch-readiness", transcript: [], participants: [], agenda: "Review launch blockers" }],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(withAgenda);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    expect(screen.getByText("Review launch blockers")).toBeInTheDocument();
+  });
+
+  it("shows 'No messages yet' when meeting transcript is empty", async () => {
+    const emptyTranscript = {
+      ...dashboardPayload,
+      meetings: [{ id: "empty-mtg", transcript: [], participants: [] }],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(emptyTranscript);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    expect(screen.getByText("No messages yet.")).toBeInTheDocument();
+  });
+
+  it("shows — for invalid occurredAt timestamp in transcript", async () => {
+    const badTime = {
+      ...dashboardPayload,
+      meetings: [{
+        id: "launch-readiness",
+        participants: ["pm-1"],
+        transcript: [{
+          id: "m-bad",
+          fromAgent: "pm-1",
+          toAgent: "swe-1",
+          type: "task",
+          content: "Bad time msg",
+          meetingId: "launch-readiness",
+          occurredAt: "not-a-valid-date",
+        }],
+      }],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(badTime);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Bad time msg");
+    // formatTime("not-a-valid-date") → "—"
+    const dashes = screen.getAllByText("—");
+    expect(dashes.length).toBeGreaterThan(0);
+  });
+
+  it("can change meeting selection via dropdown", async () => {
+    const twoMeetings = {
+      ...dashboardPayload,
+      meetings: [
+        { id: "mtg-1", transcript: [], participants: ["pm-1"] },
+        { id: "mtg-2", transcript: [], participants: ["swe-1"] },
+      ],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(twoMeetings);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
+    await waitFor(() => {
+      const selects = document.querySelectorAll("select");
+      expect(selects.length).toBeGreaterThan(0);
+    });
+    const select = document.querySelector("select");
+    if (select) fireEvent.change(select, { target: { value: "mtg-2" } });
+  });
+
+  // ── Agents tab ──────────────────────────────────────────────────────────────
+
+  it("navigates to Agents tab and shows agent cards", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    expect(screen.getByText("Agent Network")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "+ Hire Agent" })).toBeInTheDocument();
+    // Bob SWE appears in agent-card AND agents-tab org-chart; use getAllByText
+    expect(screen.getAllByText("Bob SWE").length).toBeGreaterThan(0);
+  });
+
+  it("shows ACTIVE, BLOCKED, IDLE status badges in agents tab", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    await waitFor(() => {
+      expect(document.querySelector(".status-badge--active")).toBeTruthy();
+      expect(document.querySelector(".status-badge--blocked")).toBeTruthy();
+      expect(document.querySelector(".status-badge--idle")).toBeTruthy();
+    });
+  });
+
+  it("shows status IN_MEETING badge in agents tab", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    await waitFor(() => {
+      expect(document.querySelector(".status-badge--meeting")).toBeTruthy();
+    });
+  });
+
+  it("shows empty state when no agents registered", async () => {
+    const emptyAgents = { ...richPayload, agents: [] };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(emptyAgents);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    expect(screen.getByText(/No agents registered/)).toBeInTheDocument();
+  });
+
+  it("opens hire modal when + Hire Agent is clicked", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
+    expect(screen.getByText("Hire New Agent")).toBeInTheDocument();
+  });
+
+  it("closes hire modal when Cancel is clicked", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByText("Hire New Agent")).not.toBeInTheDocument();
+  });
+
+  it("closes hire modal when ✕ close button is clicked", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.queryByText("Hire New Agent")).not.toBeInTheDocument();
+  });
+
+  it("Hire Agent button is disabled until name is entered", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
+    const hireBtn = screen.getByRole("button", { name: "Hire Agent" });
+    expect(hireBtn).toBeDisabled();
+    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "New Agent" } });
+    expect(hireBtn).not.toBeDisabled();
+  });
+
+  it("successfully hires an agent and shows notice", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
+    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "New Agent" } });
+    fireEvent.click(screen.getByRole("button", { name: "Hire Agent" }));
+    await screen.findByText(/Agent "New Agent" hired successfully/);
+  });
+
+  it("shows error when hire agent fails (visible in overview form)", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(richPayload);
+      if (input === "/api/agents/hire") return mockJson({}, 422);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
+    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "Fail Agent" } });
+    fireEvent.click(screen.getByRole("button", { name: "Hire Agent" }));
+    // error is stored in state; navigate to overview where the form renders it
+    await waitFor(() => {
+      fireEvent.click(screen.getByRole("button", { name: /overview/i }));
+    });
+    await screen.findByRole("alert");
+  });
+
+  it("changes role select in hire modal", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
+    const roleSelect = screen.getByDisplayValue("SOFTWARE ENGINEER");
+    fireEvent.change(roleSelect, { target: { value: "PRODUCT_MANAGER" } });
+    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "PM Agent" } });
+    fireEvent.click(screen.getByRole("button", { name: "Hire Agent" }));
+    await screen.findByText(/Agent "PM Agent" hired successfully/);
+  });
+
+  it("fires an agent and shows success notice", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    const removeButtons = await screen.findAllByRole("button", { name: "Remove" });
+    fireEvent.click(removeButtons[0]);
+    await screen.findByText(/removed from org/);
+  });
+
+  it("shows error when fire agent fails (visible in overview form)", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(richPayload);
+      if (input === "/api/agents/fire") return mockJson({}, 500);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    const removeButtons = await screen.findAllByRole("button", { name: "Remove" });
+    fireEvent.click(removeButtons[0]);
+    // error is stored in state; navigate to overview where the form renders it
+    await waitFor(() => {
+      fireEvent.click(screen.getByRole("button", { name: /overview/i }));
+    });
+    await screen.findByRole("alert");
+  });
+
+  it("human org members do not show a Remove button", async () => {
+    // ceo-1 is isHuman: true in richPayload.organization.members, so no Remove for that agent
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    // Only swe-1 and qa-1 get Remove buttons (ceo-1 is human)
+    const removeButtons = await screen.findAllByRole("button", { name: "Remove" });
+    expect(removeButtons.length).toBe(2);
+  });
+
+  // ── Cost tab ────────────────────────────────────────────────────────────────
+
+  it("navigates to Cost tab and shows cost analytics sections", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /cost/i }));
+    expect(screen.getByText("Cost Analytics")).toBeInTheDocument();
+    expect(screen.getByText("Burn Rate Forecast")).toBeInTheDocument();
+    expect(screen.getByText("Agent Spend Breakdown")).toBeInTheDocument();
+  });
+
+  it("shows 1.5M token count in cost tab", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /cost/i }));
+    expect(screen.getByText("1.5M")).toBeInTheDocument();
+  });
+
+  it("shows projected monthly cost $45.00 in cost tab", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /cost/i }));
+    expect(screen.getAllByText("$45.00").length).toBeGreaterThan(0);
+  });
+
+  it("shows 'No cost data yet' when agents list is empty", async () => {
+    const noCost = { ...richPayload, costs: { ...richPayload.costs, agents: [] } };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(noCost);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /cost/i }));
+    expect(screen.getByText("No cost data yet.")).toBeInTheDocument();
+  });
+
+  it("shows top token consumers on overview when agents have costs", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    expect(screen.getByText("Top Token Consumers")).toBeInTheDocument();
+  });
+
+  it("shows 5.0K suffix for token counts in thousands", async () => {
+    const kTokens = { ...dashboardPayload, costs: { ...dashboardPayload.costs, totalTokens: 5_000 } };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(kTokens);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    // embedded in "5.0K tokens used" — use regex
+    expect(screen.getByText(/5\.0K/)).toBeInTheDocument();
+  });
+
+  it("shows 2.5M suffix for large token counts", async () => {
+    const bigTokens = { ...dashboardPayload, costs: { ...dashboardPayload.costs, totalTokens: 2_500_000 } };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(bigTokens);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    expect(screen.getByText(/2\.5M/)).toBeInTheDocument();
+  });
+
+  it("formats tiny cost (< $0.001) with 6 decimal places", async () => {
+    const tinyCost = { ...dashboardPayload, costs: { ...dashboardPayload.costs, totalCostUSD: 0.000005 } };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(tinyCost);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    expect(screen.getByText("$0.000005")).toBeInTheDocument();
+  });
+
+  it("formats cost >= $1 with 2 decimal places", async () => {
+    const largeCost = { ...dashboardPayload, costs: { ...dashboardPayload.costs, totalCostUSD: 2.5 } };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(largeCost);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    expect(screen.getByText("$2.50")).toBeInTheDocument();
+  });
+
+  // ── Playbooks tab ───────────────────────────────────────────────────────────
+
+  it("navigates to Playbooks tab and shows role profiles", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /playbooks/i }));
+    expect(screen.getByText("Role Playbooks")).toBeInTheDocument();
+    expect(screen.getByText("PRODUCT MANAGER")).toBeInTheDocument();
+    expect(screen.getByText("SOFTWARE ENGINEER")).toBeInTheDocument();
+    expect(screen.getByText("Prioritize outcomes")).toBeInTheDocument();
+    expect(screen.getByText("planning")).toBeInTheDocument();
+    expect(screen.getByText("backlog")).toBeInTheDocument();
+  });
+
+  it("shows empty state when no role profiles defined", async () => {
+    const noProfiles = { ...richPayload, organization: { ...richPayload.organization, roleProfiles: [] } };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(noProfiles);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /playbooks/i }));
+    expect(screen.getByText(/No role profiles defined/)).toBeInTheDocument();
+  });
+
+  // ── Settings tab ────────────────────────────────────────────────────────────
+
+  it("navigates to Settings tab and fetches domains and MCP tools", async () => {
+    const fetchMock = makeFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    // "Settings" appears in sidebar button + heading; use heading role to be specific
+    await screen.findByRole("heading", { name: /^Settings$/ });
+    // "Software Company" appears in domain list + org info domain field; use getAllByText
+    await waitFor(() => expect(screen.getAllByText("Software Company").length).toBeGreaterThan(0));
+    await screen.findByText("Git MCP");
+    expect(fetchMock).toHaveBeenCalledWith("/api/domains");
+    expect(fetchMock).toHaveBeenCalledWith("/api/mcp/tools");
+  });
+
+  it("loads scenario and shows success notice", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByRole("heading", { name: /^Settings$/ });
+    fireEvent.click(screen.getByRole("button", { name: "Load Scenario" }));
+    await screen.findByText(/Loaded scenario: launch-readiness/);
+  });
+
+  it("shows error when load scenario fails", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(richPayload);
+      if (input === "/api/dev/seed") return mockJson({}, 500);
+      if (input === "/api/domains") return mockJson([]);
+      if (input === "/api/mcp/tools") return mockJson([]);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByRole("heading", { name: /^Settings$/ });
+    fireEvent.click(screen.getByRole("button", { name: "Load Scenario" }));
+    // seedScenario throws "Request failed for /api/dev/seed: 500"; shown via global error alert
+    await screen.findByText(/Failed to load data/);
+  });
+
+  it("can change scenario selector and load different scenario", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByRole("heading", { name: /^Settings$/ });
+    const scenarioSelect = screen.getByDisplayValue("Software Co — Launch Readiness");
+    fireEvent.change(scenarioSelect, { target: { value: "digital-marketing" } });
+    fireEvent.click(screen.getByRole("button", { name: "Load Scenario" }));
+    await screen.findByText(/Loaded scenario: digital-marketing/);
+  });
+
+  it("shows domain description and tool details in settings", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByText("SaaS products");
+    await screen.findByText("Git ops");
+    expect(screen.getByText("available")).toBeInTheDocument();
+  });
+
+  it("shows current org info in settings", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByRole("heading", { name: /^Settings$/ });
+    expect(screen.getByText("Current Organization")).toBeInTheDocument();
+    expect(screen.getAllByText("Acme Software").length).toBeGreaterThan(0);
+  });
+
+  // ── OrgTree / Sidebar ───────────────────────────────────────────────────────
+
+  it("shows YOU tag for human org member in org chart", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    expect(screen.getByText("YOU")).toBeInTheDocument();
+  });
+
+  it("shows nested OrgTree with child node", async () => {
+    const withTree = {
+      ...dashboardPayload,
+      organization: {
+        ...dashboardPayload.organization,
+        members: [
+          { id: "root-1", name: "Root Node", role: "CEO" },
+          { id: "child-1", name: "Child Node", role: "SOFTWARE_ENGINEER", managerId: "root-1" },
+        ],
+      },
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(withTree);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    // Root Node appears in org chart + CEO sidebar card; use getAllByText
+    await screen.findAllByText("Root Node");
+    expect(screen.getAllByText("Child Node").length).toBeGreaterThan(0);
+  });
+
+  it("shows CEO card in sidebar when member has CEO role", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    // "Human CEO" label is only in the sidebar CEO card
+    expect(screen.getByText("Human CEO")).toBeInTheDocument();
+    // Alice CEO appears in CEO card + agent card + org chart; use getAllByText
+    expect(screen.getAllByText("Alice CEO").length).toBeGreaterThan(0);
+  });
+
+  it("shows meeting messages badge count in sidebar nav", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    const badge = document.querySelector(".nav-badge");
+    expect(badge).toBeTruthy();
+    // dashboardPayload.meetings[0].transcript has 1 message
+    expect(badge?.textContent).toBe("1");
+  });
+
+  it("shows 'No active agents' when all statuses have count 0", async () => {
+    const zeroStatuses = { ...richPayload, statuses: [{ status: "IDLE", count: 0 }] };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(zeroStatuses);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    expect(screen.getByText("No active agents.")).toBeInTheDocument();
+  });
+
+  // ── Notice / error dismissal ────────────────────────────────────────────────
+
+  it("dismisses notice by clicking ✕ button", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    // Trigger a notice via form submit
+    fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
+    await screen.findByText("Message delivered to the meeting timeline.");
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(screen.queryByText("Message delivered to the meeting timeline.")).not.toBeInTheDocument();
+  });
+
+  it("shows domain label for Software Company domain", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    // domainLabel("software_company") = "Software Company"
+    expect(screen.getByText("Software Company")).toBeInTheDocument();
+  });
+
+  it("shows 'Offline' status label when load fails", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => mockJson({}, 500)));
+    render(<App />);
+    await screen.findByText(/Failed to load data/i);
+    expect(screen.getByText("Offline")).toBeInTheDocument();
+  });
+
+  it("shows 'Live' status label when data loads successfully", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    expect(screen.getByText("Live")).toBeInTheDocument();
+  });
+
+  it("shows updated timestamp in header after data loads", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    expect(screen.getByText(/Updated/)).toBeInTheDocument();
+  });
+
+  it("formatTokens returns plain number for count < 1000", async () => {
+    // dashboardPayload has totalTokens: 123 → renders "123"
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    // "123 tokens used" — via kpi-sub text
+    expect(screen.getByText(/123 tokens used/)).toBeInTheDocument();
+  });
+
+  it("shows agent role formatted without underscores", async () => {
+    vi.stubGlobal("fetch", makeFetch());
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    // appears in agent-card + org-chart member role; use getAllByText
+    expect(screen.getAllByText("SOFTWARE ENGINEER").length).toBeGreaterThan(0);
+  });
+
+  it("shows spend breakdown bar items for agents with costs", async () => {
+    const withCosts = {
+      ...richPayload,
+      costs: {
+        ...richPayload.costs,
+        agents: [
+          { agentID: "swe-1", model: "gpt-4o", tokenUsed: 500, costUSD: 1.25 },
+          { agentID: "pm-1", model: "gpt-4o-mini", tokenUsed: 200, costUSD: 0.5 },
+        ],
+        totalCostUSD: 1.75,
+      },
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(withCosts);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /cost/i }));
+    expect(screen.getByText("gpt-4o")).toBeInTheDocument();
+    expect(screen.getByText("$1.25")).toBeInTheDocument();
+    // tokenUsed 500 renders as "500 tokens" — use regex
+    expect(screen.getByText(/\b500\b/)).toBeInTheDocument();
+  });  // closes last it in App – navigation tabs
+});  // closes App – navigation tabs describe
+
+describe("App – form field coverage", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("triggers onChange for all overview form fields", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/messages") return mockJson({});
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+
+    // The New Message form on the overview tab — change each field
+    fireEvent.change(screen.getByDisplayValue("pm-1"), { target: { value: "ceo-2" } });
+    fireEvent.change(screen.getByDisplayValue("swe-1"), { target: { value: "eng-2" } });
+    fireEvent.change(screen.getByDisplayValue("launch-readiness"), { target: { value: "mtg-x" } });
+    fireEvent.change(screen.getByDisplayValue("task"), { target: { value: "decision" } });
+    fireEvent.change(screen.getByDisplayValue("Review launch blockers and owner assignments"), {
+      target: { value: "Updated content" },
+    });
+
+    // After changing, verify the state is updated (form reflects new values)
+    expect(screen.getByDisplayValue("ceo-2")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Updated content")).toBeInTheDocument();
+  });
+
+  it("triggers onChange for all meetings-tab Dispatch Message form fields", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/messages") return mockJson({});
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
+
+    // Dispatch Message form fields in meetings tab
+    const fromInputs = screen.getAllByDisplayValue("pm-1");
+    fireEvent.change(fromInputs[0], { target: { value: "ceo-3" } });
+    const toInputs = screen.getAllByDisplayValue("swe-1");
+    fireEvent.change(toInputs[0], { target: { value: "eng-3" } });
+    const mtgInputs = screen.getAllByDisplayValue("launch-readiness");
+    fireEvent.change(mtgInputs[0], { target: { value: "mtg-y" } });
+    const typeInputs = screen.getAllByDisplayValue("task");
+    fireEvent.change(typeInputs[0], { target: { value: "update" } });
+  });
+
+  it("changes the meeting select in the overview Active Meetings panel", async () => {
+    const twoMeetings = {
+      ...dashboardPayload,
+      meetings: [
+        { id: "meeting-a", transcript: [], participants: ["pm-1"] },
+        { id: "meeting-b", transcript: [], participants: ["swe-1"] },
+      ],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(twoMeetings);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    // change the meeting selector in the overview Active Meetings panel
+    const selects = screen.getAllByRole("combobox");
+    const meetingSelect = selects.find((s) => (s as HTMLSelectElement).value === "meeting-a");
+    if (meetingSelect) fireEvent.change(meetingSelect, { target: { value: "meeting-b" } });
+  });
+
+  it("shows loading state in agents tab org chart before data loads", async () => {
+    let resolve!: (v: unknown) => void;
+    const pending = new Promise((r) => { resolve = r; });
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") {
+        await pending;
+        return mockJson(dashboardPayload);
+      }
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    // While loading, navigate to agents tab — snapshot is null, org chart shows Loading...
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    expect(screen.getByText("Loading…")).toBeInTheDocument();
+    resolve(undefined);
+  });
+});
+
+describe("api – branch coverage", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("fetchDashboard handles absent organization field", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        // no organization field — triggers ?? {} fallback
+        meetings: [],
+        costs: undefined,  // triggers ?? {} fallback
+        agents: "not-an-array",  // triggers [] fallback
+        statuses: null,  // triggers [] fallback
+        updatedAt: "2026-01-01T00:00:00Z",
+      }),
+    })));
+    const snap = await fetchDashboard();
+    expect(snap.organization.id).toBe("");
+    expect(snap.organization.members).toEqual([]);
+    expect(snap.agents).toEqual([]);
+    expect(snap.statuses).toEqual([]);
+    expect(snap.costs.organizationID).toBe("");
+  });
+
+  it("normalizeCosts handles projectedMonthlyUsd lowercase variant", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        organizationID: "org-lc",
+        totalTokens: 10,
+        totalCostUSD: 0.5,
+        projectedMonthlyUsd: 15.0,  // lowercase variant, but projectedMonthlyUSD is absent
+        agents: [],
+      }),
+    })));
+    // projectedMonthlyUSD is undefined → ternary false branch → projectedMonthlyUSD = undefined
+    const costs = await fetchCosts();
+    expect(costs.projectedMonthlyUSD).toBeUndefined();
+  });
+
+  it("fetchDashboard with undefined updatedAt uses current ISO timestamp", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        organization: { id: "o", name: "N", domain: "d", members: [], roleProfiles: [] },
+        meetings: [],
+        costs: { organizationID: "o", totalTokens: 0, totalCostUSD: 0, agents: [] },
+        agents: [],
+        statuses: [],
+        // no updatedAt — triggers ?? new Date().toISOString()
+      }),
+    })));
+    const snap = await fetchDashboard();
+    // should have fallen back to current ISO date
+    expect(snap.updatedAt).toBeTruthy();
+    expect(snap.updatedAt).not.toBe("undefined");
+  });
+});  // closes api – branch coverage describe

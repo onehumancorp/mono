@@ -479,3 +479,219 @@ func TestSummarizeStatusesReturnsOrderedCounts(t *testing.T) {
 		t.Fatalf("unexpected in-meeting bucket: %+v", statuses[3])
 	}
 }
+
+func TestHandleHireAgentAddsToHub(t *testing.T) {
+	app, server := newTestServer(t)
+	defer server.Close()
+
+	body := bytes.NewBufferString(`{"name":"New SWE","role":"SOFTWARE_ENGINEER"}`)
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/agents/hire", body)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("POST /api/agents/hire returned error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 from hire, got %d", resp.StatusCode)
+	}
+
+	var snapshot struct {
+		Agents []orchestration.Agent `json:"agents"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&snapshot); err != nil {
+		t.Fatalf("decode hire response: %v", err)
+	}
+
+	found := false
+	for _, a := range snapshot.Agents {
+		if a.Name == "New SWE" && a.Role == "SOFTWARE_ENGINEER" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected hired agent in snapshot, got %+v", snapshot.Agents)
+	}
+	_ = app
+}
+
+func TestHandleHireAgentRejectsMissingFields(t *testing.T) {
+	app, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/agents/hire", bytes.NewBufferString(`{"name":""}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.handleHireAgent(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for missing fields, got %d", rec.Code)
+	}
+}
+
+func TestHandleFireAgentRemovesFromHub(t *testing.T) {
+	app, server := newTestServer(t)
+	defer server.Close()
+
+	body := bytes.NewBufferString(`{"agentId":"pm-1"}`)
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/agents/fire", body)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("POST /api/agents/fire returned error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 from fire, got %d", resp.StatusCode)
+	}
+
+	if _, ok := app.hub.Agent("pm-1"); ok {
+		t.Fatalf("expected pm-1 to be removed from hub after firing")
+	}
+}
+
+func TestHandleFireAgentRejectsMissingAgentID(t *testing.T) {
+	app, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/agents/fire", bytes.NewBufferString(`{}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.handleFireAgent(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for missing agentId, got %d", rec.Code)
+	}
+}
+
+func TestHandleDomainsReturnsAvailableDomains(t *testing.T) {
+	_, server := newTestServer(t)
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/api/domains")
+	if err != nil {
+		t.Fatalf("GET /api/domains returned error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var domains []DomainInfo
+	if err := json.NewDecoder(resp.Body).Decode(&domains); err != nil {
+		t.Fatalf("decode domains response: %v", err)
+	}
+	if len(domains) < 2 {
+		t.Fatalf("expected at least 2 domains, got %d", len(domains))
+	}
+	ids := make(map[string]bool)
+	for _, d := range domains {
+		ids[d.ID] = true
+	}
+	if !ids["software_company"] {
+		t.Fatalf("expected software_company domain in list")
+	}
+	if !ids["digital_marketing_agency"] {
+		t.Fatalf("expected digital_marketing_agency domain in list")
+	}
+}
+
+func TestHandleMCPToolsReturnsTools(t *testing.T) {
+	_, server := newTestServer(t)
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/api/mcp/tools")
+	if err != nil {
+		t.Fatalf("GET /api/mcp/tools returned error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var tools []MCPTool
+	if err := json.NewDecoder(resp.Body).Decode(&tools); err != nil {
+		t.Fatalf("decode mcp tools response: %v", err)
+	}
+	if len(tools) < 1 {
+		t.Fatalf("expected at least 1 MCP tool, got %d", len(tools))
+	}
+}
+
+func TestSeededScenarioDigitalMarketing(t *testing.T) {
+	_, server := newTestServer(t)
+	defer server.Close()
+
+	body := bytes.NewBufferString(`{"scenario":"digital-marketing"}`)
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/dev/seed", body)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("POST /api/dev/seed returned error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 for digital-marketing seed, got %d", resp.StatusCode)
+	}
+
+	var payload struct {
+		Organization domain.Organization `json:"organization"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.Organization.Domain != "digital_marketing_agency" {
+		t.Fatalf("expected digital_marketing_agency domain, got %q", payload.Organization.Domain)
+	}
+}
+
+func TestSeededScenarioAccounting(t *testing.T) {
+	_, server := newTestServer(t)
+	defer server.Close()
+
+	body := bytes.NewBufferString(`{"scenario":"accounting"}`)
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/dev/seed", body)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("POST /api/dev/seed returned error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 for accounting seed, got %d", resp.StatusCode)
+	}
+
+	var payload struct {
+		Organization domain.Organization `json:"organization"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if payload.Organization.Domain != "accounting_firm" {
+		t.Fatalf("expected accounting_firm domain, got %q", payload.Organization.Domain)
+	}
+}
+
+func TestHandleAgentRouteRejectsWrongMethod(t *testing.T) {
+	app, _ := newTestServer(t)
+
+	hireReq := httptest.NewRequest(http.MethodGet, "/api/agents/hire", nil)
+	hireRec := httptest.NewRecorder()
+	app.handleHireAgent(hireRec, hireReq)
+	if hireRec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405 for GET hire, got %d", hireRec.Code)
+	}
+
+	fireReq := httptest.NewRequest(http.MethodGet, "/api/agents/fire", nil)
+	fireRec := httptest.NewRecorder()
+	app.handleFireAgent(fireRec, fireReq)
+	if fireRec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405 for GET fire, got %d", fireRec.Code)
+	}
+}

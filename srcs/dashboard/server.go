@@ -41,6 +41,51 @@ type seedRequest struct {
 	Scenario string `json:"scenario"`
 }
 
+// hireRequest carries agent creation parameters.
+type hireRequest struct {
+	Name  string `json:"name"`
+	Role  string `json:"role"`
+	Model string `json:"model,omitempty"`
+}
+
+// fireRequest carries the ID of the agent to remove.
+type fireRequest struct {
+	AgentID string `json:"agentId"`
+}
+
+// MCPTool represents a registered tool in the MCP gateway.
+type MCPTool struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
+	Status      string `json:"status"`
+}
+
+// DomainInfo describes a supported organizational domain template.
+type DomainInfo struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+var availableDomains = []DomainInfo{
+	{ID: "software_company", Name: "Software Company", Description: "Full-stack engineering org: CEO, Director, PM, SWEs, QA, Security, Designer, Marketing."},
+	{ID: "digital_marketing_agency", Name: "Digital Marketing Agency", Description: "Full-service agency: CEO, Marketing Director, Growth, Content, SEO, Paid Media, Analytics, Designer."},
+	{ID: "accounting_firm", Name: "Accounting Firm", Description: "Financial services firm: CEO, CFO, Bookkeepers, Tax, Audit, Payroll."},
+}
+
+var mcpTools = []MCPTool{
+	{ID: "git-mcp", Name: "Git", Description: "Source control operations: clone, commit, pull-request, review via GitHub or Gitea.", Category: "code", Status: "available"},
+	{ID: "jira-mcp", Name: "Jira / Plane", Description: "Task and issue tracking: create tickets, update status, list sprint items.", Category: "project_management", Status: "available"},
+	{ID: "figma-mcp", Name: "Figma", Description: "Design file access: read wireframes, export assets, inspect component specs.", Category: "design", Status: "available"},
+	{ID: "aws-mcp", Name: "AWS", Description: "Cloud infrastructure: provision EC2 instances, manage S3, deploy Lambda functions.", Category: "infrastructure", Status: "available"},
+	{ID: "slack-mcp", Name: "Slack / Mattermost", Description: "Human-in-the-loop approval: send HITL notifications, await human manager sign-off.", Category: "communication", Status: "available"},
+	{ID: "postgres-mcp", Name: "PostgreSQL", Description: "Database operations: run queries, manage schema, inspect table data.", Category: "database", Status: "available"},
+	{ID: "opentelemetry-mcp", Name: "OpenTelemetry", Description: "Observability: push metrics and traces to Grafana / OpenObserve dashboards.", Category: "observability", Status: "available"},
+	{ID: "spire-mcp", Name: "SPIFFE/SPIRE", Description: "Identity management: issue and rotate SVID certificates for agent workloads.", Category: "identity", Status: "available"},
+}
+
 var statusOrder = []orchestration.Status{
 	orchestration.StatusActive,
 	orchestration.StatusBlocked,
@@ -63,6 +108,10 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/meetings", server.handleMeetings)
 	mux.HandleFunc("/api/costs", server.handleCosts)
 	mux.HandleFunc("/api/messages", server.handleSendMessage)
+	mux.HandleFunc("/api/agents/hire", server.handleHireAgent)
+	mux.HandleFunc("/api/agents/fire", server.handleFireAgent)
+	mux.HandleFunc("/api/domains", server.handleDomains)
+	mux.HandleFunc("/api/mcp/tools", server.handleMCPTools)
 	mux.HandleFunc("/api/dev/seed", server.handleDevSeed)
 	return mux
 }
@@ -314,6 +363,70 @@ func (s *Server) handleDevSeed(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, snapshot)
 }
 
+func (s *Server) handleHireAgent(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req hireRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.Name == "" || req.Role == "" {
+		http.Error(w, "name and role are required", http.StatusBadRequest)
+		return
+	}
+
+	s.mu.Lock()
+	id := s.org.ID + "-agent-" + time.Now().UTC().Format("20060102150405000")
+	agent := orchestration.Agent{
+		ID:             id,
+		Name:           req.Name,
+		Role:           req.Role,
+		OrganizationID: s.org.ID,
+		Status:         orchestration.StatusIdle,
+	}
+	s.hub.RegisterAgent(agent)
+	snapshot := s.snapshotLocked()
+	s.mu.Unlock()
+
+	writeJSON(w, snapshot)
+}
+
+func (s *Server) handleFireAgent(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req fireRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.AgentID == "" {
+		http.Error(w, "agentId is required", http.StatusBadRequest)
+		return
+	}
+
+	s.mu.Lock()
+	s.hub.FireAgent(req.AgentID)
+	snapshot := s.snapshotLocked()
+	s.mu.Unlock()
+
+	writeJSON(w, snapshot)
+}
+
+func (s *Server) handleDomains(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, availableDomains)
+}
+
+func (s *Server) handleMCPTools(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, mcpTools)
+}
+
 func (s *Server) snapshot() dashboardSnapshot {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -338,22 +451,31 @@ func seededScenario(name string, now time.Time) (domain.Organization, *orchestra
 		scenario = "launch-readiness"
 	}
 
-	if scenario != "launch-readiness" {
+	switch scenario {
+	case "launch-readiness":
+		return seededLaunchReadiness(now)
+	case "digital-marketing":
+		return seededDigitalMarketing(now)
+	case "accounting":
+		return seededAccounting(now)
+	default:
 		return domain.Organization{}, nil, nil, errors.New("unsupported seed scenario")
 	}
+}
 
+func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
 	org := domain.NewSoftwareCompany("demo", "Demo Software Company", "Human CEO", now.UTC())
 	hub := orchestration.NewHub()
 	hub.RegisterAgent(orchestration.Agent{ID: "pm-1", Name: "Product Manager", Role: "PRODUCT_MANAGER", OrganizationID: org.ID})
 	hub.RegisterAgent(orchestration.Agent{ID: "swe-1", Name: "Software Engineer", Role: "SOFTWARE_ENGINEER", OrganizationID: org.ID})
 	hub.RegisterAgent(orchestration.Agent{ID: "ux-1", Name: "Design Lead", Role: "DESIGNER", OrganizationID: org.ID})
-	hub.OpenMeeting("launch-readiness", []string{"pm-1", "swe-1", "ux-1"})
+	hub.OpenMeetingWithAgenda("launch-readiness", "Review launch blockers, sign-off on reliability checklist, assign post-launch owners.", []string{"pm-1", "swe-1", "ux-1"})
 
 	_ = hub.Publish(orchestration.Message{
 		ID:         "seed-1",
 		FromAgent:  "pm-1",
 		ToAgent:    "swe-1",
-		Type:       "task",
+		Type:       orchestration.EventTask,
 		Content:    "Ship the reliability checklist before launch.",
 		MeetingID:  "launch-readiness",
 		OccurredAt: now.Add(-4 * time.Minute),
@@ -362,7 +484,7 @@ func seededScenario(name string, now time.Time) (domain.Organization, *orchestra
 		ID:         "seed-2",
 		FromAgent:  "ux-1",
 		ToAgent:    "pm-1",
-		Type:       "status",
+		Type:       orchestration.EventStatus,
 		Content:    "Design QA pass completed with no blockers.",
 		MeetingID:  "launch-readiness",
 		OccurredAt: now.Add(-2 * time.Minute),
@@ -392,6 +514,68 @@ func seededScenario(name string, now time.Time) (domain.Organization, *orchestra
 		PromptTokens:     900,
 		CompletionTokens: 300,
 		OccurredAt:       now.Add(-6 * time.Minute),
+	})
+
+	return org, hub, tracker, nil
+}
+
+func seededDigitalMarketing(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
+	org := domain.NewDigitalMarketingAgency("dma-demo", "Demo Digital Agency", "Human CEO", now.UTC())
+	hub := orchestration.NewHub()
+	hub.RegisterAgent(orchestration.Agent{ID: "growth-1", Name: "Growth Agent", Role: "GROWTH_AGENT", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "content-1", Name: "Content Strategist", Role: "CONTENT_STRATEGIST", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "seo-1", Name: "SEO Specialist", Role: "SEO_SPECIALIST", OrganizationID: org.ID})
+	hub.OpenMeetingWithAgenda("campaign-kickoff", "Plan Q2 acquisition campaigns and assign channel ownership.", []string{"growth-1", "content-1", "seo-1"})
+
+	_ = hub.Publish(orchestration.Message{
+		ID:        "seed-dma-1",
+		FromAgent: "growth-1",
+		ToAgent:   "content-1",
+		Type:      orchestration.EventTask,
+		Content:   "Draft top-of-funnel blog series targeting enterprise SaaS buyers.",
+		MeetingID: "campaign-kickoff",
+		OccurredAt: now.Add(-5 * time.Minute),
+	})
+
+	tracker := billing.NewTracker(billing.DefaultCatalog)
+	_, _ = tracker.Track(billing.Usage{
+		AgentID:          "growth-1",
+		OrganizationID:   org.ID,
+		Model:            "gpt-4o",
+		PromptTokens:     1800,
+		CompletionTokens: 600,
+		OccurredAt:       now.Add(-5 * time.Minute),
+	})
+
+	return org, hub, tracker, nil
+}
+
+func seededAccounting(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
+	org := domain.NewAccountingFirm("acc-demo", "Demo Accounting Firm", "Human CEO", now.UTC())
+	hub := orchestration.NewHub()
+	hub.RegisterAgent(orchestration.Agent{ID: "bookkeeper-1", Name: "Bookkeeper", Role: "BOOKKEEPER", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "tax-1", Name: "Tax Specialist", Role: "TAX_SPECIALIST", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "cfo-1", Name: "CFO", Role: "CFO", OrganizationID: org.ID})
+	hub.OpenMeetingWithAgenda("month-close", "Reconcile April ledger, prepare estimated tax liability, and review payroll entries.", []string{"bookkeeper-1", "tax-1", "cfo-1"})
+
+	_ = hub.Publish(orchestration.Message{
+		ID:        "seed-acc-1",
+		FromAgent: "cfo-1",
+		ToAgent:   "bookkeeper-1",
+		Type:      orchestration.EventTask,
+		Content:   "Reconcile bank feeds and categorize uncategorized transactions before EOD.",
+		MeetingID: "month-close",
+		OccurredAt: now.Add(-3 * time.Minute),
+	})
+
+	tracker := billing.NewTracker(billing.DefaultCatalog)
+	_, _ = tracker.Track(billing.Usage{
+		AgentID:          "cfo-1",
+		OrganizationID:   org.ID,
+		Model:            "claude-3.5-sonnet",
+		PromptTokens:     1500,
+		CompletionTokens: 500,
+		OccurredAt:       now.Add(-3 * time.Minute),
 	})
 
 	return org, hub, tracker, nil

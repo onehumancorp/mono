@@ -9,12 +9,15 @@ export type OrganizationMember = {
   id: string;
   name: string;
   role: string;
+  managerId?: string;
+  isHuman?: boolean;
 };
 
 export type Organization = {
   id: string;
   name: string;
   domain: string;
+  ceoId?: string;
   members: OrganizationMember[];
   roleProfiles: RoleProfile[];
 };
@@ -31,7 +34,7 @@ export type MeetingMessage = {
 
 export type MeetingRoom = {
   id: string;
-  agenda: string;
+  agenda?: string;
   participants: string[];
   transcript: MeetingMessage[];
 };
@@ -47,6 +50,7 @@ export type CostSummary = {
   organizationID: string;
   totalTokens: number;
   totalCostUSD: number;
+  projectedMonthlyUSD?: number;
   agents: AgentCost[];
 };
 
@@ -55,17 +59,33 @@ export type StatusBucket = {
   count: number;
 };
 
+export type AgentRuntime = {
+  id: string;
+  name: string;
+  role: string;
+  organizationId: string;
+  status: string;
+};
+
 export type DashboardSnapshot = {
   organization: Organization;
   meetings: MeetingRoom[];
   costs: CostSummary;
-  agents: {
-    id: string;
-    name: string;
-    role: string;
-    organizationId: string;
-    status: string;
-  }[];
+  agents: AgentRuntime[];
   statuses: StatusBucket[];
   updatedAt: string;
+};
+
+export type DomainInfo = {
+  id: string;
+  name: string;
+  description: string;
+};
+
+export type MCPTool = {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  status: string;
 };

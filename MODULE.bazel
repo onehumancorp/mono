@@ -16,3 +16,7 @@ go_sdk.download(version = "1.25.0")
 
 platforms_host = use_extension("@platforms//host:extension.bzl", "host_platform")
 use_repo(platforms_host, "host_platform")
+bazel_dep(name = "toolchains_buildbuddy", version = "0.0.4")
+buildbuddy = use_extension("@toolchains_buildbuddy//:extensions.bzl", "buildbuddy")
+buildbuddy.gcc_toolchain()
+use_repo(buildbuddy, "buildbuddy_toolchain")

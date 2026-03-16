@@ -13,8 +13,13 @@ type Price struct {
 }
 
 var DefaultCatalog = map[string]Price{
-	"claude-3.5-sonnet": {InputPerMillionUSD: 3.00, OutputPerMillionUSD: 15.00},
-	"gpt-4o":            {InputPerMillionUSD: 5.00, OutputPerMillionUSD: 15.00},
+	"claude-3.5-sonnet":  {InputPerMillionUSD: 3.00, OutputPerMillionUSD: 15.00},
+	"claude-3.5-haiku":   {InputPerMillionUSD: 0.80, OutputPerMillionUSD: 4.00},
+	"claude-3-haiku":     {InputPerMillionUSD: 0.25, OutputPerMillionUSD: 1.25},
+	"gpt-4o":             {InputPerMillionUSD: 5.00, OutputPerMillionUSD: 15.00},
+	"gpt-4o-mini":        {InputPerMillionUSD: 0.15, OutputPerMillionUSD: 0.60},
+	"gemini-1.5-pro":     {InputPerMillionUSD: 3.50, OutputPerMillionUSD: 10.50},
+	"gemini-1.5-flash":   {InputPerMillionUSD: 0.35, OutputPerMillionUSD: 1.05},
 }
 
 type Usage struct {

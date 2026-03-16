@@ -1,7 +1,19 @@
-import type { CostSummary, DashboardSnapshot, MeetingRoom, Organization } from "./types";
+import type { CostSummary, DashboardSnapshot, DomainInfo, MCPTool, MeetingRoom, Organization } from "./types";
 
 async function getJSON<T>(path: string): Promise<T> {
   const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error(`Request failed for ${path}: ${response.status}`);
+  }
+  return (await response.json()) as T;
+}
+
+async function postJSON<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(body),
+  });
   if (!response.ok) {
     throw new Error(`Request failed for ${path}: ${response.status}`);
   }
@@ -23,6 +35,9 @@ function normalizeCosts(response: Record<string, unknown>): CostSummary {
     organizationID: String(response.organizationID ?? response.organizationId ?? ""),
     totalTokens: Number(response.totalTokens ?? 0),
     totalCostUSD: Number(response.totalCostUSD ?? response.totalCostUsd ?? 0),
+    projectedMonthlyUSD: response.projectedMonthlyUSD !== undefined
+      ? Number(response.projectedMonthlyUSD ?? response.projectedMonthlyUsd ?? 0)
+      : undefined,
     agents: agents.map((agent) => {
       const value = agent as Record<string, unknown>;
       return {
@@ -62,6 +77,7 @@ export async function fetchDashboard(): Promise<DashboardSnapshot> {
       id: String(rawOrganization.id ?? ""),
       name: String(rawOrganization.name ?? ""),
       domain: String(rawOrganization.domain ?? ""),
+      ceoId: rawOrganization.ceoId !== undefined ? String(rawOrganization.ceoId) : undefined,
       members: Array.isArray(rawOrganization.members)
         ? (rawOrganization.members as Organization["members"])
         : [],
@@ -113,4 +129,24 @@ export async function sendMessage(form: {
   if (!response.ok) {
     throw new Error(`Failed to send message: ${response.status}`);
   }
+}
+
+export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
+  return postJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
+}
+
+export function fireAgent(agentId: string): Promise<DashboardSnapshot> {
+  return postJSON<DashboardSnapshot>("/api/agents/fire", { agentId });
+}
+
+export function fetchDomains(): Promise<DomainInfo[]> {
+  return getJSON<DomainInfo[]>("/api/domains");
+}
+
+export function fetchMCPTools(): Promise<MCPTool[]> {
+  return getJSON<MCPTool[]>("/api/mcp/tools");
+}
+
+export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
+  return postJSON<DashboardSnapshot>("/api/dev/seed", { scenario });
 }
