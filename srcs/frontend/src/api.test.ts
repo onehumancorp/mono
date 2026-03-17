@@ -500,3 +500,208 @@ describe("integration api", () => {
     await expect(assignIssue("issue-1", "swe-1")).resolves.toEqual(issue);
   });
 });
+
+// ── Approval / Handoff / Identity / Skill / Snapshot / Marketplace / Analytics ─
+
+import {
+  fetchApprovals,
+  requestApproval,
+  decideApproval,
+  fetchHandoffs,
+  createHandoff,
+  fetchIdentities,
+  fetchSkillPacks,
+  importSkillPack,
+  fetchSnapshots,
+  createSnapshot,
+  restoreSnapshot,
+  fetchMarketplace,
+  fetchAnalytics,
+} from "./api";
+
+describe("approval api", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("fetchApprovals returns list", async () => {
+    const approvals = [{ id: "a-1", status: "PENDING" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => approvals })));
+    await expect(fetchApprovals()).resolves.toEqual(approvals);
+  });
+
+  it("requestApproval posts and returns approval", async () => {
+    const approval = { id: "a-2", status: "PENDING" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => approval })));
+    const result = await requestApproval({ agentId: "swe-1", action: "deploy", reason: "prod release", estimatedCostUsd: 200, riskLevel: "high" });
+    expect(result).toEqual(approval);
+  });
+
+  it("decideApproval posts decision and returns updated approvals", async () => {
+    const approvals = [{ id: "a-1", status: "APPROVED" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => approvals })));
+    const result = await decideApproval("a-1", "approve", "CEO");
+    expect(result).toEqual(approvals);
+  });
+});
+
+describe("handoff api", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("fetchHandoffs returns list", async () => {
+    const handoffs = [{ id: "h-1", status: "pending" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => handoffs })));
+    await expect(fetchHandoffs()).resolves.toEqual(handoffs);
+  });
+
+  it("createHandoff posts and returns handoff package", async () => {
+    const handoff = { id: "h-2", status: "pending" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => handoff })));
+    const result = await createHandoff({ fromAgentId: "swe-1", intent: "Need design review", failedAttempts: 2, currentState: "awaiting" });
+    expect(result).toEqual(handoff);
+  });
+});
+
+describe("identity api", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("fetchIdentities returns identity list", async () => {
+    const identities = [{ agentId: "swe-1", svid: "spiffe://corp/swe-1" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => identities })));
+    await expect(fetchIdentities()).resolves.toEqual(identities);
+  });
+});
+
+describe("skill pack api", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("fetchSkillPacks returns list", async () => {
+    const packs = [{ id: "sp-1", name: "Marketing Pack" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => packs })));
+    await expect(fetchSkillPacks()).resolves.toEqual(packs);
+  });
+
+  it("importSkillPack posts and returns imported pack", async () => {
+    const pack = { id: "sp-2", name: "Legal Pack", domain: "legal", description: "Legal consulting", source: "custom" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => pack })));
+    const result = await importSkillPack({ name: "Legal Pack", domain: "legal", description: "Legal consulting", source: "custom", author: "admin" });
+    expect(result).toEqual(pack);
+  });
+});
+
+describe("snapshot api", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("fetchSnapshots returns list", async () => {
+    const snaps = [{ id: "snap-1", label: "v1.0" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => snaps })));
+    await expect(fetchSnapshots()).resolves.toEqual(snaps);
+  });
+
+  it("createSnapshot posts label and returns snapshot", async () => {
+    const snap = { id: "snap-2", label: "pre-launch" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => snap })));
+    const result = await createSnapshot("pre-launch");
+    expect(result).toEqual(snap);
+  });
+
+  it("restoreSnapshot posts snapshotId and returns dashboard", async () => {
+    const dashboard = { organization: { id: "org-1", name: "Acme", domain: "software_company", members: [], roleProfiles: [] }, meetings: [], costs: { organizationID: "org-1", totalTokens: 0, totalCostUSD: 0, agents: [] }, agents: [], statuses: [], updatedAt: "2026-03-01T00:00:00Z" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => dashboard })));
+    const result = await restoreSnapshot("snap-1");
+    expect(result).toEqual(dashboard);
+  });
+});
+
+describe("marketplace api", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("fetchMarketplace returns items", async () => {
+    const items = [{ id: "item-1", name: "TikTok Virality Expert", type: "agent" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => items })));
+    await expect(fetchMarketplace()).resolves.toEqual(items);
+  });
+});
+
+describe("analytics api", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("fetchAnalytics returns analytics summary", async () => {
+    const analytics = { humanAgentRatio: 0.05, totalAgents: 20, totalHumans: 1, auditFidelityPct: 98.5, resumptionLatencyMs: 4200, pendingApprovals: 2, activeHandoffs: 1, tokenVelocity: 1500 };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => analytics })));
+    await expect(fetchAnalytics()).resolves.toEqual(analytics);
+  });
+});
+
+// ── Branch coverage: projectedMonthlyUsd lowercase fallback ─────────────────
+
+import { fetchCosts as fetchCosts2 } from "./api";
+
+describe("api – projectedMonthlyUsd branch", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("uses projectedMonthlyUsd lowercase fallback when projectedMonthlyUSD is null", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        organizationID: "org-1",
+        totalTokens: 0,
+        totalCostUSD: 0,
+        projectedMonthlyUSD: null,
+        projectedMonthlyUsd: 30.0,
+        agents: [],
+      }),
+    })));
+    const result = await fetchCosts2();
+    expect(result.projectedMonthlyUSD).toBe(30.0);
+  });
+});
+
+// ── Branch coverage: projectedMonthlyUSD ?? 0 final fallback ─────────────────
+
+describe("api – projectedMonthlyUSD zero fallback", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("returns 0 when both projectedMonthlyUSD and projectedMonthlyUsd are null", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        organizationID: "org-1",
+        totalTokens: 0,
+        totalCostUSD: 0,
+        projectedMonthlyUSD: null,
+        projectedMonthlyUsd: null,
+        agents: [],
+      }),
+    })));
+    const result = await fetchCosts2();
+    expect(result.projectedMonthlyUSD).toBe(0);
+  });
+});
