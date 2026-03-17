@@ -9,3 +9,26 @@ sh_test(
         "docker-compose.yml",
     ]),
 )
+
+# End-to-end smoke test against a real Kind cluster.
+# Requires kind, helm, kubectl, docker, curl on PATH.
+# Run with: bazel test //deploy:kind_e2e_test
+sh_test(
+    name = "kind_e2e_test",
+    srcs = ["tests/kind_e2e_test.sh"],
+    data = glob([
+        "docker/**/*",
+        "helm/ohc/**",
+        "docker-compose.yml",
+    ]) + [
+        "//:go.mod",
+        "//srcs/cmd/ohc:ohc",
+    ],
+    tags = [
+        "no-remote-exec",
+        "requires-docker",
+        "manual",
+        "large",
+    ],
+    size = "large",
+)

@@ -1,6 +1,11 @@
 apiVersion: v2
 name: ohc
-description: One Human Corp backend/frontend chart
+description: One Human Corp backend/frontend chart (includes Redis and CloudNative-PG)
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
+dependencies:
+  - name: redis
+    version: "20.11.3"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled

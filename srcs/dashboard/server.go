@@ -315,6 +315,15 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/integrations/issues/create", server.handleIssueCreate)
 	mux.HandleFunc("/api/integrations/issues/status", server.handleIssueUpdateStatus)
 	mux.HandleFunc("/api/integrations/issues/assign", server.handleIssueAssign)
+	// Health / readiness probes
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
+	mux.HandleFunc("/readyz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
 	return mux
 }
 
