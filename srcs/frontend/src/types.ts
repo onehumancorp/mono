@@ -63,6 +63,7 @@ export type AgentRuntime = {
   id: string;
   name: string;
   role: string;
+  model?: string;
   organizationId: string;
   status: string;
 };
@@ -88,6 +89,49 @@ export type MCPTool = {
   description: string;
   category: string;
   status: string;
+};
+
+export type AIModel = {
+  id: string;
+  provider: string;
+  capabilities: string[];
+  contextWindow: number;
+  defaultForRoles?: string[];
+};
+
+export type A2AEnvelope = {
+  id: string;
+  protocol: string;
+  fromAgentId: string;
+  toAgentId: string;
+  conversationId: string;
+  intent: string;
+  payload: string;
+  metadata?: Record<string, string>;
+  occurredAt: string;
+};
+
+export type DelegateProvider = {
+  id: string;
+  name: string;
+  mode: string;
+  status: string;
+  description: string;
+};
+
+export type DelegateTask = {
+  id: string;
+  providerId: string;
+  providerName: string;
+  title: string;
+  goal: string;
+  systemPrompt: string;
+  preferredModel?: string;
+  mcpServers: string[];
+  skills: string[];
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 // ── Approval / Confidence Gating ─────────────────────────────────────────────

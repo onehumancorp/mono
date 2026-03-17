@@ -1,9 +1,13 @@
 import type {
+  A2AEnvelope,
+  AIModel,
   AnalyticsSummary,
   AgentIdentity,
   ApprovalRequest,
   CostSummary,
   DashboardSnapshot,
+  DelegateProvider,
+  DelegateTask,
   DomainInfo,
   HandoffPackage,
   MarketplaceItem,
@@ -107,6 +111,7 @@ export async function fetchDashboard(): Promise<DashboardSnapshot> {
         id: String(value.id ?? ""),
         name: String(value.name ?? ""),
         role: String(value.role ?? ""),
+        model: value.model !== undefined ? String(value.model) : undefined,
         organizationId: String(value.organizationId ?? value.organizationID ?? ""),
         status: String(value.status ?? ""),
       };
@@ -159,6 +164,41 @@ export function fetchDomains(): Promise<DomainInfo[]> {
 
 export function fetchMCPTools(): Promise<MCPTool[]> {
   return getJSON<MCPTool[]>("/api/mcp/tools");
+}
+
+export function fetchModels(): Promise<AIModel[]> {
+  return getJSON<AIModel[]>("/api/models");
+}
+
+export function publishA2AMessage(body: {
+  fromAgentId: string;
+  toAgentId: string;
+  conversationId: string;
+  intent: string;
+  payload: string;
+  metadata?: Record<string, string>;
+}): Promise<A2AEnvelope> {
+  return postJSON<A2AEnvelope>("/api/a2a/messages", body);
+}
+
+export function fetchDelegateProviders(): Promise<DelegateProvider[]> {
+  return getJSON<DelegateProvider[]>("/api/delegate/providers");
+}
+
+export function fetchDelegateTasks(): Promise<DelegateTask[]> {
+  return getJSON<DelegateTask[]>("/api/delegate/tasks");
+}
+
+export function createDelegateTask(body: {
+  providerId: string;
+  title: string;
+  goal: string;
+  systemPrompt: string;
+  preferredModel?: string;
+  mcpServers?: string[];
+  skills?: string[];
+}): Promise<DelegateTask> {
+  return postJSON<DelegateTask>("/api/delegate/tasks", body);
 }
 
 export function seedScenario(scenario: string): Promise<DashboardSnapshot> {

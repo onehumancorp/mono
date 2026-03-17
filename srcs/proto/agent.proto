@@ -12,6 +12,7 @@ message Agent {
   string name = 3;
   ohc.common.AgentStatus status = 4;
   string organization_id = 5;
+  string model = 6;
 }
 
 message AgentMessage {
@@ -22,9 +23,39 @@ message AgentMessage {
   string content = 5;
   string meeting_id = 6;
   int64 occurred_at_unix = 7;
+  string protocol = 8;
+  map<string, string> metadata = 9;
+}
+
+message A2AEnvelope {
+  string id = 1;
+  string protocol = 2;
+  string from_agent_id = 3;
+  string to_agent_id = 4;
+  string conversation_id = 5;
+  string intent = 6;
+  string payload = 7;
+  map<string, string> metadata = 8;
+  int64 occurred_at_unix = 9;
+}
+
+message DelegateTask {
+  string id = 1;
+  string provider_id = 2;
+  string title = 3;
+  string goal = 4;
+  string system_prompt = 5;
+  string preferred_model = 6;
+  repeated string mcp_servers = 7;
+  repeated string skills = 8;
+  string status = 9;
+  int64 created_at_unix = 10;
+  int64 updated_at_unix = 11;
 }
 
 service AgentOrchestration {
   rpc RegisterAgent(Agent) returns (Agent);
   rpc PublishMessage(AgentMessage) returns (AgentMessage);
+  rpc PublishA2AMessage(A2AEnvelope) returns (A2AEnvelope);
+  rpc CreateDelegateTask(DelegateTask) returns (DelegateTask);
 }

@@ -18,15 +18,16 @@ import (
 )
 
 type Server struct {
-	mu          sync.RWMutex
-	org         domain.Organization
-	hub         *orchestration.Hub
-	tracker     *billing.Tracker
-	approvals   []ApprovalRequest
-	handoffs    []HandoffPackage
-	skills      []SkillPack
-	snapshots   []OrgSnapshot
-	integReg    *integrations.Registry
+	mu            sync.RWMutex
+	org           domain.Organization
+	hub           *orchestration.Hub
+	tracker       *billing.Tracker
+	approvals     []ApprovalRequest
+	handoffs      []HandoffPackage
+	skills        []SkillPack
+	snapshots     []OrgSnapshot
+	integReg      *integrations.Registry
+	delegateTasks []DelegateTask
 }
 
 type statusCount struct {
@@ -222,6 +223,68 @@ type MCPTool struct {
 	Status      string `json:"status"`
 }
 
+type AIModel struct {
+	ID              string   `json:"id"`
+	Provider        string   `json:"provider"`
+	Capabilities    []string `json:"capabilities"`
+	ContextWindow   int      `json:"contextWindow"`
+	DefaultForRoles []string `json:"defaultForRoles,omitempty"`
+}
+
+type DelegateProvider struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Mode        string `json:"mode"`
+	Status      string `json:"status"`
+	Description string `json:"description"`
+}
+
+type A2AEnvelope struct {
+	ID             string            `json:"id"`
+	Protocol       string            `json:"protocol"`
+	FromAgentID    string            `json:"fromAgentId"`
+	ToAgentID      string            `json:"toAgentId"`
+	ConversationID string            `json:"conversationId"`
+	Intent         string            `json:"intent"`
+	Payload        string            `json:"payload"`
+	Metadata       map[string]string `json:"metadata,omitempty"`
+	OccurredAt     time.Time         `json:"occurredAt"`
+}
+
+type delegateTaskRequest struct {
+	ProviderID     string   `json:"providerId"`
+	Title          string   `json:"title"`
+	Goal           string   `json:"goal"`
+	SystemPrompt   string   `json:"systemPrompt"`
+	PreferredModel string   `json:"preferredModel,omitempty"`
+	MCPServers     []string `json:"mcpServers,omitempty"`
+	Skills         []string `json:"skills,omitempty"`
+}
+
+type DelegateTask struct {
+	ID             string    `json:"id"`
+	ProviderID     string    `json:"providerId"`
+	ProviderName   string    `json:"providerName"`
+	Title          string    `json:"title"`
+	Goal           string    `json:"goal"`
+	SystemPrompt   string    `json:"systemPrompt"`
+	PreferredModel string    `json:"preferredModel,omitempty"`
+	MCPServers     []string  `json:"mcpServers"`
+	Skills         []string  `json:"skills"`
+	Status         string    `json:"status"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+}
+
+type a2aMessageRequest struct {
+	FromAgentID    string            `json:"fromAgentId"`
+	ToAgentID      string            `json:"toAgentId"`
+	ConversationID string            `json:"conversationId"`
+	Intent         string            `json:"intent"`
+	Payload        string            `json:"payload"`
+	Metadata       map[string]string `json:"metadata,omitempty"`
+}
+
 // DomainInfo describes a supported organizational domain template.
 type DomainInfo struct {
 	ID          string `json:"id"`
@@ -246,6 +309,18 @@ var mcpTools = []MCPTool{
 	{ID: "spire-mcp", Name: "SPIFFE/SPIRE", Description: "Identity management: issue and rotate SVID certificates for agent workloads.", Category: "identity", Status: "available"},
 }
 
+var supportedModels = []AIModel{
+	{ID: "gpt-4o", Provider: "openai", Capabilities: []string{"reasoning", "tool-use", "multimodal"}, ContextWindow: 128000, DefaultForRoles: []string{"CEO", "PRODUCT_MANAGER", "SOFTWARE_ENGINEER"}},
+	{ID: "gpt-4o-mini", Provider: "openai", Capabilities: []string{"reasoning", "fast-iteration"}, ContextWindow: 128000, DefaultForRoles: []string{"QA_TESTER", "DESIGNER"}},
+	{ID: "claude-3.5-sonnet", Provider: "anthropic", Capabilities: []string{"reasoning", "writing", "analysis"}, ContextWindow: 200000, DefaultForRoles: []string{"CFO", "MARKETING_MANAGER"}},
+	{ID: "gemini-2.0-flash", Provider: "google", Capabilities: []string{"low-latency", "tool-use", "multimodal"}, ContextWindow: 1000000, DefaultForRoles: []string{"GROWTH_AGENT", "SEO_SPECIALIST"}},
+}
+
+var delegateProviders = []DelegateProvider{
+	{ID: "google-jules", Name: "Google Jules", Mode: "one-shot", Status: "available", Description: "External one-shot coding/research agent with strong tooling and planning."},
+	{ID: "github-copilot", Name: "GitHub Copilot Agent", Mode: "one-shot", Status: "available", Description: "One-shot delegated task execution via Copilot agent infrastructure."},
+}
+
 var statusOrder = []orchestration.Status{
 	orchestration.StatusActive,
 	orchestration.StatusBlocked,
@@ -255,14 +330,15 @@ var statusOrder = []orchestration.Status{
 
 func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker) http.Handler {
 	server := &Server{
-		org:       org,
-		hub:       hub,
-		tracker:   tracker,
-		approvals: []ApprovalRequest{},
-		handoffs:  []HandoffPackage{},
-		skills:    defaultSkillPacks(),
-		snapshots: []OrgSnapshot{},
-		integReg:  integrations.NewRegistry(),
+		org:           org,
+		hub:           hub,
+		tracker:       tracker,
+		approvals:     []ApprovalRequest{},
+		handoffs:      []HandoffPackage{},
+		skills:        defaultSkillPacks(),
+		snapshots:     []OrgSnapshot{},
+		integReg:      integrations.NewRegistry(),
+		delegateTasks: []DelegateTask{},
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", server.handleIndex)
@@ -280,7 +356,11 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/agents/hire", server.handleHireAgent)
 	mux.HandleFunc("/api/agents/fire", server.handleFireAgent)
 	mux.HandleFunc("/api/domains", server.handleDomains)
+	mux.HandleFunc("/api/models", server.handleModels)
 	mux.HandleFunc("/api/mcp/tools", server.handleMCPTools)
+	mux.HandleFunc("/api/a2a/messages", server.handleA2AMessage)
+	mux.HandleFunc("/api/delegate/providers", server.handleDelegateProviders)
+	mux.HandleFunc("/api/delegate/tasks", server.handleDelegateTasks)
 	mux.HandleFunc("/api/dev/seed", server.handleDevSeed)
 	// Phase 2 – Confidence Gating / Guardian Agent
 	mux.HandleFunc("/api/approvals", server.handleApprovals)
@@ -512,12 +592,16 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	message := orchestration.Message{
-		ID:         "web-" + time.Now().UTC().Format("20060102150405.000000000"),
-		FromAgent:  r.FormValue("fromAgent"),
-		ToAgent:    r.FormValue("toAgent"),
-		Type:       r.FormValue("messageType"),
-		Content:    r.FormValue("content"),
-		MeetingID:  r.FormValue("meetingId"),
+		ID:        "web-" + time.Now().UTC().Format("20060102150405.000000000"),
+		FromAgent: r.FormValue("fromAgent"),
+		ToAgent:   r.FormValue("toAgent"),
+		Type:      r.FormValue("messageType"),
+		Protocol:  "internal/v1",
+		Content:   r.FormValue("content"),
+		MeetingID: r.FormValue("meetingId"),
+		Metadata: map[string]string{
+			"model": r.FormValue("model"),
+		},
 		OccurredAt: time.Now().UTC(),
 	}
 
@@ -580,6 +664,14 @@ func (s *Server) handleHireAgent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "name and role are required", http.StatusBadRequest)
 		return
 	}
+	if req.Model != "" && !isSupportedModel(req.Model) {
+		http.Error(w, "unsupported model", http.StatusBadRequest)
+		return
+	}
+	model := req.Model
+	if model == "" {
+		model = defaultModelForRole(req.Role)
+	}
 
 	s.mu.Lock()
 	id := s.org.ID + "-agent-" + time.Now().UTC().Format("20060102150405000")
@@ -587,6 +679,7 @@ func (s *Server) handleHireAgent(w http.ResponseWriter, r *http.Request) {
 		ID:             id,
 		Name:           req.Name,
 		Role:           req.Role,
+		Model:          model,
 		OrganizationID: s.org.ID,
 		Status:         orchestration.StatusIdle,
 	}
@@ -625,8 +718,145 @@ func (s *Server) handleDomains(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, availableDomains)
 }
 
+func (s *Server) handleModels(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, supportedModels)
+}
+
 func (s *Server) handleMCPTools(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, mcpTools)
+}
+
+func (s *Server) handleA2AMessage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req a2aMessageRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.FromAgentID == "" || req.ToAgentID == "" || req.Payload == "" {
+		http.Error(w, "fromAgentId, toAgentId, and payload are required", http.StatusBadRequest)
+		return
+	}
+
+	now := time.Now().UTC()
+	envelope := A2AEnvelope{
+		ID:             "a2a-" + now.Format("20060102150405000"),
+		Protocol:       "A2A/1.0",
+		FromAgentID:    req.FromAgentID,
+		ToAgentID:      req.ToAgentID,
+		ConversationID: req.ConversationID,
+		Intent:         req.Intent,
+		Payload:        req.Payload,
+		Metadata:       req.Metadata,
+		OccurredAt:     now,
+	}
+
+	s.mu.Lock()
+	err := s.hub.Publish(orchestration.Message{
+		ID:         envelope.ID,
+		FromAgent:  envelope.FromAgentID,
+		ToAgent:    envelope.ToAgentID,
+		Type:       "a2a.intent." + envelope.Intent,
+		Protocol:   envelope.Protocol,
+		Content:    envelope.Payload,
+		MeetingID:  envelope.ConversationID,
+		Metadata:   envelope.Metadata,
+		OccurredAt: envelope.OccurredAt,
+	})
+	s.mu.Unlock()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	writeJSON(w, envelope)
+}
+
+func (s *Server) handleDelegateProviders(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, delegateProviders)
+}
+
+func (s *Server) handleDelegateTasks(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s.mu.RLock()
+		list := append([]DelegateTask(nil), s.delegateTasks...)
+		s.mu.RUnlock()
+		writeJSON(w, list)
+	case http.MethodPost:
+		var req delegateTaskRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+			return
+		}
+		if req.ProviderID == "" || req.Title == "" || req.Goal == "" || req.SystemPrompt == "" {
+			http.Error(w, "providerId, title, goal, and systemPrompt are required", http.StatusBadRequest)
+			return
+		}
+		provider, ok := findDelegateProvider(req.ProviderID)
+		if !ok {
+			http.Error(w, "unsupported delegate provider", http.StatusBadRequest)
+			return
+		}
+		if req.PreferredModel != "" && !isSupportedModel(req.PreferredModel) {
+			http.Error(w, "unsupported preferredModel", http.StatusBadRequest)
+			return
+		}
+		now := time.Now().UTC()
+		task := DelegateTask{
+			ID:             "delegate-" + now.Format("20060102150405000"),
+			ProviderID:     req.ProviderID,
+			ProviderName:   provider.Name,
+			Title:          req.Title,
+			Goal:           req.Goal,
+			SystemPrompt:   req.SystemPrompt,
+			PreferredModel: req.PreferredModel,
+			MCPServers:     append([]string(nil), req.MCPServers...),
+			Skills:         append([]string(nil), req.Skills...),
+			Status:         "queued",
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+		s.mu.Lock()
+		s.delegateTasks = append(s.delegateTasks, task)
+		s.mu.Unlock()
+		writeJSON(w, task)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func isSupportedModel(modelID string) bool {
+	for _, model := range supportedModels {
+		if model.ID == modelID {
+			return true
+		}
+	}
+	return false
+}
+
+func defaultModelForRole(role string) string {
+	for _, model := range supportedModels {
+		for _, r := range model.DefaultForRoles {
+			if r == role {
+				return model.ID
+			}
+		}
+	}
+	return "gpt-4o-mini"
+}
+
+func findDelegateProvider(providerID string) (DelegateProvider, bool) {
+	for _, provider := range delegateProviders {
+		if provider.ID == providerID {
+			return provider, true
+		}
+	}
+	return DelegateProvider{}, false
 }
 
 func (s *Server) snapshot() dashboardSnapshot {
@@ -668,9 +898,9 @@ func seededScenario(name string, now time.Time) (domain.Organization, *orchestra
 func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
 	org := domain.NewSoftwareCompany("demo", "Demo Software Company", "Human CEO", now.UTC())
 	hub := orchestration.NewHub()
-	hub.RegisterAgent(orchestration.Agent{ID: "pm-1", Name: "Product Manager", Role: "PRODUCT_MANAGER", OrganizationID: org.ID})
-	hub.RegisterAgent(orchestration.Agent{ID: "swe-1", Name: "Software Engineer", Role: "SOFTWARE_ENGINEER", OrganizationID: org.ID})
-	hub.RegisterAgent(orchestration.Agent{ID: "ux-1", Name: "Design Lead", Role: "DESIGNER", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "pm-1", Name: "Product Manager", Role: "PRODUCT_MANAGER", Model: "gpt-4o", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "swe-1", Name: "Software Engineer", Role: "SOFTWARE_ENGINEER", Model: "gpt-4o", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "ux-1", Name: "Design Lead", Role: "DESIGNER", Model: "gpt-4o-mini", OrganizationID: org.ID})
 	hub.OpenMeetingWithAgenda("launch-readiness", "Review launch blockers, sign-off on reliability checklist, assign post-launch owners.", []string{"pm-1", "swe-1", "ux-1"})
 
 	_ = hub.Publish(orchestration.Message{
@@ -724,18 +954,18 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 func seededDigitalMarketing(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
 	org := domain.NewDigitalMarketingAgency("dma-demo", "Demo Digital Agency", "Human CEO", now.UTC())
 	hub := orchestration.NewHub()
-	hub.RegisterAgent(orchestration.Agent{ID: "growth-1", Name: "Growth Agent", Role: "GROWTH_AGENT", OrganizationID: org.ID})
-	hub.RegisterAgent(orchestration.Agent{ID: "content-1", Name: "Content Strategist", Role: "CONTENT_STRATEGIST", OrganizationID: org.ID})
-	hub.RegisterAgent(orchestration.Agent{ID: "seo-1", Name: "SEO Specialist", Role: "SEO_SPECIALIST", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "growth-1", Name: "Growth Agent", Role: "GROWTH_AGENT", Model: "gemini-2.0-flash", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "content-1", Name: "Content Strategist", Role: "CONTENT_STRATEGIST", Model: "claude-3.5-sonnet", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "seo-1", Name: "SEO Specialist", Role: "SEO_SPECIALIST", Model: "gemini-2.0-flash", OrganizationID: org.ID})
 	hub.OpenMeetingWithAgenda("campaign-kickoff", "Plan Q2 acquisition campaigns and assign channel ownership.", []string{"growth-1", "content-1", "seo-1"})
 
 	_ = hub.Publish(orchestration.Message{
-		ID:        "seed-dma-1",
-		FromAgent: "growth-1",
-		ToAgent:   "content-1",
-		Type:      orchestration.EventTask,
-		Content:   "Draft top-of-funnel blog series targeting enterprise SaaS buyers.",
-		MeetingID: "campaign-kickoff",
+		ID:         "seed-dma-1",
+		FromAgent:  "growth-1",
+		ToAgent:    "content-1",
+		Type:       orchestration.EventTask,
+		Content:    "Draft top-of-funnel blog series targeting enterprise SaaS buyers.",
+		MeetingID:  "campaign-kickoff",
 		OccurredAt: now.Add(-5 * time.Minute),
 	})
 
@@ -755,18 +985,18 @@ func seededDigitalMarketing(now time.Time) (domain.Organization, *orchestration.
 func seededAccounting(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
 	org := domain.NewAccountingFirm("acc-demo", "Demo Accounting Firm", "Human CEO", now.UTC())
 	hub := orchestration.NewHub()
-	hub.RegisterAgent(orchestration.Agent{ID: "bookkeeper-1", Name: "Bookkeeper", Role: "BOOKKEEPER", OrganizationID: org.ID})
-	hub.RegisterAgent(orchestration.Agent{ID: "tax-1", Name: "Tax Specialist", Role: "TAX_SPECIALIST", OrganizationID: org.ID})
-	hub.RegisterAgent(orchestration.Agent{ID: "cfo-1", Name: "CFO", Role: "CFO", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "bookkeeper-1", Name: "Bookkeeper", Role: "BOOKKEEPER", Model: "gpt-4o-mini", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "tax-1", Name: "Tax Specialist", Role: "TAX_SPECIALIST", Model: "claude-3.5-sonnet", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "cfo-1", Name: "CFO", Role: "CFO", Model: "claude-3.5-sonnet", OrganizationID: org.ID})
 	hub.OpenMeetingWithAgenda("month-close", "Reconcile April ledger, prepare estimated tax liability, and review payroll entries.", []string{"bookkeeper-1", "tax-1", "cfo-1"})
 
 	_ = hub.Publish(orchestration.Message{
-		ID:        "seed-acc-1",
-		FromAgent: "cfo-1",
-		ToAgent:   "bookkeeper-1",
-		Type:      orchestration.EventTask,
-		Content:   "Reconcile bank feeds and categorize uncategorized transactions before EOD.",
-		MeetingID: "month-close",
+		ID:         "seed-acc-1",
+		FromAgent:  "cfo-1",
+		ToAgent:    "bookkeeper-1",
+		Type:       orchestration.EventTask,
+		Content:    "Reconcile bank feeds and categorize uncategorized transactions before EOD.",
+		MeetingID:  "month-close",
 		OccurredAt: now.Add(-3 * time.Minute),
 	})
 
@@ -813,811 +1043,811 @@ func summarizeStatuses(agents []orchestration.Agent) []statusCount {
 // ── Approval / Confidence Gating Handlers ─────────────────────────────────────
 
 func (s *Server) handleApprovals(w http.ResponseWriter, r *http.Request) {
-switch r.Method {
-case http.MethodGet:
-s.mu.RLock()
-list := append([]ApprovalRequest(nil), s.approvals...)
-s.mu.RUnlock()
-writeJSON(w, list)
-default:
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-}
+	switch r.Method {
+	case http.MethodGet:
+		s.mu.RLock()
+		list := append([]ApprovalRequest(nil), s.approvals...)
+		s.mu.RUnlock()
+		writeJSON(w, list)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 func (s *Server) handleApprovalRequest(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-var req approvalCreateRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.AgentID == "" || req.Action == "" {
-http.Error(w, "agentId and action are required", http.StatusBadRequest)
-return
-}
+	var req approvalCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.AgentID == "" || req.Action == "" {
+		http.Error(w, "agentId and action are required", http.StatusBadRequest)
+		return
+	}
 
-now := time.Now().UTC()
-approval := ApprovalRequest{
-ID:               s.org.ID + "-approval-" + now.Format("20060102150405000"),
-AgentID:          req.AgentID,
-Action:           req.Action,
-Reason:           req.Reason,
-EstimatedCostUSD: req.EstimatedCostUSD,
-RiskLevel:        req.RiskLevel,
-Status:           ApprovalStatusPending,
-CreatedAt:        now,
-}
-if approval.RiskLevel == "" {
-if approval.EstimatedCostUSD > 500 {
-approval.RiskLevel = "critical"
-} else if approval.EstimatedCostUSD > 100 {
-approval.RiskLevel = "high"
-} else {
-approval.RiskLevel = "medium"
-}
-}
+	now := time.Now().UTC()
+	approval := ApprovalRequest{
+		ID:               s.org.ID + "-approval-" + now.Format("20060102150405000"),
+		AgentID:          req.AgentID,
+		Action:           req.Action,
+		Reason:           req.Reason,
+		EstimatedCostUSD: req.EstimatedCostUSD,
+		RiskLevel:        req.RiskLevel,
+		Status:           ApprovalStatusPending,
+		CreatedAt:        now,
+	}
+	if approval.RiskLevel == "" {
+		if approval.EstimatedCostUSD > 500 {
+			approval.RiskLevel = "critical"
+		} else if approval.EstimatedCostUSD > 100 {
+			approval.RiskLevel = "high"
+		} else {
+			approval.RiskLevel = "medium"
+		}
+	}
 
-s.mu.Lock()
-s.approvals = append(s.approvals, approval)
-s.mu.Unlock()
+	s.mu.Lock()
+	s.approvals = append(s.approvals, approval)
+	s.mu.Unlock()
 
-writeJSON(w, approval)
+	writeJSON(w, approval)
 }
 
 func (s *Server) handleApprovalDecide(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-var req approvalDecideRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.ApprovalID == "" || req.Decision == "" {
-http.Error(w, "approvalId and decision are required", http.StatusBadRequest)
-return
-}
+	var req approvalDecideRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.ApprovalID == "" || req.Decision == "" {
+		http.Error(w, "approvalId and decision are required", http.StatusBadRequest)
+		return
+	}
 
-var newStatus ApprovalStatus
-switch req.Decision {
-case "approve":
-newStatus = ApprovalStatusApproved
-case "reject":
-newStatus = ApprovalStatusRejected
-default:
-http.Error(w, "decision must be 'approve' or 'reject'", http.StatusBadRequest)
-return
-}
+	var newStatus ApprovalStatus
+	switch req.Decision {
+	case "approve":
+		newStatus = ApprovalStatusApproved
+	case "reject":
+		newStatus = ApprovalStatusRejected
+	default:
+		http.Error(w, "decision must be 'approve' or 'reject'", http.StatusBadRequest)
+		return
+	}
 
-now := time.Now().UTC()
-s.mu.Lock()
-found := false
-for i, a := range s.approvals {
-if a.ID == req.ApprovalID {
-s.approvals[i].Status = newStatus
-s.approvals[i].DecidedAt = &now
-s.approvals[i].DecidedBy = req.DecidedBy
-found = true
-break
-}
-}
-s.mu.Unlock()
+	now := time.Now().UTC()
+	s.mu.Lock()
+	found := false
+	for i, a := range s.approvals {
+		if a.ID == req.ApprovalID {
+			s.approvals[i].Status = newStatus
+			s.approvals[i].DecidedAt = &now
+			s.approvals[i].DecidedBy = req.DecidedBy
+			found = true
+			break
+		}
+	}
+	s.mu.Unlock()
 
-if !found {
-http.Error(w, "approval not found", http.StatusNotFound)
-return
-}
+	if !found {
+		http.Error(w, "approval not found", http.StatusNotFound)
+		return
+	}
 
-s.mu.RLock()
-list := append([]ApprovalRequest(nil), s.approvals...)
-s.mu.RUnlock()
-writeJSON(w, list)
+	s.mu.RLock()
+	list := append([]ApprovalRequest(nil), s.approvals...)
+	s.mu.RUnlock()
+	writeJSON(w, list)
 }
 
 // ── Warm Handoff Handlers ─────────────────────────────────────────────────────
 
 func (s *Server) handleHandoffs(w http.ResponseWriter, r *http.Request) {
-switch r.Method {
-case http.MethodGet:
-s.mu.RLock()
-list := append([]HandoffPackage(nil), s.handoffs...)
-s.mu.RUnlock()
-writeJSON(w, list)
-case http.MethodPost:
-var req handoffCreateRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.FromAgentID == "" || req.Intent == "" {
-http.Error(w, "fromAgentId and intent are required", http.StatusBadRequest)
-return
-}
-now := time.Now().UTC()
-handoff := HandoffPackage{
-ID:             s.org.ID + "-handoff-" + now.Format("20060102150405000"),
-FromAgentID:    req.FromAgentID,
-ToHumanRole:    req.ToHumanRole,
-Intent:         req.Intent,
-FailedAttempts: req.FailedAttempts,
-CurrentState:   req.CurrentState,
-Status:         "pending",
-CreatedAt:      now,
-}
-s.mu.Lock()
-s.handoffs = append(s.handoffs, handoff)
-s.mu.Unlock()
-writeJSON(w, handoff)
-default:
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-}
+	switch r.Method {
+	case http.MethodGet:
+		s.mu.RLock()
+		list := append([]HandoffPackage(nil), s.handoffs...)
+		s.mu.RUnlock()
+		writeJSON(w, list)
+	case http.MethodPost:
+		var req handoffCreateRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+			return
+		}
+		if req.FromAgentID == "" || req.Intent == "" {
+			http.Error(w, "fromAgentId and intent are required", http.StatusBadRequest)
+			return
+		}
+		now := time.Now().UTC()
+		handoff := HandoffPackage{
+			ID:             s.org.ID + "-handoff-" + now.Format("20060102150405000"),
+			FromAgentID:    req.FromAgentID,
+			ToHumanRole:    req.ToHumanRole,
+			Intent:         req.Intent,
+			FailedAttempts: req.FailedAttempts,
+			CurrentState:   req.CurrentState,
+			Status:         "pending",
+			CreatedAt:      now,
+		}
+		s.mu.Lock()
+		s.handoffs = append(s.handoffs, handoff)
+		s.mu.Unlock()
+		writeJSON(w, handoff)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 // ── Identity Management Handler ───────────────────────────────────────────────
 
 func (s *Server) handleIdentities(w http.ResponseWriter, _ *http.Request) {
-s.mu.RLock()
-agents := s.hub.Agents()
-org := s.org
-s.mu.RUnlock()
+	s.mu.RLock()
+	agents := s.hub.Agents()
+	org := s.org
+	s.mu.RUnlock()
 
-now := time.Now().UTC()
-identities := make([]AgentIdentity, 0, len(agents))
-for _, agent := range agents {
-identities = append(identities, AgentIdentity{
-AgentID:     agent.ID,
-SVID:        "spiffe://onehumancorp.io/" + org.ID + "/" + agent.ID,
-TrustDomain: "onehumancorp.io",
-IssuedAt:    now,
-ExpiresAt:   now.Add(24 * time.Hour),
-})
-}
-writeJSON(w, identities)
+	now := time.Now().UTC()
+	identities := make([]AgentIdentity, 0, len(agents))
+	for _, agent := range agents {
+		identities = append(identities, AgentIdentity{
+			AgentID:     agent.ID,
+			SVID:        "spiffe://onehumancorp.io/" + org.ID + "/" + agent.ID,
+			TrustDomain: "onehumancorp.io",
+			IssuedAt:    now,
+			ExpiresAt:   now.Add(24 * time.Hour),
+		})
+	}
+	writeJSON(w, identities)
 }
 
 // ── Skill Pack Handlers ───────────────────────────────────────────────────────
 
 func (s *Server) handleSkills(w http.ResponseWriter, _ *http.Request) {
-s.mu.RLock()
-list := append([]SkillPack(nil), s.skills...)
-s.mu.RUnlock()
-writeJSON(w, list)
+	s.mu.RLock()
+	list := append([]SkillPack(nil), s.skills...)
+	s.mu.RUnlock()
+	writeJSON(w, list)
 }
 
 func (s *Server) handleSkillImport(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-var req skillImportRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.Name == "" || req.Domain == "" {
-http.Error(w, "name and domain are required", http.StatusBadRequest)
-return
-}
+	var req skillImportRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.Name == "" || req.Domain == "" {
+		http.Error(w, "name and domain are required", http.StatusBadRequest)
+		return
+	}
 
-now := time.Now().UTC()
-source := req.Source
-if source == "" {
-source = "custom"
-}
-pack := SkillPack{
-ID:          s.org.ID + "-skill-" + now.Format("20060102150405000"),
-Name:        req.Name,
-Domain:      req.Domain,
-Description: req.Description,
-Source:      source,
-Author:      req.Author,
-Roles:       req.Roles,
-ImportedAt:  now,
-}
-if pack.Roles == nil {
-pack.Roles = []SkillPackRole{}
-}
+	now := time.Now().UTC()
+	source := req.Source
+	if source == "" {
+		source = "custom"
+	}
+	pack := SkillPack{
+		ID:          s.org.ID + "-skill-" + now.Format("20060102150405000"),
+		Name:        req.Name,
+		Domain:      req.Domain,
+		Description: req.Description,
+		Source:      source,
+		Author:      req.Author,
+		Roles:       req.Roles,
+		ImportedAt:  now,
+	}
+	if pack.Roles == nil {
+		pack.Roles = []SkillPackRole{}
+	}
 
-s.mu.Lock()
-s.skills = append(s.skills, pack)
-s.mu.Unlock()
+	s.mu.Lock()
+	s.skills = append(s.skills, pack)
+	s.mu.Unlock()
 
-writeJSON(w, pack)
+	writeJSON(w, pack)
 }
 
 // ── Snapshot Handlers ─────────────────────────────────────────────────────────
 
 func (s *Server) handleSnapshots(w http.ResponseWriter, _ *http.Request) {
-s.mu.RLock()
-list := append([]OrgSnapshot(nil), s.snapshots...)
-s.mu.RUnlock()
-writeJSON(w, list)
+	s.mu.RLock()
+	list := append([]OrgSnapshot(nil), s.snapshots...)
+	s.mu.RUnlock()
+	writeJSON(w, list)
 }
 
 func (s *Server) handleSnapshotCreate(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-var req snapshotCreateRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
+	var req snapshotCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
 
-s.mu.Lock()
-meetings := s.hub.Meetings()
-agents := s.hub.Agents()
-msgCount := 0
-for _, m := range meetings {
-msgCount += len(m.Transcript)
-}
-now := time.Now().UTC()
-label := req.Label
-if label == "" {
-label = "Snapshot " + now.Format("2006-01-02 15:04")
-}
-snap := OrgSnapshot{
-ID:           s.org.ID + "-snap-" + now.Format("20060102150405000"),
-Label:        label,
-OrgID:        s.org.ID,
-OrgName:      s.org.Name,
-Domain:       s.org.Domain,
-AgentCount:   len(agents),
-MeetingCount: len(meetings),
-MessageCount: msgCount,
-CreatedAt:    now,
-}
-s.snapshots = append(s.snapshots, snap)
-s.mu.Unlock()
+	s.mu.Lock()
+	meetings := s.hub.Meetings()
+	agents := s.hub.Agents()
+	msgCount := 0
+	for _, m := range meetings {
+		msgCount += len(m.Transcript)
+	}
+	now := time.Now().UTC()
+	label := req.Label
+	if label == "" {
+		label = "Snapshot " + now.Format("2006-01-02 15:04")
+	}
+	snap := OrgSnapshot{
+		ID:           s.org.ID + "-snap-" + now.Format("20060102150405000"),
+		Label:        label,
+		OrgID:        s.org.ID,
+		OrgName:      s.org.Name,
+		Domain:       s.org.Domain,
+		AgentCount:   len(agents),
+		MeetingCount: len(meetings),
+		MessageCount: msgCount,
+		CreatedAt:    now,
+	}
+	s.snapshots = append(s.snapshots, snap)
+	s.mu.Unlock()
 
-writeJSON(w, snap)
+	writeJSON(w, snap)
 }
 
 func (s *Server) handleSnapshotRestore(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-var req snapshotRestoreRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.SnapshotID == "" {
-http.Error(w, "snapshotId is required", http.StatusBadRequest)
-return
-}
+	var req snapshotRestoreRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.SnapshotID == "" {
+		http.Error(w, "snapshotId is required", http.StatusBadRequest)
+		return
+	}
 
-s.mu.RLock()
-var target *OrgSnapshot
-for i, snap := range s.snapshots {
-if snap.ID == req.SnapshotID {
-target = &s.snapshots[i]
-break
-}
-}
-s.mu.RUnlock()
+	s.mu.RLock()
+	var target *OrgSnapshot
+	for i, snap := range s.snapshots {
+		if snap.ID == req.SnapshotID {
+			target = &s.snapshots[i]
+			break
+		}
+	}
+	s.mu.RUnlock()
 
-if target == nil {
-http.Error(w, "snapshot not found", http.StatusNotFound)
-return
-}
+	if target == nil {
+		http.Error(w, "snapshot not found", http.StatusNotFound)
+		return
+	}
 
-org, hub, tracker, err := seededScenarioByDomain(target.Domain, time.Now().UTC())
-if err != nil {
-http.Error(w, err.Error(), http.StatusBadRequest)
-return
-}
+	org, hub, tracker, err := seededScenarioByDomain(target.Domain, time.Now().UTC())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-s.mu.Lock()
-s.org = org
-s.hub = hub
-s.tracker = tracker
-snapshot := s.snapshotLocked()
-s.mu.Unlock()
+	s.mu.Lock()
+	s.org = org
+	s.hub = hub
+	s.tracker = tracker
+	snapshot := s.snapshotLocked()
+	s.mu.Unlock()
 
-writeJSON(w, snapshot)
+	writeJSON(w, snapshot)
 }
 
 // seededScenarioByDomain re-seeds an org from its domain identifier.
 func seededScenarioByDomain(dom string, now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
-switch dom {
-case "software_company":
-return seededLaunchReadiness(now)
-case "digital_marketing_agency":
-return seededDigitalMarketing(now)
-case "accounting_firm":
-return seededAccounting(now)
-default:
-return domain.Organization{}, nil, nil, errors.New("unsupported domain for restore")
-}
+	switch dom {
+	case "software_company":
+		return seededLaunchReadiness(now)
+	case "digital_marketing_agency":
+		return seededDigitalMarketing(now)
+	case "accounting_firm":
+		return seededAccounting(now)
+	default:
+		return domain.Organization{}, nil, nil, errors.New("unsupported domain for restore")
+	}
 }
 
 // ── Marketplace Handler ───────────────────────────────────────────────────────
 
 func (s *Server) handleMarketplace(w http.ResponseWriter, _ *http.Request) {
-writeJSON(w, defaultMarketplaceItems())
+	writeJSON(w, defaultMarketplaceItems())
 }
 
 // ── Analytics Handler ─────────────────────────────────────────────────────────
 
 func (s *Server) handleAnalytics(w http.ResponseWriter, _ *http.Request) {
-s.mu.RLock()
-agents := s.hub.Agents()
-org := s.org
-summary := s.tracker.Summary(org.ID)
-pendingApprovals := 0
-for _, a := range s.approvals {
-if a.Status == ApprovalStatusPending {
-pendingApprovals++
-}
-}
-activeHandoffs := 0
-for _, h := range s.handoffs {
-if h.Status == "pending" {
-activeHandoffs++
-}
-}
-s.mu.RUnlock()
+	s.mu.RLock()
+	agents := s.hub.Agents()
+	org := s.org
+	summary := s.tracker.Summary(org.ID)
+	pendingApprovals := 0
+	for _, a := range s.approvals {
+		if a.Status == ApprovalStatusPending {
+			pendingApprovals++
+		}
+	}
+	activeHandoffs := 0
+	for _, h := range s.handoffs {
+		if h.Status == "pending" {
+			activeHandoffs++
+		}
+	}
+	s.mu.RUnlock()
 
-totalHumans := 0
-for _, m := range org.Members {
-if m.IsHuman {
-totalHumans++
-}
-}
-totalAgents := len(agents)
+	totalHumans := 0
+	for _, m := range org.Members {
+		if m.IsHuman {
+			totalHumans++
+		}
+	}
+	totalAgents := len(agents)
 
-var ratio float64
-if totalHumans > 0 {
-ratio = float64(totalAgents) / float64(totalHumans)
-}
+	var ratio float64
+	if totalHumans > 0 {
+		ratio = float64(totalAgents) / float64(totalHumans)
+	}
 
-meetings := s.hub.Meetings()
-totalMsgs := 0
-auditedMsgs := 0
-agentSet := map[string]bool{}
-for _, a := range agents {
-agentSet[a.ID] = true
-}
-for _, m := range meetings {
-for _, msg := range m.Transcript {
-totalMsgs++
-if agentSet[msg.FromAgent] {
-auditedMsgs++
-}
-}
-}
-auditFidelity := 100.0
-if totalMsgs > 0 {
-auditFidelity = float64(auditedMsgs) / float64(totalMsgs) * 100
-}
+	meetings := s.hub.Meetings()
+	totalMsgs := 0
+	auditedMsgs := 0
+	agentSet := map[string]bool{}
+	for _, a := range agents {
+		agentSet[a.ID] = true
+	}
+	for _, m := range meetings {
+		for _, msg := range m.Transcript {
+			totalMsgs++
+			if agentSet[msg.FromAgent] {
+				auditedMsgs++
+			}
+		}
+	}
+	auditFidelity := 100.0
+	if totalMsgs > 0 {
+		auditFidelity = float64(auditedMsgs) / float64(totalMsgs) * 100
+	}
 
-writeJSON(w, AnalyticsSummary{
-HumanAgentRatio:     ratio,
-TotalAgents:         totalAgents,
-TotalHumans:         totalHumans,
-AuditFidelityPct:    auditFidelity,
-ResumptionLatencyMS: 4800,
-PendingApprovals:    pendingApprovals,
-ActiveHandoffs:      activeHandoffs,
-TokenVelocity:       summary.TotalTokens,
-})
+	writeJSON(w, AnalyticsSummary{
+		HumanAgentRatio:     ratio,
+		TotalAgents:         totalAgents,
+		TotalHumans:         totalHumans,
+		AuditFidelityPct:    auditFidelity,
+		ResumptionLatencyMS: 4800,
+		PendingApprovals:    pendingApprovals,
+		ActiveHandoffs:      activeHandoffs,
+		TokenVelocity:       summary.TotalTokens,
+	})
 }
 
 // ── Default Data Factories ────────────────────────────────────────────────────
 
 func defaultSkillPacks() []SkillPack {
-now := time.Now().UTC()
-return []SkillPack{
-{
-ID:          "builtin-core-ai",
-Name:        "Core AI Skills",
-Domain:      "all",
-Description: "Foundational reasoning, summarization, and context management capabilities shared by all agents.",
-Source:      "builtin",
-Roles: []SkillPackRole{
-{Role: "ALL", BasePrompt: "You are a highly capable AI agent. Summarize long discussions before passing context to the next agent."},
-},
-ImportedAt: now,
-},
-{
-ID:          "builtin-software-dev",
-Name:        "Software Development Mastery",
-Domain:      "software_company",
-Description: "Advanced engineering skills: clean code, TDD, security-first development, and CI/CD automation.",
-Source:      "builtin",
-Roles: []SkillPackRole{
-{Role: "SOFTWARE_ENGINEER", BasePrompt: "Write well-tested, secure, and maintainable code. Follow TDD practices."},
-{Role: "QA_TESTER", BasePrompt: "Design comprehensive test suites covering edge cases and regressions."},
-},
-ImportedAt: now,
-},
-{
-ID:          "builtin-marketing-automation",
-Name:        "Marketing Automation Suite",
-Domain:      "digital_marketing_agency",
-Description: "Data-driven growth hacking, SEO optimization, and paid media management at scale.",
-Source:      "builtin",
-Roles: []SkillPackRole{
-{Role: "GROWTH_AGENT", BasePrompt: "Identify high-value acquisition channels using data. Run A/B tests continuously."},
-},
-ImportedAt: now,
-},
-{
-ID:          "builtin-financial-ops",
-Name:        "Financial Operations Pack",
-Domain:      "accounting_firm",
-Description: "GAAP-compliant bookkeeping, tax optimization, and audit preparation.",
-Source:      "builtin",
-Roles: []SkillPackRole{
-{Role: "BOOKKEEPER", BasePrompt: "Maintain double-entry books with 100% accuracy. Reconcile all accounts daily."},
-},
-ImportedAt: now,
-},
-}
+	now := time.Now().UTC()
+	return []SkillPack{
+		{
+			ID:          "builtin-core-ai",
+			Name:        "Core AI Skills",
+			Domain:      "all",
+			Description: "Foundational reasoning, summarization, and context management capabilities shared by all agents.",
+			Source:      "builtin",
+			Roles: []SkillPackRole{
+				{Role: "ALL", BasePrompt: "You are a highly capable AI agent. Summarize long discussions before passing context to the next agent."},
+			},
+			ImportedAt: now,
+		},
+		{
+			ID:          "builtin-software-dev",
+			Name:        "Software Development Mastery",
+			Domain:      "software_company",
+			Description: "Advanced engineering skills: clean code, TDD, security-first development, and CI/CD automation.",
+			Source:      "builtin",
+			Roles: []SkillPackRole{
+				{Role: "SOFTWARE_ENGINEER", BasePrompt: "Write well-tested, secure, and maintainable code. Follow TDD practices."},
+				{Role: "QA_TESTER", BasePrompt: "Design comprehensive test suites covering edge cases and regressions."},
+			},
+			ImportedAt: now,
+		},
+		{
+			ID:          "builtin-marketing-automation",
+			Name:        "Marketing Automation Suite",
+			Domain:      "digital_marketing_agency",
+			Description: "Data-driven growth hacking, SEO optimization, and paid media management at scale.",
+			Source:      "builtin",
+			Roles: []SkillPackRole{
+				{Role: "GROWTH_AGENT", BasePrompt: "Identify high-value acquisition channels using data. Run A/B tests continuously."},
+			},
+			ImportedAt: now,
+		},
+		{
+			ID:          "builtin-financial-ops",
+			Name:        "Financial Operations Pack",
+			Domain:      "accounting_firm",
+			Description: "GAAP-compliant bookkeeping, tax optimization, and audit preparation.",
+			Source:      "builtin",
+			Roles: []SkillPackRole{
+				{Role: "BOOKKEEPER", BasePrompt: "Maintain double-entry books with 100% accuracy. Reconcile all accounts daily."},
+			},
+			ImportedAt: now,
+		},
+	}
 }
 
 func defaultMarketplaceItems() []MarketplaceItem {
-return []MarketplaceItem{
-{
-ID:          "mkt-tiger-team",
-Name:        "Tiger Team Sprint Pack",
-Type:        "skill_pack",
-Author:      "OneHumanCorp",
-Description: "Spin up a temporary 5-agent strike force for a time-boxed launch sprint.",
-Downloads:   1420,
-Rating:      4.8,
-Tags:        []string{"sprint", "launch", "team"},
-},
-{
-ID:          "mkt-ecommerce-domain",
-Name:        "E-Commerce Operations Domain",
-Type:        "domain",
-Author:      "Community",
-Description: "Full e-commerce organization with catalog, inventory, customer support, and growth roles.",
-Downloads:   892,
-Rating:      4.6,
-Tags:        []string{"ecommerce", "retail", "domain"},
-},
-{
-ID:          "mkt-crm-integration",
-Name:        "CRM Intelligence Pack",
-Type:        "tool",
-Author:      "SalesStack",
-Description: "Bi-directional Salesforce / HubSpot sync for Sales and Growth agents.",
-Downloads:   2100,
-Rating:      4.9,
-Tags:        []string{"crm", "sales", "integration"},
-},
-{
-ID:          "mkt-code-review-agent",
-Name:        "Autonomous Code Review Agent",
-Type:        "agent",
-Author:      "DevBot Labs",
-Description: "Specialized SWE agent trained on your codebase conventions. Reviews PRs for style, correctness, and test coverage.",
-Downloads:   3750,
-Rating:      4.7,
-Tags:        []string{"code-review", "engineering", "agent"},
-},
-{
-ID:          "mkt-guardian-agent",
-Name:        "Guardian Agent Pro",
-Type:        "agent",
-Author:      "SafeOps",
-Description: "Advanced confidence-gating agent with configurable spend thresholds and Slack/email HITL notifications.",
-Downloads:   980,
-Rating:      4.8,
-Tags:        []string{"security", "approval", "hitl"},
-},
-}
+	return []MarketplaceItem{
+		{
+			ID:          "mkt-tiger-team",
+			Name:        "Tiger Team Sprint Pack",
+			Type:        "skill_pack",
+			Author:      "OneHumanCorp",
+			Description: "Spin up a temporary 5-agent strike force for a time-boxed launch sprint.",
+			Downloads:   1420,
+			Rating:      4.8,
+			Tags:        []string{"sprint", "launch", "team"},
+		},
+		{
+			ID:          "mkt-ecommerce-domain",
+			Name:        "E-Commerce Operations Domain",
+			Type:        "domain",
+			Author:      "Community",
+			Description: "Full e-commerce organization with catalog, inventory, customer support, and growth roles.",
+			Downloads:   892,
+			Rating:      4.6,
+			Tags:        []string{"ecommerce", "retail", "domain"},
+		},
+		{
+			ID:          "mkt-crm-integration",
+			Name:        "CRM Intelligence Pack",
+			Type:        "tool",
+			Author:      "SalesStack",
+			Description: "Bi-directional Salesforce / HubSpot sync for Sales and Growth agents.",
+			Downloads:   2100,
+			Rating:      4.9,
+			Tags:        []string{"crm", "sales", "integration"},
+		},
+		{
+			ID:          "mkt-code-review-agent",
+			Name:        "Autonomous Code Review Agent",
+			Type:        "agent",
+			Author:      "DevBot Labs",
+			Description: "Specialized SWE agent trained on your codebase conventions. Reviews PRs for style, correctness, and test coverage.",
+			Downloads:   3750,
+			Rating:      4.7,
+			Tags:        []string{"code-review", "engineering", "agent"},
+		},
+		{
+			ID:          "mkt-guardian-agent",
+			Name:        "Guardian Agent Pro",
+			Type:        "agent",
+			Author:      "SafeOps",
+			Description: "Advanced confidence-gating agent with configurable spend thresholds and Slack/email HITL notifications.",
+			Downloads:   980,
+			Rating:      4.8,
+			Tags:        []string{"security", "approval", "hitl"},
+		},
+	}
 }
 
 // ── Integration request/response types ────────────────────────────────────────
 
 type integrationConnectRequest struct {
-IntegrationID string `json:"integrationId"`
-BaseURL       string `json:"baseUrl,omitempty"`
+	IntegrationID string `json:"integrationId"`
+	BaseURL       string `json:"baseUrl,omitempty"`
 }
 
 type integrationDisconnectRequest struct {
-IntegrationID string `json:"integrationId"`
+	IntegrationID string `json:"integrationId"`
 }
 
 type chatSendRequest struct {
-IntegrationID string `json:"integrationId"`
-Channel       string `json:"channel"`
-FromAgent     string `json:"fromAgent"`
-Content       string `json:"content"`
-ThreadID      string `json:"threadId,omitempty"`
+	IntegrationID string `json:"integrationId"`
+	Channel       string `json:"channel"`
+	FromAgent     string `json:"fromAgent"`
+	Content       string `json:"content"`
+	ThreadID      string `json:"threadId,omitempty"`
 }
 
 type prCreateRequest struct {
-IntegrationID string `json:"integrationId"`
-Repository    string `json:"repository"`
-Title         string `json:"title"`
-Body          string `json:"body,omitempty"`
-SourceBranch  string `json:"sourceBranch"`
-TargetBranch  string `json:"targetBranch"`
-CreatedBy     string `json:"createdBy,omitempty"`
+	IntegrationID string `json:"integrationId"`
+	Repository    string `json:"repository"`
+	Title         string `json:"title"`
+	Body          string `json:"body,omitempty"`
+	SourceBranch  string `json:"sourceBranch"`
+	TargetBranch  string `json:"targetBranch"`
+	CreatedBy     string `json:"createdBy,omitempty"`
 }
 
 type prActionRequest struct {
-PRID string `json:"prId"`
+	PRID string `json:"prId"`
 }
 
 type issueCreateRequest struct {
-IntegrationID string   `json:"integrationId"`
-Project       string   `json:"project"`
-Title         string   `json:"title"`
-Description   string   `json:"description,omitempty"`
-CreatedBy     string   `json:"createdBy,omitempty"`
-Priority      string   `json:"priority,omitempty"`
-Labels        []string `json:"labels,omitempty"`
+	IntegrationID string   `json:"integrationId"`
+	Project       string   `json:"project"`
+	Title         string   `json:"title"`
+	Description   string   `json:"description,omitempty"`
+	CreatedBy     string   `json:"createdBy,omitempty"`
+	Priority      string   `json:"priority,omitempty"`
+	Labels        []string `json:"labels,omitempty"`
 }
 
 type issueStatusRequest struct {
-IssueID string `json:"issueId"`
-Status  string `json:"status"`
+	IssueID string `json:"issueId"`
+	Status  string `json:"status"`
 }
 
 type issueAssignRequest struct {
-IssueID  string `json:"issueId"`
-Assignee string `json:"assignee"`
+	IssueID  string `json:"issueId"`
+	Assignee string `json:"assignee"`
 }
 
 // ── Integration handlers ──────────────────────────────────────────────────────
 
 func (s *Server) handleIntegrations(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodGet {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-category := r.URL.Query().Get("category")
-if category != "" {
-writeJSON(w, s.integReg.IntegrationsByCategory(integrations.Category(category)))
-return
-}
-writeJSON(w, s.integReg.Integrations())
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	category := r.URL.Query().Get("category")
+	if category != "" {
+		writeJSON(w, s.integReg.IntegrationsByCategory(integrations.Category(category)))
+		return
+	}
+	writeJSON(w, s.integReg.Integrations())
 }
 
 func (s *Server) handleIntegrationConnect(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req integrationConnectRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.IntegrationID == "" {
-http.Error(w, "integrationId is required", http.StatusBadRequest)
-return
-}
-updated, err := s.integReg.Connect(req.IntegrationID, req.BaseURL)
-if err != nil {
-http.Error(w, err.Error(), http.StatusNotFound)
-return
-}
-writeJSON(w, updated)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req integrationConnectRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.IntegrationID == "" {
+		http.Error(w, "integrationId is required", http.StatusBadRequest)
+		return
+	}
+	updated, err := s.integReg.Connect(req.IntegrationID, req.BaseURL)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	writeJSON(w, updated)
 }
 
 func (s *Server) handleIntegrationDisconnect(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req integrationDisconnectRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.IntegrationID == "" {
-http.Error(w, "integrationId is required", http.StatusBadRequest)
-return
-}
-updated, err := s.integReg.Disconnect(req.IntegrationID)
-if err != nil {
-http.Error(w, err.Error(), http.StatusNotFound)
-return
-}
-writeJSON(w, updated)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req integrationDisconnectRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.IntegrationID == "" {
+		http.Error(w, "integrationId is required", http.StatusBadRequest)
+		return
+	}
+	updated, err := s.integReg.Disconnect(req.IntegrationID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	writeJSON(w, updated)
 }
 
 // ── Chat handlers ─────────────────────────────────────────────────────────────
 
 func (s *Server) handleChatMessages(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodGet {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-integrationID := r.URL.Query().Get("integrationId")
-msgs := s.integReg.ChatMessages(integrationID)
-if msgs == nil {
-msgs = []integrations.ChatMessage{}
-}
-writeJSON(w, msgs)
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	integrationID := r.URL.Query().Get("integrationId")
+	msgs := s.integReg.ChatMessages(integrationID)
+	if msgs == nil {
+		msgs = []integrations.ChatMessage{}
+	}
+	writeJSON(w, msgs)
 }
 
 func (s *Server) handleChatSend(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req chatSendRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-msg, err := s.integReg.SendChatMessage(req.IntegrationID, req.Channel, req.FromAgent, req.Content, req.ThreadID, time.Now().UTC())
-if err != nil {
-http.Error(w, err.Error(), http.StatusBadRequest)
-return
-}
-writeJSON(w, msg)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req chatSendRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	msg, err := s.integReg.SendChatMessage(req.IntegrationID, req.Channel, req.FromAgent, req.Content, req.ThreadID, time.Now().UTC())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, msg)
 }
 
 // ── Git handlers ──────────────────────────────────────────────────────────────
 
 func (s *Server) handlePullRequests(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodGet {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-integrationID := r.URL.Query().Get("integrationId")
-prs := s.integReg.PullRequests(integrationID)
-if prs == nil {
-prs = []integrations.PullRequest{}
-}
-writeJSON(w, prs)
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	integrationID := r.URL.Query().Get("integrationId")
+	prs := s.integReg.PullRequests(integrationID)
+	if prs == nil {
+		prs = []integrations.PullRequest{}
+	}
+	writeJSON(w, prs)
 }
 
 func (s *Server) handlePRCreate(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req prCreateRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-pr, err := s.integReg.CreatePullRequest(req.IntegrationID, req.Repository, req.Title, req.Body, req.SourceBranch, req.TargetBranch, req.CreatedBy, time.Now().UTC())
-if err != nil {
-http.Error(w, err.Error(), http.StatusBadRequest)
-return
-}
-writeJSON(w, pr)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req prCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	pr, err := s.integReg.CreatePullRequest(req.IntegrationID, req.Repository, req.Title, req.Body, req.SourceBranch, req.TargetBranch, req.CreatedBy, time.Now().UTC())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, pr)
 }
 
 func (s *Server) handlePRMerge(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req prActionRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.PRID == "" {
-http.Error(w, "prId is required", http.StatusBadRequest)
-return
-}
-pr, err := s.integReg.MergePullRequest(req.PRID)
-if err != nil {
-http.Error(w, err.Error(), http.StatusBadRequest)
-return
-}
-writeJSON(w, pr)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req prActionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.PRID == "" {
+		http.Error(w, "prId is required", http.StatusBadRequest)
+		return
+	}
+	pr, err := s.integReg.MergePullRequest(req.PRID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, pr)
 }
 
 func (s *Server) handlePRClose(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req prActionRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.PRID == "" {
-http.Error(w, "prId is required", http.StatusBadRequest)
-return
-}
-pr, err := s.integReg.ClosePullRequest(req.PRID)
-if err != nil {
-http.Error(w, err.Error(), http.StatusBadRequest)
-return
-}
-writeJSON(w, pr)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req prActionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.PRID == "" {
+		http.Error(w, "prId is required", http.StatusBadRequest)
+		return
+	}
+	pr, err := s.integReg.ClosePullRequest(req.PRID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, pr)
 }
 
 // ── Issue tracker handlers ────────────────────────────────────────────────────
 
 func (s *Server) handleIssues(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodGet {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-integrationID := r.URL.Query().Get("integrationId")
-issues := s.integReg.Issues(integrationID)
-if issues == nil {
-issues = []integrations.Issue{}
-}
-writeJSON(w, issues)
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	integrationID := r.URL.Query().Get("integrationId")
+	issues := s.integReg.Issues(integrationID)
+	if issues == nil {
+		issues = []integrations.Issue{}
+	}
+	writeJSON(w, issues)
 }
 
 func (s *Server) handleIssueCreate(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req issueCreateRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-issue, err := s.integReg.CreateIssue(req.IntegrationID, req.Project, req.Title, req.Description, req.CreatedBy, integrations.IssuePriority(req.Priority), req.Labels, time.Now().UTC())
-if err != nil {
-http.Error(w, err.Error(), http.StatusBadRequest)
-return
-}
-writeJSON(w, issue)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req issueCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	issue, err := s.integReg.CreateIssue(req.IntegrationID, req.Project, req.Title, req.Description, req.CreatedBy, integrations.IssuePriority(req.Priority), req.Labels, time.Now().UTC())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, issue)
 }
 
 func (s *Server) handleIssueUpdateStatus(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req issueStatusRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.IssueID == "" || req.Status == "" {
-http.Error(w, "issueId and status are required", http.StatusBadRequest)
-return
-}
-issue, err := s.integReg.UpdateIssueStatus(req.IssueID, integrations.IssueStatus(req.Status))
-if err != nil {
-http.Error(w, err.Error(), http.StatusNotFound)
-return
-}
-writeJSON(w, issue)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req issueStatusRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.IssueID == "" || req.Status == "" {
+		http.Error(w, "issueId and status are required", http.StatusBadRequest)
+		return
+	}
+	issue, err := s.integReg.UpdateIssueStatus(req.IssueID, integrations.IssueStatus(req.Status))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	writeJSON(w, issue)
 }
 
 func (s *Server) handleIssueAssign(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req issueAssignRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.IssueID == "" || req.Assignee == "" {
-http.Error(w, "issueId and assignee are required", http.StatusBadRequest)
-return
-}
-issue, err := s.integReg.AssignIssue(req.IssueID, req.Assignee)
-if err != nil {
-http.Error(w, err.Error(), http.StatusNotFound)
-return
-}
-writeJSON(w, issue)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req issueAssignRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.IssueID == "" || req.Assignee == "" {
+		http.Error(w, "issueId and assignee are required", http.StatusBadRequest)
+		return
+	}
+	issue, err := s.integReg.AssignIssue(req.IssueID, req.Assignee)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	writeJSON(w, issue)
 }

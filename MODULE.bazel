@@ -13,11 +13,12 @@ archive_override(
     integrity = "sha256-htPcj1nSU1JPkzqvLzwFiWywtgX8NbRgwLSwOZlhJMY=",
 )
 bazel_dep(name = "gazelle", version = "0.47.0")
+bazel_dep(name = "aspect_bazel_lib", version = "2.21.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "protobuf", version = "34.0.bcr.1")
 bazel_dep(name = "rules_python", version = "1.7.0")
-bazel_dep(name = "rules_shell", version = "0.6.1")
+bazel_dep(name = "rules_oci", version = "2.2.6")
 
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
 go_sdk.download(version = "1.25.0")
@@ -28,3 +29,11 @@ bazel_dep(name = "toolchains_buildbuddy", version = "0.0.4")
 buildbuddy = use_extension("@toolchains_buildbuddy//:extensions.bzl", "buildbuddy")
 buildbuddy.gcc_toolchain()
 use_repo(buildbuddy, "buildbuddy_toolchain")
+
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+oci.pull(
+    name = "distroless_static_debian12_nonroot",
+    image = "gcr.io/distroless/static-debian12",
+    tag = "nonroot",
+)
+use_repo(oci, "distroless_static_debian12_nonroot")

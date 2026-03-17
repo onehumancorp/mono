@@ -5,15 +5,15 @@ export default defineConfig({
   timeout: 30_000,
   webServer: [
     {
-      command: "go run ../cmd/ohc",
+      command: process.env.PLAYWRIGHT_BACKEND_COMMAND ?? "go run ../cmd/ohc",
       port: 8080,
-      reuseExistingServer: true,
+      reuseExistingServer: false,
       timeout: 120_000,
     },
     {
       command: "npm run dev -- --host 127.0.0.1 --port 8081",
       port: 8081,
-      reuseExistingServer: true,
+      reuseExistingServer: false,
       timeout: 120_000,
     },
   ],

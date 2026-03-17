@@ -1,1 +1,1 @@
-exports_files(["go.mod"])
+exports_files(["go.mod", "go.sum"])

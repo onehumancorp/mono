@@ -1,19 +1,27 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
+  createDelegateTask,
   connectIntegration,
   disconnectIntegration,
   fetchDashboard,
+  fetchDelegateProviders,
+  fetchDelegateTasks,
   fetchDomains,
   fetchIntegrations,
   fetchMCPTools,
+  fetchModels,
   fireAgent,
   hireAgent,
+  publishA2AMessage,
   seedScenario,
   sendMessage,
 } from "./api";
 import type {
   AgentRuntime,
+  AIModel,
   DashboardSnapshot,
+  DelegateProvider,
+  DelegateTask,
   DomainInfo,
   Integration,
   MCPTool,
@@ -211,9 +219,28 @@ export function App() {
   const [showHireModal, setShowHireModal] = useState(false);
   const [agentActionLoading, setAgentActionLoading] = useState(false);
   const [domains, setDomains] = useState<DomainInfo[]>([]);
+  const [models, setModels] = useState<AIModel[]>([]);
   const [mcpTools, setMcpTools] = useState<MCPTool[]>([]);
   const [integrationsList, setIntegrationsList] = useState<Integration[]>([]);
+  const [delegateProviders, setDelegateProviders] = useState<DelegateProvider[]>([]);
+  const [delegateTasks, setDelegateTasks] = useState<DelegateTask[]>([]);
   const [selectedScenario, setSelectedScenario] = useState("launch-readiness");
+  const [delegateForm, setDelegateForm] = useState({
+    providerId: "github-copilot",
+    title: "One-shot implementation task",
+    goal: "Implement a backend improvement and ship tests",
+    systemPrompt: "You are a delegated execution agent. Use MCP tools and imported skills to call internal APIs safely and return machine-readable summaries.",
+    preferredModel: "gpt-4o",
+    mcpServers: "git-mcp,jira-mcp",
+    skills: "software-dev,delivery",
+  });
+  const [a2aForm, setA2AForm] = useState({
+    fromAgentId: "pm-1",
+    toAgentId: "swe-1",
+    conversationId: "launch-readiness",
+    intent: "task_delegation",
+    payload: "Please execute the launch checklist and report blockers.",
+  });
 
   const [form, setForm] = useState({
     fromAgent: "pm-1",
@@ -269,7 +296,10 @@ export function App() {
   useEffect(() => {
     if (activeNav === "settings") {
       void fetchDomains().then(setDomains).catch(() => { });
+      void fetchModels().then(setModels).catch(() => { });
       void fetchMCPTools().then(setMcpTools).catch(() => { });
+      void fetchDelegateProviders().then(setDelegateProviders).catch(() => { });
+      void fetchDelegateTasks().then(setDelegateTasks).catch(() => { });
     }
     if (activeNav === "integrations") {
       void fetchIntegrations().then(setIntegrationsList).catch(() => { });
@@ -334,6 +364,41 @@ export function App() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load scenario");
       setState("error");
+    }
+  }
+
+  async function handlePublishA2A(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSending(true);
+    setError("");
+    try {
+      await publishA2AMessage(a2aForm);
+      await loadAll();
+      setNotice("A2A message published.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to publish A2A message");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function handleCreateDelegateTask(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    try {
+      const created = await createDelegateTask({
+        providerId: delegateForm.providerId,
+        title: delegateForm.title,
+        goal: delegateForm.goal,
+        systemPrompt: delegateForm.systemPrompt,
+        preferredModel: delegateForm.preferredModel,
+        mcpServers: delegateForm.mcpServers.split(",").map((s) => s.trim()).filter(Boolean),
+        skills: delegateForm.skills.split(",").map((s) => s.trim()).filter(Boolean),
+      });
+      setDelegateTasks((prev) => [created, ...prev]);
+      setNotice(`Delegate task queued via ${created.providerName}.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to create delegate task");
     }
   }
 
@@ -755,6 +820,44 @@ export function App() {
                   </form>
                 </div>
               </article>
+
+              <article className="panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">A2A Protocol Dispatch</h2>
+                </header>
+                <div className="panel-body">
+                  <form onSubmit={handlePublishA2A} className="msg-form">
+                    <label className="field">
+                      <span className="field-label">From Agent</span>
+                      <input className="input input-sm" value={a2aForm.fromAgentId}
+                        onChange={(e) => setA2AForm((p) => ({ ...p, fromAgentId: e.target.value }))} />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">To Agent</span>
+                      <input className="input input-sm" value={a2aForm.toAgentId}
+                        onChange={(e) => setA2AForm((p) => ({ ...p, toAgentId: e.target.value }))} />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">Conversation</span>
+                      <input className="input input-sm" value={a2aForm.conversationId}
+                        onChange={(e) => setA2AForm((p) => ({ ...p, conversationId: e.target.value }))} />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">Intent</span>
+                      <input className="input input-sm" value={a2aForm.intent}
+                        onChange={(e) => setA2AForm((p) => ({ ...p, intent: e.target.value }))} />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">Payload</span>
+                      <textarea className="input input-sm textarea" value={a2aForm.payload} rows={3}
+                        onChange={(e) => setA2AForm((p) => ({ ...p, payload: e.target.value }))} />
+                    </label>
+                    <button type="submit" className="btn btn-primary btn-full" disabled={sending}>
+                      {sending ? "Publishing…" : "Publish A2A"}
+                    </button>
+                  </form>
+                </div>
+              </article>
             </div>
           </>
         )}
@@ -786,6 +889,7 @@ export function App() {
                   </div>
                   <p className="agent-card__name">{agent.name}</p>
                   <p className="agent-card__role">{agent.role.replace(/_/g, " ")}</p>
+                  {agent.model && <p className="agent-card__role">Model: {agent.model}</p>}
                   <p className="agent-card__id">{agent.id}</p>
                   {!snapshot?.organization.members.find((m) => m.id === agent.id && m.isHuman) && (
                     <button
@@ -1254,6 +1358,98 @@ export function App() {
                         <span className="tool-category">{tool.category}</span>
                       </li>
                     ))}
+                  </ul>
+                </div>
+              </article>
+
+              <article className="panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Model Registry</h2>
+                  <span className="chip chip--green">{models.length} models</span>
+                </header>
+                <div className="panel-body">
+                  {models.length === 0 && <p className="empty-state">Loading model catalog…</p>}
+                  <ul className="tool-list">
+                    {models.map((model) => (
+                      <li key={model.id} className="tool-item">
+                        <div className="tool-item__header">
+                          <span className="tool-item__name">{model.id}</span>
+                          <span className="chip chip--sm">{model.provider}</span>
+                        </div>
+                        <p className="tool-item__desc">{model.capabilities.join(", ")}</p>
+                        <span className="tool-category">ctx: {model.contextWindow.toLocaleString()}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+
+              <article className="panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Agent Delegate Mode</h2>
+                </header>
+                <div className="panel-body">
+                  <p className="settings-desc">
+                    Launch one-shot tasks on external agents with system prompts tailored for MCP and skill-driven internal API usage.
+                  </p>
+                  <form className="msg-form" onSubmit={handleCreateDelegateTask}>
+                    <label className="field">
+                      <span className="field-label">Provider</span>
+                      <select className="input input-sm" value={delegateForm.providerId}
+                        onChange={(e) => setDelegateForm((p) => ({ ...p, providerId: e.target.value }))}>
+                        {delegateProviders.map((provider) => (
+                          <option key={provider.id} value={provider.id}>{provider.name}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span className="field-label">Title</span>
+                      <input className="input input-sm" value={delegateForm.title}
+                        onChange={(e) => setDelegateForm((p) => ({ ...p, title: e.target.value }))} />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">Goal</span>
+                      <textarea className="input input-sm textarea" rows={2} value={delegateForm.goal}
+                        onChange={(e) => setDelegateForm((p) => ({ ...p, goal: e.target.value }))} />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">System Prompt</span>
+                      <textarea className="input input-sm textarea" rows={4} value={delegateForm.systemPrompt}
+                        onChange={(e) => setDelegateForm((p) => ({ ...p, systemPrompt: e.target.value }))} />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">Preferred Model</span>
+                      <select className="input input-sm" value={delegateForm.preferredModel}
+                        onChange={(e) => setDelegateForm((p) => ({ ...p, preferredModel: e.target.value }))}>
+                        {models.map((model) => (
+                          <option key={model.id} value={model.id}>{model.id}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span className="field-label">MCP Servers (comma separated)</span>
+                      <input className="input input-sm" value={delegateForm.mcpServers}
+                        onChange={(e) => setDelegateForm((p) => ({ ...p, mcpServers: e.target.value }))} />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">Skills (comma separated)</span>
+                      <input className="input input-sm" value={delegateForm.skills}
+                        onChange={(e) => setDelegateForm((p) => ({ ...p, skills: e.target.value }))} />
+                    </label>
+                    <button type="submit" className="btn btn-primary">Queue Delegate Task</button>
+                  </form>
+                  <ul className="tool-list" style={{ marginTop: "1rem" }}>
+                    {delegateTasks.map((task) => (
+                      <li key={task.id} className="tool-item">
+                        <div className="tool-item__header">
+                          <span className="tool-item__name">{task.title}</span>
+                          <span className="tool-badge tool-badge--yellow">{task.status}</span>
+                        </div>
+                        <p className="tool-item__desc">{task.goal}</p>
+                        <span className="tool-category">{task.providerName} • {task.preferredModel || "auto"}</span>
+                      </li>
+                    ))}
+                    {delegateTasks.length === 0 && <p className="empty-state">No delegate tasks queued.</p>}
                   </ul>
                 </div>
               </article>

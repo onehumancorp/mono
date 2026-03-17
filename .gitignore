@@ -32,7 +32,7 @@ go.work.sum
 # .vscode/
 
 # Bazel outputs
-bazel-*
+/bazel-*
 
 # Frontend artifacts
 srcs/frontend/node_modules/

@@ -1,4 +1,4 @@
-load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("@rules_go//go:def.bzl", "go_test")
 
 filegroup(
     name = "srcs",
@@ -16,11 +16,49 @@ filegroup(
     ),
 )
 
-sh_test(
+go_test(
     name = "frontend_layout_test",
-    srcs = ["tests/layout_test.sh"],
+    srcs = [
+        "tests/bazel_helpers.go",
+        "tests/layout_bazel_test.go",
+    ],
+    importpath = "github.com/onehumancorp/mono/srcs/frontend/tests",
     data = [
         ":srcs",
         "package.json",
+        "vitest.config.ts",
+        "vite.config.ts",
+        "src/main.tsx",
+        "src/App.tsx",
+        "src/App.test.tsx",
     ],
+)
+
+go_test(
+    name = "frontend_unit_bazel_test",
+    srcs = [
+        "tests/bazel_helpers.go",
+        "tests/unit_bazel_test.go",
+    ],
+    importpath = "github.com/onehumancorp/mono/srcs/frontend/tests",
+    data = glob([
+        "**/*",
+    ]),
+    timeout = "long",
+)
+
+go_test(
+    name = "frontend_e2e_bazel_test",
+    srcs = [
+        "tests/bazel_helpers.go",
+        "tests/e2e_bazel_test.go",
+    ],
+    importpath = "github.com/onehumancorp/mono/srcs/frontend/tests",
+    data = glob([
+        "**/*",
+    ]) + [
+        "//srcs/cmd/ohc:ohc",
+    ],
+    timeout = "long",
+    tags = ["manual"],
 )

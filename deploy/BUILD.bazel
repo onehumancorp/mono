@@ -1,11 +1,85 @@
-load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@rules_go//go:def.bzl", "go_test")
 
-sh_test(
+genrule(
+    name = "backend_layer",
+    srcs = ["//srcs/cmd/ohc:ohc"],
+    outs = ["backend_layer.tar"],
+    cmd = """
+set -euo pipefail
+root="$(@D)/backend_root"
+rm -rf "$${root}"
+mkdir -p "$${root}/app"
+cp $(location //srcs/cmd/ohc:ohc) "$${root}/app/ohc"
+chmod 755 "$${root}/app/ohc"
+tar -C "$${root}" -cf "$@" app
+""",
+)
+
+oci_image(
+    name = "backend_image",
+    base = "@distroless_static_debian12_nonroot",
+    cmd = ["/app/ohc"],
+    exposed_ports = ["8080"],
+    tars = [":backend_layer"],
+)
+
+oci_load(
+    name = "backend_image_tarball",
+    image = ":backend_image",
+    repo_tags = ["onehumancorp/mono-backend:dev"],
+)
+
+genrule(
+    name = "frontend_layer",
+    srcs = ["//srcs/frontend/server:frontend_server"],
+    outs = ["frontend_layer.tar"],
+    cmd = """
+set -euo pipefail
+root="$(@D)/frontend_root"
+rm -rf "$${root}"
+mkdir -p "$${root}/app"
+cp $(location //srcs/frontend/server:frontend_server) "$${root}/app/frontend_server"
+chmod 755 "$${root}/app/frontend_server"
+tar -C "$${root}" -cf "$@" app
+""",
+)
+
+oci_image(
+    name = "frontend_image",
+    base = "@distroless_static_debian12_nonroot",
+    cmd = ["/app/frontend_server"],
+    exposed_ports = ["8081"],
+    tars = [":frontend_layer"],
+)
+
+oci_load(
+    name = "frontend_image_tarball",
+    image = ":frontend_image",
+    repo_tags = ["onehumancorp/mono-frontend:dev"],
+)
+
+go_test(
     name = "deploy_artifacts_test",
-    srcs = ["tests/deploy_artifacts_test.sh"],
+    srcs = ["tests/deploy_artifacts_bazel_test.go"],
+    importpath = "github.com/onehumancorp/mono/deploy/tests",
     data = glob([
-        "docker/**/*",
         "helm/ohc/**",
         "docker-compose.yml",
+        "BUILD.bazel",
+        "tests/deploy_artifacts_test.sh",
+        "tests/kind_helm_e2e_test.sh",
     ]),
+)
+
+go_test(
+    name = "kind_helm_e2e_test",
+    srcs = ["tests/kind_helm_e2e_bazel_test.go"],
+    importpath = "github.com/onehumancorp/mono/deploy/tests",
+    data = glob([
+        "helm/ohc/**",
+        "tests/kind_helm_e2e_test.sh",
+    ]),
+    tags = ["manual", "requires-docker", "requires-kind"],
+    timeout = "long",
 )

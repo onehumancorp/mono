@@ -2,17 +2,21 @@ version: "3.9"
 
 services:
   backend:
-    build:
-      context: ..
-      dockerfile: deploy/docker/backend/Dockerfile
     image: onehumancorp/mono-backend:dev
+    environment:
+      OHC_REDIS_URL: redis://redis:6379
+      OHC_POSTGRES_HOST: postgres
+      OHC_POSTGRES_PORT: "5432"
+      OHC_POSTGRES_DB: ohc
+      OHC_POSTGRES_USER: ohc
+      OHC_POSTGRES_PASSWORD: ohc
+    depends_on:
+      - redis
+      - postgres
     ports:
       - "8080:8080"
 
   frontend:
-    build:
-      context: ..
-      dockerfile: deploy/docker/frontend/Dockerfile
     image: onehumancorp/mono-frontend:dev
     environment:
       BACKEND_URL: http://backend:8080
@@ -20,3 +24,17 @@ services:
       - backend
     ports:
       - "8081:8081"
+
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ohc
+      POSTGRES_USER: ohc
+      POSTGRES_PASSWORD: ohc
+    ports:
+      - "5432:5432"

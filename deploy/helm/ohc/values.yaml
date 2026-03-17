@@ -9,3 +9,18 @@ frontend:
   replicas: 1
   service:
     port: 8081
+
+redis:
+  enabled: false
+  architecture: standalone
+  auth:
+    enabled: false
+
+postgresql:
+  enabled: false
+  auth:
+    enablePostgresUser: true
+    postgresPassword: postgres
+    username: ohc
+    password: ohc
+    database: ohc
