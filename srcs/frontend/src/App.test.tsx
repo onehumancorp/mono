@@ -1578,7 +1578,7 @@ describe("App – cost and playbooks null-snapshot branches", () => {
     // Navigate to cost tab BEFORE data loads (snapshot is null)
     fireEvent.click(screen.getByRole("button", { name: /cost/i }));
 
-    await screen.findByText("Burn Rate Analytics");
+    await screen.findByText("Burn Rate Forecast");
     // With null snapshot, all KPIs should show fallback values
     const zeros = screen.getAllByText("$0.000000");
     expect(zeros.length).toBeGreaterThan(0);
@@ -1625,7 +1625,7 @@ describe("App – cost and playbooks null-snapshot branches", () => {
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /cost/i }));
-    await screen.findByText("Burn Rate Analytics");
+    await screen.findByText("Burn Rate Forecast");
 
     // 0% burn since projectedMonthlyUSD is falsy
     expect(screen.getByText("0%")).toBeInTheDocument();
