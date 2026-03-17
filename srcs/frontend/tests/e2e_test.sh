@@ -24,6 +24,10 @@ cp -rL "${root}/srcs/frontend/." "${tmp}/frontend"
 # need srcs/cmd and the rest of the Go module.
 cp -rL "${root}/srcs/." "${tmp}/srcs"
 cp "${root}/go.mod" "${tmp}/go.mod"
+# Copy go.sum if present (required for Go module verification).
+if [[ -f "${root}/go.sum" ]]; then
+  cp "${root}/go.sum" "${tmp}/go.sum"
+fi
 
 cd "${tmp}/frontend"
 
