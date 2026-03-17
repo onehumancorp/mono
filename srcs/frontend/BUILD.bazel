@@ -16,11 +16,57 @@ filegroup(
     ),
 )
 
+filegroup(
+    name = "all_srcs",
+    srcs = glob(
+        [
+            "src/**",
+            "tests/**",
+            "*.json",
+            "*.html",
+            "*.ts",
+        ],
+        exclude = [
+            "node_modules/**",
+            "dist/**",
+            "tests/screenshots/**",
+        ],
+    ),
+)
+
 sh_test(
     name = "frontend_layout_test",
     srcs = ["tests/layout_test.sh"],
     data = [
         ":srcs",
         "package.json",
+    ],
+)
+
+# Run npm unit tests (vitest) via Bazel.
+# Requires node and npm on PATH (inherited from the host via .bazelrc test_env).
+sh_test(
+    name = "frontend_unit_test",
+    srcs = ["tests/unit_test.sh"],
+    data = [":all_srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+# Run Playwright e2e tests via Bazel.
+# Requires node, npm, go on PATH and a display (headless Chromium).
+sh_test(
+    name = "frontend_e2e_test",
+    srcs = ["tests/e2e_test.sh"],
+    data = [
+        ":all_srcs",
+        "//srcs/cmd/ohc:ohc",
+    ],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+        "manual",
     ],
 )

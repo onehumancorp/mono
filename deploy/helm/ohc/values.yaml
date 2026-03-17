@@ -9,3 +9,21 @@ frontend:
   replicas: 1
   service:
     port: 8081
+
+# Redis subchart (Bitnami) – used for session caching and pub/sub
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
+
+# CloudNative PostgreSQL operator cluster
+# Set cnpg.enabled=true when the CNPG operator is installed in the cluster.
+cnpg:
+  enabled: false
+  clusterName: ohc-pg
+  instances: 1
+  storage:
+    size: 1Gi
+  database: ohc
+  owner: ohc

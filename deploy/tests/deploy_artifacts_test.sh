@@ -28,8 +28,13 @@ grep -q "BACKEND_URL" "$compose_file"
 
 grep -q "backend" "$values_file"
 grep -q "frontend" "$values_file"
+grep -q "redis" "$values_file"
 
 grep -q "Deployment" "${root}/deploy/helm/ohc/templates/backend-deployment.yaml"
 grep -q "Deployment" "${root}/deploy/helm/ohc/templates/frontend-deployment.yaml"
+
+# Verify health probes are wired in the backend deployment template
+grep -q "livenessProbe" "${root}/deploy/helm/ohc/templates/backend-deployment.yaml"
+grep -q "readinessProbe" "${root}/deploy/helm/ohc/templates/backend-deployment.yaml"
 
 echo "deployment artifact checks passed"
