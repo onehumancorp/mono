@@ -39,9 +39,9 @@ The architecture of One Human Corp is built upon foundational layers, utilizing 
 
 1. **Domain Knowledge**: The specific industry or area of operation. The system is built with a flexible framework so users can always import new skills, areas, and domain knowledge bases (e.g., Legal Firm, Accounting, E-commerce). For our starting point, the domain is a *Software Company*.
 2. **Role**: The required positions within a specific domain. For a Software Company, these roles include:
-   - **Product Manager (PM)**: Defines features, user stories, and acceptance criteria.
+   - **Product Manager (PM)**: Defines features, user stories, and acceptance criteria based on market needs.
    - **Software Engineer (SWE)**: Writes, tests, and deploys code based on specifications.
-   - **Engineering Director**: Oversees engineering teams, reviews architecture, and ensures technical alignment.
+   - **Director (Engineering/Product/Marketing)**: Oversees teams, reviews architecture or plans, and ensures alignment with CEO's vision.
    - **Marketing Manager**: Handles go-to-market strategies, user acquisition, and branding.
    - **Security Engineer**: Audits code for vulnerabilities and ensures compliance with security standards.
    - **QA Tester**: Develops and executes test plans to ensure product quality.
@@ -49,21 +49,23 @@ The architecture of One Human Corp is built upon foundational layers, utilizing 
    - **DevOps Engineer**: Manages CI/CD pipelines, cloud infrastructure, and deployment processes.
    - **Sales Representative**: Manages outbound and inbound leads, negotiates contracts, and drives revenue.
    - **Customer Support Specialist**: Handles client inquiries, troubleshoots issues, and ensures high customer satisfaction.
-3. **Organization**: The hierarchical structure defining reporting lines, communication flows, and management. This dictates how the company operates.
-   - *Example Layout*: An Engineering Director manages 3 SWEs, 1 QA Tester, and 1 Security Engineer. The Director reports directly to the CEO. Product Managers collaborate cross-functionally with Engineering and Marketing.
-4. **User as CEO**: The human user is always at the top of the hierarchy (CEO). They define the issues, set the company's direction, and oversee operations.
+3. **Organization**: The hierarchical layout of the company, which defines reporting lines, communication flows, and management.
+   - *Example Layout*: A Director manages X PMs and Y SWEs. A Director reports directly to the CEO. Product Managers collaborate cross-functionally with Engineering and Marketing.
+4. **User as CEO**: The human user is always at the top of the hierarchy (CEO). When the CEO defines an issue, goal, or product requirement, the entire company will work collaboratively towards the goal.
 
 ## Workflow Execution & Collaboration
 When the CEO defines a high-level issue, goal, or product requirement, the entire AI organization is mobilized collaboratively to work towards the goal:
 
-- **Virtual Meeting Rooms**: Multiple agents of each role gather in virtual meeting rooms to discuss strategy. For example, a "Product Kickoff Meeting" might include the PM, UI/UX Designer, and Engineering Director. The CEO can drop in to read transcripts, guide the conversation, or observe the discussion in real-time. This is where multiple agents of each role discuss with each other to define scopes, design products, and plan implementation. Each agent brings its specific context (e.g., PM brings market needs, SWE brings technical constraints).
+- **Virtual Meeting Rooms**: This is where multiple agents of each role discuss with each other to define scopes, design products, and plan implementation. For example, a "Product Kickoff Meeting" might include the PM, UI/UX Designer, and Engineering Director. The CEO can drop in to read transcripts, guide the conversation, or observe the discussion in real-time. Each agent brings its specific context (e.g., PM brings market needs, SWE brings technical constraints).
 - **Scoping & Design**: Within these meeting rooms, PMs and UI/UX Designers discuss requirements, define the product scopes based on CEO's input, and create detailed product specs and designs collaboratively. They output PRDs (Product Requirement Documents) and wireframes.
 - **Implementation**: SWEs, DevOps, and Security Engineers receive the finalized specs from the design phase. They spin up implementation "rooms" to write the code, set up deployment pipelines, and ensure security compliance. If a Security Engineer flags an issue, they discuss it directly with the SWE in a virtual room to resolve it before code is merged.
 - **Continuous Alignment**: Agents autonomously iterate on feedback, cross-communicate across departments, and resolve blockers, working together to deliver the final product to the CEO. If an implementation hurdle changes the scope, the SWE can request a meeting with the PM to negotiate the feature list.
 
 ---
 
-## Technical & Product Roadmap
+## Detailed Technical & Product Roadmap
+
+To aggressively address the small business pain points identified in our market research, the "One Human Corp" rollout is phased to systematically eliminate founder bottlenecks, moving from basic operational relief to fully autonomous enterprise scaling.
 
 ### Phase 1: Foundation and The "Software Company" Prototype (Q1-Q2)
 *Goal: Establish the core orchestration capability where a human CEO can define a software product idea, and AI agents collaborate to design, scope, and begin implementation.*
@@ -75,26 +77,33 @@ When the CEO defines a high-level issue, goal, or product requirement, the entir
   - Define the default organizational schema (CEO -> Directors -> PMs / SWEs / Marketing / Sales).
   - Implement role-specific behavior, context management, and initial capabilities for the core Software Company.
 - **CEO Dashboard (V1)**: Interface for the human user to define issues, view the org chart, oversee virtual meeting transcripts in real-time, and manage the overall product roadmap.
+- *Pain Point Solved*: **Talent Shortage & Recruitment.** By deploying the Software Company template, a CEO instantly commands a full engineering suite without months of interviewing and hiring.
 
-### Phase 2: Implementation & Tool Aggregation (Q3)
-*Goal: Connect the AI workforce to external tools so they can actively implement the designs, ship code, run marketing campaigns, and manage accounting.*
-- **External Tool Aggregation via MCP**: Implement standard protocols to give agents read/write access to necessary tools (e.g., GitHub for SWEs, Jira for PMs, Figma for Designers, AWS for DevOps, QuickBooks for Finance Directors).
+### Phase 2: Implementation, Tool Aggregation, & 24/7 Operations (Q3)
+*Goal: Connect the AI workforce to external tools so they can actively implement the designs, ship code, run marketing campaigns, and manage customer operations around the clock.*
+- **External Tool Aggregation via MCP**: Implement standard protocols to give agents read/write access to necessary tools (e.g., GitHub for SWEs, Jira for PMs, Figma for Designers, AWS for DevOps, Zendesk for Support).
 - **Automated Implementation Pipelines**: SWE and DevOps agents autonomously trigger CI/CD pipelines, deploy test environments, and present the CEO with a live preview link for approval.
+- **Customer Support Swarm Deployment**: Introduce the 24/7 Customer Support Specialist role capable of reading documentation, drafting responses, resolving user queries via email/chat, and escalating critical bugs directly to PMs via internal ticketing.
 - **Advanced Agent Interactions & Conflict Resolution**: Enable agents to flag issues (e.g., Security Agent finds a bug in SWE's code) and automatically spin up a dedicated virtual meeting room to resolve the conflict without CEO intervention.
 - **Hybrid Identity Management**: Integrate unified identity issuance (SPIFFE/SPIRE) to provide secure, verifiable identities for both humans and AI agents.
+- *Pain Point Solved*: **Working 24/7 & Time Management.** The CEO stops triaging late-night bug reports or customer complaints because the Support and DevOps agents are actively monitoring and resolving them.
 
-### Phase 3: The Extensibility Framework & New Domains (Q4)
-*Goal: Evolve the platform from a hardcoded "Software Company" into a flexible framework where users can import any knowledge, skill, or domain to tackle any market.*
-- **Extensible Skill Import Framework**: Build the core capability for a user to define custom domains. A CEO can upload a JSON/YAML "Skill Pack" or describe the desired business area in natural language (e.g., "I want to start a Legal Consulting firm").
-- **Dynamic Organization Generation**: Based on the imported domain knowledge, the system automatically suggests the required roles, hierarchical layout, and tools needed to operate in that specific industry.
-- **"Hire/Fire" UI**: A dynamic control panel for the CEO to scale departments up or down instantly. If customer support tickets spike, the CEO can allocate more compute to spin up 5 new Customer Support Specialist agents.
-- **New Out-of-the-Box Templates**: Launch templates for "Digital Marketing Agency," "Accounting Firm," and "E-commerce Operations."
+### Phase 3: Solving "Marketing Without a Map" & Financial Intelligence (Q4)
+*Goal: Shift from pure execution to growth. Equip the system to acquire users, improve conversion rates, and manage the resulting financial inflows.*
+- **AI Growth & Marketing Department**: Roll out Marketing Managers and Sales Representatives capable of defining SEO strategies, writing blog content, generating ad copy, and building targeted outreach lists.
+- **UI/UX Conversion Optimization**: The UX Designer role iterates on web properties based on analytical feedback. If a product page has a low conversion rate, the Designer drafts a new layout and assigns a task to the SWE to implement A/B testing.
+- **Financial Directors & Accounting Integration**: Deploy the Finance Director role connected to tools like QuickBooks/Stripe via MCP. The agent autonomously categorizes expenses, generates profit/loss statements, and flags cash-flow anomalies to the CEO.
+- **Extensible Skill Import Framework**: Build the core capability for a user to define custom domains. A CEO can upload a JSON/YAML "Skill Pack" or describe a desired business area in natural language to extend beyond software.
+- *Pain Points Solved*: **Marketing Without a Map & Accounting Challenges.** The AI acts as a strategic marketing consultant and a rigorous bookkeeper, stopping the founder from guessing on ad spend and ensuring tax/bookkeeping readiness.
 
-### Phase 4: Scaling, Marketplace, and Enterprise Operations (Future)
-*Goal: Create a thriving ecosystem of plug-and-play AI talent and tools, fully resolving all small business pain points at a massive scale.*
-- **Advanced Autonomous Execution**: Agents become capable of self-healing workflows, analyzing long-term market trends, proactively identifying issues, and suggesting strategic pivots without waiting for a daily prompt from the CEO.
+### Phase 4: Scaling, Dynamic Reorganization, and Marketplace (Future)
+*Goal: Create a thriving ecosystem of plug-and-play AI talent and tools, allowing the user to dynamically shape the organization to respond to the market at scale.*
+- **Dynamic Organization Generation**: Based on imported domain knowledge, the system automatically suggests required roles, hierarchical layouts, and tools needed to operate in entirely new industries.
+- **"Hire/Fire" UI**: A dynamic control panel for the CEO to scale departments up or down instantly. If a marketing campaign goes viral, the CEO can allocate more compute to spin up 50 new Customer Support Specialist agents instantly via the K8s Operator.
+- **Advanced Autonomous Execution**: Agents become capable of self-healing workflows, analyzing long-term market trends, proactively identifying product issues, and suggesting strategic company pivots without waiting for a daily prompt from the CEO.
 - **The "One Human Corp" Marketplace**: Launch a community-driven marketplace. Users can buy, sell, and share highly specialized agents (e.g., a "TikTok Virality Expert Agent"), custom organizational templates, and unique tool integrations.
 - **Deep Analytics & Real-Time Auditing**: Provide the CEO with real-time financial tracking, token burn-rate forecasting, and deep actionable insights, completely eliminating the "Lack of Insights" pain point.
+
 ## One Human Corp: Cloud-Native Hybrid Architecture as Code
 
 This architecture defines the "Hybrid Agentic OS"—a framework where organizational structures, roles, and tool integrations are managed as Infrastructure as Code (IaC). The system is designed to run on a Kubernetes (K8s) cluster, allowing a human CEO to manage an "Alphabet-style" conglomerate. It supports Human-Agent Hybrid Teams, where any role can be filled by a human or an AI agent, and every tool integration follows a standardized interface to ensure zero vendor lock-in.
