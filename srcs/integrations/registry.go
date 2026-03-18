@@ -3,9 +3,9 @@
 // It implements three categories of integration that allow AI agents to
 // interact with the same tools that human team members use:
 //
-//   - Chat services: Slack, Discord, Google Chat — for human–agent messaging
+//   - Chat services: Slack, Discord, Google Chat, Telegram, Microsoft Teams — for human–agent messaging
 //   - Git platforms: GitHub, GitLab, Gitea    — for PR/MR creation
-//   - Issue trackers: JIRA, Plane, GitHub Issues — for ticket management
+//   - Issue trackers: JIRA, Plane, GitHub Issues, Linear — for ticket management
 //
 // All state is held in-memory following the same pattern used by the rest of
 // the platform.  Real-world deployments would replace the stub send/create
@@ -37,6 +37,8 @@ const (
 	IntegrationTypeSlack      IntegrationType = "slack"
 	IntegrationTypeDiscord    IntegrationType = "discord"
 	IntegrationTypeGoogleChat IntegrationType = "google_chat"
+	IntegrationTypeTelegram   IntegrationType = "telegram"
+	IntegrationTypeTeams      IntegrationType = "teams"
 
 	// Git platforms.
 	IntegrationTypeGitHub IntegrationType = "github"
@@ -47,6 +49,7 @@ const (
 	IntegrationTypeJIRA         IntegrationType = "jira"
 	IntegrationTypePlane        IntegrationType = "plane"
 	IntegrationTypeGitHubIssues IntegrationType = "github_issues"
+	IntegrationTypeLinear       IntegrationType = "linear"
 )
 
 // ConnectionStatus reflects whether an integration is reachable.
@@ -520,6 +523,24 @@ func defaultIntegrations() []Integration {
 			Status:      StatusDisconnected,
 			CreatedAt:   now,
 		},
+		{
+			ID:          "telegram",
+			Name:        "Telegram",
+			Type:        IntegrationTypeTelegram,
+			Category:    CategoryChat,
+			Description: "Send agent notifications and HITL approval requests via Telegram bots and channels.",
+			Status:      StatusDisconnected,
+			CreatedAt:   now,
+		},
+		{
+			ID:          "teams",
+			Name:        "Microsoft Teams",
+			Type:        IntegrationTypeTeams,
+			Category:    CategoryChat,
+			Description: "Deliver agent updates and approval requests to Microsoft Teams channels via webhooks.",
+			Status:      StatusDisconnected,
+			CreatedAt:   now,
+		},
 		// Git platforms
 		{
 			ID:          "github",
@@ -575,6 +596,15 @@ func defaultIntegrations() []Integration {
 			Type:        IntegrationTypeGitHubIssues,
 			Category:    CategoryIssues,
 			Description: "Track tasks and bugs directly in GitHub Issues alongside your repositories.",
+			Status:      StatusDisconnected,
+			CreatedAt:   now,
+		},
+		{
+			ID:          "linear",
+			Name:        "Linear",
+			Type:        IntegrationTypeLinear,
+			Category:    CategoryIssues,
+			Description: "Manage issues, cycles, and roadmaps with Linear — the modern issue tracker for high-velocity teams.",
 			Status:      StatusDisconnected,
 			CreatedAt:   now,
 		},
