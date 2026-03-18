@@ -90,11 +90,28 @@ When the CEO defines a high-level issue, goal, or product requirement, the entir
 - **"Hire/Fire" UI**: A dynamic control panel for the CEO to scale departments up or down instantly. If customer support tickets spike, the CEO can allocate more compute to spin up 5 new Customer Support Specialist agents.
 - **New Out-of-the-Box Templates**: Launch templates for "Digital Marketing Agency," "Accounting Firm," and "E-commerce Operations."
 
-### Phase 4: Scaling, Marketplace, and Enterprise Operations (Future)
+### Phase 4: Scaling, Marketplace, and Enterprise Operations (Q1-Q2 2027)
 *Goal: Create a thriving ecosystem of plug-and-play AI talent and tools, fully resolving all small business pain points at a massive scale.*
 - **Advanced Autonomous Execution**: Agents become capable of self-healing workflows, analyzing long-term market trends, proactively identifying issues, and suggesting strategic pivots without waiting for a daily prompt from the CEO.
 - **The "One Human Corp" Marketplace**: Launch a community-driven marketplace. Users can buy, sell, and share highly specialized agents (e.g., a "TikTok Virality Expert Agent"), custom organizational templates, and unique tool integrations.
 - **Deep Analytics & Real-Time Auditing**: Provide the CEO with real-time financial tracking, token burn-rate forecasting, and deep actionable insights, completely eliminating the "Lack of Insights" pain point.
+
+### Phase 5: World-Scale Workforce (Multi-Cluster Federation)
+*Goal: Enable geo-distributed AI teams that operate with sub-50ms latency regardless of where the CEO is based.*
+- **Federated SPIRE & mTLS Mesh**: Seamless identity across global clusters. See [identity-security/federation.md](features/identity-security/federation.md).
+- **Global Hub Router**: Intelligent, latency-blind task delegation.
+- **Cross-Region Snapshot Mirroring**: Instant disaster recovery for the entire organization state.
+
+### Phase 6: Ecosystem Interop (B2B Agent Exchange)
+*Goal: Standardize the way different OHC organizations cooperate.*
+- **Inter-Org Collaboration Rooms**: Securely bridged workspaces for multi-company projects. See [b2b-collaboration/inter-org.md](features/b2b-collaboration/inter-org.md).
+- **Autonomous Procurement**: Buyer agents from one org negotiating and contracting with Sales agents from another.
+- **Shared Audit Logs**: Provable, immutable logs for B2B compliance.
+
+### Phase 7: Performance Optimization (Hardware-Aware Scheduling)
+*Goal: Maximize throughput and ROI by aligning model weights with specialized compute.*
+- **NVIDIA/TPU Resource Scheduling**: Automated placement of high-density LLM agents on GPU nodes. See [compute-optimization/hardware-scheduling.md](features/compute-optimization/hardware-scheduling.md).
+- **VRAM Quota Management**: Department-level GPU budgets to prevent runaway compute costs.
 ## One Human Corp: Cloud-Native Hybrid Architecture as Code
 
 This architecture defines the "Hybrid Agentic OS"—a framework where organizational structures, roles, and tool integrations are managed as Infrastructure as Code (IaC). The system is designed to run on a Kubernetes (K8s) cluster, allowing a human CEO to manage an "Alphabet-style" conglomerate. It supports Human-Agent Hybrid Teams, where any role can be filled by a human or an AI agent, and every tool integration follows a standardized interface to ensure zero vendor lock-in.

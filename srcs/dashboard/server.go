@@ -18,15 +18,20 @@ import (
 )
 
 type Server struct {
-	mu          sync.RWMutex
-	org         domain.Organization
-	hub         *orchestration.Hub
-	tracker     *billing.Tracker
-	approvals   []ApprovalRequest
-	handoffs    []HandoffPackage
-	skills      []SkillPack
-	snapshots   []OrgSnapshot
-	integReg    *integrations.Registry
+	mu              sync.RWMutex
+	org             domain.Organization
+	hub             *orchestration.Hub
+	tracker         *billing.Tracker
+	approvals       []ApprovalRequest
+	handoffs        []HandoffPackage
+	skills          []SkillPack
+	snapshots       []OrgSnapshot
+	integReg        *integrations.Registry
+	trustAgreements []TrustAgreement
+	incidents       []Incident
+	computeProfiles []ComputeProfile
+	budgetAlerts    []BudgetAlert
+	pipelines       []Pipeline
 }
 
 type statusCount struct {
@@ -255,14 +260,19 @@ var statusOrder = []orchestration.Status{
 
 func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker) http.Handler {
 	server := &Server{
-		org:       org,
-		hub:       hub,
-		tracker:   tracker,
-		approvals: []ApprovalRequest{},
-		handoffs:  []HandoffPackage{},
-		skills:    defaultSkillPacks(),
-		snapshots: []OrgSnapshot{},
-		integReg:  integrations.NewRegistry(),
+		org:             org,
+		hub:             hub,
+		tracker:         tracker,
+		approvals:       []ApprovalRequest{},
+		handoffs:        []HandoffPackage{},
+		skills:          defaultSkillPacks(),
+		snapshots:       []OrgSnapshot{},
+		integReg:        integrations.NewRegistry(),
+		trustAgreements: []TrustAgreement{},
+		incidents:       []Incident{},
+		computeProfiles: []ComputeProfile{},
+		budgetAlerts:    []BudgetAlert{},
+		pipelines:       []Pipeline{},
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", server.handleIndex)
@@ -315,6 +325,22 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/integrations/issues/create", server.handleIssueCreate)
 	mux.HandleFunc("/api/integrations/issues/status", server.handleIssueUpdateStatus)
 	mux.HandleFunc("/api/integrations/issues/assign", server.handleIssueAssign)
+	// Phase 5 – B2B Cross-Org Collaboration
+	mux.HandleFunc("/api/b2b/agreements", server.handleB2BAgreements)
+	mux.HandleFunc("/api/b2b/handshake", server.handleB2BHandshake)
+	mux.HandleFunc("/api/b2b/revoke", server.handleB2BRevoke)
+	// Phase 5 – Autonomous SRE / Incident Management
+	mux.HandleFunc("/api/incidents", server.handleIncidents)
+	mux.HandleFunc("/api/incidents/status", server.handleIncidentStatus)
+	// Phase 5 – Compute Optimisation / Hardware-Aware Scheduling
+	mux.HandleFunc("/api/compute/profiles", server.handleComputeProfiles)
+	mux.HandleFunc("/api/clusters/", server.handleClusterStatus)
+	// Phase 5 – Budget Alerts
+	mux.HandleFunc("/api/billing/alerts", server.handleBudgetAlerts)
+	// Phase 5 – Automated SDLC / Pipelines
+	mux.HandleFunc("/api/pipelines", server.handlePipelines)
+	mux.HandleFunc("/api/pipelines/promote", server.handlePipelinePromote)
+	mux.HandleFunc("/api/pipelines/status", server.handlePipelineStatus)
 	// Health / readiness probes
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -1629,4 +1655,517 @@ http.Error(w, err.Error(), http.StatusNotFound)
 return
 }
 writeJSON(w, issue)
+}
+
+// ── B2B Collaboration ─────────────────────────────────────────────────────────
+
+// TrustAgreementStatus represents the lifecycle of a B2B trust agreement.
+type TrustAgreementStatus string
+
+const (
+TrustStatusPending  TrustAgreementStatus = "PENDING"
+TrustStatusActive   TrustAgreementStatus = "ACTIVE"
+TrustStatusRevoked  TrustAgreementStatus = "REVOKED"
+)
+
+// TrustAgreement is a federated trust relationship between two OHC organisations.
+// It enables cross-org agent collaboration using SPIFFE-federated JWTs.
+type TrustAgreement struct {
+ID           string               `json:"id"`
+PartnerOrg   string               `json:"partnerOrg"`
+PartnerJWKS  string               `json:"partnerJwksUrl"`
+AllowedRoles []string             `json:"allowedRoles"`
+Status       TrustAgreementStatus `json:"status"`
+CreatedAt    time.Time            `json:"createdAt"`
+}
+
+type b2bHandshakeRequest struct {
+PartnerOrg   string   `json:"partnerOrg"`
+PartnerJWKS  string   `json:"partnerJwksUrl"`
+AllowedRoles []string `json:"allowedRoles"`
+}
+
+func (s *Server) handleB2BAgreements(w http.ResponseWriter, r *http.Request) {
+switch r.Method {
+case http.MethodGet:
+s.mu.RLock()
+agreements := append([]TrustAgreement(nil), s.trustAgreements...)
+s.mu.RUnlock()
+writeJSON(w, agreements)
+default:
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+}
+
+func (s *Server) handleB2BHandshake(w http.ResponseWriter, r *http.Request) {
+if r.Method != http.MethodPost {
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+return
+}
+var req b2bHandshakeRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.PartnerOrg == "" || req.PartnerJWKS == "" {
+http.Error(w, "partnerOrg and partnerJwksUrl are required", http.StatusBadRequest)
+return
+}
+
+agreement := TrustAgreement{
+ID:           "ta-" + strings.ReplaceAll(req.PartnerOrg, ".", "-") + "-" + time.Now().Format("20060102150405"),
+PartnerOrg:   req.PartnerOrg,
+PartnerJWKS:  req.PartnerJWKS,
+AllowedRoles: req.AllowedRoles,
+Status:       TrustStatusActive,
+CreatedAt:    time.Now().UTC(),
+}
+
+s.mu.Lock()
+s.trustAgreements = append(s.trustAgreements, agreement)
+s.mu.Unlock()
+
+writeJSON(w, agreement)
+}
+
+func (s *Server) handleB2BRevoke(w http.ResponseWriter, r *http.Request) {
+if r.Method != http.MethodPost {
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+return
+}
+var req struct {
+AgreementID string `json:"agreementId"`
+}
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.AgreementID == "" {
+http.Error(w, "agreementId is required", http.StatusBadRequest)
+return
+}
+
+s.mu.Lock()
+defer s.mu.Unlock()
+for i, ag := range s.trustAgreements {
+if ag.ID == req.AgreementID {
+s.trustAgreements[i].Status = TrustStatusRevoked
+writeJSON(w, s.trustAgreements[i])
+return
+}
+}
+http.Error(w, "agreement not found", http.StatusNotFound)
+}
+
+// ── Autonomous SRE / Incident Management ─────────────────────────────────────
+
+// IncidentSeverity classifies the urgency of an operational incident.
+type IncidentSeverity string
+
+const (
+SeverityP0 IncidentSeverity = "P0"
+SeverityP1 IncidentSeverity = "P1"
+SeverityP2 IncidentSeverity = "P2"
+)
+
+// IncidentStatus reflects the investigation lifecycle state.
+type IncidentStatus string
+
+const (
+IncidentStatusInvestigating IncidentStatus = "INVESTIGATING"
+IncidentStatusProposed      IncidentStatus = "PROPOSED"
+IncidentStatusResolved      IncidentStatus = "RESOLVED"
+)
+
+// Incident represents an operational event requiring SRE attention.
+type Incident struct {
+ID               string           `json:"id"`
+Severity         IncidentSeverity `json:"severity"`
+Summary          string           `json:"summary"`
+RCA              string           `json:"rootCauseAnalysis"`
+ResolutionPlanID string           `json:"resolutionPlanId,omitempty"`
+Status           IncidentStatus   `json:"status"`
+CreatedAt        time.Time        `json:"createdAt"`
+UpdatedAt        time.Time        `json:"updatedAt"`
+}
+
+type incidentCreateRequest struct {
+Severity string `json:"severity"`
+Summary  string `json:"summary"`
+RCA      string `json:"rootCauseAnalysis,omitempty"`
+}
+
+type incidentStatusRequest struct {
+IncidentID       string `json:"incidentId"`
+Status           string `json:"status"`
+ResolutionPlanID string `json:"resolutionPlanId,omitempty"`
+RCA              string `json:"rootCauseAnalysis,omitempty"`
+}
+
+func (s *Server) handleIncidents(w http.ResponseWriter, r *http.Request) {
+switch r.Method {
+case http.MethodGet:
+s.mu.RLock()
+incidents := append([]Incident(nil), s.incidents...)
+s.mu.RUnlock()
+writeJSON(w, incidents)
+case http.MethodPost:
+var req incidentCreateRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.Severity == "" || req.Summary == "" {
+http.Error(w, "severity and summary are required", http.StatusBadRequest)
+return
+}
+now := time.Now().UTC()
+incident := Incident{
+ID:        "inc-" + now.Format("20060102150405"),
+Severity:  IncidentSeverity(req.Severity),
+Summary:   req.Summary,
+RCA:       req.RCA,
+Status:    IncidentStatusInvestigating,
+CreatedAt: now,
+UpdatedAt: now,
+}
+s.mu.Lock()
+s.incidents = append(s.incidents, incident)
+s.mu.Unlock()
+writeJSON(w, incident)
+default:
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+}
+
+func (s *Server) handleIncidentStatus(w http.ResponseWriter, r *http.Request) {
+if r.Method != http.MethodPost {
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+return
+}
+var req incidentStatusRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.IncidentID == "" || req.Status == "" {
+http.Error(w, "incidentId and status are required", http.StatusBadRequest)
+return
+}
+
+s.mu.Lock()
+defer s.mu.Unlock()
+for i, inc := range s.incidents {
+if inc.ID == req.IncidentID {
+s.incidents[i].Status = IncidentStatus(req.Status)
+s.incidents[i].UpdatedAt = time.Now().UTC()
+if req.ResolutionPlanID != "" {
+s.incidents[i].ResolutionPlanID = req.ResolutionPlanID
+}
+if req.RCA != "" {
+s.incidents[i].RCA = req.RCA
+}
+writeJSON(w, s.incidents[i])
+return
+}
+}
+http.Error(w, "incident not found", http.StatusNotFound)
+}
+
+// ── Compute Optimization / Hardware-Aware Scheduling ─────────────────────────
+
+// ComputeProfile defines the hardware requirements for a given agent role.
+type ComputeProfile struct {
+RoleID              string    `json:"roleId"`
+MinVRAMGB           int       `json:"minVramGb"`
+PreferredGPUType    string    `json:"preferredGpuType"` // "h100", "a10g", "cpu"
+SchedulingPriority  int       `json:"schedulingPriority"`
+CreatedAt           time.Time `json:"createdAt"`
+}
+
+type computeProfileRequest struct {
+RoleID             string `json:"roleId"`
+MinVRAMGB          int    `json:"minVramGb"`
+PreferredGPUType   string `json:"preferredGpuType"`
+SchedulingPriority int    `json:"schedulingPriority"`
+}
+
+// ClusterStatus reflects the health of a remote Kubernetes cluster region.
+type ClusterStatus struct {
+Region         string    `json:"region"`
+Status         string    `json:"status"` // healthy, degraded, offline
+LatencyMS      int       `json:"latencyMs"`
+AvailableNodes int       `json:"availableNodes"`
+CheckedAt      time.Time `json:"checkedAt"`
+}
+
+func (s *Server) handleComputeProfiles(w http.ResponseWriter, r *http.Request) {
+switch r.Method {
+case http.MethodGet:
+s.mu.RLock()
+profiles := append([]ComputeProfile(nil), s.computeProfiles...)
+s.mu.RUnlock()
+writeJSON(w, profiles)
+case http.MethodPost:
+var req computeProfileRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.RoleID == "" {
+http.Error(w, "roleId is required", http.StatusBadRequest)
+return
+}
+profile := ComputeProfile{
+RoleID:             req.RoleID,
+MinVRAMGB:          req.MinVRAMGB,
+PreferredGPUType:   req.PreferredGPUType,
+SchedulingPriority: req.SchedulingPriority,
+CreatedAt:          time.Now().UTC(),
+}
+s.mu.Lock()
+s.computeProfiles = append(s.computeProfiles, profile)
+s.mu.Unlock()
+writeJSON(w, profile)
+default:
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+}
+
+func (s *Server) handleClusterStatus(w http.ResponseWriter, r *http.Request) {
+if r.Method != http.MethodGet {
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+return
+}
+// Extract region from URL path: /api/clusters/{region}/status
+parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+region := ""
+for i, p := range parts {
+if p == "clusters" && i+1 < len(parts) {
+region = parts[i+1]
+break
+}
+}
+if region == "" {
+http.Error(w, "region is required in path", http.StatusBadRequest)
+return
+}
+// Simulated cluster health response (would call k8s API in production)
+status := ClusterStatus{
+Region:         region,
+Status:         "healthy",
+LatencyMS:      3,
+AvailableNodes: 5,
+CheckedAt:      time.Now().UTC(),
+}
+writeJSON(w, status)
+}
+
+// ── Budget Alerts ─────────────────────────────────────────────────────────────
+
+// defaultBudgetAlertNotifyPct is the default notification threshold (80 %).
+const defaultBudgetAlertNotifyPct = 0.8
+
+// BudgetAlert defines a spending threshold with notification behaviour.
+type BudgetAlert struct {
+ID             string    `json:"id"`
+OrganizationID string    `json:"organizationId"`
+ThresholdUSD   float64   `json:"thresholdUsd"`
+NotifyAtPct    float64   `json:"notifyAtPct"` // e.g. 0.8 → notify at 80 %
+Triggered      bool      `json:"triggered"`
+CreatedAt      time.Time `json:"createdAt"`
+}
+
+type budgetAlertRequest struct {
+OrganizationID string  `json:"organizationId"`
+ThresholdUSD   float64 `json:"thresholdUsd"`
+NotifyAtPct    float64 `json:"notifyAtPct"`
+}
+
+func (s *Server) handleBudgetAlerts(w http.ResponseWriter, r *http.Request) {
+switch r.Method {
+case http.MethodGet:
+s.mu.RLock()
+alerts := append([]BudgetAlert(nil), s.budgetAlerts...)
+s.mu.RUnlock()
+// Evaluate triggered state against current spend.
+summary := s.tracker.Summary(s.org.ID)
+for i, a := range alerts {
+alerts[i].Triggered = summary.TotalCostUSD >= a.ThresholdUSD*a.NotifyAtPct
+}
+writeJSON(w, alerts)
+case http.MethodPost:
+var req budgetAlertRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.ThresholdUSD <= 0 {
+http.Error(w, "thresholdUsd must be greater than zero", http.StatusBadRequest)
+return
+}
+if req.NotifyAtPct <= 0 || req.NotifyAtPct > 1 {
+req.NotifyAtPct = defaultBudgetAlertNotifyPct // default 80 %
+}
+orgID := req.OrganizationID
+if orgID == "" {
+s.mu.RLock()
+orgID = s.org.ID
+s.mu.RUnlock()
+}
+alert := BudgetAlert{
+ID:             "alert-" + time.Now().Format("20060102150405"),
+OrganizationID: orgID,
+ThresholdUSD:   req.ThresholdUSD,
+NotifyAtPct:    req.NotifyAtPct,
+Triggered:      false,
+CreatedAt:      time.Now().UTC(),
+}
+s.mu.Lock()
+s.budgetAlerts = append(s.budgetAlerts, alert)
+s.mu.Unlock()
+writeJSON(w, alert)
+default:
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+}
+
+// ── Automated SDLC / Pipelines ────────────────────────────────────────────────
+
+// PipelineStatus reflects the lifecycle of an autonomous CI/CD pipeline.
+type PipelineStatus string
+
+const (
+PipelineStatusPending      PipelineStatus = "PENDING"
+PipelineStatusImplementing PipelineStatus = "IMPLEMENTING"
+PipelineStatusTesting      PipelineStatus = "TESTING"
+PipelineStatusStaging      PipelineStatus = "STAGING"
+PipelineStatusPromoted     PipelineStatus = "PROMOTED"
+PipelineStatusFailed       PipelineStatus = "FAILED"
+)
+
+// Pipeline represents an autonomous implementation pipeline from spec to production.
+type Pipeline struct {
+ID          string         `json:"id"`
+Name        string         `json:"name"`
+Status      PipelineStatus `json:"status"`
+Branch      string         `json:"branch"`
+StagingURL  string         `json:"stagingUrl,omitempty"`
+InitiatedBy string         `json:"initiatedBy"`
+CreatedAt   time.Time      `json:"createdAt"`
+UpdatedAt   time.Time      `json:"updatedAt"`
+}
+
+type pipelineCreateRequest struct {
+Name        string `json:"name"`
+Branch      string `json:"branch"`
+InitiatedBy string `json:"initiatedBy"`
+}
+
+type pipelinePromoteRequest struct {
+PipelineID string `json:"pipelineId"`
+ApprovedBy string `json:"approvedBy"`
+}
+
+func (s *Server) handlePipelines(w http.ResponseWriter, r *http.Request) {
+switch r.Method {
+case http.MethodGet:
+s.mu.RLock()
+pipelines := append([]Pipeline(nil), s.pipelines...)
+s.mu.RUnlock()
+writeJSON(w, pipelines)
+case http.MethodPost:
+var req pipelineCreateRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.Name == "" {
+http.Error(w, "name is required", http.StatusBadRequest)
+return
+}
+now := time.Now().UTC()
+pipeline := Pipeline{
+ID:          "pipeline-" + now.Format("20060102150405"),
+Name:        req.Name,
+Status:      PipelineStatusPending,
+Branch:      req.Branch,
+InitiatedBy: req.InitiatedBy,
+CreatedAt:   now,
+UpdatedAt:   now,
+}
+s.mu.Lock()
+s.pipelines = append(s.pipelines, pipeline)
+s.mu.Unlock()
+writeJSON(w, pipeline)
+default:
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+}
+
+func (s *Server) handlePipelinePromote(w http.ResponseWriter, r *http.Request) {
+if r.Method != http.MethodPost {
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+return
+}
+var req pipelinePromoteRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.PipelineID == "" {
+http.Error(w, "pipelineId is required", http.StatusBadRequest)
+return
+}
+
+s.mu.Lock()
+defer s.mu.Unlock()
+for i, p := range s.pipelines {
+if p.ID == req.PipelineID {
+if s.pipelines[i].Status != PipelineStatusStaging {
+http.Error(w, "pipeline must be in STAGING status to promote", http.StatusBadRequest)
+return
+}
+s.pipelines[i].Status = PipelineStatusPromoted
+s.pipelines[i].UpdatedAt = time.Now().UTC()
+writeJSON(w, s.pipelines[i])
+return
+}
+}
+http.Error(w, "pipeline not found", http.StatusNotFound)
+}
+
+func (s *Server) handlePipelineStatus(w http.ResponseWriter, r *http.Request) {
+if r.Method != http.MethodPost {
+http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+return
+}
+var req struct {
+PipelineID string `json:"pipelineId"`
+Status     string `json:"status"`
+StagingURL string `json:"stagingUrl,omitempty"`
+}
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+return
+}
+if req.PipelineID == "" || req.Status == "" {
+http.Error(w, "pipelineId and status are required", http.StatusBadRequest)
+return
+}
+
+s.mu.Lock()
+defer s.mu.Unlock()
+for i, p := range s.pipelines {
+if p.ID == req.PipelineID {
+s.pipelines[i].Status = PipelineStatus(req.Status)
+s.pipelines[i].UpdatedAt = time.Now().UTC()
+if req.StagingURL != "" {
+s.pipelines[i].StagingURL = req.StagingURL
+}
+writeJSON(w, s.pipelines[i])
+return
+}
+}
+http.Error(w, "pipeline not found", http.StatusNotFound)
 }

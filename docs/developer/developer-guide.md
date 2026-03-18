@@ -1,6 +1,26 @@
-# Developer Guide
+# Developer Guide: One Human Corp
+
+## Introduction
+This guide is intended for engineers who want to contribute to the One Human Corp (OHC) platform. It covers everything from local setup to adding new features and deploying to Kubernetes.
 
 ## Prerequisites
+{Existing table}
+
+## Setup
+### 1. Clone the Repository
+```bash
+git clone https://github.com/onehumancorp/mono.git
+cd mono
+```
+
+### 2. Configure Environment
+Create a `.env` file in the root directory (see [Environment Variables](#environment-variables)).
+
+### 3. Local Development with Docker Compose
+```bash
+docker compose -f deploy/docker-compose.yml up --build
+```
+Navigate to `http://localhost:8081` to view the dashboard.
 
 | Tool | Minimum Version | Install |
 |------|----------------|---------|
@@ -30,10 +50,11 @@ mono/
 │   ├── helm/ohc/            Helm chart (backend, frontend, Redis, CNPG)
 │   └── tests/               Deploy artefact and Kind e2e tests
 ├── docs/
-│   ├── designs/             Architecture and design documents
-│   ├── cuj/                 PM investigation / CUJ documents
+│   ├── features/            Feature-centric documentation (Design + CUJ + Guide)
 │   ├── developer/           This guide
-│   └── user/                End-user guides
+│   ├── templates/           Standard templates for docs
+│   ├── system-design.md     Top-level architecture
+│   └── roadmap.md           Strategic technical roadmap
 └── srcs/
     ├── billing/             Billing tracker
     ├── cmd/ohc/             Backend binary entrypoint

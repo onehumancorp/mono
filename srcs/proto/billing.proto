@@ -1,8 +1,11 @@
-syntax = "proto3";
+edition = "2024";
 
 package ohc.billing;
 
+import "google/protobuf/go_features.proto";
+
 option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/billing;billingpb";
+option features.(pb.go).api = OPAQUE;
 
 message TokenUsage {
   string agent_id = 1;
@@ -26,6 +29,14 @@ message AgentCostSummary {
   string agent_id = 1;
   double cost_usd = 2;
   int64 token_used = 3;
+}
+
+message BudgetAlert {
+  string id = 1;
+  string organization_id = 2;
+  double threshold_usd = 3;
+  double notify_at_pct = 4;
+  bool triggered = 5;
 }
 
 service BillingService {

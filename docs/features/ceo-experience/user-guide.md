@@ -1,14 +1,23 @@
 # User Guide: One Human Corp Platform
 
-## What Is One Human Corp?
+## Introduction
+One Human Corp (OHC) is an enterprise-grade AI-agent orchestration platform. It gives your organisation a virtual workforce of AI agents that can collaborate, escalate high-risk actions, and manage entire product development life cycles autonomously under your guidance as CEO.
 
-One Human Corp (OHC) is an enterprise-grade AI-agent orchestration platform. It gives your organisation a virtual workforce of AI agents that can:
+## Prerequisites
+- A modern web browser (Chrome, Firefox, Safari).
+- Access credentials provided by your platform administrator.
+- For local development: Docker and Docker Compose installed.
 
-- Collaborate in **Meeting Rooms**
-- Escalate high-risk actions for **Human Approval**
-- Hand off tasks gracefully to human managers via **Warm Handoffs**
-- Track AI usage costs in real-time via the **Billing Dashboard**
-- Import new capabilities through **Skill Packs**
+## Setup
+1. **Login**: Navigate to your platform URL (e.g., `http://localhost:8081`).
+2. **Initial Configuration**: Follow the on-screen prompts to set your Organisation Name and Domain.
+3. **Seed Data (Optional)**: If you are in a development environment, you can seed demo data by clicking "Seed Demo" in the settings menu.
+
+## Key Concepts
+- **AI Agents**: Specialized virtual employees assigned to specific roles.
+- **Meeting Rooms**: Virtual spaces where agents collaborate on tasks.
+- **Approvals**: A safety mechanism where high-risk agent actions require your sign-off.
+- **Skill Packs**: Add-ons that provide agents with new capabilities or domain knowledge.
 
 ---
 

@@ -2792,3 +2792,342 @@ if issues == nil {
 t.Errorf("expected empty slice (not nil) in JSON response")
 }
 }
+
+// ── B2B Collaboration Tests ───────────────────────────────────────────────────
+
+func TestHandleB2BHandshakeAndAgreements(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Initially empty.
+resp, err := http.Get(server.URL + "/api/b2b/agreements")
+if err != nil {
+t.Fatalf("GET /api/b2b/agreements: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var agreements []TrustAgreement
+if err := json.NewDecoder(resp.Body).Decode(&agreements); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if len(agreements) != 0 {
+t.Errorf("expected 0 agreements, got %d", len(agreements))
+}
+
+// Create a handshake.
+body, _ := json.Marshal(map[string]any{
+"partnerOrg":   "globex.com",
+"partnerJwksUrl": "https://ohc.globex.com/.well-known/jwks.json",
+"allowedRoles": []string{"SALES_AGENT", "BUYER_AGENT"},
+})
+postResp, err := http.Post(server.URL+"/api/b2b/handshake", "application/json", bytes.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/b2b/handshake: %v", err)
+}
+defer postResp.Body.Close()
+if postResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(postResp.Body)
+t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
+}
+var agreement TrustAgreement
+if err := json.NewDecoder(postResp.Body).Decode(&agreement); err != nil {
+t.Fatalf("decode handshake response: %v", err)
+}
+if agreement.Status != TrustStatusActive {
+t.Errorf("expected ACTIVE status, got %s", agreement.Status)
+}
+if agreement.PartnerOrg != "globex.com" {
+t.Errorf("expected partnerOrg=globex.com, got %s", agreement.PartnerOrg)
+}
+
+// Revoke the agreement.
+revokeBody, _ := json.Marshal(map[string]string{"agreementId": agreement.ID})
+revokeResp, err := http.Post(server.URL+"/api/b2b/revoke", "application/json", bytes.NewReader(revokeBody))
+if err != nil {
+t.Fatalf("POST /api/b2b/revoke: %v", err)
+}
+defer revokeResp.Body.Close()
+if revokeResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(revokeResp.Body)
+t.Fatalf("expected 200, got %d: %s", revokeResp.StatusCode, b)
+}
+var revoked TrustAgreement
+if err := json.NewDecoder(revokeResp.Body).Decode(&revoked); err != nil {
+t.Fatalf("decode revoke response: %v", err)
+}
+if revoked.Status != TrustStatusRevoked {
+t.Errorf("expected REVOKED status, got %s", revoked.Status)
+}
+}
+
+// ── Autonomous SRE / Incident Tests ──────────────────────────────────────────
+
+func TestHandleIncidents(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Create incident.
+body, _ := json.Marshal(map[string]string{
+"severity": "P0",
+"summary":  "High error rate in billing-engine",
+})
+postResp, err := http.Post(server.URL+"/api/incidents", "application/json", bytes.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/incidents: %v", err)
+}
+defer postResp.Body.Close()
+if postResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(postResp.Body)
+t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
+}
+var incident Incident
+if err := json.NewDecoder(postResp.Body).Decode(&incident); err != nil {
+t.Fatalf("decode incident response: %v", err)
+}
+if incident.Severity != SeverityP0 {
+t.Errorf("expected P0 severity, got %s", incident.Severity)
+}
+if incident.Status != IncidentStatusInvestigating {
+t.Errorf("expected INVESTIGATING status, got %s", incident.Status)
+}
+
+// Update status.
+statusBody, _ := json.Marshal(map[string]string{
+"incidentId":       incident.ID,
+"status":           "PROPOSED",
+"resolutionPlanId": "rollback-v1.2.0",
+})
+statusResp, err := http.Post(server.URL+"/api/incidents/status", "application/json", bytes.NewReader(statusBody))
+if err != nil {
+t.Fatalf("POST /api/incidents/status: %v", err)
+}
+defer statusResp.Body.Close()
+if statusResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(statusResp.Body)
+t.Fatalf("expected 200, got %d: %s", statusResp.StatusCode, b)
+}
+var updated Incident
+if err := json.NewDecoder(statusResp.Body).Decode(&updated); err != nil {
+t.Fatalf("decode updated incident: %v", err)
+}
+if updated.Status != IncidentStatusProposed {
+t.Errorf("expected PROPOSED, got %s", updated.Status)
+}
+if updated.ResolutionPlanID != "rollback-v1.2.0" {
+t.Errorf("expected rollback plan ID, got %s", updated.ResolutionPlanID)
+}
+
+// List incidents.
+listResp, err := http.Get(server.URL + "/api/incidents")
+if err != nil {
+t.Fatalf("GET /api/incidents: %v", err)
+}
+defer listResp.Body.Close()
+var incidents []Incident
+if err := json.NewDecoder(listResp.Body).Decode(&incidents); err != nil {
+t.Fatalf("decode incidents list: %v", err)
+}
+if len(incidents) != 1 {
+t.Errorf("expected 1 incident, got %d", len(incidents))
+}
+}
+
+// ── Compute Optimisation Tests ────────────────────────────────────────────────
+
+func TestHandleComputeProfiles(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Create a compute profile.
+body, _ := json.Marshal(map[string]any{
+"roleId":             "AUDIT_AGENT",
+"minVramGb":          40,
+"preferredGpuType":   "h100",
+"schedulingPriority": 10,
+})
+postResp, err := http.Post(server.URL+"/api/compute/profiles", "application/json", bytes.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/compute/profiles: %v", err)
+}
+defer postResp.Body.Close()
+if postResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(postResp.Body)
+t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
+}
+var profile ComputeProfile
+if err := json.NewDecoder(postResp.Body).Decode(&profile); err != nil {
+t.Fatalf("decode profile: %v", err)
+}
+if profile.MinVRAMGB != 40 {
+t.Errorf("expected minVramGb=40, got %d", profile.MinVRAMGB)
+}
+if profile.PreferredGPUType != "h100" {
+t.Errorf("expected h100, got %s", profile.PreferredGPUType)
+}
+
+// List profiles.
+listResp, err := http.Get(server.URL + "/api/compute/profiles")
+if err != nil {
+t.Fatalf("GET /api/compute/profiles: %v", err)
+}
+defer listResp.Body.Close()
+var profiles []ComputeProfile
+if err := json.NewDecoder(listResp.Body).Decode(&profiles); err != nil {
+t.Fatalf("decode profiles: %v", err)
+}
+if len(profiles) != 1 {
+t.Errorf("expected 1 profile, got %d", len(profiles))
+}
+}
+
+func TestHandleClusterStatus(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+resp, err := http.Get(server.URL + "/api/clusters/eu-central-1/status")
+if err != nil {
+t.Fatalf("GET cluster status: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var status ClusterStatus
+if err := json.NewDecoder(resp.Body).Decode(&status); err != nil {
+t.Fatalf("decode cluster status: %v", err)
+}
+if status.Region != "eu-central-1" {
+t.Errorf("expected region=eu-central-1, got %s", status.Region)
+}
+if status.Status != "healthy" {
+t.Errorf("expected healthy status, got %s", status.Status)
+}
+}
+
+// ── Budget Alert Tests ────────────────────────────────────────────────────────
+
+func TestHandleBudgetAlerts(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Create a budget alert.
+body, _ := json.Marshal(map[string]any{
+"thresholdUsd": 500.0,
+"notifyAtPct":  0.8,
+})
+postResp, err := http.Post(server.URL+"/api/billing/alerts", "application/json", bytes.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/billing/alerts: %v", err)
+}
+defer postResp.Body.Close()
+if postResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(postResp.Body)
+t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
+}
+var alert BudgetAlert
+if err := json.NewDecoder(postResp.Body).Decode(&alert); err != nil {
+t.Fatalf("decode alert: %v", err)
+}
+if alert.ThresholdUSD != 500.0 {
+t.Errorf("expected thresholdUsd=500, got %f", alert.ThresholdUSD)
+}
+
+// List alerts.
+listResp, err := http.Get(server.URL + "/api/billing/alerts")
+if err != nil {
+t.Fatalf("GET /api/billing/alerts: %v", err)
+}
+defer listResp.Body.Close()
+var alerts []BudgetAlert
+if err := json.NewDecoder(listResp.Body).Decode(&alerts); err != nil {
+t.Fatalf("decode alerts: %v", err)
+}
+if len(alerts) != 1 {
+t.Errorf("expected 1 alert, got %d", len(alerts))
+}
+}
+
+// ── Pipeline Tests ────────────────────────────────────────────────────────────
+
+func TestHandlePipelines(t *testing.T) {
+_, server := newTestServer(t)
+defer server.Close()
+
+// Create a pipeline.
+body, _ := json.Marshal(map[string]string{
+"name":        "feat-analytics",
+"branch":      "feat/analytics",
+"initiatedBy": "pm-1",
+})
+postResp, err := http.Post(server.URL+"/api/pipelines", "application/json", bytes.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/pipelines: %v", err)
+}
+defer postResp.Body.Close()
+if postResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(postResp.Body)
+t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
+}
+var pipeline Pipeline
+if err := json.NewDecoder(postResp.Body).Decode(&pipeline); err != nil {
+t.Fatalf("decode pipeline: %v", err)
+}
+if pipeline.Status != PipelineStatusPending {
+t.Errorf("expected PENDING status, got %s", pipeline.Status)
+}
+
+// Update status to STAGING.
+statusBody, _ := json.Marshal(map[string]string{
+"pipelineId": pipeline.ID,
+"status":     "STAGING",
+"stagingUrl": "https://staging.example.com",
+})
+statusResp, err := http.Post(server.URL+"/api/pipelines/status", "application/json", bytes.NewReader(statusBody))
+if err != nil {
+t.Fatalf("POST /api/pipelines/status: %v", err)
+}
+defer statusResp.Body.Close()
+if statusResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(statusResp.Body)
+t.Fatalf("expected 200, got %d: %s", statusResp.StatusCode, b)
+}
+
+// Promote to production.
+promoteBody, _ := json.Marshal(map[string]string{
+"pipelineId": pipeline.ID,
+"approvedBy": "ceo",
+})
+promoteResp, err := http.Post(server.URL+"/api/pipelines/promote", "application/json", bytes.NewReader(promoteBody))
+if err != nil {
+t.Fatalf("POST /api/pipelines/promote: %v", err)
+}
+defer promoteResp.Body.Close()
+if promoteResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(promoteResp.Body)
+t.Fatalf("expected 200, got %d: %s", promoteResp.StatusCode, b)
+}
+var promoted Pipeline
+if err := json.NewDecoder(promoteResp.Body).Decode(&promoted); err != nil {
+t.Fatalf("decode promoted pipeline: %v", err)
+}
+if promoted.Status != PipelineStatusPromoted {
+t.Errorf("expected PROMOTED, got %s", promoted.Status)
+}
+
+// List pipelines.
+listResp, err := http.Get(server.URL + "/api/pipelines")
+if err != nil {
+t.Fatalf("GET /api/pipelines: %v", err)
+}
+defer listResp.Body.Close()
+var pipelines []Pipeline
+if err := json.NewDecoder(listResp.Body).Decode(&pipelines); err != nil {
+t.Fatalf("decode pipelines: %v", err)
+}
+if len(pipelines) != 1 {
+t.Errorf("expected 1 pipeline, got %d", len(pipelines))
+}
+}
