@@ -20,7 +20,7 @@ bazel_dep(name = "rules_python", version = "1.7.0")
 bazel_dep(name = "rules_shell", version = "0.6.1")
 
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
-go_sdk.download(version = "1.25.0")
+go_sdk.download(version = "1.26.0")
 
 platforms_host = use_extension("@platforms//host:extension.bzl", "host_platform")
 use_repo(platforms_host, "host_platform")

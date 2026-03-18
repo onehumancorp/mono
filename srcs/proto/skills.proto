@@ -1,10 +1,12 @@
-syntax = "proto3";
+edition = "2024";
 
 package ohc.skills;
 
-option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/skills;skillspb";
-
+import "google/protobuf/go_features.proto";
 import "common.proto";
+
+option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/skills;skillspb";
+option features.(pb.go).api = OPAQUE;
 
 // A Phase represents a single execution step in a multi-phase agent prompt.
 message Phase {

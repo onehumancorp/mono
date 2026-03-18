@@ -3,33 +3,44 @@ load("@protobuf//bazel:proto_library.bzl", "proto_library")
 proto_library(
     name = "common_proto",
     srcs = ["common.proto"],
+    deps = ["@protobuf//:go_features_proto"],
     visibility = ["//visibility:public"],
 )
 
 proto_library(
     name = "agent_proto",
     srcs = ["agent.proto"],
-    deps = [":common_proto"],
+    deps = [
+        ":common_proto",
+        "@protobuf//:go_features_proto",
+    ],
     visibility = ["//visibility:public"],
 )
 
 proto_library(
     name = "organization_proto",
     srcs = ["organization.proto"],
-    deps = [":common_proto"],
+    deps = [
+        ":common_proto",
+        "@protobuf//:go_features_proto",
+    ],
     visibility = ["//visibility:public"],
 )
 
 proto_library(
     name = "billing_proto",
     srcs = ["billing.proto"],
+    deps = ["@protobuf//:go_features_proto"],
     visibility = ["//visibility:public"],
 )
 
 proto_library(
     name = "skills_proto",
     srcs = ["skills.proto"],
-    deps = [":common_proto"],
+    deps = [
+        ":common_proto",
+        "@protobuf//:go_features_proto",
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -41,6 +52,7 @@ proto_library(
         ":billing_proto",
         ":organization_proto",
         ":skills_proto",
+        "@protobuf//:go_features_proto",
     ],
     visibility = ["//visibility:public"],
 )
