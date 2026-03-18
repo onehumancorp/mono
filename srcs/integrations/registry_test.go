@@ -699,13 +699,128 @@ func TestAllExpectedIntegrationTypesPresent(t *testing.T) {
 	}
 
 	expected := []IntegrationType{
+		// Chat services
 		IntegrationTypeSlack, IntegrationTypeDiscord, IntegrationTypeGoogleChat,
+		IntegrationTypeTelegram, IntegrationTypeTeams,
+		// Git platforms
 		IntegrationTypeGitHub, IntegrationTypeGitLab, IntegrationTypeGitea,
+		// Issue trackers
 		IntegrationTypeJIRA, IntegrationTypePlane, IntegrationTypeGitHubIssues,
+		IntegrationTypeLinear,
 	}
 	for _, typ := range expected {
 		if !types[typ] {
 			t.Errorf("expected integration type %q to be present", typ)
 		}
+	}
+}
+
+func TestTelegramIntegrationSendMessage(t *testing.T) {
+	r := NewRegistry()
+
+	i, ok := r.Integration("telegram")
+	if !ok {
+		t.Fatal("expected telegram integration to exist")
+	}
+	if i.Type != IntegrationTypeTelegram {
+		t.Errorf("expected type telegram, got %q", i.Type)
+	}
+	if i.Category != CategoryChat {
+		t.Errorf("expected category chat, got %q", i.Category)
+	}
+
+	msg, err := r.SendChatMessage("telegram", "@oncall_channel", "sre-agent", "Incident detected", "", testNow)
+	if err != nil {
+		t.Fatalf("send telegram message returned error: %v", err)
+	}
+	if msg.IntegrationID != "telegram" {
+		t.Errorf("expected integrationId telegram, got %q", msg.IntegrationID)
+	}
+	if msg.Channel != "@oncall_channel" {
+		t.Errorf("expected channel @oncall_channel, got %q", msg.Channel)
+	}
+}
+
+func TestTeamsIntegrationSendMessage(t *testing.T) {
+	r := NewRegistry()
+
+	i, ok := r.Integration("teams")
+	if !ok {
+		t.Fatal("expected teams integration to exist")
+	}
+	if i.Type != IntegrationTypeTeams {
+		t.Errorf("expected type teams, got %q", i.Type)
+	}
+	if i.Category != CategoryChat {
+		t.Errorf("expected category chat, got %q", i.Category)
+	}
+
+	msg, err := r.SendChatMessage("teams", "Engineering", "pm-agent", "Sprint review at 3pm", "", testNow)
+	if err != nil {
+		t.Fatalf("send teams message returned error: %v", err)
+	}
+	if msg.IntegrationID != "teams" {
+		t.Errorf("expected integrationId teams, got %q", msg.IntegrationID)
+	}
+}
+
+func TestLinearIntegrationCreateIssue(t *testing.T) {
+	r := NewRegistry()
+
+	i, ok := r.Integration("linear")
+	if !ok {
+		t.Fatal("expected linear integration to exist")
+	}
+	if i.Type != IntegrationTypeLinear {
+		t.Errorf("expected type linear, got %q", i.Type)
+	}
+	if i.Category != CategoryIssues {
+		t.Errorf("expected category issues, got %q", i.Category)
+	}
+
+	issue, err := r.CreateIssue("linear", "ENG", "Add Linear integration", "Support Linear as issue tracker",
+		"pm-1", IssuePriorityHigh, []string{"integration"}, testNow)
+	if err != nil {
+		t.Fatalf("create linear issue returned error: %v", err)
+	}
+	if issue.IntegrationID != "linear" {
+		t.Errorf("expected integrationId linear, got %q", issue.IntegrationID)
+	}
+	if issue.Project != "ENG" {
+		t.Errorf("expected project ENG, got %q", issue.Project)
+	}
+}
+
+func TestNewChatIntegrationsStartDisconnected(t *testing.T) {
+	r := NewRegistry()
+	for _, id := range []string{"telegram", "teams"} {
+		i, ok := r.Integration(id)
+		if !ok {
+			t.Errorf("expected integration %q to exist", id)
+			continue
+		}
+		if i.Status != StatusDisconnected {
+			t.Errorf("integration %q should start disconnected, got %q", id, i.Status)
+		}
+	}
+}
+
+func TestConnectAndDisconnectTelegram(t *testing.T) {
+	r := NewRegistry()
+
+	connected, err := r.Connect("telegram", "https://api.telegram.org/bot<token>")
+	if err != nil {
+		t.Fatalf("connect telegram returned error: %v", err)
+	}
+	if connected.Status != StatusConnected {
+		t.Errorf("expected connected, got %q", connected.Status)
+	}
+
+	disconnected, err := r.Disconnect("telegram")
+	if err != nil {
+		t.Fatalf("disconnect telegram returned error: %v", err)
+	}
+	if disconnected.Status != StatusDisconnected {
+		t.Errorf("expected disconnected, got %q", disconnected.Status)
 	}
 }

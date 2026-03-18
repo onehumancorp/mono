@@ -112,3 +112,70 @@ func TestSummaryFiltersOrganization(t *testing.T) {
 		t.Fatalf("expected only org-a agent summary, got %+v", summary.Agents)
 	}
 }
+
+func TestDefaultCatalogContainsAllModels(t *testing.T) {
+	expected := []string{
+		// Anthropic
+		"claude-3-opus",
+		"claude-3-sonnet",
+		"claude-3-haiku",
+		"claude-3.5-sonnet",
+		"claude-3.5-haiku",
+		"claude-3.7-sonnet",
+		// OpenAI GPT-4 family
+		"gpt-4",
+		"gpt-4-turbo",
+		"gpt-4o",
+		"gpt-4o-mini",
+		// OpenAI GPT-4.1 family
+		"gpt-4.1",
+		"gpt-4.1-mini",
+		"gpt-4.1-nano",
+		// OpenAI o-series
+		"o1",
+		"o1-mini",
+		"o3-mini",
+		// Google Gemini 1.5 family
+		"gemini-1.5-pro",
+		"gemini-1.5-flash",
+		// Google Gemini 2.0 family
+		"gemini-2.0-flash",
+		"gemini-2.0-flash-lite",
+		// Google Gemini 2.5 family
+		"gemini-2.5-pro",
+		"gemini-2.5-flash",
+	}
+
+	for _, model := range expected {
+		if _, ok := DefaultCatalog[model]; !ok {
+			t.Errorf("DefaultCatalog is missing model %q", model)
+		}
+	}
+}
+
+func TestNewModelsHavePositivePricing(t *testing.T) {
+	newModels := []string{
+		"claude-3-opus", "claude-3-sonnet", "claude-3.7-sonnet",
+		"gpt-4", "gpt-4-turbo", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano",
+		"o1", "o1-mini", "o3-mini",
+		"gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.5-pro", "gemini-2.5-flash",
+	}
+	tracker := NewTracker(DefaultCatalog)
+	for _, model := range newModels {
+		usage, err := tracker.Track(Usage{
+			AgentID:          "agent-1",
+			OrganizationID:   "org-1",
+			Model:            model,
+			PromptTokens:     1000,
+			CompletionTokens: 500,
+			OccurredAt:       time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC),
+		})
+		if err != nil {
+			t.Errorf("model %q: unexpected error: %v", model, err)
+			continue
+		}
+		if usage.CostUSD <= 0 {
+			t.Errorf("model %q: expected positive cost, got %f", model, usage.CostUSD)
+		}
+	}
+}
