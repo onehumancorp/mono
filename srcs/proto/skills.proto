@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package ohc.skills;
+
+option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/skills;skillspb";
+
+import "common.proto";
+
+// A Phase represents a single execution step in a multi-phase agent prompt.
+message Phase {
+  string name = 1;
+  string description = 2;
+  string protocol_details = 3; // Detailed instructions for this phase.
+}
+
+// A RoleBlueprint defines the identity and prompt structure for a specialized agent.
+message RoleBlueprint {
+  string id = 1;
+  string name = 2;
+  ohc.common.Role role_archetype = 3;
+  string level = 4; // e.g., "L7", "Senior"
+  string objective = 5;
+  repeated Phase phases = 6;
+  repeated string constraints = 7;
+}
+
+// A SystemPromptBlueprint defines how the global goal and project context are injected.
+message SystemPromptBlueprint {
+  string core_directive = 1;
+  repeated string required_context_variables = 2; // e.g., ["PROJECT_NAME", "STRATEGIC_DIRECTIVE"]
+}
+
+// A TeamBlueprint is a collection of roles that form a functional department.
+message TeamBlueprint {
+  string id = 1;
+  string team_name = 2;
+  SystemPromptBlueprint system_prompt = 3;
+  repeated RoleBlueprint roles = 4;
+}
+
+// SkillSet represents a library of reusable capabilities.
+message SkillSet {
+  string id = 1;
+  string name = 2;
+  repeated TeamBlueprint team_templates = 3;
+}

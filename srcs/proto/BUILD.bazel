@@ -27,12 +27,20 @@ proto_library(
 )
 
 proto_library(
+    name = "skills_proto",
+    srcs = ["skills.proto"],
+    deps = [":common_proto"],
+    visibility = ["//visibility:public"],
+)
+
+proto_library(
     name = "app_proto",
     srcs = ["app.proto"],
     deps = [
         ":agent_proto",
         ":billing_proto",
         ":organization_proto",
+        ":skills_proto",
     ],
     visibility = ["//visibility:public"],
 )
