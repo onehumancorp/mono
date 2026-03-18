@@ -19,6 +19,8 @@ trap 'rm -rf "${tmp}"' EXIT
 cp -rL "${root}/." "${tmp}/frontend"
 cd "${tmp}/frontend"
 
+export npm_config_cache="${tmp}/npm_cache"
+
 # Install dependencies.
 npm install --prefer-offline --no-audit --no-fund 2>&1 | tail -5
 
