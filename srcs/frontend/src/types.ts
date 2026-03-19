@@ -1,3 +1,24 @@
+// Re-export proto-generated types for use throughout the application.
+// These types are generated at build time from srcs/proto/*.proto and are NOT
+// stored in the repo – they appear as src/proto_types.ts in the Bazel output.
+export type {
+  AgentAgentMessage,
+  AgentAgent,
+  ApiDashboardSnapshot,
+  ApiMeetingRoom,
+  ApiStatusCount,
+  BillingCostSummary,
+  BillingAgentCostSummary,
+  CommonAgentStatus,
+  CommonRole,
+  OrchestrationAgent,
+  OrchestrationMessage,
+  OrchestrationMeetingRoom,
+  OrganizationOrganization,
+  OrganizationTeamMember,
+  OrganizationRoleProfile,
+} from "./proto_types";
+
 /**
  * Defines the playbook, prompt, and capabilities for a specific role within the AI workforce.
  */

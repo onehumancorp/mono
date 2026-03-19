@@ -1,0 +1,20 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "gen_ts_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/onehumancorp/mono/srcs/proto/cmd/gen_ts",
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "gen_ts",
+    embed = [":gen_ts_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "gen_ts_test",
+    srcs = ["main_test.go"],
+    embed = [":gen_ts_lib"],
+)
