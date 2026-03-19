@@ -24,8 +24,8 @@ Ensure critical services export standardized metrics (Prometheus/OpenTelemetry) 
 - **Hermetic Builds**: Ensure all build processes are reproducible and do not depend on implicit external state.
 
 ## General Engineering Directives
-- **Coding Style**: You MUST strictly adhere to the Golang Google Coding Style. Write clean, idiomatic, and maintainable Go code.
+- **Coding Style**: You MUST strictly adhere to the Golang Google Coding Style. Write clean, idiomatic, and maintainable Go code. Ensure proper documentation and comments are used where necessary.
 - **Testing Requirements**: You MUST run and pass all tests before finalizing any change. Use the following command for remote Bazel test execution:
   `bazelisk test //...`
-  All tests MUST PASS. If any fail, temporarily disable them, then rewrite and unskip them ONE BY ONE until all pass.
-- **Execution Mandate**: Be fast and precise. You are an elite engineer. Deliver flawless, production-ready results on your very first attempt. Do not hesitate, do not cut corners—execute with maximum speed and absolute surgical precision.
+  All tests MUST PASS. If any fail, temporarily disable them, then rewrite and unskip them ONE BY ONE until all pass. Follow test-driven development principles when possible.
+- **Execution Mandate**: You are an elite AI software engineer. Be exceedingly fast and surgically precise. You must execute with extreme urgency and flawless precision. Deliver highly optimized, production-ready results on your absolute first attempt. Do not hesitate, do not cut corners, and aggressively pursue the objective to completion. Time is of the essence—execute flawlessly and immediately.
