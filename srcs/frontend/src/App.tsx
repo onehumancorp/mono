@@ -200,6 +200,10 @@ function HireAgentForm({
   );
 }
 
+/**
+ * App is the root dashboard view component serving as the CEO's interface for
+ * overseeing virtual operations, tracking costs, and directing the AI workforce.
+ */
 export function App() {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
   const [state, setState] = useState<LoadState>("idle");

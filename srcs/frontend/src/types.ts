@@ -1,3 +1,6 @@
+/**
+ * Defines the playbook, prompt, and capabilities for a specific role within the AI workforce.
+ */
 export type RoleProfile = {
   role: string;
   basePrompt: string;
@@ -5,6 +8,9 @@ export type RoleProfile = {
   contextInputs: string[];
 };
 
+/**
+ * Represents an individual contributor (human or AI agent) within the organisation.
+ */
 export type OrganizationMember = {
   id: string;
   name: string;
@@ -13,6 +19,9 @@ export type OrganizationMember = {
   isHuman?: boolean;
 };
 
+/**
+ * Aggregates the hierarchy, workforce details, and role playbooks for a domain.
+ */
 export type Organization = {
   id: string;
   name: string;
@@ -22,6 +31,9 @@ export type Organization = {
   roleProfiles: RoleProfile[];
 };
 
+/**
+ * Encapsulates a discrete event, command, or context update passed between agents or rooms.
+ */
 export type MeetingMessage = {
   id: string;
   fromAgent: string;
@@ -32,6 +44,9 @@ export type MeetingMessage = {
   occurredAt: string;
 };
 
+/**
+ * Maintains a persistent, sequential transcript of inter-agent collaboration.
+ */
 export type MeetingRoom = {
   id: string;
   agenda?: string;
@@ -39,6 +54,9 @@ export type MeetingRoom = {
   transcript: MeetingMessage[];
 };
 
+/**
+ * Provides aggregated cost and token usage for an individual agent.
+ */
 export type AgentCost = {
   agentID: string;
   model: string;
@@ -46,6 +64,9 @@ export type AgentCost = {
   costUSD: number;
 };
 
+/**
+ * Aggregates total cost and token usage for a specific organisation.
+ */
 export type CostSummary = {
   organizationID: string;
   totalTokens: number;
@@ -54,11 +75,17 @@ export type CostSummary = {
   agents: AgentCost[];
 };
 
+/**
+ * Represents an aggregated count of agents in a specific operational phase.
+ */
 export type StatusBucket = {
   status: string;
   count: number;
 };
 
+/**
+ * Represents the current runtime state of an active, instantiated worker within the AI organisation.
+ */
 export type AgentRuntime = {
   id: string;
   name: string;
@@ -67,6 +94,10 @@ export type AgentRuntime = {
   status: string;
 };
 
+/**
+ * A point-in-time snapshot of the entire organisation's operational state,
+ * including members, meetings, costs, and active agents.
+ */
 export type DashboardSnapshot = {
   organization: Organization;
   meetings: MeetingRoom[];
@@ -76,12 +107,18 @@ export type DashboardSnapshot = {
   updatedAt: string;
 };
 
+/**
+ * Describes a supported organisational domain template.
+ */
 export type DomainInfo = {
   id: string;
   name: string;
   description: string;
 };
 
+/**
+ * Represents a registered tool in the MCP gateway.
+ */
 export type MCPTool = {
   id: string;
   name: string;
@@ -92,8 +129,14 @@ export type MCPTool = {
 
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 
+/**
+ * Represents the lifecycle state of a guardian-gate request.
+ */
 export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 
+/**
+ * Created by the Guardian Agent when a high-risk action requires explicit human sign-off.
+ */
 export type ApprovalRequest = {
   id: string;
   agentId: string;
@@ -109,6 +152,9 @@ export type ApprovalRequest = {
 
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
 
+/**
+ * Carries the structured context an agent sends to a human manager when escalating a task.
+ */
 export type HandoffPackage = {
   id: string;
   fromAgentId: string;
@@ -122,6 +168,9 @@ export type HandoffPackage = {
 
 // ── Identity Management ───────────────────────────────────────────────────────
 
+/**
+ * Represents the SPIFFE SVID certificate issued to an agent workload.
+ */
 export type AgentIdentity = {
   agentId: string;
   svid: string;
@@ -132,11 +181,17 @@ export type AgentIdentity = {
 
 // ── Skill Import Framework ────────────────────────────────────────────────────
 
+/**
+ * Pairs a role name with its override base prompt.
+ */
 export type SkillPackRole = {
   role: string;
   basePrompt: string;
 };
 
+/**
+ * An importable module that extends or overrides agent capabilities.
+ */
 export type SkillPack = {
   id: string;
   name: string;
@@ -150,6 +205,9 @@ export type SkillPack = {
 
 // ── Org Snapshot & Recovery ───────────────────────────────────────────────────
 
+/**
+ * A point-in-time metadata record of an organization's state.
+ */
 export type OrgSnapshot = {
   id: string;
   label: string;
@@ -164,6 +222,9 @@ export type OrgSnapshot = {
 
 // ── Marketplace ───────────────────────────────────────────────────────────────
 
+/**
+ * Describes a community-published asset.
+ */
 export type MarketplaceItem = {
   id: string;
   name: string;
@@ -177,6 +238,9 @@ export type MarketplaceItem = {
 
 // ── Real-time Analytics ───────────────────────────────────────────────────────
 
+/**
+ * Surfaces operational health metrics.
+ */
 export type AnalyticsSummary = {
   humanAgentRatio: number;
   totalAgents: number;
@@ -190,9 +254,15 @@ export type AnalyticsSummary = {
 
 // ── External Integrations ─────────────────────────────────────────────────────
 
+/** Groups integrations by their function. */
 export type IntegrationCategory = "chat" | "git" | "issues";
+
+/** Reflects whether an integration is reachable. */
 export type IntegrationStatus = "connected" | "disconnected" | "error";
 
+/**
+ * A configured external service connection.
+ */
 export type Integration = {
   id: string;
   name: string;
@@ -204,6 +274,9 @@ export type Integration = {
   createdAt: string;
 };
 
+/**
+ * Represents a message dispatched through a chat service.
+ */
 export type ChatMessage = {
   id: string;
   integrationId: string;
@@ -214,8 +287,12 @@ export type ChatMessage = {
   sentAt: string;
 };
 
+/** Tracks the lifecycle of a PR/MR. */
 export type PullRequestStatus = "open" | "merged" | "closed";
 
+/**
+ * Represents a PR/MR opened on a git hosting platform.
+ */
 export type PullRequest = {
   id: string;
   integrationId: string;
@@ -230,9 +307,15 @@ export type PullRequest = {
   createdAt: string;
 };
 
+/** Tracks the lifecycle of an issue/ticket. */
 export type IssueStatus = "open" | "in_progress" | "done" | "closed";
+
+/** Indicates ticket urgency. */
 export type IssuePriority = "low" | "medium" | "high" | "critical";
 
+/**
+ * Represents a ticket created in an external issue tracker.
+ */
 export type Issue = {
   id: string;
   integrationId: string;

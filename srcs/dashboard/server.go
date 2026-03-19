@@ -17,6 +17,9 @@ import (
 	"github.com/onehumancorp/mono/srcs/orchestration"
 )
 
+// Server encapsulates the HTTP handlers and state for the One Human Corp dashboard.
+//
+// Constraints: Must be instantiated with a valid domain.Organization, orchestration.Hub, and billing.Tracker.
 type Server struct {
 	mu              sync.RWMutex
 	org             domain.Organization
@@ -270,6 +273,14 @@ var statusOrder = []orchestration.Status{
 	orchestration.StatusInMeeting,
 }
 
+// NewServer initializes a new Dashboard HTTP handler that routes all API and frontend requests.
+//
+// Parameters:
+//   - org: domain.Organization; The base organizational structure.
+//   - hub: *orchestration.Hub; The agent communication and meeting room registry.
+//   - tracker: *billing.Tracker; The cost and token tracking engine.
+//
+// Returns: An http.Handler that serves the dashboard REST APIs and static React frontend.
 func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker) http.Handler {
 	server := &Server{
 		org:             org,
