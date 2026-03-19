@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -140,9 +141,11 @@ message AgentCostSummary {
 	w.Close()
 	os.Stdout = old
 
-	buf := make([]byte, 8192)
-	n, _ := r.Read(buf)
-	out := string(buf[:n])
+	outBytes, err := io.ReadAll(r)
+	if err != nil {
+		t.Fatalf("reading captured output: %v", err)
+	}
+	out := string(outBytes)
 
 	checks := []string{
 		"export type BillingAlertLevel =",
@@ -174,9 +177,11 @@ func TestGenerateHeader(t *testing.T) {
 	w.Close()
 	os.Stdout = old
 
-	buf := make([]byte, 2048)
-	n, _ := r.Read(buf)
-	out := string(buf[:n])
+	outBytes, err := io.ReadAll(r)
+	if err != nil {
+		t.Fatalf("reading captured output: %v", err)
+	}
+	out := string(outBytes)
 
 	if !strings.Contains(out, "GENERATED FILE") {
 		t.Errorf("expected GENERATED FILE header, got: %s", out)

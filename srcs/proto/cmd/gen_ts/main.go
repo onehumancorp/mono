@@ -325,11 +325,7 @@ func generate(files []protoFile) {
 				if field.repeated {
 					tsType = tsType + "[]"
 				}
-				optional := "?"
-				if field.repeated {
-					optional = "?" // repeated fields are still optional in JSON
-				}
-				fmt.Printf("  %s%s: %s;\n", camel, optional, tsType)
+				fmt.Printf("  %s?: %s;\n", camel, tsType)
 			}
 			fmt.Println("}")
 			fmt.Println()
