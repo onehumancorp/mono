@@ -8,7 +8,7 @@
 **Success Metrics:** Success notification < 3s, All new roles visible in `Hire` modal, Skill IDs registered.
 
 ## 1. User Journey Overview
-The CEO wants to expand the company's capabilities. They find a "Marketing Specialist Pack" (YAML) and import it. The system must validate the schema, register the new `RoleProfiles`, and immediately make them available for hire.
+The CEO wants to expand the company's capabilities by importing new skills, areas, and domain knowledge. They find a "Marketing Specialist Pack" (YAML) and import it. The system must validate the schema, register the new domain knowledge, add the new `RoleProfiles`, and immediately make them available for hire, expanding the organization's collaborative potential in virtual meeting rooms.
 
 ## 2. Detailed Step-by-Step Breakdown
 

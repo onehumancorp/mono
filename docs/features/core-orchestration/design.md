@@ -5,15 +5,16 @@
 **Last Updated:** 2026-03-17
 
 ## Overview
-The Core Orchestration Engine is the central brain of One Human Corp. It manages agent lifecycle, task delegation, and role-based coordination. It allows multiple specialized AI agents to work together towards a high-level goal defined by the CEO.
+The Core Orchestration Engine is the central brain of One Human Corp. It manages agent lifecycle, task delegation, and role-based coordination based on the 4 conceptual layers: **Domain Knowledge, Role, Organization, and CEO User**. It allows multiple specialized AI agents to work together in **virtual meeting rooms** towards a high-level goal defined by the CEO.
 
 ## Goals
-- Provide a robust framework for agent communication.
-- Enable dynamic role assignment based on task requirements.
+- Provide a robust framework for agent communication via virtual meeting rooms where agents can define scopes, design, and implement products.
+- Enable dynamic role assignment based on task requirements and extensible skill frameworks.
 - Maintain persistent state across long-running agent workflows.
+- Support an extensible framework allowing users to constantly import new skills, areas, and domain knowledge.
 
 ## Non-Goals
-- Directly implementing specific skill logic (this is handled by Skill Packs).
+- Directly implementing specific skill logic (this is handled by imported Domain Knowledge/Skill Packs).
 - Managing underlying infrastructure (handled by the OHC Kubernetes Operator).
 
 ## Proposed Design

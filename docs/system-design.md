@@ -7,6 +7,14 @@
 ## 1. Overview
 One Human Corp (OHC) is an enterprise-grade AI-agent orchestration platform. It enables organisations to define a virtual workforce of AI agents, assign them hierarchical roles, coordinate complex multi-agent tasks through persistence-backed "Meeting Rooms", track granular cost/billing at the token level, and gate high-risk or high-cost actions behind human approval (Confidence Gating).
 
+The platform is built on 4 conceptual layers:
+1. **Domain Knowledge**: The industry or area the corporation operates in (e.g., Software Company). This is an extensible framework; users can import new skills, areas, and domain knowledge at any time.
+2. **Role**: Specific positions required within the domain. For a Software Company, this includes PM, SWE, Engineering Director, Marketing Manager, Security Engineer, QA Tester, UI/UX Designer, Sales Representative, Customer Support Specialist, and DevOps Engineer.
+3. **Organization**: The management hierarchy and structure (e.g., a Director managing X PMs and Y SWEs).
+4. **User**: The human user, who always acts as the CEO.
+
+When the CEO defines a goal, the organisation works collaboratively. Agents enter **virtual meeting rooms** to discuss, define scopes, design products, and implement them autonomously, guided by their specialized roles.
+
 ## 2. Goals & Non-Goals
 ### 2.1 Goals
 - **Autonomous Orchestration**: Enable agents to delegate tasks to specialists without human intervention.
@@ -47,8 +55,8 @@ graph TD
 The `Hub` is the central coordinator using a thread-safe registry (`sync.RWMutex`). It manages:
 - **Agent Lifecycle**: `RegisterAgent(Agent)`, `FireAgent(id)`.
 - **Communication**: `Publish(Message)` routes events to specific agent inboxes or meeting room transcripts.
-- **Meeting Rooms**: Persisted workspaces for multi-agent collaboration on specific tasks.
-- **Skill Blueprints**: Importable JSON/Protobuf templates that define specialized expert teams (e.g., "Sentinel" Security Engineers) with multi-phase prompt protocols.
+- **Meeting Rooms**: Persisted workspaces for multi-agent collaboration on specific tasks. This is where cross-functional roles (e.g., a PM, UI/UX Designer, and SWE) converse, debate constraints, define scopes, design products, and implement them based on the CEO's goal.
+- **Skill Blueprints**: Importable JSON/Protobuf templates that define specialized expert teams (e.g., "Sentinel" Security Engineers) and new domain knowledge, allowing the CEO to seamlessly extend the framework.
 
 ### 3.2 Data Models (Go & Protobuf)
 #### Domain Entities (`srcs/domain/organization.go`)
