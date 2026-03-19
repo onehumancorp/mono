@@ -53,3 +53,14 @@ Snapshots contain sensitive IP and credentials. They are encrypted at rest using
 - **Phase 1**: DB/Transcript persistence (COMPLETE).
 - **Phase 2**: Agent context window serialization and S3 sync (IN-PROGRESS).
 - **Phase 3**: "Org Forking" (creating a new Org from a snapshot) (BACKLOG).
+
+## 7. Implementation Details
+- **Stack:** Go 1.25, Bazel 9.0.0, Postgres, Redis.
+- **Deployment:** Kubernetes via custom OHC Operator.
+- **Communication:** Pub/Sub for async, gRPC/MCP for sync tool calls.
+- **Code Organization:** Services located in `srcs/` and proto definitions in `srcs/proto/`.
+
+## 8. Edge Cases
+- **Network Partitions:** Fallback to cached state and retry logic for tool calls.
+- **Database Unavailability:** Circuit breakers open, gracefully degrade to read-only mode if possible.
+- **Context Window Bloat:** Agent memory is forcefully summarized to fit within token limits, potentially losing subtle historical nuances.

@@ -42,3 +42,8 @@ A high-level summary of the testing strategy for the Hybrid Identity Management 
 
 ## 6. Environment & Prerequisites
 - Kubernetes test cluster with SPIFFE/SPIRE deployed.
+
+## Implementation Details
+- Tests written in Go (using `testing` package and Table-Driven Test pattern).
+- >95% coverage requirement per `AGENTS.md`.
+- Hermetic testing enforced via Bazel `test //...`.

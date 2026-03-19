@@ -1,5 +1,9 @@
 # CUJ: Cross-Org Collaboration (B2B Agent Negotiation)
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** CEO / Partner Agent | **Context:** Negotiating a supply contract between two OHC-powered firms.
 **Success Metrics:** Secure mTLS link < 1s, Mutual identity verified, Agreement artifact generated.
 
@@ -29,3 +33,8 @@ The CEO of Acme Corp wants to purchase 100 server racks from Globex. Acme's "Pur
 ## 5. Security & Privacy
 - **Encryption**: Double-envelope encryption (mTLS tunnel + message-level AES).
 - **Compliance**: Shared audit logs are exported to a neutral "Vault" for legal discovery.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.

@@ -43,3 +43,8 @@ A high-level summary of the testing strategy for the Automated Implementation Pi
 ## 6. Environment & Prerequisites
 - OHC Hub configured with local test cluster.
 - Bazel runner pool available.
+
+## Implementation Details
+- Tests written in Go (using `testing` package and Table-Driven Test pattern).
+- >95% coverage requirement per `AGENTS.md`.
+- Hermetic testing enforced via Bazel `test //...`.

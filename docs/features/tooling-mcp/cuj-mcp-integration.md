@@ -1,5 +1,9 @@
 # CUJ: Securely Extend Capabilities via MCP (Tooling Integration)
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** Platform Admin | **Context:** Integrating a new corporate tool (e.g., Slack).
 **Success Metrics:** Handshake success < 2s, 100% tool discovery, Zero exposed secrets.
 
@@ -30,3 +34,8 @@ The Admin needs to give the "Support Agent" access to Slack. They register a cus
 ## 5. Security & Privacy
 - **Token Masking**: API keys for Slack are stored exclusively in the MCP Server environment, never in the OHC Hub.
 - **Audit Log**: `Admin[kevin] ENABLED Tool[slack.post] for Role[SUPPORT]` logged.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.

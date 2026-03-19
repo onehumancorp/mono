@@ -42,3 +42,8 @@ A high-level summary of the testing strategy for the Hardware-Aware Agent Schedu
 
 ## 6. Environment & Prerequisites
 - Kubernetes test cluster with simulated GPU device plugins.
+
+## Implementation Details
+- Tests written in Go (using `testing` package and Table-Driven Test pattern).
+- >95% coverage requirement per `AGENTS.md`.
+- Hermetic testing enforced via Bazel `test //...`.
