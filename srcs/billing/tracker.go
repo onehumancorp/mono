@@ -88,6 +88,12 @@ type Tracker struct {
 	mu      sync.RWMutex
 	catalog map[string]Price
 	usages  []Usage
+
+	// ⚡ BOLT: [Pre-aggregate cost and token metrics by org and agent to eliminate O(N) read-lock iteration in the Cost Tracking Engine] - Randomized Selection from Top 5
+	orgTotalCost   map[string]float64
+	orgTotalTokens map[string]int64
+	agentCost      map[string]map[string]float64
+	agentTokens    map[string]map[string]int64
 }
 
 // NewTracker constructs a Tracker configured with the specified model pricing catalog.
@@ -102,7 +108,13 @@ func NewTracker(catalog map[string]Price) *Tracker {
 		copied[model] = price
 	}
 
-	return &Tracker{catalog: copied}
+	return &Tracker{
+		catalog:        copied,
+		orgTotalCost:   make(map[string]float64),
+		orgTotalTokens: make(map[string]int64),
+		agentCost:      make(map[string]map[string]float64),
+		agentTokens:    make(map[string]map[string]int64),
+	}
 }
 
 // Track calculates the USD cost for a token consumption event and persists it in memory.
@@ -129,6 +141,20 @@ func (t *Tracker) Track(usage Usage) (Usage, error) {
 	usage.OccurredAt = usage.OccurredAt.UTC()
 	t.usages = append(t.usages, usage)
 
+	orgID := usage.OrganizationID
+	agentID := usage.AgentID
+	tokens := usage.PromptTokens + usage.CompletionTokens
+
+	t.orgTotalCost[orgID] += usage.CostUSD
+	t.orgTotalTokens[orgID] += tokens
+
+	if t.agentCost[orgID] == nil {
+		t.agentCost[orgID] = make(map[string]float64)
+		t.agentTokens[orgID] = make(map[string]int64)
+	}
+	t.agentCost[orgID][agentID] += usage.CostUSD
+	t.agentTokens[orgID][agentID] += tokens
+
 	return usage, nil
 }
 
@@ -142,27 +168,24 @@ func (t *Tracker) Summary(organizationID string) Summary {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
-	byAgent := map[string]AgentSummary{}
-	var totalCost float64
-	var totalTokens int64
+	totalCost := t.orgTotalCost[organizationID]
+	totalTokens := t.orgTotalTokens[organizationID]
 
-	for _, usage := range t.usages {
-		if usage.OrganizationID != organizationID {
-			continue
+	var agents []AgentSummary
+	if aCosts, ok := t.agentCost[organizationID]; ok {
+		aTokens := t.agentTokens[organizationID]
+		agents = make([]AgentSummary, 0, len(aCosts))
+		for agentID, cost := range aCosts {
+			agents = append(agents, AgentSummary{
+				AgentID:   agentID,
+				CostUSD:   cost,
+				TokenUsed: aTokens[agentID],
+			})
 		}
-		agent := byAgent[usage.AgentID]
-		agent.AgentID = usage.AgentID
-		agent.CostUSD += usage.CostUSD
-		agent.TokenUsed += usage.PromptTokens + usage.CompletionTokens
-		byAgent[usage.AgentID] = agent
-		totalCost += usage.CostUSD
-		totalTokens += usage.PromptTokens + usage.CompletionTokens
+	} else {
+		agents = make([]AgentSummary, 0)
 	}
 
-	agents := make([]AgentSummary, 0, len(byAgent))
-	for _, summary := range byAgent {
-		agents = append(agents, summary)
-	}
 	sort.Slice(agents, func(i, j int) bool {
 		return agents[i].AgentID < agents[j].AgentID
 	})
