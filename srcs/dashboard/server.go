@@ -287,7 +287,18 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 		hub:             hub,
 		tracker:         tracker,
 		approvals:       []ApprovalRequest{},
-		handoffs:        []HandoffPackage{},
+		handoffs: []HandoffPackage{
+			{
+				ID:             org.ID + "-handoff-" + time.Now().Format("20060102150405000"),
+				FromAgentID:    "swe-1",
+				ToHumanRole:    "CEO",
+				Intent:         "Failed to resolve merge conflict in reliability checklist.",
+				FailedAttempts: 3,
+				CurrentState:   "Blocked on staging branch.",
+				Status:         "pending",
+				CreatedAt:      time.Now().UTC(),
+			},
+		},
 		skills:          defaultSkillPacks(),
 		snapshots:       []OrgSnapshot{},
 		integReg:        integrations.NewRegistry(),
@@ -321,6 +332,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/approvals/decide", server.handleApprovalDecide)
 	// Phase 2 – Warm Handoff
 	mux.HandleFunc("/api/handoffs", server.handleHandoffs)
+	mux.HandleFunc("/api/handoffs/resolve", server.handleHandoffResolve)
 	// Phase 2 – Unified Identity Management (SPIFFE/SPIRE)
 	mux.HandleFunc("/api/identities", server.handleIdentities)
 	// Phase 2 – Extensible Skill Import Framework
@@ -1034,6 +1046,46 @@ func (s *Server) handleHandoffs(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func (s *Server) handleHandoffResolve(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		HandoffID string `json:"handoffId"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.HandoffID == "" {
+		http.Error(w, "handoffId is required", http.StatusBadRequest)
+		return
+	}
+
+	s.mu.Lock()
+	found := false
+	for i, h := range s.handoffs {
+		if h.ID == req.HandoffID {
+			s.handoffs[i].Status = "resolved"
+			found = true
+			break
+		}
+	}
+	s.mu.Unlock()
+
+	if !found {
+		http.Error(w, "handoff not found", http.StatusNotFound)
+		return
+	}
+
+	s.mu.RLock()
+	list := append([]HandoffPackage(nil), s.handoffs...)
+	s.mu.RUnlock()
+	writeJSON(w, list)
 }
 
 // ── Identity Management Handler ───────────────────────────────────────────────

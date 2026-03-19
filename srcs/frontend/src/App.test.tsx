@@ -1626,3 +1626,66 @@ describe("App – cost and playbooks null-snapshot branches", () => {
     expect(screen.getByText("0%")).toBeInTheDocument();
   });
 });
+
+describe("App – handoffs tab", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("renders pending handoffs and resolves them", async () => {
+    const mockHandoffs = [{
+      id: "ho-1",
+      fromAgentId: "swe-1",
+      toHumanRole: "CEO",
+      intent: "Need human approval to push to production",
+      failedAttempts: 2,
+      currentState: "Blocked",
+      status: "pending",
+      createdAt: "2024-05-20T10:00:00Z"
+    }];
+
+    vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
+      if (url === "/api/dashboard") return Promise.resolve({ ok: true, json: () => Promise.resolve(dashboardPayload) });
+      if (url === "/api/handoffs") return Promise.resolve({ ok: true, json: () => Promise.resolve(mockHandoffs) });
+      if (url === "/api/handoffs/resolve") return Promise.resolve({ ok: true, json: () => Promise.resolve([{...mockHandoffs[0], status: "resolved"}]) });
+      return Promise.reject(new Error(`Unhandled request: ${url}`));
+    }));
+
+    render(<App />);
+
+    await waitFor(() => screen.getByText("One Human Corp Dashboard"));
+
+    // Navigate to Handoffs tab
+    const handoffsTab = screen.getByText("Handoffs");
+    fireEvent.click(handoffsTab);
+
+    // Wait for the panel to show
+    await waitFor(() => screen.getByText("Warm Handoffs"));
+    expect(screen.getByText("From: swe-1")).toBeInTheDocument();
+
+    // Test resolution
+    const resolveBtn = screen.getByText("Resolve");
+    fireEvent.click(resolveBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText("resolved")).toBeInTheDocument();
+    });
+  });
+
+  it("handles empty handoffs", async () => {
+    vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
+      if (url === "/api/dashboard") return Promise.resolve({ ok: true, json: () => Promise.resolve(dashboardPayload) });
+      if (url === "/api/handoffs") return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
+      return Promise.reject(new Error(`Unhandled request: ${url}`));
+    }));
+
+    render(<App />);
+    await waitFor(() => screen.getByText("One Human Corp Dashboard"));
+
+    const handoffsTab = screen.getByText("Handoffs");
+    fireEvent.click(handoffsTab);
+
+    await waitFor(() => screen.getByText("No pending handoffs."));
+  });
+});
