@@ -1,28 +1,42 @@
 # CUJ: Send Message Updates UI and Backend Transcript
 
-**Persona:** Human Manager / Org Admin
-**Goal:** Broadcast a message to the active meeting room and confirm it is persisted.
-**Success Metrics:** Message appears in UI <1s and is persisted in the backend.
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
 
-## Context
-Collaboration is happening in a virtual meeting room, and the human manager needs to intervene or guide the discussion.
+**Persona:** Manager / Org Admin | **Context:** Intervening or guiding an ongoing virtual meeting.
+**Success Metrics:** Message appears in UI < 1s, Persisted in DB, other agents receive pub/sub event.
 
-## Journey Breakdown
-### Step 1: Type Message
-- **User Input:** Manager types "What is the status of the API design?" in the message box.
-- **System Action:** Frontend captures input.
-- **Outcome:** Input is ready for submission.
+## 1. User Journey Overview
+Collaboration is happening in a virtual meeting room, and the human manager needs to intervene or guide the discussion. They type a message and send it, which updates the UI immediately and triggers the backend transcript update.
 
-### Step 2: Send Message
-- **User Input:** Manager clicks "Send Message".
-- **System Action:** `POST /api/messages` is called. Backend updates meeting transcript and emits a pub/sub event.
-- **Outcome:** Message appears in the conversation thread immediately.
+## 2. Detailed Step-by-Step Breakdown
 
-## Error Modes & Recovery
-### Failure 1: Message Submission Failure
-- **System Behavior:** UI shows a red notification "Failed to send message".
-- **Recovery Step:** User retries or checks network connection.
+| Step | User Action | System Trigger | Resulting State | Verification |
+|------|-------------|----------------|-----------------|--------------|
+| 1 | Type "What is the status?" | FE: `onInputChange` | UI: Text in input box. | Check `#message-input` value. |
+| 2 | Click "Send Message". | BE: `POST /api/messages` | Hub: Emits Pub/Sub event. | HTTP 200 OK. |
+| 3 | Wait for confirmation. | FE: `onMessageSent` | UI: Renders `MessageBubble`. | DOM check for `.message-bubble`. |
+| 4 | Verify DB State. | BE: `SaveTranscript` | DB: Row inserted. | SQL check `SELECT count FROM messages`. |
 
-## Security & Privacy Considerations
-- Only members of the meeting room can send/view messages.
-- Messages are logged for audit purposes.
+## 3. Edge Cases & Error Recovery
+### 3.1 Scenario: Message persistence failure (Postgres down)
+- **Detection**: Backend returns 500 Error on POST.
+- **User Feedback**: "Message failed to save. Retrying..." (Amber tooltip).
+- **Auto-Recovery**: LocalStorage backup of the message; automatic retry every 2s.
+### 3.2 Scenario: Meeting Room Closed mid-send
+- **Detection**: 404 Room Not Found on message submission.
+- **Resolution**: UI redirects to the Archive view of the meeting.
+
+## 4. UI/UX Details
+- **Component IDs**: `MeetingChatBox`, `MessageBubble-CEO`.
+- **Visual Cues**: CEO messages have a gold border to distinguish them from agent thoughts.
+
+## 5. Security & Privacy
+- **Access Control**: Hub verifies the `UserID` has `MANAGER` permissions for the specific `OrgID`.
+- **Encryption**: Messages are encrypted at-rest using the Snapshot Fabric key.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.

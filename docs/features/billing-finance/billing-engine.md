@@ -56,3 +56,14 @@ The Billing API is locked to the `CEOID`. Agents cannot read their own cost summ
 - **Phase 1**: Token ingestion and basic P&L view (COMPLETE).
 - **Phase 2**: Real-time forecasting and budget alerts (IN-PROGRESS).
 - **Phase 3**: Multi-currency support and OHC-managed API proxying.
+
+## 7. Implementation Details
+- **Stack:** Go 1.25, Bazel 9.0.0, Postgres, Redis.
+- **Deployment:** Kubernetes via custom OHC Operator.
+- **Communication:** Pub/Sub for async, gRPC/MCP for sync tool calls.
+- **Code Organization:** Services located in `srcs/` and proto definitions in `srcs/proto/`.
+
+## 8. Edge Cases
+- **Network Partitions:** Fallback to cached state and retry logic for tool calls.
+- **Database Unavailability:** Circuit breakers open, gracefully degrade to read-only mode if possible.
+- **Context Window Bloat:** Agent memory is forcefully summarized to fit within token limits, potentially losing subtle historical nuances.

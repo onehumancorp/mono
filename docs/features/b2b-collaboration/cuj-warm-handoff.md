@@ -1,5 +1,9 @@
 # CUJ: Warm Handoff to Human Manager
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** AI Agent → Human Manager
 **Goal:** An agent that cannot complete a task escalates gracefully to a human.
 **Success Metrics:** Human manager receives full context and takes over seamlessly.
@@ -25,3 +29,13 @@ An agent encountered an ambiguous goal or a technical blocker it cannot resolve 
 
 ## Security & Privacy Considerations
 - Handoff data contains snapshots of agent memory/state, which may contain sensitive info.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.
+
+## Edge Cases
+- **Timeout:** Task aborts and escalates to human CEO.
+- **Rate Limit:** Agent backoffs using exponential retry.
+- **Loss of Context:** Supervisor agent reconstructs state from snapshot.

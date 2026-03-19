@@ -1,28 +1,41 @@
-# CUJ: Securely Extend Capabilities via MCP
+# CUJ: Securely Extend Capabilities via MCP (Tooling Integration)
 
-**Persona:** Platform Admin / Org Owner
-**Goal:** Add a new tool (e.g., Slack) to the OHC ecosystem via MCP.
-**Success Metrics:** Tool is registered and available to agents in <1 minute.
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
 
-## Context
-The organisation needs to communicate externally via Slack, and the CEO wants the Marketing Agent to post updates automatically.
+**Persona:** Platform Admin | **Context:** Integrating a new corporate tool (e.g., Slack).
+**Success Metrics:** Handshake success < 2s, 100% tool discovery, Zero exposed secrets.
 
-## Journey Breakdown
-### Step 1: Register MCP Server
-- **User Input:** Admin enters the MCP server URL for Slack (`http://mcp-slack:3000`).
-- **System Action:** Hub calls the MCP "Handshake" to discover available tools (`post_message`, `create_channel`).
-- **Outcome:** Slack tools are added to the integration registry.
+## 1. User Journey Overview
+The Admin needs to give the "Support Agent" access to Slack. They register a custom MCP Server. The OHC Gateway performs a dynamic handshake to discover tools (`send_message`, `list_channels`). Once approved, these tools are "mapped" to the Support Agent's capabilities.
 
-### Step 2: Assign Tool to Agent
-- **User Input:** Admin assigns "Slack" capability to the "Marketing Agent".
-- **System Action:** Hub updates agent's tool permissions.
-- **Outcome:** Marketing Agent can now post to Slack.
+## 2. Detailed Step-by-Step Breakdown
 
-## Error Modes & Recovery
-### Failure 1: Tool Timeout
-- **System Behavior:** Agent reports "Tool Slack is unavailable".
-- **Recovery Step:** Admin checks the status of the MCP server pod.
+| Step | User Action | System Trigger | Resulting State | Verification |
+|------|-------------|----------------|-----------------|--------------|
+| 1 | Click "Add New Integration". | FE: `openMCPForm()` | UI: URL & Token input modal. | Modal ID `#mcp-integration-form`. |
+| 2 | Enter `http://slack-mcp:3000`. | BE: `POST /api/mcp/probe` | Gateway: Initiates JSON-RPC ListTools. | HTTP 200 with Tool Schema. |
+| 3 | Review discovered tools. | N/A | UI: List with checkboxes for permissions. | DOM check for `.tool-checkbox`. |
+| 4 | Click "Enable for Role: Support".| BE: `PUT /api/roles/support/tools`| Hub: Updates RoleProfile ACL. | Registry reflects new tool mapping. |
 
-## Security & Privacy Considerations
-- Tool calls are scoped by agent role.
-- All secrets (API tokens) are managed by the MCP server, never exposed to the agent.
+## 3. Edge Cases & Error Recovery
+### 3.1 Scenario: MCP Gateway Timeout
+- **Detection**: Probe fails with `context.DeadlineExceeded`.
+- **Recovery Step**: Check cluster network policies; UI suggests checking `mcp-slack` pod logs.
+### 3.2 Scenario: Insecure Tool Discovery
+- **Detection**: MCP server doesn't support mTLS.
+- **User Feedback**: "Caution: Unencrypted tool connection. Proceed only in local environment."
+
+## 4. UI/UX Details
+- **Component IDs**: `IntegrationList`, `ToolPermissionMatrix`.
+- **Visual Cues**: Success adds a "Slack" icon to the registered integrations bar with a green "Live" badge.
+
+## 5. Security & Privacy
+- **Token Masking**: API keys for Slack are stored exclusively in the MCP Server environment, never in the OHC Hub.
+- **Audit Log**: `Admin[kevin] ENABLED Tool[slack.post] for Role[SUPPORT]` logged.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.

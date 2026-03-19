@@ -213,6 +213,10 @@ function HireAgentForm({
   );
 }
 
+/**
+ * App is the root dashboard view component serving as the CEO's interface for
+ * overseeing virtual operations, tracking costs, and directing the AI workforce.
+ */
 export function App() {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
   const [state, setState] = useState<LoadState>("idle");
@@ -445,7 +449,7 @@ export function App() {
     try {
       const updated = await connectIntegration("discord", { webhookUrl: dcWizard.webhookUrl });
       setIntegrationsList((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
-      setDcWizard({ open: false, step: 1, webhookUrl: "", loading: false, error: "", testSent: false });
+      setDcWizard((w) => ({ ...w, loading: false, step: 4 }));
       setNotice("Discord connected — messages will be delivered to your webhook channel.");
     } catch (e) {
       setDcWizard((w) => ({ ...w, loading: false, error: e instanceof Error ? e.message : "Connect failed" }));
@@ -1196,139 +1200,148 @@ export function App() {
         {/* ────────────────── Meetings ────────────────── */}
         {activeNav === "meetings" && (
           <>
-            <div className="page-header">
+            <div className="page-header" style={{ marginBottom: "1rem" }}>
               <div>
-                <h2 className="page-heading">Virtual Meeting Rooms</h2>
-                <p className="page-sub">Real-time agent collaboration and decision logs</p>
+                <h2 className="page-heading">Virtual War Room</h2>
+                <p className="page-sub">Real-time agent collaboration, context tracking, and hybrid handoffs</p>
+              </div>
+              <div className="panel-actions">
+                {meetings.length > 0 && (
+                  <select
+                    className="select-sm"
+                    value={selectedMeetingID}
+                    onChange={(e) => {
+                      setSelectedMeetingID(e.target.value);
+                      setForm((f) => ({ ...f, meetingId: e.target.value }));
+                    }}
+                  >
+                    {meetings.map((m) => (
+                      <option key={m.id} value={m.id}>{m.id}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
 
-            <div className="content-grid three-col">
-              <article className="panel span-2">
-                <header className="panel-head">
-                  <h2 className="panel-title">Transcript</h2>
-                  <div className="panel-actions">
-                    {meetings.length > 0 && (
-                      <select
-                        className="select-sm"
-                        value={selectedMeetingID}
-                        onChange={(e) => {
-                          setSelectedMeetingID(e.target.value);
-                          setForm((f) => ({ ...f, meetingId: e.target.value }));
-                        }}
-                      >
-                        {meetings.map((m) => (
-                          <option key={m.id} value={m.id}>{m.id}</option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                </header>
-                <div className="panel-body">
-                  {selectedMeeting?.agenda && (
-                    <p className="meeting-agenda">
-                      <span className="agenda-label">Agenda</span>
-                      {selectedMeeting.agenda}
-                    </p>
-                  )}
-                  {selectedMeeting?.participants && (
-                    <div className="participants">
-                      {selectedMeeting.participants.map((p) => (
-                        <span key={p} className="participant-chip">{p}</span>
-                      ))}
-                    </div>
-                  )}
-                  {!selectedMeeting && <p className="empty-state">No active meetings.</p>}
-                  {selectedMeeting && (
-                    <ul className="transcript">
-                      {selectedMeeting.transcript.length === 0 && (
-                        <li className="empty-state">No messages yet.</li>
-                      )}
-                      {selectedMeeting.transcript.map((msg) => (
-                        <li key={msg.id} className="transcript-item">
-                          <div className="transcript-header">
-                            <span className="transcript-from">{msg.fromAgent}</span>
-                            <span className="transcript-arrow" aria-hidden="true">→</span>
-                            <span className="transcript-to">{msg.toAgent}</span>
-                            <span className="event-chip">{msg.type}</span>
-                            <span className="transcript-time">{formatTime(msg.occurredAt)}</span>
-                          </div>
-                          <p className="transcript-body">{msg.content}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+            {!selectedMeeting ? (
+              <div className="war-room-panel">
+                <div style={{ margin: "auto" }}>
+                  <p className="empty-state">No active meetings.</p>
                 </div>
-              </article>
+              </div>
+            ) : (
+              <div className="war-room-panel">
+                <header className="war-room-header">
+                  <h3 className="war-room-title">{selectedMeeting.id}</h3>
+                  {selectedMeeting.agenda && (
+                    <p className="war-room-agenda">{selectedMeeting.agenda}</p>
+                  )}
+                </header>
 
-              <article className="panel">
-                <header className="panel-head">
-                  <h2 className="panel-title">Dispatch Message</h2>
-                </header>
-                <div className="panel-body">
-                  <form onSubmit={handleSubmit} className="msg-form">
-                    <label className="field">
-                      <span className="field-label">From</span>
-                      <select className="input input-sm" value={form.fromAgent}
-                        onChange={(e) => setForm((p) => ({ ...p, fromAgent: e.target.value }))}>
-                        {(snapshot?.agents ?? []).map((a) => (
-                          <option key={a.id} value={a.id}>{a.name} ({a.id})</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="field">
-                      <span className="field-label">To</span>
-                      <select className="input input-sm" value={form.toAgent}
-                        onChange={(e) => setForm((p) => ({ ...p, toAgent: e.target.value }))}>
-                        {(snapshot?.agents ?? []).map((a) => (
-                          <option key={a.id} value={a.id}>{a.name} ({a.id})</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="field">
-                      <span className="field-label">Meeting</span>
-                      <select className="input input-sm" value={form.meetingId}
-                        onChange={(e) => {
-                          setSelectedMeetingID(e.target.value);
-                          setForm((p) => ({ ...p, meetingId: e.target.value }));
-                        }}>
-                        {meetings.map((m) => (
-                          <option key={m.id} value={m.id}>{m.id}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="field">
-                      <span className="field-label">Event Type</span>
-                      <select className="input input-sm" value={form.messageType}
-                        onChange={(e) => setForm((p) => ({ ...p, messageType: e.target.value }))}>
-                        <option value="task">task</option>
-                        <option value="status">status</option>
-                        <option value="handoff">handoff</option>
-                        <option value="CodeReviewed">CodeReviewed</option>
-                        <option value="TestsFailed">TestsFailed</option>
-                        <option value="TestsPassed">TestsPassed</option>
-                        <option value="SpecApproved">SpecApproved</option>
-                        <option value="BlockerRaised">BlockerRaised</option>
-                        <option value="BlockerCleared">BlockerCleared</option>
-                        <option value="PRCreated">PRCreated</option>
-                        <option value="PRMerged">PRMerged</option>
-                        <option value="DesignReviewed">DesignReviewed</option>
-                        <option value="ApprovalNeeded">ApprovalNeeded</option>
-                      </select>
-                    </label>
-                    <label className="field">
-                      <span className="field-label">Content</span>
-                      <textarea className="input input-sm textarea" value={form.content} rows={3}
-                        onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))} />
-                    </label>
-                    {error && !notice && <p className="field-error" role="alert">{error}</p>}
-                    <button type="submit" className="btn btn-primary btn-full" disabled={sending}>
-                      {sending ? "Sending…" : "Send Message"}
-                    </button>
-                  </form>
+                <div className="war-room-body">
+                  <aside className="war-room-sidebar">
+                    <div className="war-room-sidebar-section">
+                      <h4 className="war-room-sidebar-title">Participants</h4>
+                      <div className="war-room-participants">
+                        {selectedMeeting.participants.map((pid) => {
+                          const isHuman = snapshot?.organization.members.some(m => m.id === pid && m.isHuman);
+                          const member = snapshot?.organization.members.find(m => m.id === pid);
+                          const roleName = member?.role || pid;
+                          const displayName = member?.name || pid;
+                          return (
+                            <div key={pid} className="war-room-participant">
+                              <RoleAvatar role={roleName} name={displayName} />
+                              <div className="war-room-participant-info">
+                                <span className="war-room-participant-name">
+                                  {displayName}
+                                  {isHuman && <span className="human-tag" style={{ marginLeft: "4px" }}>YOU</span>}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </aside>
+
+                  <section className="war-room-main">
+                    <div className="war-room-transcript-wrap">
+                      <div className="context-summary-panel">
+                        <div className="context-summary-title">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                          Context Efficiency Active
+                        </div>
+                        <div className="context-summary-body">
+                          Agents in this room are fed a summarized rolling context window to prevent context bloat and minimize token burn.
+                        </div>
+                      </div>
+
+                      <ul className="transcript">
+                        {selectedMeeting.transcript.length === 0 && (
+                          <li className="empty-state">No messages yet.</li>
+                        )}
+                        {selectedMeeting.transcript.map((msg) => {
+                          const isHuman = snapshot?.organization.members.some(m => m.id === msg.fromAgent && m.isHuman) || msg.fromAgent === "CEO";
+                          return (
+                            <li key={msg.id} className={`transcript-item ${isHuman ? "transcript-item--human" : "transcript-item--agent"}`}>
+                              <div className="transcript-header">
+                                <span className="transcript-from">{msg.fromAgent}</span>
+                                {msg.toAgent && (
+                                  <>
+                                    <span className="transcript-arrow" aria-hidden="true">→</span>
+                                    <span className="transcript-to">{msg.toAgent}</span>
+                                  </>
+                                )}
+                                <span className="event-chip" style={{ marginLeft: "4px" }}>{msg.type}</span>
+                                <span className="transcript-time">{formatTime(msg.occurredAt)}</span>
+                              </div>
+                              <div className="transcript-bubble">
+                                <p className="transcript-body">{msg.content}</p>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+
+                    <div className="war-room-input-area">
+                      <form onSubmit={handleSubmit} className="war-room-composer">
+                        {/* Hidden fields to maintain the required API payload while simplifying the UI for the CEO */}
+                        <input type="hidden" name="fromAgent" value={ceoMember?.id || "CEO"} />
+                        <input type="hidden" name="toAgent" value={selectedMeeting.participants.find(p => p !== (ceoMember?.id || "CEO")) || "all"} />
+                        <input type="hidden" name="meetingId" value={selectedMeeting.id} />
+                        <input type="hidden" name="messageType" value="direction" />
+
+                        <textarea
+                          className="textarea"
+                          placeholder="Inject direction or approve actions as CEO..."
+                          value={form.content}
+                          onChange={(e) => setForm({
+                            ...form,
+                            content: e.target.value,
+                            fromAgent: ceoMember?.id || "CEO",
+                            toAgent: selectedMeeting.participants.find(p => p !== (ceoMember?.id || "CEO")) || "all",
+                            meetingId: selectedMeeting.id,
+                            messageType: "direction"
+                          })}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              const event = new Event("submit", { bubbles: true, cancelable: true });
+                              e.currentTarget.form?.dispatchEvent(event);
+                            }
+                          }}
+                        />
+                        <button type="submit" className="btn btn-primary war-room-send-btn" disabled={sending || !form.content.trim()}>
+                          {sending ? "..." : "Send"}
+                        </button>
+                      </form>
+                      {error && !notice && <p className="field-error" style={{ marginTop: "0.5rem" }} role="alert">{error}</p>}
+                    </div>
+                  </section>
                 </div>
-              </article>
-            </div>
+              </div>
+            )}
           </>
         )}
 

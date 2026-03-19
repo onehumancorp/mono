@@ -1,5 +1,9 @@
 # CUJ: Design-to-Deploy (Autonomous Pipeline)
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** CEO / Product Manager | **Context:** Moving from "Feature Idea" to "Live Production".
 **Success Metrics:** 100% autonomous deployment to staging, Human approval gate enforced, Rollback capability verified.
 
@@ -31,3 +35,8 @@ The CEO identifies a "High Priority" feature (e.g., Marketing Analytics). The AI
 ## 5. Security & Privacy
 - **Audit Log**: `Admin[kevin] PROMOTED feat-analytics to PRODUCTION` logged.
 - **Scanning**: Mandatory Snyk/Gator security scan on every image before production promotion.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.

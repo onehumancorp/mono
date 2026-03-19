@@ -1,5 +1,9 @@
 # CUJ: Predict and Manage AI Operational Costs
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** CEO / Finance Manager
 **Goal:** Forecast monthly AI spending based on current agent activity.
 **Success Metrics:** Forecast accuracy within ±10% of actual spend.
@@ -22,3 +26,13 @@ The CEO is planning to launch a major product development phase and needs to ens
 ### Failure 1: Missing Model Pricing
 - **System Behavior:** Forecast shows "Unknown Cost" for certain agents.
 - **Recovery Step:** Admin updates the Billing Catalog with the new model rates.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.
+
+## Edge Cases
+- **Timeout:** Task aborts and escalates to human CEO.
+- **Rate Limit:** Agent backoffs using exponential retry.
+- **Loss of Context:** Supervisor agent reconstructs state from snapshot.

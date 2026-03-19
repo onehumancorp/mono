@@ -1,5 +1,9 @@
 # PM Investigation: Critical User Journeys (CUJs)
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 ## Overview
 This document provides an overview of the Critical User Journeys (CUJs) for the One Human Corp (OHC) platform. Each CUJ is designed to meet the "Google Golden Standard," ensuring clarity, success metrics, and error recovery paths.
 
@@ -30,3 +34,13 @@ This document provides an overview of the Critical User Journeys (CUJs) for the 
 All CUJs are verified via automated Playwright tests and Kind e2e smoke tests.
 - **Frontend E2E**: `bazel test //srcs/frontend:frontend_e2e_test`
 - **Kind E2E**: `bazel test //deploy:kind_e2e_test`
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.
+
+## Edge Cases
+- **Timeout:** Task aborts and escalates to human CEO.
+- **Rate Limit:** Agent backoffs using exponential retry.
+- **Loss of Context:** Supervisor agent reconstructs state from snapshot.

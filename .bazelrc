@@ -34,6 +34,7 @@ build --announce_rc
 # Use all available CPUs
 # Pass through critical environment variables
 test --test_env=GEMINI_API_KEY
+test --test_env=MINIMAX_API_KEY
 test --test_env=MCP_BUNDLE_DIR
 test --test_env=CI
 test --test_env=HOME
@@ -43,6 +44,7 @@ test --test_env=PATH
 
 # Also for actions if needed
 build --action_env=GEMINI_API_KEY
+build --action_env=MINIMAX_API_KEY
 build --action_env=MCP_BUNDLE_DIR
 build --action_env=CI
 
