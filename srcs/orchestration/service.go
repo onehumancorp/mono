@@ -284,12 +284,13 @@ func (h *Hub) Meetings() []MeetingRoom {
 // Returns: A slice of all active Agent objects in the orchestration Hub.
 func (h *Hub) Agents() []Agent {
 	h.mu.RLock()
-	defer h.mu.RUnlock()
-
 	agents := make([]Agent, 0, len(h.agents))
 	for _, agent := range h.agents {
 		agents = append(agents, agent)
 	}
+	h.mu.RUnlock()
+
+	// ⚡ BOLT: [O(n log n) sorting inside read lock] - Randomized Selection from Top 5
 	sort.Slice(agents, func(i, j int) bool {
 		return agents[i].ID < agents[j].ID
 	})
