@@ -1324,6 +1324,21 @@ func TestHandleIntegrationConnectNotFound(t *testing.T) {
 	}
 }
 
+func TestHandleIntegrationConnectSSRF(t *testing.T) {
+	_, server := newTestServer(t)
+	defer server.Close()
+
+	body := `{"integrationId":"github","baseUrl":"http://169.254.169.254"}`
+	resp, err := http.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", resp.StatusCode)
+	}
+}
+
 func TestHandleIntegrationConnectMethodNotAllowed(t *testing.T) {
 	_, server := newTestServer(t)
 	defer server.Close()

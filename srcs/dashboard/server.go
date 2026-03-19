@@ -1536,7 +1536,11 @@ func (s *Server) handleIntegrationConnect(w http.ResponseWriter, r *http.Request
 	}
 	updated, err := s.integReg.Connect(req.IntegrationID, req.BaseURL)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		if err.Error() == "integration not found" {
+			http.Error(w, err.Error(), http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
 		return
 	}
 	writeJSON(w, updated)
