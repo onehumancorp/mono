@@ -34,10 +34,20 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
   return (await response.json()) as T;
 }
 
+/**
+ * Fetches the current organization's hierarchical and structural state.
+ *
+ * @returns A Promise resolving to the Organization object.
+ */
 export function fetchOrganization(): Promise<Organization> {
   return getJSON<Organization>("/api/org");
 }
 
+/**
+ * Fetches all active virtual meeting rooms and their transcripts.
+ *
+ * @returns A Promise resolving to an array of MeetingRoom objects.
+ */
 export function fetchMeetings(): Promise<MeetingRoom[]> {
   return getJSON<MeetingRoom[]>("/api/meetings").then(normalizeMeetings);
 }
@@ -71,11 +81,21 @@ function normalizeMeetings(meetings: MeetingRoom[]): MeetingRoom[] {
   }));
 }
 
+/**
+ * Fetches the token usage and cost metrics for the entire organization.
+ *
+ * @returns A Promise resolving to a CostSummary object.
+ */
 export async function fetchCosts(): Promise<CostSummary> {
   const response = await getJSON<Record<string, unknown>>("/api/costs");
   return normalizeCosts(response);
 }
 
+/**
+ * Fetches a consolidated snapshot of the dashboard, including agents, costs, and meetings.
+ *
+ * @returns A Promise resolving to the complete DashboardSnapshot.
+ */
 export async function fetchDashboard(): Promise<DashboardSnapshot> {
   const response = await getJSON<Record<string, unknown>>("/api/dashboard");
   const rawOrganization = (response.organization ?? {}) as Record<string, unknown>;
@@ -122,6 +142,12 @@ export async function fetchDashboard(): Promise<DashboardSnapshot> {
   };
 }
 
+/**
+ * Dispatches a message or task from one agent to another within a specific meeting.
+ *
+ * @param form - An object containing the sender, recipient, meeting ID, type, and content of the message.
+ * @returns A Promise resolving when the message is successfully published.
+ */
 export async function sendMessage(form: {
   fromAgent: string;
   toAgent: string;
@@ -145,31 +171,71 @@ export async function sendMessage(form: {
   }
 }
 
+/**
+ * Instantiates a new agent and assigns it to the organizational workforce.
+ *
+ * @param name - The display name for the new agent.
+ * @param role - The specific role profile the agent will assume.
+ * @returns A Promise resolving to the updated DashboardSnapshot.
+ */
 export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
   return postJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
 }
 
+/**
+ * Terminates an agent's process and removes it from the orchestration hub.
+ *
+ * @param agentId - The unique identifier of the agent to fire.
+ * @returns A Promise resolving to the updated DashboardSnapshot.
+ */
 export function fireAgent(agentId: string): Promise<DashboardSnapshot> {
   return postJSON<DashboardSnapshot>("/api/agents/fire", { agentId });
 }
 
+/**
+ * Retrieves available organizational domain templates (e.g., Software Company).
+ *
+ * @returns A Promise resolving to an array of DomainInfo objects.
+ */
 export function fetchDomains(): Promise<DomainInfo[]> {
   return getJSON<DomainInfo[]>("/api/domains");
 }
 
+/**
+ * Retrieves the catalog of active tools registered in the MCP gateway.
+ *
+ * @returns A Promise resolving to an array of MCPTool objects.
+ */
 export function fetchMCPTools(): Promise<MCPTool[]> {
   return getJSON<MCPTool[]>("/api/mcp/tools");
 }
 
+/**
+ * Overrides current state with a predefined scenario for demonstration purposes.
+ *
+ * @param scenario - The identifier string of the scenario to seed.
+ * @returns A Promise resolving to the resulting DashboardSnapshot.
+ */
 export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
   return postJSON<DashboardSnapshot>("/api/dev/seed", { scenario });
 }
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 
+/**
+ * Retrieves all pending and resolved confidence gating approval requests.
+ *
+ * @returns A Promise resolving to an array of ApprovalRequest objects.
+ */
 export function fetchApprovals(): Promise<ApprovalRequest[]> {
   return getJSON<ApprovalRequest[]>("/api/approvals");
 }
 
+/**
+ * Submits a new request for human manager sign-off on a high-risk action.
+ *
+ * @param body - An object defining the action, reason, estimated cost, and risk level.
+ * @returns A Promise resolving to the newly created ApprovalRequest.
+ */
 export function requestApproval(body: {
   agentId: string;
   action: string;
@@ -180,6 +246,14 @@ export function requestApproval(body: {
   return postJSON<ApprovalRequest>("/api/approvals/request", body);
 }
 
+/**
+ * Submits the human manager's decision (approve/reject) for an approval request.
+ *
+ * @param approvalId - The unique ID of the pending approval request.
+ * @param decision - The decision status, either 'approve' or 'reject'.
+ * @param decidedBy - Optional identifier for the human manager who made the decision.
+ * @returns A Promise resolving to an updated array of ApprovalRequest objects.
+ */
 export function decideApproval(
   approvalId: string,
   decision: "approve" | "reject",
@@ -190,10 +264,21 @@ export function decideApproval(
 
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
 
+/**
+ * Retrieves all warm handoff escalations across the organization.
+ *
+ * @returns A Promise resolving to an array of HandoffPackage objects.
+ */
 export function fetchHandoffs(): Promise<HandoffPackage[]> {
   return getJSON<HandoffPackage[]>("/api/handoffs");
 }
 
+/**
+ * Escalates a complex task from an autonomous agent to a human manager.
+ *
+ * @param body - The handoff package containing context, intent, and failed attempts.
+ * @returns A Promise resolving to the newly created HandoffPackage.
+ */
 export function createHandoff(body: {
   fromAgentId: string;
   toHumanRole?: string;
@@ -206,16 +291,32 @@ export function createHandoff(body: {
 
 // ── Identity Management ───────────────────────────────────────────────────────
 
+/**
+ * Retrieves the SPIFFE SVID certificates issued to the current workforce.
+ *
+ * @returns A Promise resolving to an array of AgentIdentity objects.
+ */
 export function fetchIdentities(): Promise<AgentIdentity[]> {
   return getJSON<AgentIdentity[]>("/api/identities");
 }
 
 // ── Skill Packs ───────────────────────────────────────────────────────────────
 
+/**
+ * Retrieves all imported skill packs available for agent instantiation.
+ *
+ * @returns A Promise resolving to an array of SkillPack objects.
+ */
 export function fetchSkillPacks(): Promise<SkillPack[]> {
   return getJSON<SkillPack[]>("/api/skills");
 }
 
+/**
+ * Imports a new specialized skill pack into the organization's domain.
+ *
+ * @param body - An object defining the skill pack metadata and capabilities.
+ * @returns A Promise resolving to the successfully imported SkillPack.
+ */
 export function importSkillPack(body: {
   name: string;
   domain: string;
@@ -228,26 +329,53 @@ export function importSkillPack(body: {
 
 // ── Snapshots ─────────────────────────────────────────────────────────────────
 
+/**
+ * Retrieves all point-in-time recovery snapshots for the organization.
+ *
+ * @returns A Promise resolving to an array of OrgSnapshot objects.
+ */
 export function fetchSnapshots(): Promise<OrgSnapshot[]> {
   return getJSON<OrgSnapshot[]>("/api/snapshots");
 }
 
+/**
+ * Captures a point-in-time snapshot of the entire organization's memory and state.
+ *
+ * @param label - Optional user-defined label for the snapshot.
+ * @returns A Promise resolving to the created OrgSnapshot.
+ */
 export function createSnapshot(label?: string): Promise<OrgSnapshot> {
   return postJSON<OrgSnapshot>("/api/snapshots/create", { label });
 }
 
+/**
+ * Restores the organization to a specific point-in-time snapshot.
+ *
+ * @param snapshotId - The unique ID of the snapshot to restore.
+ * @returns A Promise resolving to the restored DashboardSnapshot.
+ */
 export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> {
   return postJSON<DashboardSnapshot>("/api/snapshots/restore", { snapshotId });
 }
 
 // ── Marketplace ───────────────────────────────────────────────────────────────
 
+/**
+ * Retrieves the catalog of community-published agents and tools.
+ *
+ * @returns A Promise resolving to an array of MarketplaceItem objects.
+ */
 export function fetchMarketplace(): Promise<MarketplaceItem[]> {
   return getJSON<MarketplaceItem[]>("/api/marketplace");
 }
 
 // ── Real-time Analytics ───────────────────────────────────────────────────────
 
+/**
+ * Fetches real-time operational and health metrics for the organization.
+ *
+ * @returns A Promise resolving to the AnalyticsSummary.
+ */
 export function fetchAnalytics(): Promise<AnalyticsSummary> {
   return getJSON<AnalyticsSummary>("/api/analytics");
 }
@@ -261,24 +389,55 @@ import type {
   PullRequest,
 } from "./types";
 
+/**
+ * Retrieves external service connections, optionally filtered by category.
+ *
+ * @param category - Optional integration category to filter by (e.g., 'chat', 'git').
+ * @returns A Promise resolving to an array of Integration objects.
+ */
 export function fetchIntegrations(category?: string): Promise<Integration[]> {
   const q = category ? `?category=${category}` : "";
   return getJSON<Integration[]>(`/api/integrations${q}`);
 }
 
+/**
+ * Connects and authenticates a specific external integration.
+ *
+ * @param integrationId - The identifier for the service to connect to.
+ * @param baseUrl - The optional API endpoint URL.
+ * @returns A Promise resolving to the connected Integration.
+ */
 export function connectIntegration(integrationId: string, baseUrl?: string): Promise<Integration> {
   return postJSON<Integration>("/api/integrations/connect", { integrationId, baseUrl });
 }
 
+/**
+ * Disconnects an active external integration.
+ *
+ * @param integrationId - The identifier for the service to disconnect from.
+ * @returns A Promise resolving to the disconnected Integration.
+ */
 export function disconnectIntegration(integrationId: string): Promise<Integration> {
   return postJSON<Integration>("/api/integrations/disconnect", { integrationId });
 }
 
+/**
+ * Fetches recorded chat messages from the integration registry.
+ *
+ * @param integrationId - Optional integration ID to filter the messages by.
+ * @returns A Promise resolving to an array of ChatMessage objects.
+ */
 export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return getJSON<ChatMessage[]>(`/api/integrations/chat/messages${q}`);
 }
 
+/**
+ * Dispatches a message to an external chat platform.
+ *
+ * @param body - An object defining the target integration, channel, sender, and message context.
+ * @returns A Promise resolving to the recorded ChatMessage.
+ */
 export function sendChatMessage(body: {
   integrationId: string;
   channel: string;
@@ -289,11 +448,23 @@ export function sendChatMessage(body: {
   return postJSON<ChatMessage>("/api/integrations/chat/send", body);
 }
 
+/**
+ * Fetches pull requests opened via the git integrations.
+ *
+ * @param integrationId - Optional integration ID to filter the pull requests by.
+ * @returns A Promise resolving to an array of PullRequest objects.
+ */
 export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return getJSON<PullRequest[]>(`/api/integrations/git/prs${q}`);
 }
 
+/**
+ * Opens a pull request/merge request on a connected git platform.
+ *
+ * @param body - The parameters required to open a pull request (repo, branches, etc).
+ * @returns A Promise resolving to the successfully created PullRequest.
+ */
 export function createPullRequest(body: {
   integrationId: string;
   repository: string;
@@ -306,19 +477,43 @@ export function createPullRequest(body: {
   return postJSON<PullRequest>("/api/integrations/git/pr/create", body);
 }
 
+/**
+ * Merges an open pull request on a connected git platform.
+ *
+ * @param prId - The unique ID of the pull request to merge.
+ * @returns A Promise resolving to the merged PullRequest.
+ */
 export function mergePullRequest(prId: string): Promise<PullRequest> {
   return postJSON<PullRequest>("/api/integrations/git/pr/merge", { prId });
 }
 
+/**
+ * Closes an open pull request on a connected git platform without merging.
+ *
+ * @param prId - The unique ID of the pull request to close.
+ * @returns A Promise resolving to the closed PullRequest.
+ */
 export function closePullRequest(prId: string): Promise<PullRequest> {
   return postJSON<PullRequest>("/api/integrations/git/pr/close", { prId });
 }
 
+/**
+ * Fetches tickets from connected issue trackers.
+ *
+ * @param integrationId - Optional integration ID to filter the tickets by.
+ * @returns A Promise resolving to an array of Issue objects.
+ */
 export function fetchIssues(integrationId?: string): Promise<Issue[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return getJSON<Issue[]>(`/api/integrations/issues${q}`);
 }
 
+/**
+ * Creates a ticket in a connected issue tracker.
+ *
+ * @param body - The details needed to create the issue (project, title, description, priority).
+ * @returns A Promise resolving to the generated Issue object.
+ */
 export function createIssue(body: {
   integrationId: string;
   project: string;
@@ -331,10 +526,24 @@ export function createIssue(body: {
   return postJSON<Issue>("/api/integrations/issues/create", body);
 }
 
+/**
+ * Updates the status phase of an existing ticket.
+ *
+ * @param issueId - The unique ID of the ticket.
+ * @param status - The new status to transition to.
+ * @returns A Promise resolving to the updated Issue.
+ */
 export function updateIssueStatus(issueId: string, status: string): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/status", { issueId, status });
 }
 
+/**
+ * Assigns ownership of a ticket to a specific agent or human manager.
+ *
+ * @param issueId - The unique ID of the ticket.
+ * @param assignee - The identifier of the agent or manager taking ownership.
+ * @returns A Promise resolving to the assigned Issue.
+ */
 export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
 }

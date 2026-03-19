@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Status indicates the current operational phase of an AI agent within the workforce.
 type Status string
 
 const (
@@ -33,6 +34,7 @@ const (
 	EventApprovalNeeded = "ApprovalNeeded"
 )
 
+// Agent represents an active, instantiated worker within the AI organisation.
 type Agent struct {
 	ID             string `json:"id"`
 	Name           string `json:"name"`
@@ -41,6 +43,7 @@ type Agent struct {
 	Status         Status `json:"status"`
 }
 
+// Message encapsulates a discrete event, command, or context update passed between agents or rooms.
 type Message struct {
 	ID         string    `json:"id"`
 	FromAgent  string    `json:"fromAgent"`
@@ -51,6 +54,7 @@ type Message struct {
 	OccurredAt time.Time `json:"occurredAt"`
 }
 
+// MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
 type MeetingRoom struct {
 	ID           string    `json:"id"`
 	Agenda       string    `json:"agenda,omitempty"`
@@ -58,6 +62,9 @@ type MeetingRoom struct {
 	Transcript   []Message `json:"transcript"`
 }
 
+// Hub acts as the thread-safe central message broker and runtime state manager for the AI workforce.
+//
+// Constraints: Must be accessed via its exported methods to preserve data race safety.
 type Hub struct {
 	mu       sync.RWMutex
 	agents   map[string]Agent
@@ -65,6 +72,9 @@ type Hub struct {
 	meetings map[string]MeetingRoom
 }
 
+// NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
+//
+// Returns: An instantiated *Hub ready to register agents and route events.
 func NewHub() *Hub {
 	return &Hub{
 		agents:   map[string]Agent{},
@@ -73,6 +83,10 @@ func NewHub() *Hub {
 	}
 }
 
+// RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.
+//
+// Parameters:
+//   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
 func (h *Hub) RegisterAgent(agent Agent) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -84,6 +98,12 @@ func (h *Hub) RegisterAgent(agent Agent) {
 	h.agents[agent.ID] = agent
 }
 
+// Agent retrieves the runtime state of a specific worker by ID.
+//
+// Parameters:
+//   - id: string; The unique identifier of the agent.
+//
+// Returns: The matching Agent object and a boolean indicating if it exists in the registry.
 func (h *Hub) Agent(id string) (Agent, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -92,6 +112,13 @@ func (h *Hub) Agent(id string) (Agent, bool) {
 	return agent, ok
 }
 
+// OpenMeeting instantiates a new collaborative context window and marks all participants as InMeeting.
+//
+// Parameters:
+//   - id: string; Unique identifier for the room.
+//   - participants: []string; A list of agent IDs to be enrolled in the discussion.
+//
+// Returns: The instantiated MeetingRoom.
 func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -108,6 +135,13 @@ func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 }
 
 // OpenMeetingWithAgenda creates a meeting room with an explicit agenda descriptor.
+//
+// Parameters:
+//   - id: string; Unique identifier for the room.
+//   - agenda: string; The primary objective guiding the agents' conversation.
+//   - participants: []string; A list of agent IDs to be enrolled in the discussion.
+//
+// Returns: The instantiated MeetingRoom.
 func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -124,6 +158,9 @@ func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) Me
 }
 
 // FireAgent removes an agent from the hub and clears their inbox.
+//
+// Parameters:
+//   - id: string; The unique identifier of the agent to terminate.
 func (h *Hub) FireAgent(id string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -132,6 +169,12 @@ func (h *Hub) FireAgent(id string) {
 	delete(h.inbox, id)
 }
 
+// Publish validates and routes a message to a direct recipient, a meeting room, or both.
+//
+// Parameters:
+//   - message: Message; The event payload containing routing headers and content.
+//
+// Returns: An error if the sender or recipient agents do not exist, or if the target meeting is unrecognised.
 func (h *Hub) Publish(message Message) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -163,6 +206,12 @@ func (h *Hub) Publish(message Message) error {
 	return nil
 }
 
+// Inbox retrieves all undelivered or direct messages routed exclusively to a single agent.
+//
+// Parameters:
+//   - agentID: string; The unique identifier of the worker.
+//
+// Returns: A slice of direct Message objects.
 func (h *Hub) Inbox(agentID string) []Message {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -170,6 +219,12 @@ func (h *Hub) Inbox(agentID string) []Message {
 	return append([]Message(nil), h.inbox[agentID]...)
 }
 
+// Meeting retrieves the current state and transcript of a specified virtual meeting room.
+//
+// Parameters:
+//   - id: string; The unique identifier of the room.
+//
+// Returns: The matching MeetingRoom object and a boolean indicating if it exists.
 func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -178,6 +233,9 @@ func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 	return meeting, ok
 }
 
+// Meetings fetches a point-in-time snapshot of all active meeting rooms.
+//
+// Returns: A slice containing all MeetingRoom objects.
 func (h *Hub) Meetings() []MeetingRoom {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -190,6 +248,9 @@ func (h *Hub) Meetings() []MeetingRoom {
 	return meetings
 }
 
+// Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID.
+//
+// Returns: A slice of all active Agent objects in the orchestration Hub.
 func (h *Hub) Agents() []Agent {
 	h.mu.RLock()
 	defer h.mu.RUnlock()

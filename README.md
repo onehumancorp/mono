@@ -1,37 +1,35 @@
-# mono
+# One Human Corp
 
-This repository is initialized as a Bazel-based monorepo:
+## Identity
+One Human Corp is an innovative Cloud-Native Hybrid Architecture (Agentic OS) that empowers a single individual to run an entire enterprise by orchestrating highly specialized AI agents natively on Kubernetes.
 
-- application and library code lives under `srcs/`
-- documentation lives under `docs/`
-- contract definitions live under `srcs/proto/`
-- Bazel is pinned to `9.0.0`
-- Go modules target `1.25`
+## Architecture
+Built on a modular, open-source stack (Model Context Protocol, SPIFFE/SPIRE, LangGraph/CrewAI), the system leverages Kubernetes Custom Resource Definitions (CRDs) to manage the organisational structure as Infrastructure as Code. The backend is written in Go (Bazel-based monorepo), and it integrates with a React Next.js-style frontend to allow the human CEO to direct virtual meeting rooms, handle high-risk approvals, and monitor token usage and billing.
 
-## Initial roadmap slice
+## Quick Start
+1. Ensure you have `bazelisk` and `npm` installed.
+2. Build the backend:
+   ```bash
+   bazelisk build //...
+   ```
+3. Run the Go backend (Dashboard Server) locally on port `8080`.
+4. In parallel, run the frontend dev server:
+   ```bash
+   cd srcs/frontend
+   npm install
+   npm run dev
+   ```
+5. Access the dashboard at `http://localhost:5173`.
 
-The first implemented slice focuses on the Phase 1 foundation from `docs/roadmap.md`:
+## Developer Workflow
+This project uses Bazel for deterministic builds and testing.
+- **Build all modules:** `bazelisk build //...`
+- **Run all tests:** `bazelisk test //...`
+- **Format code:** Use standard `gofmt` for Go and Prettier for the frontend.
 
-- Software Company default organization schema
-- in-memory agent orchestration and virtual meeting rooms
-- model-aware token cost tracking
-- a small CEO dashboard HTTP interface with org chart, project status, meeting, cost, and message form views
-
-## Running tests
-
-```bash
-bazelisk test //...
-```
-
-## Frontend (React)
-
-The repository now includes a React-only frontend scaffold in `srcs/frontend`.
-
-```bash
-cd srcs/frontend
-npm install
-npm run dev
-```
-
-The dev server proxies `/api/*` requests to `http://localhost:8080`, so run the
-Go dashboard backend in parallel when developing the UI.
+## Configuration
+The following environment variables and configurations are commonly used:
+- `GEMINI_API_KEY`: API Key for Gemini models (if using Google models).
+- `MCP_BUNDLE_DIR`: Directory for MCP bundles.
+- `MONO_FRONTEND_DIST`: Path to the compiled frontend dist directory.
+- Kubernetes Secrets are used to inject runtime credentials safely without committing secrets to the repo.
