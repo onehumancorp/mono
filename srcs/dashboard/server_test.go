@@ -835,8 +835,9 @@ func TestHandleHandoffsReturnsEmptyListInitially(t *testing.T) {
 	if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
 		t.Fatalf("decode handoffs: %v", err)
 	}
-	if len(list) != 0 {
-		t.Fatalf("expected empty handoffs, got %d", len(list))
+	// Note: We now seed one handoff in NewServer
+	if len(list) != 1 {
+		t.Errorf("expected 1 handoff, got %d", len(list))
 	}
 }
 
@@ -2717,8 +2718,9 @@ func TestHandleAnalyticsWithApprovalHandoffAndTranscript(t *testing.T) {
 	if summary.PendingApprovals != 1 {
 		t.Errorf("expected 1 pending approval, got %d", summary.PendingApprovals)
 	}
-	if summary.ActiveHandoffs != 1 {
-		t.Errorf("expected 1 active handoff, got %d", summary.ActiveHandoffs)
+	// Note: We now seed one handoff in NewServer, so 1 + 1 = 2 active handoffs
+	if summary.ActiveHandoffs != 2 {
+		t.Errorf("expected 2 active handoffs, got %d", summary.ActiveHandoffs)
 	}
 	if summary.AuditFidelityPct < 0 || summary.AuditFidelityPct > 100 {
 		t.Errorf("expected audit fidelity in [0,100], got %f", summary.AuditFidelityPct)

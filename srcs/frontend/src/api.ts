@@ -289,6 +289,16 @@ export function createHandoff(body: {
   return postJSON<HandoffPackage>("/api/handoffs", body);
 }
 
+/**
+ * Resolves a pending handoff escalation.
+ *
+ * @param handoffId - The unique ID of the pending handoff request.
+ * @returns A Promise resolving to the updated array of HandoffPackage objects.
+ */
+export function resolveHandoff(handoffId: string): Promise<HandoffPackage[]> {
+  return postJSON<HandoffPackage[]>("/api/handoffs/resolve", { handoffId });
+}
+
 // ── Identity Management ───────────────────────────────────────────────────────
 
 /**
