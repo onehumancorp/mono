@@ -187,7 +187,7 @@ describe("api", () => {
   });
 
   it("throws for failed message send", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 400, json: async () => ({}) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 400, json: async () => ({}), text: async () => "" })));
 
     await expect(
       sendMessage({
@@ -224,13 +224,13 @@ describe("api – new endpoints", () => {
       "/api/agents/hire",
       expect.objectContaining({ method: "POST" })
     );
-    const body = JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1]?.body ?? "{}"));
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as any)[1]?.body ?? "{}"));
     expect(body).toEqual({ name: "Alice", role: "SOFTWARE_ENGINEER" });
     expect(result.organization.id).toBe("o");
   });
 
   it("hireAgent throws on non-OK response", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 422, json: async () => ({}) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 422, json: async () => ({}), text: async () => "" })));
     await expect(hireAgent("X", "Y")).rejects.toThrow("422");
   });
 
@@ -242,13 +242,13 @@ describe("api – new endpoints", () => {
       "/api/agents/fire",
       expect.objectContaining({ method: "POST" })
     );
-    const body = JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1]?.body ?? "{}"));
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as any)[1]?.body ?? "{}"));
     expect(body).toEqual({ agentId: "swe-1" });
     expect(result.organization.id).toBe("o");
   });
 
   it("fireAgent throws on non-OK response", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}), text: async () => "" })));
     await expect(fireAgent("nobody")).rejects.toThrow("404");
   });
 
@@ -282,13 +282,13 @@ describe("api – new endpoints", () => {
       "/api/dev/seed",
       expect.objectContaining({ method: "POST" })
     );
-    const body = JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1]?.body ?? "{}"));
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as any)[1]?.body ?? "{}"));
     expect(body).toEqual({ scenario: "digital-marketing" });
     expect(result.organization.id).toBe("o");
   });
 
   it("seedScenario throws on non-OK response", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 400, json: async () => ({}) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 400, json: async () => ({}), text: async () => "" })));
     await expect(seedScenario("bad")).rejects.toThrow("400");
   });
 
@@ -385,7 +385,7 @@ describe("integration api", () => {
   it("connects an integration", async () => {
     const updated = { id: "slack", status: "connected" };
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => updated })));
-    await expect(connectIntegration("slack", "https://hooks.slack.com/test")).resolves.toEqual(updated);
+    await expect(connectIntegration("slack", { baseUrl: "https://hooks.slack.com/test" })).resolves.toEqual(updated);
   });
 
   it("disconnects an integration", async () => {

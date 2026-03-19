@@ -2,26 +2,26 @@ version: "3.9"
 
 services:
   backend:
-    build:
-      context: ..
-      dockerfile: deploy/docker/backend/Dockerfile
-    image: onehumancorp/mono-backend:dev
+    image: onehumancorp/mono-backend:bazel
     environment:
       REDIS_ADDR: redis:6379
       DATABASE_URL: postgres://ohc:ohc@postgres:5432/ohc?sslmode=disable
+      CHATWOOT_URL: http://chatwoot:3000
+      CHATWOOT_ADMIN_EMAIL: admin@ohc.local
+      CHATWOOT_ADMIN_PASSWORD: changeme
+      CHATWOOT_ENABLED: "true"
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
+      chatwoot:
+        condition: service_started
     ports:
       - "8080:8080"
 
   frontend:
-    build:
-      context: ..
-      dockerfile: deploy/docker/frontend/Dockerfile
-    image: onehumancorp/mono-frontend:dev
+    image: onehumancorp/mono-frontend:bazel
     environment:
       BACKEND_URL: http://backend:8080
     depends_on:
@@ -45,6 +45,9 @@ services:
       POSTGRES_USER: ohc
       POSTGRES_PASSWORD: ohc
       POSTGRES_DB: ohc
+      POSTGRES_MULTIPLE_DATABASES: ohc,chatwoot
+    volumes:
+      - ./docker/postgres/init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh
     ports:
       - "5432:5432"
     healthcheck:
@@ -52,3 +55,68 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  chatwoot-migrate:
+    image: chatwoot/chatwoot:v3.15.1
+    command: bundle exec rails db:chatwoot_prepare
+    environment:
+      SECRET_KEY_BASE: changeme_secret_key_base_at_least_64_chars_long_for_production
+      DATABASE_URL: postgres://ohc:ohc@postgres:5432/chatwoot?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      RAILS_ENV: production
+      INSTALLATION_ENV: docker
+      DEFAULT_LOCALE: en
+      FORCE_SSL: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  chatwoot:
+    image: chatwoot/chatwoot:v3.15.1
+    command: bundle exec rails s -p 3000 -b 0.0.0.0
+    environment:
+      SECRET_KEY_BASE: changeme_secret_key_base_at_least_64_chars_long_for_production
+      DATABASE_URL: postgres://ohc:ohc@postgres:5432/chatwoot?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      RAILS_ENV: production
+      INSTALLATION_ENV: docker
+      DEFAULT_LOCALE: en
+      FORCE_SSL: "false"
+    ports:
+      - "3002:3000"
+    depends_on:
+      - chatwoot-migrate
+
+  chatwoot-worker:
+    image: chatwoot/chatwoot:v3.15.1
+    command: bundle exec sidekiq -C config/sidekiq.yml
+    environment:
+      SECRET_KEY_BASE: changeme_secret_key_base_at_least_64_chars_long_for_production
+      DATABASE_URL: postgres://ohc:ohc@postgres:5432/chatwoot?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      RAILS_ENV: production
+      INSTALLATION_ENV: docker
+      DEFAULT_LOCALE: en
+      FORCE_SSL: "false"
+    depends_on:
+      - chatwoot
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    depends_on:
+      - prometheus
+

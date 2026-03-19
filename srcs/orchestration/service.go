@@ -1,10 +1,22 @@
 package orchestration
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"net/http"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/onehumancorp/mono/srcs/telemetry"
+	pb "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type Status string
@@ -59,10 +71,11 @@ type MeetingRoom struct {
 }
 
 type Hub struct {
-	mu       sync.RWMutex
-	agents   map[string]Agent
-	inbox    map[string][]Message
-	meetings map[string]MeetingRoom
+	mu            sync.RWMutex
+	agents        map[string]Agent
+	inbox         map[string][]Message
+	meetings      map[string]MeetingRoom
+	minimaxAPIKey string
 }
 
 func NewHub() *Hub {
@@ -82,6 +95,18 @@ func (h *Hub) RegisterAgent(agent Agent) {
 	}
 
 	h.agents[agent.ID] = agent
+}
+
+func (h *Hub) SetMinimaxAPIKey(key string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.minimaxAPIKey = key
+}
+
+func (h *Hub) MinimaxAPIKey() string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.minimaxAPIKey
 }
 
 func (h *Hub) Agent(id string) (Agent, bool) {
@@ -104,6 +129,7 @@ func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 		h.agents[participant] = agent
 	}
 
+	telemetry.RecordMeetingEvent(context.Background(), "opened")
 	return meeting
 }
 
@@ -120,6 +146,7 @@ func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) Me
 		h.agents[participant] = agent
 	}
 
+	telemetry.RecordMeetingEvent(context.Background(), "opened")
 	return meeting
 }
 
@@ -160,6 +187,8 @@ func (h *Hub) Publish(message Message) error {
 	}
 	h.agents[message.FromAgent] = sender
 
+	telemetry.RecordAgentApiCall(context.Background(), sender.ID, sender.Role, "publish")
+
 	return nil
 }
 
@@ -175,6 +204,7 @@ func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 	defer h.mu.RUnlock()
 
 	meeting, ok := h.meetings[id]
+	telemetry.RecordMeetingEvent(context.Background(), "opened")
 	return meeting, ok
 }
 
@@ -187,6 +217,7 @@ func (h *Hub) Meetings() []MeetingRoom {
 		meetings = append(meetings, meeting)
 	}
 
+	telemetry.RecordMeetingEvent(context.Background(), "opened")
 	return meetings
 }
 
@@ -203,4 +234,166 @@ func (h *Hub) Agents() []Agent {
 	})
 
 	return agents
+}
+
+// HubServiceServer implements the gRPC HubService defined in hub.proto.
+func RegisterHubService(s *grpc.Server, hub *Hub) {
+	pb.RegisterHubServiceServer(s, &HubServiceServer{hub: hub})
+}
+
+type HubServiceServer struct {
+	pb.UnimplementedHubServiceServer
+	hub *Hub
+}
+
+func NewHubServiceServer(hub *Hub) *HubServiceServer {
+	return &HubServiceServer{hub: hub}
+}
+
+func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAgentRequest) (*pb.RegisterAgentResponse, error) {
+	agentReq := req.GetAgent()
+	agent := Agent{
+		ID:             agentReq.GetId(),
+		Name:           agentReq.GetName(),
+		Role:           agentReq.GetRole(),
+		OrganizationID: agentReq.GetOrganizationId(),
+		Status:         Status(agentReq.GetStatus()),
+	}
+	s.hub.RegisterAgent(agent)
+	return pb.RegisterAgentResponse_builder{Success: true}.Build(), nil
+}
+
+func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingRequest) (*pb.MeetingRoom, error) {
+	meeting := s.hub.OpenMeetingWithAgenda(req.GetMeetingId(), req.GetAgenda(), req.GetParticipants())
+	return pb.MeetingRoom_builder{
+		Id:           meeting.ID,
+		Agenda:       meeting.Agenda,
+		Participants: meeting.Participants,
+	}.Build(), nil
+}
+
+func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRequest) (*pb.PublishMessageResponse, error) {
+	msgReq := req.GetMessage()
+	msg := Message{
+		ID:         msgReq.GetId(),
+		FromAgent:  msgReq.GetFromAgent(),
+		ToAgent:    msgReq.GetToAgent(),
+		Type:       msgReq.GetType(),
+		Content:    msgReq.GetContent(),
+		MeetingID:  msgReq.GetMeetingId(),
+		OccurredAt: time.Unix(msgReq.GetOccurredAtUnix(), 0),
+	}
+	if err := s.hub.Publish(msg); err != nil {
+		return nil, status.Errorf(codes.Internal, "publish failed: %v", err)
+	}
+	return pb.PublishMessageResponse_builder{Success: true}.Build(), nil
+}
+
+func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream pb.HubService_StreamMessagesServer) error {
+	// Simple polling implementation for demonstration.
+	// In production, use a proper pub/sub or channel-based mechanism.
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	var lastCount int
+	for {
+		select {
+		case <-stream.Context().Done():
+			return nil
+		case <-ticker.C:
+			msgs := s.hub.Inbox(req.GetAgentId())
+			if len(msgs) > lastCount {
+				for i := lastCount; i < len(msgs); i++ {
+					m := msgs[i]
+					if err := stream.Send(pb.Message_builder{
+						Id:             m.ID,
+						FromAgent:      m.FromAgent,
+						ToAgent:        m.ToAgent,
+						Type:           m.Type,
+						Content:        m.Content,
+						MeetingId:      m.MeetingID,
+						OccurredAtUnix: m.OccurredAt.Unix(),
+					}.Build()); err != nil {
+						return err
+					}
+				}
+				lastCount = len(msgs)
+			}
+		}
+	}
+}
+
+func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*pb.ReasonResponse, error) {
+	client := NewMinimaxClient(s.hub.MinimaxAPIKey())
+	content, err := client.Reason(ctx, req.GetPrompt())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "minimax reasoning failed: %v", err)
+	}
+	return pb.ReasonResponse_builder{Content: content}.Build(), nil
+}
+
+// MinimaxClient handles interaction with the Minimax Model 2.7.
+type MinimaxClient struct {
+	APIKey string
+}
+
+func NewMinimaxClient(apiKey string) *MinimaxClient {
+	return &MinimaxClient{APIKey: apiKey}
+}
+
+func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, error) {
+	if c.APIKey == "" {
+		return "", errors.New("minimax API key is not configured")
+	}
+
+	url := "https://api.minimax.io/v1/chat/completions"
+	payload := map[string]interface{}{
+		"model": "MiniMax-M2.7",
+		"messages": []map[string]string{
+			{"role": "user", "content": prompt},
+		},
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(body))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("minimax API error (status %d): %s", resp.StatusCode, string(respBody))
+	}
+
+	var result struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", err
+	}
+
+	if len(result.Choices) == 0 {
+		return "", errors.New("empty response from minimax")
+	}
+
+	return result.Choices[0].Message.Content, nil
 }

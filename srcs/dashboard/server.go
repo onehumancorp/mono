@@ -3,18 +3,17 @@ package dashboard
 import (
 	"encoding/json"
 	"errors"
-	"html/template"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/onehumancorp/mono/srcs/auth"
 	"github.com/onehumancorp/mono/srcs/billing"
 	"github.com/onehumancorp/mono/srcs/domain"
 	"github.com/onehumancorp/mono/srcs/integrations"
 	"github.com/onehumancorp/mono/srcs/orchestration"
+	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
 type Server struct {
@@ -32,6 +31,13 @@ type Server struct {
 	computeProfiles []ComputeProfile
 	budgetAlerts    []BudgetAlert
 	pipelines       []Pipeline
+	authStore       *auth.Store
+	authHandlers    *auth.Handlers
+	settings        Settings
+}
+
+type Settings struct {
+	MinimaxAPIKey string `json:"minimaxApiKey"`
 }
 
 type statusCount struct {
@@ -270,7 +276,13 @@ var statusOrder = []orchestration.Status{
 	orchestration.StatusInMeeting,
 }
 
-func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker) http.Handler {
+func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker, authStore ...*auth.Store) http.Handler {
+	var store *auth.Store
+	if len(authStore) > 0 && authStore[0] != nil {
+		store = authStore[0]
+	} else {
+		store = auth.NewStore()
+	}
 	server := &Server{
 		org:             org,
 		hub:             hub,
@@ -285,15 +297,10 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 		computeProfiles: []ComputeProfile{},
 		budgetAlerts:    []BudgetAlert{},
 		pipelines:       []Pipeline{},
+		authStore:       store,
+		authHandlers:    auth.NewHandlers(store),
 	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", server.handleIndex)
-	mux.HandleFunc("/app", server.handleApp)
-	if dist := frontendDistPath(); dist != "" {
-		mux.Handle("/app/", http.StripPrefix("/app/", http.FileServer(http.Dir(dist))))
-	} else {
-		mux.HandleFunc("/app/", server.handleApp)
-	}
 	mux.HandleFunc("/api/dashboard", server.handleDashboard)
 	mux.HandleFunc("/api/org", server.handleOrg)
 	mux.HandleFunc("/api/meetings", server.handleMeetings)
@@ -303,7 +310,9 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/agents/fire", server.handleFireAgent)
 	mux.HandleFunc("/api/domains", server.handleDomains)
 	mux.HandleFunc("/api/mcp/tools", server.handleMCPTools)
+	mux.HandleFunc("/api/mcp/tools/invoke", server.handleMCPInvoke)
 	mux.HandleFunc("/api/dev/seed", server.handleDevSeed)
+	mux.HandleFunc("/api/settings", server.handleSettings)
 	// Phase 2 – Confidence Gating / Guardian Agent
 	mux.HandleFunc("/api/approvals", server.handleApprovals)
 	mux.HandleFunc("/api/approvals/request", server.handleApprovalRequest)
@@ -329,6 +338,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/integrations/disconnect", server.handleIntegrationDisconnect)
 	mux.HandleFunc("/api/integrations/chat/messages", server.handleChatMessages)
 	mux.HandleFunc("/api/integrations/chat/send", server.handleChatSend)
+	mux.HandleFunc("/api/integrations/chat/test", server.handleChatTest)
 	mux.HandleFunc("/api/integrations/git/prs", server.handlePullRequests)
 	mux.HandleFunc("/api/integrations/git/pr/create", server.handlePRCreate)
 	mux.HandleFunc("/api/integrations/git/pr/merge", server.handlePRMerge)
@@ -353,6 +363,15 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/pipelines", server.handlePipelines)
 	mux.HandleFunc("/api/pipelines/promote", server.handlePipelinePromote)
 	mux.HandleFunc("/api/pipelines/status", server.handlePipelineStatus)
+	// Auth – login / logout / current user
+	mux.HandleFunc("/api/auth/login", server.authHandlers.HandleLogin)
+	mux.HandleFunc("/api/auth/logout", server.authHandlers.HandleLogout)
+	mux.HandleFunc("/api/auth/me", server.authHandlers.HandleMe)
+	// User management (admin only)
+	mux.HandleFunc("/api/users", server.authHandlers.HandleUsers)
+	mux.HandleFunc("/api/users/", server.authHandlers.HandleUser)
+	// Role management
+	mux.HandleFunc("/api/roles", server.authHandlers.HandleRoles)
 	// Health / readiness probes
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -362,168 +381,11 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
-	return mux
+	mux.Handle("/metrics", telemetry.MetricsHandler())
+	return telemetry.Middleware(auth.Middleware(store)(mux))
 }
 
-func frontendDistPath() string {
-	if fromEnv := os.Getenv("MONO_FRONTEND_DIST"); fromEnv != "" {
-		if hasFrontendIndex(fromEnv) {
-			return fromEnv
-		}
-	}
 
-	candidates := []string{
-		"srcs/frontend/dist",
-		"../srcs/frontend/dist",
-		"../../srcs/frontend/dist",
-	}
-
-	for _, candidate := range candidates {
-		if hasFrontendIndex(candidate) {
-			return candidate
-		}
-	}
-
-	return ""
-}
-
-func hasFrontendIndex(dir string) bool {
-	info, err := os.Stat(filepath.Join(dir, "index.html"))
-	if err != nil {
-		return false
-	}
-	return !info.IsDir()
-}
-
-func (s *Server) handleApp(w http.ResponseWriter, r *http.Request) {
-	if dist := frontendDistPath(); dist != "" {
-		http.ServeFile(w, r, filepath.Join(dist, "index.html"))
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(`<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>One Human Corp Frontend</title>
-  <style>
-    body { font-family: sans-serif; margin: 2rem; background: #0f172a; color: #e2e8f0; }
-    .card { background: #1e293b; padding: 1rem 1.25rem; border-radius: 12px; }
-    code { background: #334155; padding: 0.1rem 0.3rem; border-radius: 6px; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>React Frontend Route</h1>
-    <p>No production build found at <code>srcs/frontend/dist</code>.</p>
-    <p>Run <code>cd srcs/frontend && npm install && npm run build</code> and refresh this page.</p>
-    <p>For local development, run <code>npm run dev</code> in <code>srcs/frontend</code>.</p>
-  </div>
-</body>
-</html>`))
-}
-
-func (s *Server) handleIndex(w http.ResponseWriter, _ *http.Request) {
-	snapshot := s.snapshot()
-	page := template.Must(template.New("dashboard").Parse(`<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>One Human Corp Dashboard</title>
-  <style>
-    body { font-family: sans-serif; margin: 2rem; background: #0f172a; color: #e2e8f0; }
-    .card { background: #1e293b; padding: 1rem 1.25rem; border-radius: 12px; margin-bottom: 1rem; }
-    h1, h2 { margin-top: 0; }
-    ul { padding-left: 1.25rem; }
-  </style>
-</head>
-<body>
-  <h1>One Human Corp Dashboard</h1>
-  <div class="card">
-    <h2>{{.Org.Name}}</h2>
-    <p>Domain: {{.Org.Domain}}</p>
-    <p>Members: {{len .Org.Members}}</p>
-  </div>
-  <div class="card">
-    <h2>Org Chart</h2>
-    <ul>
-    {{range .Org.Members}}
-      <li>{{.Name}} — {{.Role}}</li>
-    {{end}}
-    </ul>
-  </div>
-  <div class="card">
-    <h2>Role Playbooks</h2>
-    {{range .Org.RoleProfiles}}
-    <h3>{{.Role}}</h3>
-    <p>{{.BasePrompt}}</p>
-    <p><strong>Capabilities:</strong> {{range $index, $capability := .Capabilities}}{{if $index}}, {{end}}{{$capability}}{{end}}</p>
-    <p><strong>Context Inputs:</strong> {{range $index, $input := .ContextInputs}}{{if $index}}, {{end}}{{$input}}{{end}}</p>
-    {{end}}
-  </div>
-  <div class="card">
-    <h2>Project Status</h2>
-    <p>Registered agents: {{len .Agents}}</p>
-    <ul>
-    {{range .Statuses}}
-      <li>{{.Status}} — {{.Count}}</li>
-    {{end}}
-    </ul>
-    <ul>
-    {{range .Agents}}
-      <li>{{.Name}} — {{.Status}}</li>
-    {{end}}
-    </ul>
-  </div>
-  <div class="card">
-    <h2>Active Meetings</h2>
-    <p>{{len .Meetings}} meeting(s)</p>
-    {{range .Meetings}}
-    <h3>{{.ID}}</h3>
-    <ul>
-      {{range .Transcript}}
-      <li>{{.FromAgent}} → {{.ToAgent}}: {{.Content}}</li>
-      {{else}}
-      <li>No messages yet.</li>
-      {{end}}
-    </ul>
-    {{end}}
-  </div>
-  <div class="card">
-    <h2>Cost Summary</h2>
-    <p>Total cost: ${{printf "%.6f" .Summary.TotalCostUSD}}</p>
-    <p>Total tokens: {{.Summary.TotalTokens}}</p>
-    <ul>
-    {{range .Summary.Agents}}
-      <li>{{.AgentID}} — ${{printf "%.6f" .CostUSD}} ({{.TokenUsed}} tokens)</li>
-    {{end}}
-    </ul>
-  </div>
-  <div class="card">
-    <h2>Send Message</h2>
-    <form method="post" action="/api/messages">
-      <label>From Agent <input name="fromAgent" value="pm-1"></label><br>
-      <label>To Agent <input name="toAgent" value="swe-1"></label><br>
-      <label>Meeting ID <input name="meetingId" value="kickoff"></label><br>
-      <label>Message Type <input name="messageType" value="task"></label><br>
-      <label>Content <input name="content" value="Review the roadmap"></label><br>
-      <button type="submit">Send Message</button>
-    </form>
-  </div>
-</body>
-</html>`))
-
-	_ = page.Execute(w, map[string]any{
-		"Org":      snapshot.Organization,
-		"Agents":   snapshot.Agents,
-		"Statuses": snapshot.Statuses,
-		"Meetings": snapshot.Meetings,
-		"Summary":  snapshot.Costs,
-	})
-}
 
 func (s *Server) handleOrg(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
@@ -577,6 +439,7 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if strings.Contains(r.Header.Get("Accept"), "application/json") {
+		telemetry.RecordHumanInteraction(r.Context(), "message")
 		writeJSON(w, s.snapshotLocked())
 		return
 	}
@@ -672,6 +535,30 @@ func (s *Server) handleDomains(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, availableDomains)
 }
 
+func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if r.Method == http.MethodGet {
+		writeJSON(w, s.settings)
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		var req Settings
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+			return
+		}
+		s.settings = req
+		s.hub.SetMinimaxAPIKey(req.MinimaxAPIKey)
+		writeJSON(w, s.settings)
+		return
+	}
+
+	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+
 func (s *Server) handleMCPTools(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, mcpTools)
 }
@@ -742,6 +629,7 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 	tracker := billing.NewTracker(billing.DefaultCatalog)
 	_, _ = tracker.Track(billing.Usage{
 		AgentID:          "pm-1",
+		AgentRole:        "PRODUCT_MANAGER",
 		OrganizationID:   org.ID,
 		Model:            "gpt-4o-mini",
 		PromptTokens:     1200,
@@ -750,6 +638,7 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 	})
 	_, _ = tracker.Track(billing.Usage{
 		AgentID:          "swe-1",
+		AgentRole:        "SOFTWARE_ENGINEER",
 		OrganizationID:   org.ID,
 		Model:            "gpt-4o",
 		PromptTokens:     2600,
@@ -758,6 +647,7 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 	})
 	_, _ = tracker.Track(billing.Usage{
 		AgentID:          "ux-1",
+		AgentRole:        "DESIGNER",
 		OrganizationID:   org.ID,
 		Model:            "gpt-4o-mini",
 		PromptTokens:     900,
@@ -789,6 +679,7 @@ func seededDigitalMarketing(now time.Time) (domain.Organization, *orchestration.
 	tracker := billing.NewTracker(billing.DefaultCatalog)
 	_, _ = tracker.Track(billing.Usage{
 		AgentID:          "growth-1",
+		AgentRole:        "GROWTH_AGENT",
 		OrganizationID:   org.ID,
 		Model:            "gpt-4o",
 		PromptTokens:     1800,
@@ -820,6 +711,7 @@ func seededAccounting(now time.Time) (domain.Organization, *orchestration.Hub, *
 	tracker := billing.NewTracker(billing.DefaultCatalog)
 	_, _ = tracker.Track(billing.Usage{
 		AgentID:          "cfo-1",
+		AgentRole:        "CFO",
 		OrganizationID:   org.ID,
 		Model:            "claude-3.5-sonnet",
 		PromptTokens:     1500,
@@ -833,6 +725,179 @@ func seededAccounting(now time.Time) (domain.Organization, *orchestration.Hub, *
 func writeJSON(w http.ResponseWriter, value any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(value)
+}
+
+// ── Chat test handler ─────────────────────────────────────────────────────────
+
+type chatTestRequest struct {
+	IntegrationID string `json:"integrationId"`
+	BotToken      string `json:"botToken,omitempty"`
+	ChatID        string `json:"chatId,omitempty"`
+	WebhookURL    string `json:"webhookUrl,omitempty"`
+	APIToken      string `json:"apiToken,omitempty"`
+}
+
+func (s *Server) handleChatTest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req chatTestRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.IntegrationID == "" {
+		http.Error(w, "integrationId is required", http.StatusBadRequest)
+		return
+	}
+	creds := integrations.IntegrationCredentials{
+		BotToken:   req.BotToken,
+		ChatID:     req.ChatID,
+		WebhookURL: req.WebhookURL,
+		APIToken:   req.APIToken,
+	}
+	if err := s.integReg.TestConnection(req.IntegrationID, creds); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, map[string]bool{"success": true})
+}
+
+// ── MCP tool invocation ───────────────────────────────────────────────────────
+
+type mcpInvokeRequest struct {
+	ToolID string         `json:"toolId"`
+	Action string         `json:"action"`
+	Params map[string]any `json:"params"`
+}
+
+func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req mcpInvokeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.ToolID == "" {
+		http.Error(w, "toolId is required", http.StatusBadRequest)
+		return
+	}
+	if req.Params == nil {
+		req.Params = map[string]any{}
+	}
+	result, err := s.invokeMCPTool(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, result)
+}
+
+func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
+	getString := func(key string) string {
+		if v, ok := req.Params[key]; ok {
+			if str, ok := v.(string); ok {
+				return str
+			}
+		}
+		return ""
+	}
+
+	switch req.ToolID {
+	// ── Communication tools ───────────────────────────────────────────────────
+	case "telegram-mcp", "slack-mcp", "teams-mcp":
+		integrationID := getString("integrationId")
+		if integrationID == "" {
+			switch req.ToolID {
+			case "telegram-mcp":
+				integrationID = "telegram"
+			case "slack-mcp":
+				integrationID = "slack"
+			case "teams-mcp":
+				integrationID = "teams"
+			}
+		}
+		channel := getString("channel")
+		fromAgent := getString("fromAgent")
+		content := getString("content")
+		threadID := getString("threadId")
+
+		if content == "" {
+			return nil, errors.New("content is required")
+		}
+		if fromAgent == "" {
+			fromAgent = "system"
+		}
+		// Fall back to the configured chatspace if no channel given.
+		if channel == "" {
+			if integ, ok := s.integReg.Integration(integrationID); ok {
+				channel = integ.Chatspace
+			}
+		}
+		if channel == "" {
+			return nil, errors.New("channel is required — configure the integration's chatspace first")
+		}
+		msg, err := s.integReg.SendChatMessage(integrationID, channel, fromAgent, content, threadID, time.Now().UTC())
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"message": msg, "delivered": true}, nil
+
+	// ── Git tools ─────────────────────────────────────────────────────────────
+	case "git-mcp":
+		integrationID := getString("integrationId")
+		if integrationID == "" {
+			integrationID = "github"
+		}
+		repo := getString("repository")
+		title := getString("title")
+		body := getString("body")
+		source := getString("sourceBranch")
+		target := getString("targetBranch")
+		createdBy := getString("createdBy")
+		if target == "" {
+			target = "main"
+		}
+		pr, err := s.integReg.CreatePullRequest(integrationID, repo, title, body, source, target, createdBy, time.Now().UTC())
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"pullRequest": pr}, nil
+
+	// ── Issue tracker tools ───────────────────────────────────────────────────
+	case "jira-mcp", "linear-mcp":
+		integrationID := getString("integrationId")
+		if integrationID == "" {
+			if req.ToolID == "jira-mcp" {
+				integrationID = "jira"
+			} else {
+				integrationID = "linear"
+			}
+		}
+		project := getString("project")
+		title := getString("title")
+		description := getString("description")
+		createdBy := getString("createdBy")
+		priority := getString("priority")
+		issue, err := s.integReg.CreateIssue(integrationID, project, title, description, createdBy,
+			integrations.IssuePriority(priority), nil, time.Now().UTC())
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{"issue": issue}, nil
+
+	// ── Unimplemented tools — return a structured acknowledgement ─────────────
+	default:
+		return map[string]any{
+			"toolId":  req.ToolID,
+			"status":  "invoked",
+			"message": "Tool invocation recorded. Connect the corresponding service integration to enable live execution.",
+		}, nil
+	}
 }
 
 func summarizeStatuses(agents []orchestration.Agent) []statusCount {
@@ -1373,8 +1438,13 @@ Tags:        []string{"security", "approval", "hitl"},
 // ── Integration request/response types ────────────────────────────────────────
 
 type integrationConnectRequest struct {
-IntegrationID string `json:"integrationId"`
-BaseURL       string `json:"baseUrl,omitempty"`
+	IntegrationID string `json:"integrationId"`
+	BaseURL       string `json:"baseUrl,omitempty"`
+	// Chat credentials — stored server-side, never returned to the client.
+	BotToken   string `json:"botToken,omitempty"`
+	ChatID     string `json:"chatId,omitempty"`
+	WebhookURL string `json:"webhookUrl,omitempty"`
+	APIToken   string `json:"apiToken,omitempty"`
 }
 
 type integrationDisconnectRequest struct {
@@ -1452,7 +1522,13 @@ if req.IntegrationID == "" {
 http.Error(w, "integrationId is required", http.StatusBadRequest)
 return
 }
-updated, err := s.integReg.Connect(req.IntegrationID, req.BaseURL)
+creds := integrations.IntegrationCredentials{
+	BotToken:   req.BotToken,
+	ChatID:     req.ChatID,
+	WebhookURL: req.WebhookURL,
+	APIToken:   req.APIToken,
+}
+updated, err := s.integReg.Connect(req.IntegrationID, req.BaseURL, creds)
 if err != nil {
 http.Error(w, err.Error(), http.StatusNotFound)
 return

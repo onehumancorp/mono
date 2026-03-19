@@ -1,10 +1,13 @@
 package billing
 
 import (
+	"context"
 	"errors"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
 type Price struct {
@@ -44,10 +47,14 @@ var DefaultCatalog = map[string]Price{
 	// Google — Gemini 2.5 family
 	"gemini-2.5-pro":     {InputPerMillionUSD: 1.25, OutputPerMillionUSD: 10.00},
 	"gemini-2.5-flash":   {InputPerMillionUSD: 0.15, OutputPerMillionUSD: 0.60},
+	// MiniMax — M2.7 family
+	"minimax-m2.7":       {InputPerMillionUSD: 1.00, OutputPerMillionUSD: 1.00},
+	"minimax-m2.7-turbo": {InputPerMillionUSD: 0.50, OutputPerMillionUSD: 0.50},
 }
 
 type Usage struct {
 	AgentID          string    `json:"agentId"`
+	AgentRole        string    `json:"agentRole"`
 	OrganizationID   string    `json:"organizationId"`
 	Model            string    `json:"model"`
 	PromptTokens     int64     `json:"promptTokens"`
@@ -98,6 +105,9 @@ func (t *Tracker) Track(usage Usage) (Usage, error) {
 		(float64(usage.CompletionTokens)/1_000_000.0)*price.OutputPerMillionUSD
 	usage.OccurredAt = usage.OccurredAt.UTC()
 	t.usages = append(t.usages, usage)
+
+	telemetry.RecordTokenUsage(context.Background(), usage.AgentID, usage.AgentRole, usage.Model, "prompt", usage.PromptTokens)
+	telemetry.RecordTokenUsage(context.Background(), usage.AgentID, usage.AgentRole, usage.Model, "completion", usage.CompletionTokens)
 
 	return usage, nil
 }

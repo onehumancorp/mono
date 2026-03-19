@@ -8,12 +8,17 @@
 //   - Issue trackers: JIRA, Plane, GitHub Issues, Linear — for ticket management
 //
 // All state is held in-memory following the same pattern used by the rest of
-// the platform.  Real-world deployments would replace the stub send/create
-// calls with actual HTTP client requests.
+// the platform.  Chat integrations with stored credentials (Telegram, Discord)
+// make real outbound HTTP API calls in addition to recording messages locally.
 package integrations
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -63,14 +68,30 @@ const (
 
 // Integration is a configured external service connection.
 type Integration struct {
-	ID          string           `json:"id"`
-	Name        string           `json:"name"`
-	Type        IntegrationType  `json:"type"`
-	Category    Category         `json:"category"`
-	BaseURL     string           `json:"baseUrl,omitempty"`
-	Status      ConnectionStatus `json:"status"`
-	Description string           `json:"description,omitempty"`
-	CreatedAt   time.Time        `json:"createdAt"`
+	ID             string           `json:"id"`
+	Name           string           `json:"name"`
+	Type           IntegrationType  `json:"type"`
+	Category       Category         `json:"category"`
+	BaseURL        string           `json:"baseUrl,omitempty"`
+	Status         ConnectionStatus `json:"status"`
+	Description    string           `json:"description,omitempty"`
+	HasCredentials bool             `json:"hasCredentials,omitempty"`
+	Chatspace      string           `json:"chatspace,omitempty"`
+	CreatedAt      time.Time        `json:"createdAt"`
+}
+
+// IntegrationCredentials holds the secret configuration for an integration.
+// These are stored server-side only and never serialised to the client.
+type IntegrationCredentials struct {
+	BotToken   string // Telegram Bot API token
+	ChatID     string // Telegram chat / group ID
+	WebhookURL string // Discord (or generic) inbound webhook URL
+	APIToken   string // Generic API token / Bearer credential
+}
+
+// IsEmpty reports whether no fields are set.
+func (c IntegrationCredentials) IsEmpty() bool {
+	return c.BotToken == "" && c.ChatID == "" && c.WebhookURL == "" && c.APIToken == ""
 }
 
 // ── Chat types ────────────────────────────────────────────────────────────────
@@ -157,6 +178,7 @@ type Issue struct {
 type Registry struct {
 	mu           sync.RWMutex
 	integrations []Integration
+	credentials  map[string]IntegrationCredentials // keyed by integration ID; never exposed to clients
 	chatMessages []ChatMessage
 	pullRequests []PullRequest
 	issues       []Issue
@@ -167,6 +189,7 @@ type Registry struct {
 func NewRegistry() *Registry {
 	return &Registry{
 		integrations: defaultIntegrations(),
+		credentials:  map[string]IntegrationCredentials{},
 		chatMessages: []ChatMessage{},
 		pullRequests: []PullRequest{},
 		issues:       []Issue{},
@@ -211,7 +234,9 @@ func (r *Registry) Integration(id string) (Integration, bool) {
 }
 
 // Connect marks an integration as connected and sets its base URL.
-func (r *Registry) Connect(id, baseURL string) (Integration, error) {
+// An optional IntegrationCredentials value stores secrets (e.g. bot tokens)
+// for integrations that make real outbound API calls.
+func (r *Registry) Connect(id, baseURL string, creds ...IntegrationCredentials) (Integration, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -220,6 +245,15 @@ func (r *Registry) Connect(id, baseURL string) (Integration, error) {
 			r.integrations[idx].Status = StatusConnected
 			if baseURL != "" {
 				r.integrations[idx].BaseURL = baseURL
+			}
+			if len(creds) > 0 && !creds[0].IsEmpty() {
+				r.credentials[id] = creds[0]
+				r.integrations[idx].HasCredentials = true
+				// Populate the default chatspace from the ChatID credential so the
+				// UI can display which channel messages will be delivered to.
+				if creds[0].ChatID != "" {
+					r.integrations[idx].Chatspace = creds[0].ChatID
+				}
 			}
 			return r.integrations[idx], nil
 		}
@@ -244,7 +278,9 @@ func (r *Registry) Disconnect(id string) (Integration, error) {
 // ── Chat operations ───────────────────────────────────────────────────────────
 
 // SendChatMessage dispatches a message through the named chat integration and
-// records it in the registry log.
+// records it in the registry log.  When real credentials are stored for the
+// integration (Telegram bot token, Discord webhook URL) the message is also
+// delivered via the external API.
 func (r *Registry) SendChatMessage(integrationID, channel, fromAgent, content, threadID string, now time.Time) (ChatMessage, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -276,7 +312,70 @@ func (r *Registry) SendChatMessage(integrationID, channel, fromAgent, content, t
 		SentAt:        now.UTC(),
 	}
 	r.chatMessages = append(r.chatMessages, msg)
+
+	// Attempt real delivery when credentials are configured.
+	if creds, hasCreds := r.credentials[integrationID]; hasCreds {
+		text := fmt.Sprintf("[%s] %s", fromAgent, content)
+		switch integ.Type {
+		case IntegrationTypeTelegram:
+			if creds.BotToken != "" {
+				// Use provided channel (chat_id) or fall back to the stored ChatID.
+				chatID := channel
+				if creds.ChatID != "" {
+					chatID = creds.ChatID
+				}
+				// Best-effort: log but do not fail the in-memory record.
+				_ = sendTelegramMessage(creds.BotToken, chatID, text)
+			}
+		case IntegrationTypeDiscord:
+			if creds.WebhookURL != "" {
+				_ = sendDiscordWebhook(creds.WebhookURL, fromAgent, content)
+			}
+		}
+	}
+
 	return msg, nil
+}
+
+// TestConnection validates that the provided credentials can reach the external
+// service by sending a short test message.  Use this during setup wizards
+// before persisting credentials.
+func (r *Registry) TestConnection(id string, creds IntegrationCredentials) error {
+	r.mu.RLock()
+	integ, ok := r.findIntegration(id)
+	// If no credentials supplied, fall back to stored ones.
+	stored := r.credentials[id]
+	r.mu.RUnlock()
+
+	if !ok {
+		return errors.New("integration not found")
+	}
+
+	active := creds
+	if active.IsEmpty() {
+		active = stored
+	}
+
+	switch integ.Type {
+	case IntegrationTypeTelegram:
+		if active.BotToken == "" {
+			return errors.New("bot token is required")
+		}
+		if active.ChatID == "" {
+			return errors.New("chat ID is required")
+		}
+		return sendTelegramMessage(active.BotToken, active.ChatID,
+			"✅ Test message from One Human Corp — Telegram integration confirmed!")
+	case IntegrationTypeDiscord:
+		if active.WebhookURL == "" {
+			return errors.New("webhook URL is required")
+		}
+		return sendDiscordWebhook(active.WebhookURL, "One Human Corp",
+			"✅ Test message — Discord integration confirmed!")
+	default:
+		// No live endpoint to test; accept unconditionally.
+		return nil
+	}
 }
 
 // ChatMessages returns all recorded chat messages, optionally filtered by
@@ -488,6 +587,62 @@ func (r *Registry) findIntegration(id string) (Integration, bool) {
 // generateID produces a namespaced, time-stamped identifier for an activity record.
 func generateID(prefix string, now time.Time) string {
 	return prefix + "-" + now.UTC().Format("20060102150405.000000000")
+}
+
+// ── Real outbound HTTP helpers ────────────────────────────────────────────────
+
+// TelegramAPIBase is the base URL for the Telegram Bot API.
+// Override in tests to point to a mock server.
+var TelegramAPIBase = "https://api.telegram.org"
+
+// sendTelegramMessage posts a text message to a Telegram chat via the Bot API.
+func sendTelegramMessage(botToken, chatID, text string) error {
+	apiURL := TelegramAPIBase + "/bot" + botToken + "/sendMessage"
+	payload, err := json.Marshal(map[string]string{
+		"chat_id": chatID,
+		"text":    text,
+	})
+	if err != nil {
+		return err
+	}
+	resp, err := http.Post(apiURL, "application/json", bytes.NewReader(payload)) //nolint:noctx
+	if err != nil {
+		return fmt.Errorf("telegram API: %w", err)
+	}
+	defer func() { _, _ = io.Copy(io.Discard, resp.Body); _ = resp.Body.Close() }()
+
+	var result struct {
+		OK          bool   `json:"ok"`
+		Description string `json:"description,omitempty"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return fmt.Errorf("telegram decode: %w", err)
+	}
+	if !result.OK {
+		return fmt.Errorf("telegram error: %s", result.Description)
+	}
+	return nil
+}
+
+// sendDiscordWebhook posts a message to a Discord channel via an inbound webhook.
+func sendDiscordWebhook(webhookURL, username, content string) error {
+	payload, err := json.Marshal(map[string]string{
+		"username": username,
+		"content":  content,
+	})
+	if err != nil {
+		return err
+	}
+	resp, err := http.Post(webhookURL, "application/json", bytes.NewReader(payload)) //nolint:noctx
+	if err != nil {
+		return fmt.Errorf("discord API: %w", err)
+	}
+	defer func() { _, _ = io.Copy(io.Discard, resp.Body); _ = resp.Body.Close() }()
+	// Discord webhooks return 204 No Content on success.
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("discord API returned status %d", resp.StatusCode)
+	}
+	return nil
 }
 
 // defaultIntegrations returns the built-in set of supported external services,

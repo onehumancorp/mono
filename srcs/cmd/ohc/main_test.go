@@ -99,7 +99,7 @@ func TestNewDemoSystem(t *testing.T) {
 }
 
 func TestNewDemoHandlerServesDashboard(t *testing.T) {
-	handler := newDemoHandler(time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC))
+	handler, _ := newDemoHandler(time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC))
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 

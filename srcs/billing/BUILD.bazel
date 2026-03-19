@@ -5,6 +5,7 @@ go_library(
     srcs = ["tracker.go"],
     importpath = "github.com/onehumancorp/mono/srcs/billing",
     visibility = ["//visibility:public"],
+    deps = ["//srcs/telemetry"],
 )
 
 go_test(

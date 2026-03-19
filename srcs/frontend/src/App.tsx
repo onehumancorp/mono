@@ -6,10 +6,20 @@ import {
   fetchDomains,
   fetchIntegrations,
   fetchMCPTools,
+  fetchUsers,
   fireAgent,
   hireAgent,
+  invokeMCPTool,
+  login,
+  logout,
   seedScenario,
   sendMessage,
+  testChatIntegration,
+  fetchSettings,
+  saveSettings,
+  getStoredToken,
+  createUser,
+  deleteUser,
 } from "./api";
 import type {
   AgentRuntime,
@@ -19,10 +29,12 @@ import type {
   MCPTool,
   MeetingRoom,
   OrganizationMember,
+  Settings,
+  UserPublic,
 } from "./types";
 
 type LoadState = "idle" | "loading" | "ready" | "error";
-type NavSection = "overview" | "meetings" | "agents" | "cost" | "playbooks" | "integrations" | "settings";
+type NavSection = "overview" | "meetings" | "agents" | "cost" | "playbooks" | "integrations" | "settings" | "users";
 
 function formatCost(value: number): string {
   if (value === 0) return "$0.000000";
@@ -80,6 +92,7 @@ const ICONS: Record<string, string> = {
   playbooks: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/></svg>`,
   integrations: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 7H7v6h6V7z"/><path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"/></svg>`,
   settings: `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>`,
+  users: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>`,
 };
 
 function NavIcon({ name }: { name: string }) {
@@ -215,6 +228,51 @@ export function App() {
   const [integrationsList, setIntegrationsList] = useState<Integration[]>([]);
   const [selectedScenario, setSelectedScenario] = useState("launch-readiness");
 
+  // ── Auth state ─────────────────────────────────────────────────────────────
+  const [authToken, setAuthToken] = useState<string | null>(getStoredToken);
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [users, setUsers] = useState<UserPublic[]>([]);
+  const [createUserForm, setCreateUserForm] = useState({ username: "", email: "", password: "", roles: "operator" });
+  const [userActionLoading, setUserActionLoading] = useState(false);
+
+  async function handleLogin(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoginLoading(true);
+    setLoginError("");
+    try {
+      const result = await login(loginUsername, loginPassword);
+      setAuthToken(result.token);
+      setLoginUsername("");
+      setLoginPassword("");
+    } catch (err) {
+      setLoginError(err instanceof Error ? err.message : "Login failed");
+    } finally {
+      setLoginLoading(false);
+    }
+  }
+
+  async function handleLogout() {
+    await logout();
+    setAuthToken(null);
+    setSnapshot(null);
+    setState("idle");
+  }
+
+  // ── Telegram setup wizard ──────────────────────────────────────────────────
+  type TelegramWizardState = { open: boolean; step: number; botToken: string; chatId: string; loading: boolean; error: string; testSent: boolean };
+  const [tgWizard, setTgWizard] = useState<TelegramWizardState>({ open: false, step: 1, botToken: "", chatId: "", loading: false, error: "", testSent: false });
+
+  // ── Discord setup wizard ───────────────────────────────────────────────────
+  type DiscordWizardState = { open: boolean; step: number; webhookUrl: string; loading: boolean; error: string; testSent: boolean };
+  const [dcWizard, setDcWizard] = useState<DiscordWizardState>({ open: false, step: 1, webhookUrl: "", loading: false, error: "", testSent: false });
+
+  // ── MCP tool invocation modal ──────────────────────────────────────────────
+  type MCPInvokeState = { open: boolean; tool: MCPTool | null; params: Record<string, string>; loading: boolean; result: string; error: string };
+  const [mcpInvoke, setMcpInvoke] = useState<MCPInvokeState>({ open: false, tool: null, params: {}, loading: false, result: "", error: "" });
+
   const [form, setForm] = useState({
     fromAgent: "pm-1",
     toAgent: "swe-1",
@@ -222,6 +280,8 @@ export function App() {
     messageType: "task",
     content: "Review launch blockers and owner assignments",
   });
+  const [settings, setSettings] = useState<Settings>({ minimaxApiKey: "" });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   const meetings = snapshot?.meetings ?? [];
   const selectedMeeting = useMemo(
@@ -263,16 +323,22 @@ export function App() {
   }
 
   useEffect(() => {
-    void loadAll();
-  }, []);
+    if (authToken) {
+      void loadAll();
+    }
+  }, [authToken]);
 
   useEffect(() => {
     if (activeNav === "settings") {
       void fetchDomains().then(setDomains).catch(() => { });
       void fetchMCPTools().then(setMcpTools).catch(() => { });
+      void fetchSettings().then(setSettings).catch(() => { });
     }
     if (activeNav === "integrations") {
       void fetchIntegrations().then(setIntegrationsList).catch(() => { });
+    }
+    if (activeNav === "users") {
+      void fetchUsers().then(setUsers).catch(() => { });
     }
   }, [activeNav]);
 
@@ -282,8 +348,8 @@ export function App() {
     setError("");
     setNotice("");
     try {
-      await sendMessage(form);
-      await loadAll();
+      const data = await sendMessage(form);
+      setSnapshot(data);
       setSelectedMeetingID(form.meetingId);
       setNotice("Message delivered to the meeting timeline.");
     } catch (e) {
@@ -337,6 +403,80 @@ export function App() {
     }
   }
 
+  // ── Telegram wizard actions ────────────────────────────────────────────────
+  async function handleTelegramTest() {
+    setTgWizard((w) => ({ ...w, loading: true, error: "" }));
+    try {
+      await testChatIntegration("telegram", { botToken: tgWizard.botToken, chatId: tgWizard.chatId });
+      setTgWizard((w) => ({ ...w, loading: false, testSent: true, step: 3 }));
+    } catch (e) {
+      setTgWizard((w) => ({ ...w, loading: false, error: e instanceof Error ? e.message : "Test failed" }));
+    }
+  }
+
+  async function handleTelegramConnect() {
+    setTgWizard((w) => ({ ...w, loading: true, error: "" }));
+    try {
+      const updated = await connectIntegration("telegram", {
+        botToken: tgWizard.botToken,
+        chatId: tgWizard.chatId,
+      });
+      setIntegrationsList((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+      setTgWizard({ open: false, step: 1, botToken: "", chatId: "", loading: false, error: "", testSent: false });
+      setNotice("Telegram connected — messages will be delivered to your bot channel.");
+    } catch (e) {
+      setTgWizard((w) => ({ ...w, loading: false, error: e instanceof Error ? e.message : "Connect failed" }));
+    }
+  }
+
+  // ── Discord wizard actions ─────────────────────────────────────────────────
+  async function handleDiscordTest() {
+    setDcWizard((w) => ({ ...w, loading: true, error: "" }));
+    try {
+      await testChatIntegration("discord", { webhookUrl: dcWizard.webhookUrl });
+      setDcWizard((w) => ({ ...w, loading: false, testSent: true, step: 3 }));
+    } catch (e) {
+      setDcWizard((w) => ({ ...w, loading: false, error: e instanceof Error ? e.message : "Test failed" }));
+    }
+  }
+
+  async function handleDiscordConnect() {
+    setDcWizard((w) => ({ ...w, loading: true, error: "" }));
+    try {
+      const updated = await connectIntegration("discord", { webhookUrl: dcWizard.webhookUrl });
+      setIntegrationsList((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+      setDcWizard({ open: false, step: 1, webhookUrl: "", loading: false, error: "", testSent: false });
+      setNotice("Discord connected — messages will be delivered to your webhook channel.");
+    } catch (e) {
+      setDcWizard((w) => ({ ...w, loading: false, error: e instanceof Error ? e.message : "Connect failed" }));
+    }
+  }
+
+  // ── MCP tool invocation ────────────────────────────────────────────────────
+  async function handleMCPInvoke() {
+    if (!mcpInvoke.tool) return;
+    setMcpInvoke((s) => ({ ...s, loading: true, error: "", result: "" }));
+    try {
+      const res = await invokeMCPTool(mcpInvoke.tool.id, "invoke", mcpInvoke.params);
+      setMcpInvoke((s) => ({ ...s, loading: false, result: JSON.stringify(res, null, 2) }));
+    } catch (e) {
+      setMcpInvoke((s) => ({ ...s, loading: false, error: e instanceof Error ? e.message : "Invocation failed" }));
+    }
+  }
+
+  async function handleSaveSettings() {
+    setSavingSettings(true);
+    setError("");
+    try {
+      await saveSettings(settings);
+      setNotice("Settings saved successfully.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to save settings");
+    } finally {
+      setSavingSettings(false);
+    }
+  }
+
   const navItems: { key: NavSection; label: string }[] = [
     { key: "overview", label: "Overview" },
     { key: "meetings", label: "Meetings" },
@@ -345,16 +485,384 @@ export function App() {
     { key: "playbooks", label: "Playbooks" },
     { key: "integrations", label: "Integrations" },
     { key: "settings", label: "Settings" },
+    { key: "users", label: "Users" },
   ];
 
   const ceoMember = snapshot?.organization.members.find(
     (m) => m.id === snapshot.organization.ceoId || m.role === "CEO",
   );
 
+  // ── Login screen ──────────────────────────────────────────────────────────
+  if (!authToken) {
+    return (
+      <div className="login-screen">
+        <div className="login-card">
+          <div className="login-logo">OHC</div>
+          <h1 className="login-title">Sign in to One Human Corp</h1>
+          <form onSubmit={(e) => { void handleLogin(e); }}>
+            <div className="login-field">
+              <label htmlFor="login-username">Username</label>
+              <input
+                id="login-username"
+                type="text"
+                className="login-input"
+                value={loginUsername}
+                onChange={(e) => setLoginUsername(e.target.value)}
+                autoComplete="username"
+                required
+              />
+            </div>
+            <div className="login-field">
+              <label htmlFor="login-password">Password</label>
+              <input
+                id="login-password"
+                type="password"
+                className="login-input"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </div>
+            {loginError && <p className="login-error">{loginError}</p>}
+            <button type="submit" className="login-btn" disabled={loginLoading}>
+              {loginLoading ? "Signing in…" : "Sign in"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="shell">
       {showHireModal && (
         <HireAgentForm onHire={handleHire} onClose={() => setShowHireModal(false)} />
+      )}
+
+      {/* ── Telegram Setup Wizard ── */}
+      {tgWizard.open && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Connect Telegram">
+          <div className="modal modal--wide">
+            <div className="modal-header">
+              <h2 className="modal-title">Connect Telegram Bot</h2>
+              <button type="button" className="icon-btn" onClick={() => setTgWizard((w) => ({ ...w, open: false }))} aria-label="Close">✕</button>
+            </div>
+            <div className="modal-body">
+              {/* Step indicator */}
+              <div className="wizard-steps">
+                {["Create Bot", "Credentials", "Test", "Done"].map((label, i) => (
+                  <div key={label} className={`wizard-step ${tgWizard.step > i + 1 ? "wizard-step--done" : tgWizard.step === i + 1 ? "wizard-step--active" : ""}`}>
+                    <span className="wizard-step__num">{tgWizard.step > i + 1 ? "✓" : i + 1}</span>
+                    <span className="wizard-step__label">{label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {tgWizard.step === 1 && (
+                <div className="wizard-content">
+                  <h3 className="wizard-heading">Step 1 — Create a Telegram Bot</h3>
+                  <ol className="wizard-list">
+                    <li>Open Telegram and search for <strong>@BotFather</strong>.</li>
+                    <li>Send the command <code>/newbot</code>.</li>
+                    <li>Follow BotFather's instructions — choose a display name and a username ending in <code>bot</code>.</li>
+                    <li>BotFather will reply with your <strong>Bot Token</strong> — a string like <code>123456:ABC-DEF...</code>. Copy it.</li>
+                    <li>Add your bot to the Telegram group or channel where you want messages delivered, then obtain the <strong>Chat ID</strong>.<br /><em>Tip: Forward a message from that chat to @userinfobot to get the chat ID.</em></li>
+                  </ol>
+                  <p className="wizard-note">The bot token and chat ID stay on the server — they are never sent back to the browser.</p>
+                </div>
+              )}
+
+              {tgWizard.step === 2 && (
+                <div className="wizard-content">
+                  <h3 className="wizard-heading">Step 2 — Enter Credentials</h3>
+                  <label className="field">
+                    <span className="field-label">Bot Token</span>
+                    <input
+                      className="input"
+                      type="password"
+                      placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+                      value={tgWizard.botToken}
+                      onChange={(e) => setTgWizard((w) => ({ ...w, botToken: e.target.value }))}
+                      autoComplete="off"
+                    />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">Chat ID</span>
+                    <input
+                      className="input"
+                      placeholder="-1001234567890  (group) or  123456789  (direct)"
+                      value={tgWizard.chatId}
+                      onChange={(e) => setTgWizard((w) => ({ ...w, chatId: e.target.value }))}
+                      autoComplete="off"
+                    />
+                    <span className="field-hint">For a group/channel, the ID is usually a negative number. For a private chat, it's positive.</span>
+                  </label>
+                  {tgWizard.error && <p className="field-error" role="alert">{tgWizard.error}</p>}
+                </div>
+              )}
+
+              {tgWizard.step === 3 && !tgWizard.testSent && (
+                <div className="wizard-content">
+                  <h3 className="wizard-heading">Step 3 — Test Connection</h3>
+                  <p>Click <strong>Send Test Message</strong> to verify your bot can reach the chat. A confirmation message will appear in your Telegram.</p>
+                  {tgWizard.error && <p className="field-error" role="alert">{tgWizard.error}</p>}
+                </div>
+              )}
+
+              {tgWizard.step === 3 && tgWizard.testSent && (
+                <div className="wizard-content">
+                  <h3 className="wizard-heading">Step 3 — Test Succeeded ✓</h3>
+                  <p className="wizard-success">A test message was sent to your Telegram chat. Check your Telegram to confirm delivery, then click <strong>Complete Setup</strong>.</p>
+                </div>
+              )}
+
+              {tgWizard.step === 4 && (
+                <div className="wizard-content">
+                  <h3 className="wizard-heading">Telegram Connected!</h3>
+                  <p className="wizard-success">Your Telegram bot is now connected. Agent messages and notifications will be delivered to your configured chat.</p>
+                  <p><strong>Chat ID:</strong> <code>{tgWizard.chatId}</code></p>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              {tgWizard.step > 1 && tgWizard.step < 4 && (
+                <button type="button" className="btn btn-ghost" onClick={() => setTgWizard((w) => ({ ...w, step: w.step - 1 as 1 | 2 | 3 | 4, error: "" }))}>Back</button>
+              )}
+              {tgWizard.step === 1 && (
+                <button type="button" className="btn btn-primary" onClick={() => setTgWizard((w) => ({ ...w, step: 2 }))}>Next: Enter Token →</button>
+              )}
+              {tgWizard.step === 2 && (
+                <button type="button" className="btn btn-primary" disabled={!tgWizard.botToken.trim() || !tgWizard.chatId.trim()} onClick={() => setTgWizard((w) => ({ ...w, step: 3, error: "" }))}>Next: Test →</button>
+              )}
+              {tgWizard.step === 3 && !tgWizard.testSent && (
+                <button type="button" className="btn btn-primary" disabled={tgWizard.loading} onClick={() => { void handleTelegramTest(); }}>
+                  {tgWizard.loading ? "Sending…" : "Send Test Message"}
+                </button>
+              )}
+              {tgWizard.step === 3 && tgWizard.testSent && (
+                <button type="button" className="btn btn-primary" disabled={tgWizard.loading} onClick={() => { void handleTelegramConnect(); }}>
+                  {tgWizard.loading ? "Connecting…" : "Complete Setup"}
+                </button>
+              )}
+              {tgWizard.step === 4 && (
+                <button type="button" className="btn btn-primary" onClick={() => setTgWizard((w) => ({ ...w, open: false }))}>Done</button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Discord Setup Wizard ── */}
+      {dcWizard.open && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Connect Discord">
+          <div className="modal modal--wide">
+            <div className="modal-header">
+              <h2 className="modal-title">Connect Discord Webhook</h2>
+              <button type="button" className="icon-btn" onClick={() => setDcWizard((w) => ({ ...w, open: false }))} aria-label="Close">✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="wizard-steps">
+                {["Create Webhook", "Enter URL", "Test", "Done"].map((label, i) => (
+                  <div key={label} className={`wizard-step ${dcWizard.step > i + 1 ? "wizard-step--done" : dcWizard.step === i + 1 ? "wizard-step--active" : ""}`}>
+                    <span className="wizard-step__num">{dcWizard.step > i + 1 ? "✓" : i + 1}</span>
+                    <span className="wizard-step__label">{label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {dcWizard.step === 1 && (
+                <div className="wizard-content">
+                  <h3 className="wizard-heading">Step 1 — Create a Discord Webhook</h3>
+                  <ol className="wizard-list">
+                    <li>Open Discord and go to the <strong>Server Settings</strong> of your target server.</li>
+                    <li>Click <strong>Integrations</strong> in the left sidebar.</li>
+                    <li>Click <strong>Webhooks</strong>, then <strong>New Webhook</strong>.</li>
+                    <li>Give the webhook a name (e.g. <em>One Human Corp Agents</em>) and choose the channel for notifications.</li>
+                    <li>Click <strong>Copy Webhook URL</strong> — you'll need it in the next step.</li>
+                  </ol>
+                  <p className="wizard-note">The webhook URL is stored server-side and never returned to the browser.</p>
+                </div>
+              )}
+
+              {dcWizard.step === 2 && (
+                <div className="wizard-content">
+                  <h3 className="wizard-heading">Step 2 — Enter Webhook URL</h3>
+                  <label className="field">
+                    <span className="field-label">Webhook URL</span>
+                    <input
+                      className="input"
+                      type="password"
+                      placeholder="https://discord.com/api/webhooks/..."
+                      value={dcWizard.webhookUrl}
+                      onChange={(e) => setDcWizard((w) => ({ ...w, webhookUrl: e.target.value }))}
+                      autoComplete="off"
+                    />
+                  </label>
+                  {dcWizard.error && <p className="field-error" role="alert">{dcWizard.error}</p>}
+                </div>
+              )}
+
+              {dcWizard.step === 3 && !dcWizard.testSent && (
+                <div className="wizard-content">
+                  <h3 className="wizard-heading">Step 3 — Test Connection</h3>
+                  <p>Click <strong>Send Test Message</strong> to verify the webhook can post to your Discord channel.</p>
+                  {dcWizard.error && <p className="field-error" role="alert">{dcWizard.error}</p>}
+                </div>
+              )}
+
+              {dcWizard.step === 3 && dcWizard.testSent && (
+                <div className="wizard-content">
+                  <h3 className="wizard-heading">Step 3 — Test Succeeded ✓</h3>
+                  <p className="wizard-success">A test message was posted to your Discord channel. Confirm it appeared, then click <strong>Complete Setup</strong>.</p>
+                </div>
+              )}
+
+              {dcWizard.step === 4 && (
+                <div className="wizard-content">
+                  <h3 className="wizard-heading">Discord Connected!</h3>
+                  <p className="wizard-success">Your Discord webhook is now active. Agent messages and notifications will be delivered to your configured channel.</p>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              {dcWizard.step > 1 && dcWizard.step < 4 && (
+                <button type="button" className="btn btn-ghost" onClick={() => setDcWizard((w) => ({ ...w, step: w.step - 1 as 1 | 2 | 3 | 4, error: "" }))}>Back</button>
+              )}
+              {dcWizard.step === 1 && (
+                <button type="button" className="btn btn-primary" onClick={() => setDcWizard((w) => ({ ...w, step: 2 }))}>Next: Enter URL →</button>
+              )}
+              {dcWizard.step === 2 && (
+                <button type="button" className="btn btn-primary" disabled={!dcWizard.webhookUrl.trim()} onClick={() => setDcWizard((w) => ({ ...w, step: 3, error: "" }))}>Next: Test →</button>
+              )}
+              {dcWizard.step === 3 && !dcWizard.testSent && (
+                <button type="button" className="btn btn-primary" disabled={dcWizard.loading} onClick={() => { void handleDiscordTest(); }}>
+                  {dcWizard.loading ? "Sending…" : "Send Test Message"}
+                </button>
+              )}
+              {dcWizard.step === 3 && dcWizard.testSent && (
+                <button type="button" className="btn btn-primary" disabled={dcWizard.loading} onClick={() => { void handleDiscordConnect(); }}>
+                  {dcWizard.loading ? "Connecting…" : "Complete Setup"}
+                </button>
+              )}
+              {dcWizard.step === 4 && (
+                <button type="button" className="btn btn-primary" onClick={() => setDcWizard((w) => ({ ...w, open: false }))}>Done</button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MCP Tool Invocation Modal ── */}
+      {mcpInvoke.open && mcpInvoke.tool && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Invoke MCP Tool">
+          <div className="modal modal--wide">
+            <div className="modal-header">
+              <h2 className="modal-title">Invoke: {mcpInvoke.tool.name}</h2>
+              <button type="button" className="icon-btn" onClick={() => setMcpInvoke((s) => ({ ...s, open: false, result: "", error: "" }))} aria-label="Close">✕</button>
+            </div>
+            <div className="modal-body">
+              <p className="settings-desc">{mcpInvoke.tool.description}</p>
+              {/* Render param fields based on tool category */}
+              {mcpInvoke.tool.category === "communication" && (
+                <>
+                  <label className="field">
+                    <span className="field-label">From Agent</span>
+                    <select className="input input-sm" value={mcpInvoke.params.fromAgent ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, fromAgent: e.target.value } }))}>
+                      <option value="">— select agent —</option>
+                      {(snapshot?.agents ?? []).map((a) => <option key={a.id} value={a.id}>{a.name} ({a.id})</option>)}
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span className="field-label">Channel / Chat ID</span>
+                    <input className="input input-sm" placeholder="e.g. -1001234567890 or #general" value={mcpInvoke.params.channel ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, channel: e.target.value } }))} />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">Message</span>
+                    <textarea className="input input-sm textarea" rows={3} value={mcpInvoke.params.content ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, content: e.target.value } }))} />
+                  </label>
+                </>
+              )}
+              {mcpInvoke.tool.category === "code" && (
+                <>
+                  <label className="field">
+                    <span className="field-label">Repository</span>
+                    <input className="input input-sm" placeholder="owner/repo" value={mcpInvoke.params.repository ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, repository: e.target.value } }))} />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">PR Title</span>
+                    <input className="input input-sm" placeholder="feat: description" value={mcpInvoke.params.title ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, title: e.target.value } }))} />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">Source Branch</span>
+                    <input className="input input-sm" placeholder="feature/my-branch" value={mcpInvoke.params.sourceBranch ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, sourceBranch: e.target.value } }))} />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">Target Branch</span>
+                    <input className="input input-sm" value={mcpInvoke.params.targetBranch ?? "main"} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, targetBranch: e.target.value } }))} />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">Created By</span>
+                    <select className="input input-sm" value={mcpInvoke.params.createdBy ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, createdBy: e.target.value } }))}>
+                      <option value="">— select agent —</option>
+                      {(snapshot?.agents ?? []).map((a) => <option key={a.id} value={a.id}>{a.name} ({a.id})</option>)}
+                    </select>
+                  </label>
+                </>
+              )}
+              {(mcpInvoke.tool.category === "project_management") && (
+                <>
+                  <label className="field">
+                    <span className="field-label">Project</span>
+                    <input className="input input-sm" placeholder="e.g. PROJ" value={mcpInvoke.params.project ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, project: e.target.value } }))} />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">Title</span>
+                    <input className="input input-sm" placeholder="Issue title" value={mcpInvoke.params.title ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, title: e.target.value } }))} />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">Description</span>
+                    <textarea className="input input-sm textarea" rows={2} value={mcpInvoke.params.description ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, description: e.target.value } }))} />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">Priority</span>
+                    <select className="input input-sm" value={mcpInvoke.params.priority ?? "medium"} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, priority: e.target.value } }))}>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span className="field-label">Created By</span>
+                    <select className="input input-sm" value={mcpInvoke.params.createdBy ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, createdBy: e.target.value } }))}>
+                      <option value="">— select agent —</option>
+                      {(snapshot?.agents ?? []).map((a) => <option key={a.id} value={a.id}>{a.name} ({a.id})</option>)}
+                    </select>
+                  </label>
+                </>
+              )}
+              {!["communication", "code", "project_management"].includes(mcpInvoke.tool.category) && (
+                <div className="wizard-content">
+                  <p>This tool uses default invocation. Add integration-specific parameters as needed by your workflow.</p>
+                </div>
+              )}
+              {mcpInvoke.error && <p className="field-error" role="alert">{mcpInvoke.error}</p>}
+              {mcpInvoke.result && (
+                <div className="mcp-result">
+                  <p className="mcp-result__label">Result</p>
+                  <pre className="mcp-result__body">{mcpInvoke.result}</pre>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-ghost" onClick={() => setMcpInvoke((s) => ({ ...s, open: false, result: "", error: "" }))}>Close</button>
+              <button type="button" className="btn btn-primary" disabled={mcpInvoke.loading} onClick={() => { void handleMCPInvoke(); }}>
+                {mcpInvoke.loading ? "Invoking…" : "Invoke Tool"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Sidebar ── */}
@@ -392,6 +900,13 @@ export function App() {
         </nav>
 
         <div className="sidebar-footer">
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm logout-btn"
+            onClick={() => { void handleLogout(); }}
+          >
+            Sign out
+          </button>
           {ceoMember && (
             <div className="ceo-card">
               <span className="ceo-avatar" aria-hidden="true">CEO</span>
@@ -593,35 +1108,64 @@ export function App() {
                   <form onSubmit={handleSubmit} className="msg-form">
                     <label className="field">
                       <span className="field-label">From</span>
-                      <input
+                      <select
                         className="input input-sm"
                         value={form.fromAgent}
                         onChange={(e) => setForm((p) => ({ ...p, fromAgent: e.target.value }))}
-                      />
+                      >
+                        {(snapshot?.agents ?? []).map((a) => (
+                          <option key={a.id} value={a.id}>{a.name} ({a.id})</option>
+                        ))}
+                      </select>
                     </label>
                     <label className="field">
                       <span className="field-label">To</span>
-                      <input
+                      <select
                         className="input input-sm"
                         value={form.toAgent}
                         onChange={(e) => setForm((p) => ({ ...p, toAgent: e.target.value }))}
-                      />
+                      >
+                        {(snapshot?.agents ?? []).map((a) => (
+                          <option key={a.id} value={a.id}>{a.name} ({a.id})</option>
+                        ))}
+                      </select>
                     </label>
                     <label className="field">
-                      <span className="field-label">Meeting ID</span>
-                      <input
+                      <span className="field-label">Meeting</span>
+                      <select
                         className="input input-sm"
                         value={form.meetingId}
-                        onChange={(e) => setForm((p) => ({ ...p, meetingId: e.target.value }))}
-                      />
+                        onChange={(e) => {
+                          setSelectedMeetingID(e.target.value);
+                          setForm((p) => ({ ...p, meetingId: e.target.value }));
+                        }}
+                      >
+                        {meetings.map((m) => (
+                          <option key={m.id} value={m.id}>{m.id}</option>
+                        ))}
+                      </select>
                     </label>
                     <label className="field">
-                      <span className="field-label">Type</span>
-                      <input
+                      <span className="field-label">Event Type</span>
+                      <select
                         className="input input-sm"
                         value={form.messageType}
                         onChange={(e) => setForm((p) => ({ ...p, messageType: e.target.value }))}
-                      />
+                      >
+                        <option value="task">task</option>
+                        <option value="status">status</option>
+                        <option value="handoff">handoff</option>
+                        <option value="CodeReviewed">CodeReviewed</option>
+                        <option value="TestsFailed">TestsFailed</option>
+                        <option value="TestsPassed">TestsPassed</option>
+                        <option value="SpecApproved">SpecApproved</option>
+                        <option value="BlockerRaised">BlockerRaised</option>
+                        <option value="BlockerCleared">BlockerCleared</option>
+                        <option value="PRCreated">PRCreated</option>
+                        <option value="PRMerged">PRMerged</option>
+                        <option value="DesignReviewed">DesignReviewed</option>
+                        <option value="ApprovalNeeded">ApprovalNeeded</option>
+                      </select>
                     </label>
                     <label className="field">
                       <span className="field-label">Content</span>
@@ -725,23 +1269,52 @@ export function App() {
                   <form onSubmit={handleSubmit} className="msg-form">
                     <label className="field">
                       <span className="field-label">From</span>
-                      <input className="input input-sm" value={form.fromAgent}
-                        onChange={(e) => setForm((p) => ({ ...p, fromAgent: e.target.value }))} />
+                      <select className="input input-sm" value={form.fromAgent}
+                        onChange={(e) => setForm((p) => ({ ...p, fromAgent: e.target.value }))}>
+                        {(snapshot?.agents ?? []).map((a) => (
+                          <option key={a.id} value={a.id}>{a.name} ({a.id})</option>
+                        ))}
+                      </select>
                     </label>
                     <label className="field">
                       <span className="field-label">To</span>
-                      <input className="input input-sm" value={form.toAgent}
-                        onChange={(e) => setForm((p) => ({ ...p, toAgent: e.target.value }))} />
+                      <select className="input input-sm" value={form.toAgent}
+                        onChange={(e) => setForm((p) => ({ ...p, toAgent: e.target.value }))}>
+                        {(snapshot?.agents ?? []).map((a) => (
+                          <option key={a.id} value={a.id}>{a.name} ({a.id})</option>
+                        ))}
+                      </select>
                     </label>
                     <label className="field">
-                      <span className="field-label">Meeting ID</span>
-                      <input className="input input-sm" value={form.meetingId}
-                        onChange={(e) => setForm((p) => ({ ...p, meetingId: e.target.value }))} />
+                      <span className="field-label">Meeting</span>
+                      <select className="input input-sm" value={form.meetingId}
+                        onChange={(e) => {
+                          setSelectedMeetingID(e.target.value);
+                          setForm((p) => ({ ...p, meetingId: e.target.value }));
+                        }}>
+                        {meetings.map((m) => (
+                          <option key={m.id} value={m.id}>{m.id}</option>
+                        ))}
+                      </select>
                     </label>
                     <label className="field">
                       <span className="field-label">Event Type</span>
-                      <input className="input input-sm" value={form.messageType}
-                        onChange={(e) => setForm((p) => ({ ...p, messageType: e.target.value }))} />
+                      <select className="input input-sm" value={form.messageType}
+                        onChange={(e) => setForm((p) => ({ ...p, messageType: e.target.value }))}>
+                        <option value="task">task</option>
+                        <option value="status">status</option>
+                        <option value="handoff">handoff</option>
+                        <option value="CodeReviewed">CodeReviewed</option>
+                        <option value="TestsFailed">TestsFailed</option>
+                        <option value="TestsPassed">TestsPassed</option>
+                        <option value="SpecApproved">SpecApproved</option>
+                        <option value="BlockerRaised">BlockerRaised</option>
+                        <option value="BlockerCleared">BlockerCleared</option>
+                        <option value="PRCreated">PRCreated</option>
+                        <option value="PRMerged">PRMerged</option>
+                        <option value="DesignReviewed">DesignReviewed</option>
+                        <option value="ApprovalNeeded">ApprovalNeeded</option>
+                      </select>
                     </label>
                     <label className="field">
                       <span className="field-label">Content</span>
@@ -1014,18 +1587,30 @@ export function App() {
                             </span>
                           </div>
                           <p className="tool-item__desc">{integ.description}</p>
+                          {integ.status === "connected" && integ.chatspace && (
+                            <p className="tool-item__meta">Chatspace: <code>{integ.chatspace}</code></p>
+                          )}
+                          {integ.status === "connected" && integ.hasCredentials && (
+                            <p className="tool-item__meta tool-item__meta--green">Credentials configured ✓</p>
+                          )}
                           <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
                             {integ.status !== "connected" ? (
                               <button
                                 type="button"
                                 className="btn btn-primary btn--sm"
                                 onClick={() => {
-                                  void connectIntegration(integ.id).then((updated) => {
-                                    setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
-                                  });
+                                  if (integ.id === "telegram") {
+                                    setTgWizard({ open: true, step: 1, botToken: "", chatId: "", loading: false, error: "", testSent: false });
+                                  } else if (integ.id === "discord") {
+                                    setDcWizard({ open: true, step: 1, webhookUrl: "", loading: false, error: "", testSent: false });
+                                  } else {
+                                    void connectIntegration(integ.id).then((updated) => {
+                                      setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
+                                    });
+                                  }
                                 }}
                               >
-                                Connect
+                                {integ.id === "telegram" || integ.id === "discord" ? "Setup →" : "Connect"}
                               </button>
                             ) : (
                               <button
@@ -1213,6 +1798,37 @@ export function App() {
 
               <article className="panel">
                 <header className="panel-head">
+                  <h2 className="panel-title">AI Model Configuration</h2>
+                </header>
+                <div className="panel-body">
+                  <p className="settings-desc">
+                    Configure API keys for third-party AI model providers used by your agents.
+                  </p>
+                  <label className="field">
+                    <span className="field-label">Minimax API Key</span>
+                    <input
+                      className="input"
+                      type="password"
+                      placeholder="sk-cp-..."
+                      value={settings.minimaxApiKey ?? ""}
+                      onChange={(e) => setSettings({ ...settings, minimaxApiKey: e.target.value })}
+                      autoComplete="off"
+                    />
+                    <span className="field-hint">Required for minimax-m2.7 models.</span>
+                  </label>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => { void handleSaveSettings(); }}
+                    disabled={savingSettings}
+                  >
+                    {savingSettings ? "Saving…" : "Save Settings"}
+                  </button>
+                </div>
+              </article>
+
+              <article className="panel">
+                <header className="panel-head">
                   <h2 className="panel-title">Available Domains</h2>
                 </header>
                 <div className="panel-body">
@@ -1251,7 +1867,16 @@ export function App() {
                           </span>
                         </div>
                         <p className="tool-item__desc">{tool.description}</p>
-                        <span className="tool-category">{tool.category}</span>
+                        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
+                          <span className="tool-category">{tool.category}</span>
+                          <button
+                            type="button"
+                            className="btn btn-primary btn--sm"
+                            onClick={() => setMcpInvoke({ open: true, tool, params: {}, loading: false, result: "", error: "" })}
+                          >
+                            Invoke
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -1275,6 +1900,123 @@ export function App() {
                     <dt>Role Profiles</dt>
                     <dd>{snapshot?.organization.roleProfiles.length ?? 0}</dd>
                   </dl>
+                </div>
+              </article>
+            </div>
+          </>
+        )}
+
+        {activeNav === "users" && (
+          <>
+            <div className="page-header">
+              <div>
+                <h2 className="page-heading">User Management</h2>
+                <p className="page-sub">Create and manage human users with role-based access control</p>
+              </div>
+            </div>
+            <div className="content-grid two-col">
+              <article className="panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Users</h2>
+                  <span className="chip chip--green">{users.length}</span>
+                </header>
+                <div className="panel-body">
+                  {users.length === 0 && <p className="empty-state">No users yet.</p>}
+                  <ul className="user-list">
+                    {users.map((u) => (
+                      <li key={u.id} className="user-item">
+                        <div className="user-item__header">
+                          <span className="user-item__name">{u.username}</span>
+                          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                            {u.roles.map((r) => <span key={r} className="chip chip--sm">{r}</span>)}
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              disabled={userActionLoading}
+                              onClick={() => {
+                                setUserActionLoading(true);
+                                void deleteUser(u.id).then(async () => {
+                                  const list = await fetchUsers();
+                                  setUsers(list);
+                                }).finally(() => setUserActionLoading(false));
+                              }}
+                            >Remove</button>
+                          </div>
+                        </div>
+                        <span className="user-item__email">{u.email}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+              <article className="panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Create User</h2>
+                </header>
+                <div className="panel-body">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      setUserActionLoading(true);
+                      void createUser({ username: createUserForm.username, email: createUserForm.email, password: createUserForm.password, roles: [createUserForm.roles] })
+                        .then(async () => {
+                          const list = await fetchUsers();
+                          setUsers(list);
+                          setCreateUserForm({ username: "", email: "", password: "", roles: "operator" });
+                        })
+                        .finally(() => setUserActionLoading(false));
+                    }}
+                  >
+                    <label className="field">
+                      <span className="field-label">Username</span>
+                      <input
+                        className="input"
+                        value={createUserForm.username}
+                        onChange={(e) => setCreateUserForm((f) => ({ ...f, username: e.target.value }))}
+                        required
+                        placeholder="e.g. alice"
+                      />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">Email</span>
+                      <input
+                        type="email"
+                        className="input"
+                        value={createUserForm.email}
+                        onChange={(e) => setCreateUserForm((f) => ({ ...f, email: e.target.value }))}
+                        required
+                        placeholder="alice@example.com"
+                      />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">Password</span>
+                      <input
+                        type="password"
+                        className="input"
+                        value={createUserForm.password}
+                        onChange={(e) => setCreateUserForm((f) => ({ ...f, password: e.target.value }))}
+                        required
+                        placeholder="••••••••"
+                      />
+                    </label>
+                    <label className="field">
+                      <span className="field-label">Role</span>
+                      <select
+                        className="input"
+                        value={createUserForm.roles}
+                        onChange={(e) => setCreateUserForm((f) => ({ ...f, roles: e.target.value }))}
+                      >
+                        <option value="admin">admin</option>
+                        <option value="operator">operator</option>
+                        <option value="viewer">viewer</option>
+                      </select>
+                    </label>
+                    <div style={{ marginTop: "1rem" }}>
+                      <button type="submit" className="btn btn-primary" disabled={userActionLoading}>
+                        {userActionLoading ? "Creating…" : "Create User"}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </article>
             </div>

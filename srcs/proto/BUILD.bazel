@@ -1,52 +1,54 @@
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@rules_go//proto:def.bzl", "go_proto_library")
 
 proto_library(
     name = "common_proto",
     srcs = ["common.proto"],
-    deps = ["@protobuf//:go_features_proto"],
     visibility = ["//visibility:public"],
+    deps = ["@protobuf//:go_features_proto"],
 )
 
 proto_library(
     name = "agent_proto",
     srcs = ["agent.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         ":common_proto",
         "@protobuf//:go_features_proto",
     ],
-    visibility = ["//visibility:public"],
 )
 
 proto_library(
     name = "organization_proto",
     srcs = ["organization.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         ":common_proto",
         "@protobuf//:go_features_proto",
     ],
-    visibility = ["//visibility:public"],
 )
 
 proto_library(
     name = "billing_proto",
     srcs = ["billing.proto"],
-    deps = ["@protobuf//:go_features_proto"],
     visibility = ["//visibility:public"],
+    deps = ["@protobuf//:go_features_proto"],
 )
 
 proto_library(
     name = "skills_proto",
     srcs = ["skills.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         ":common_proto",
         "@protobuf//:go_features_proto",
     ],
-    visibility = ["//visibility:public"],
 )
 
 proto_library(
     name = "app_proto",
     srcs = ["app.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         ":agent_proto",
         ":billing_proto",
@@ -54,6 +56,20 @@ proto_library(
         ":skills_proto",
         "@protobuf//:go_features_proto",
     ],
+)
+
+proto_library(
+    name = "hub_proto",
+    srcs = ["hub.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["@protobuf//:go_features_proto"],
+)
+
+go_proto_library(
+    name = "hub_go_proto",
+    compilers = ["@rules_go//proto:go_grpc"],
+    importpath = "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration",
+    proto = ":hub_proto",
     visibility = ["//visibility:public"],
 )
 
@@ -63,4 +79,5 @@ exports_files([
     "billing.proto",
     "common.proto",
     "organization.proto",
+    "hub.proto",
 ])

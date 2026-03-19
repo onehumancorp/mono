@@ -1,1 +1,27 @@
-exports_files(["go.mod"])
+load("@gazelle//:def.bzl", "gazelle")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+
+# gazelle:prefix github.com/onehumancorp/mono
+# gazelle:exclude srcs/proto
+gazelle(name = "gazelle")
+
+gazelle(
+    name = "gazelle-update-repos",
+    args = [
+        "-from_file=go.mod",
+        "-to_macro=repositories.bzl%go_repositories",
+        "-prune",
+    ],
+    command = "update-repos",
+)
+
+sh_binary(
+    name = "deploy_dev",
+    srcs = ["//deploy:deploy_dev.sh"],
+    data = [
+        "//deploy:backend_tarball",
+        "//deploy:docker-compose.yml",
+        "//deploy:frontend_tarball",
+    ],
+    tags = ["manual"],
+)

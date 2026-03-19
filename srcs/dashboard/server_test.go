@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -45,54 +43,9 @@ func newTestServer(t *testing.T) (*Server, *httptest.Server) {
 	return app, server
 }
 
-func TestServerServesDashboardEndpoints(t *testing.T) {
-	t.Setenv("MONO_FRONTEND_DIST", filepath.Join(t.TempDir(), "missing"))
-	t.Chdir(t.TempDir())
-
+func TestServerServesAPIs(t *testing.T) {
 	_, server := newTestServer(t)
 	defer server.Close()
-
-	resp, err := http.Get(server.URL + "/")
-	if err != nil {
-		t.Fatalf("GET / returned error: %v", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("reading html response: %v", err)
-	}
-	if !strings.Contains(string(body), "One Human Corp Dashboard") {
-		t.Fatalf("expected dashboard title in HTML body")
-	}
-	if !strings.Contains(string(body), "Send Message") {
-		t.Fatalf("expected interactive message form in HTML body")
-	}
-	if !strings.Contains(string(body), "Project Status") {
-		t.Fatalf("expected project status panel in HTML body")
-	}
-	if !strings.Contains(string(body), "Role Playbooks") {
-		t.Fatalf("expected role playbooks panel in HTML body")
-	}
-	if !strings.Contains(string(body), "Context Inputs:") {
-		t.Fatalf("expected role playbook context inputs in HTML body")
-	}
-	if !strings.Contains(string(body), "PM — IN_MEETING") {
-		t.Fatalf("expected agent status details in HTML body")
-	}
-
-	resp, err = http.Get(server.URL + "/app")
-	if err != nil {
-		t.Fatalf("GET /app returned error: %v", err)
-	}
-	defer resp.Body.Close()
-	appBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("reading app response: %v", err)
-	}
-	if !strings.Contains(string(appBody), "React Frontend Route") {
-		t.Fatalf("expected frontend route fallback HTML")
-	}
 
 	for _, path := range []string{"/api/org", "/api/meetings", "/api/costs"} {
 		resp, err := http.Get(server.URL + path)
@@ -131,93 +84,7 @@ func TestHandleDashboardReturnsSnapshot(t *testing.T) {
 	}
 }
 
-func TestFrontendDistPathUsesEnvironmentOverride(t *testing.T) {
-	dir := t.TempDir()
-	indexPath := filepath.Join(dir, "index.html")
-	if err := os.WriteFile(indexPath, []byte("ok"), 0o644); err != nil {
-		t.Fatalf("write index file: %v", err)
-	}
-	t.Setenv("MONO_FRONTEND_DIST", dir)
 
-	got := frontendDistPath()
-	if got != dir {
-		t.Fatalf("expected env override path %q, got %q", dir, got)
-	}
-}
-
-func TestFrontendDistPathIgnoresInvalidEnvAndFallsBackEmpty(t *testing.T) {
-	t.Setenv("MONO_FRONTEND_DIST", filepath.Join(t.TempDir(), "missing"))
-	t.Chdir(t.TempDir())
-	if got := frontendDistPath(); got != "" {
-		t.Fatalf("expected empty path when env and candidates are invalid, got %q", got)
-	}
-}
-
-func TestFrontendDistPathFindsCandidatePath(t *testing.T) {
-	t.Setenv("MONO_FRONTEND_DIST", "")
-	work := t.TempDir()
-	t.Chdir(work)
-
-	dir := filepath.Join(work, "srcs", "frontend", "dist")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatalf("mkdir dist path: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte("ok"), 0o644); err != nil {
-		t.Fatalf("write index file: %v", err)
-	}
-
-	if got := frontendDistPath(); got != "srcs/frontend/dist" {
-		t.Fatalf("expected candidate path srcs/frontend/dist, got %q", got)
-	}
-}
-
-func TestHandleAppServesBuiltIndexWhenDistExists(t *testing.T) {
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte("<html>built app</html>"), 0o644); err != nil {
-		t.Fatalf("write index file: %v", err)
-	}
-	t.Setenv("MONO_FRONTEND_DIST", dir)
-
-	_, server := newTestServer(t)
-	defer server.Close()
-
-	resp, err := http.Get(server.URL + "/app")
-	if err != nil {
-		t.Fatalf("GET /app returned error: %v", err)
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("read /app body: %v", err)
-	}
-	if !strings.Contains(string(body), "built app") {
-		t.Fatalf("expected built frontend content, got %s", string(body))
-	}
-}
-
-func TestNewServerServesAppAssetsFromDist(t *testing.T) {
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte("index"), 0o644); err != nil {
-		t.Fatalf("write index file: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "asset.js"), []byte("console.log('asset')"), 0o644); err != nil {
-		t.Fatalf("write asset file: %v", err)
-	}
-	t.Setenv("MONO_FRONTEND_DIST", dir)
-
-	_, server := newTestServer(t)
-	defer server.Close()
-
-	resp, err := http.Get(server.URL + "/app/asset.js")
-	if err != nil {
-		t.Fatalf("GET /app/asset.js returned error: %v", err)
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	if !strings.Contains(string(body), "asset") {
-		t.Fatalf("expected asset body, got %s", string(body))
-	}
-}
 
 func TestHandleOrgReturnsJSONPayload(t *testing.T) {
 	_, server := newTestServer(t)

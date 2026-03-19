@@ -2,13 +2,19 @@ package main
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"time"
 
+	"google.golang.org/grpc"
+
+	"github.com/onehumancorp/mono/srcs/auth"
 	"github.com/onehumancorp/mono/srcs/billing"
 	"github.com/onehumancorp/mono/srcs/dashboard"
 	"github.com/onehumancorp/mono/srcs/domain"
+	chatwoot "github.com/onehumancorp/mono/srcs/integrations/chatwoot"
 	"github.com/onehumancorp/mono/srcs/orchestration"
+	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
 const defaultAddress = ":8080"
@@ -31,6 +37,7 @@ func newDemoSystem(now time.Time) (domain.Organization, *orchestration.Hub, *bil
 	tracker := billing.NewTracker(billing.DefaultCatalog)
 	_, _ = tracker.Track(billing.Usage{
 		AgentID:          "swe-1",
+		AgentRole:        "SOFTWARE_ENGINEER",
 		OrganizationID:   org.ID,
 		Model:            "gpt-4o",
 		PromptTokens:     1500,
@@ -41,17 +48,53 @@ func newDemoSystem(now time.Time) (domain.Organization, *orchestration.Hub, *bil
 	return org, hub, tracker
 }
 
-func newDemoHandler(now time.Time) http.Handler {
+func newDemoHandler(now time.Time) (http.Handler, *orchestration.Hub) {
 	org, hub, tracker := newDemoSystem(now)
-	return dashboard.NewServer(org, hub, tracker)
+	authStore := auth.NewStore()
+
+	// Start Chatwoot auto-setup in the background when enabled.
+	if chatwoot.IsEnabled() {
+		go func() {
+			c := chatwoot.NewClientFromEnv()
+			if err := c.Setup(); err != nil {
+				log.Printf("chatwoot setup: %v", err)
+			}
+		}()
+	}
+
+	return dashboard.NewServer(org, hub, tracker, authStore), hub
 }
 
 func run(now time.Time, listen listenFunc, logger *log.Logger) error {
-	logger.Printf("serving dashboard on http://%s", defaultAddress)
-	return listen(defaultAddress, newDemoHandler(now))
+	handler, hub := newDemoHandler(now)
+
+	// Start gRPC server
+	go func() {
+		lis, err := net.Listen("tcp", ":9090")
+		if err != nil {
+			logger.Printf("failed to listen for gRPC: %v", err)
+			return
+		}
+		s := grpc.NewServer()
+		orchestration.RegisterHubService(s, hub)
+		logger.Printf("serving gRPC on :9090")
+		if err := s.Serve(lis); err != nil {
+			logger.Printf("failed to serve gRPC: %v", err)
+		}
+	}()
+
+	logger.Printf("serving API on http://%s", defaultAddress)
+	return listen(defaultAddress, handler)
 }
 
 func main() {
+	shutdown, err := telemetry.InitTelemetry()
+	if err != nil {
+		log.Printf("warning: failed to initialize telemetry: %v", err)
+	} else {
+		defer shutdown()
+	}
+
 	if err := run(nowUTC().UTC(), listenForMain, log.Default()); err != nil {
 		fatalForMain(err)
 	}

@@ -6,12 +6,16 @@ import type {
   DashboardSnapshot,
   DomainInfo,
   HandoffPackage,
+  LoginResponse,
   MarketplaceItem,
   MCPTool,
   MeetingRoom,
   OrgSnapshot,
   Organization,
+  Role,
+  Settings,
   SkillPack,
+  UserPublic,
 } from "./types";
 
 async function getJSON<T>(path: string): Promise<T> {
@@ -29,7 +33,8 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   });
   if (!response.ok) {
-    throw new Error(`Request failed for ${path}: ${response.status}`);
+    const text = await response.text().catch(() => "");
+    throw new Error(text || `Request failed for ${path}: ${response.status}`);
   }
   return (await response.json()) as T;
 }
@@ -71,13 +76,8 @@ function normalizeMeetings(meetings: MeetingRoom[]): MeetingRoom[] {
   }));
 }
 
-export async function fetchCosts(): Promise<CostSummary> {
-  const response = await getJSON<Record<string, unknown>>("/api/costs");
-  return normalizeCosts(response);
-}
-
-export async function fetchDashboard(): Promise<DashboardSnapshot> {
-  const response = await getJSON<Record<string, unknown>>("/api/dashboard");
+/** Normalise a raw dashboard JSON response into a typed DashboardSnapshot. */
+function normalizeDashboard(response: Record<string, unknown>): DashboardSnapshot {
   const rawOrganization = (response.organization ?? {}) as Record<string, unknown>;
   const rawMeetings = Array.isArray(response.meetings)
     ? (response.meetings as MeetingRoom[])
@@ -122,13 +122,23 @@ export async function fetchDashboard(): Promise<DashboardSnapshot> {
   };
 }
 
+export async function fetchCosts(): Promise<CostSummary> {
+  const response = await getJSON<Record<string, unknown>>("/api/costs");
+  return normalizeCosts(response);
+}
+
+export async function fetchDashboard(): Promise<DashboardSnapshot> {
+  const response = await getJSON<Record<string, unknown>>("/api/dashboard");
+  return normalizeDashboard(response);
+}
+
 export async function sendMessage(form: {
   fromAgent: string;
   toAgent: string;
   meetingId: string;
   messageType: string;
   content: string;
-}): Promise<void> {
+}): Promise<DashboardSnapshot> {
   const params = new URLSearchParams(form);
   const response = await fetch("/api/messages", {
     method: "POST",
@@ -141,8 +151,11 @@ export async function sendMessage(form: {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to send message: ${response.status}`);
+    const text = await response.text().catch(() => "");
+    throw new Error(text || `Failed to send message: ${response.status}`);
   }
+  const raw = await response.json() as Record<string, unknown>;
+  return normalizeDashboard(raw);
 }
 
 export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
@@ -266,12 +279,39 @@ export function fetchIntegrations(category?: string): Promise<Integration[]> {
   return getJSON<Integration[]>(`/api/integrations${q}`);
 }
 
-export function connectIntegration(integrationId: string, baseUrl?: string): Promise<Integration> {
-  return postJSON<Integration>("/api/integrations/connect", { integrationId, baseUrl });
+export function connectIntegration(
+  integrationId: string,
+  config?: {
+    baseUrl?: string;
+    botToken?: string;
+    chatId?: string;
+    webhookUrl?: string;
+    apiToken?: string;
+  },
+): Promise<Integration> {
+  return postJSON<Integration>("/api/integrations/connect", {
+    integrationId,
+    baseUrl: config?.baseUrl,
+    botToken: config?.botToken,
+    chatId: config?.chatId,
+    webhookUrl: config?.webhookUrl,
+    apiToken: config?.apiToken,
+  });
 }
 
 export function disconnectIntegration(integrationId: string): Promise<Integration> {
   return postJSON<Integration>("/api/integrations/disconnect", { integrationId });
+}
+
+/** Send a test message to validate credentials before saving them. */
+export function testChatIntegration(
+  integrationId: string,
+  config: { botToken?: string; chatId?: string; webhookUrl?: string },
+): Promise<{ success: boolean }> {
+  return postJSON<{ success: boolean }>("/api/integrations/chat/test", {
+    integrationId,
+    ...config,
+  });
 }
 
 export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]> {
@@ -338,3 +378,136 @@ export function updateIssueStatus(issueId: string, status: string): Promise<Issu
 export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
 }
+
+/** Invoke an MCP tool with the given action and parameters.
+ *  Communication tools route to the underlying connected integration.
+ *  Git/issue tools create PRs or tickets in the connected platform.
+ */
+export function invokeMCPTool(
+  toolId: string,
+  action: string,
+  params: Record<string, string>,
+): Promise<Record<string, unknown>> {
+  return postJSON<Record<string, unknown>>("/api/mcp/tools/invoke", { toolId, action, params });
+}
+
+export function fetchSettings(): Promise<Settings> {
+  return getJSON<Settings>("/api/settings");
+}
+
+export function saveSettings(settings: Settings): Promise<Settings> {
+  return postJSON<Settings>("/api/settings", settings);
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+const TOKEN_KEY = "ohc_token";
+
+export function getStoredToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setStoredToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearStoredToken(): void {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+async function authedGetJSON<T>(path: string): Promise<T> {
+  const token = getStoredToken();
+  const response = await fetch(path, {
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      Accept: "application/json",
+    },
+  });
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearStoredToken();
+      throw new Error("Unauthorized");
+    }
+    throw new Error(`Request failed for ${path}: ${response.status}`);
+  }
+  return (await response.json()) as T;
+}
+
+async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
+  const token = getStoredToken();
+  const response = await fetch(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: token ? `Bearer ${token}` : "",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    if (response.status === 401) {
+      clearStoredToken();
+      throw new Error("Unauthorized");
+    }
+    throw new Error(text || `Request failed for ${path}: ${response.status}`);
+  }
+  return (await response.json()) as T;
+}
+
+export async function login(username: string, password: string): Promise<LoginResponse> {
+  const resp = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => "");
+    throw new Error(text || "Login failed");
+  }
+  const result = (await resp.json()) as LoginResponse;
+  setStoredToken(result.token);
+  return result;
+}
+
+export async function logout(): Promise<void> {
+  try {
+    await authedPostJSON<void>("/api/auth/logout", {});
+  } finally {
+    clearStoredToken();
+  }
+}
+
+export function fetchMe(): Promise<UserPublic> {
+  return authedGetJSON<UserPublic>("/api/auth/me");
+}
+
+export function fetchUsers(): Promise<UserPublic[]> {
+  return authedGetJSON<UserPublic[]>("/api/users");
+}
+
+export function createUser(body: {
+  username: string;
+  email: string;
+  password: string;
+  roles?: string[];
+}): Promise<UserPublic> {
+  return authedPostJSON<UserPublic>("/api/users", body);
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  const token = getStoredToken();
+  await fetch(`/api/users/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: token ? `Bearer ${token}` : "" },
+  });
+}
+
+export function fetchRoles(): Promise<Role[]> {
+  return authedGetJSON<Role[]>("/api/roles");
+}
+
+export function createRole(body: { name: string; permissions?: string[] }): Promise<Role> {
+  return authedPostJSON<Role>("/api/roles", body);
+}
+

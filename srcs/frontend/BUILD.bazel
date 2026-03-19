@@ -14,6 +14,7 @@ filegroup(
             "dist/**",
         ],
     ),
+    visibility = ["//visibility:public"],
 )
 
 filegroup(
@@ -32,14 +33,15 @@ filegroup(
             "tests/screenshots/**",
         ],
     ),
+    visibility = ["//visibility:public"],
 )
 
 sh_test(
     name = "frontend_layout_test",
     srcs = ["tests/layout_test.sh"],
     data = [
-        ":srcs",
         "package.json",
+        ":srcs",
     ],
 )
 
@@ -62,11 +64,11 @@ sh_test(
     srcs = ["tests/e2e_test.sh"],
     data = [
         ":all_srcs",
-        "//srcs/cmd/ohc:ohc",
+        "//srcs/cmd/ohc",
     ],
     tags = [
+        "manual",
         "no-remote-exec",
         "requires-network",
-        "manual",
     ],
 )
