@@ -1,5 +1,9 @@
 # CUJ: Billing Cost Tracking
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** Finance / Platform Admin
 **Goal:** View token usage and cost breakdown across models and agents.
 **Success Metrics:** Cost data is accurate and updated in real-time.
@@ -25,3 +29,13 @@ The CFO needs to monitor operational expenses related to AI agent usage.
 
 ## Security & Privacy Considerations
 - Billing data should be accessible only to authorized finance/admin personnel.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.
+
+## Edge Cases
+- **Timeout:** Task aborts and escalates to human CEO.
+- **Rate Limit:** Agent backoffs using exponential retry.
+- **Loss of Context:** Supervisor agent reconstructs state from snapshot.

@@ -59,3 +59,14 @@ The dashboard must maintain a 100/100 Lighthouse score for accessibility, ensuri
 - **Phase 1**: Core API integration and basic Org list (COMPLETE).
 - **Phase 2**: WebSocket streaming and Approval Gating (IN-PROGRESS).
 - **Phase 3**: Advanced D3-based financial forecasting and hierarchy editing (BACKLOG).
+
+## 7. Implementation Details
+- **Stack:** Go 1.25, Bazel 9.0.0, Postgres, Redis.
+- **Deployment:** Kubernetes via custom OHC Operator.
+- **Communication:** Pub/Sub for async, gRPC/MCP for sync tool calls.
+- **Code Organization:** Services located in `srcs/` and proto definitions in `srcs/proto/`.
+
+## 8. Edge Cases
+- **Network Partitions:** Fallback to cached state and retry logic for tool calls.
+- **Database Unavailability:** Circuit breakers open, gracefully degrade to read-only mode if possible.
+- **Context Window Bloat:** Agent memory is forcefully summarized to fit within token limits, potentially losing subtle historical nuances.

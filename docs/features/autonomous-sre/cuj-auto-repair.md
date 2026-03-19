@@ -1,5 +1,9 @@
 # CUJ: Autonomous System Repair (Self-Healing)
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** SRE Agent / CEO | **Context:** Production outage or performance degradation.
 **Success Metrics:** MTTR (Mean Time To Recovery) < 2 mins, Human approval requested < 30s, Safe rollback executed.
 
@@ -30,3 +34,8 @@ A sudden spike in 5xx errors occurs in the `billing-engine`. An SRE Agent detect
 ## 5. Security & Privacy
 - **Audit Log**: `Agent[SRE-1] performed ROLLBACK on Service[billing] approved by CEO` logged.
 - **Perms**: SRE Agent uses a dedicated K8s `ServiceAccount` with limited `patch` permissions.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.

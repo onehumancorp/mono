@@ -44,3 +44,14 @@ type ComputeProfile struct {
 1. **Phase 1**: Basic GPU taints and tolerations based on agent `RoleProfile`.
 2. **Phase 2**: Real-time VRAM monitoring and quota enforcement.
 3. **Phase 3**: AI-driven scheduling based on model performance metrics (Latency vs Cost).
+
+## 7. Implementation Details
+- **Stack:** Go 1.25, Bazel 9.0.0, Postgres, Redis.
+- **Deployment:** Kubernetes via custom OHC Operator.
+- **Communication:** Pub/Sub for async, gRPC/MCP for sync tool calls.
+- **Code Organization:** Services located in `srcs/` and proto definitions in `srcs/proto/`.
+
+## 8. Edge Cases
+- **Network Partitions:** Fallback to cached state and retry logic for tool calls.
+- **Database Unavailability:** Circuit breakers open, gracefully degrade to read-only mode if possible.
+- **Context Window Bloat:** Agent memory is forcefully summarized to fit within token limits, potentially losing subtle historical nuances.

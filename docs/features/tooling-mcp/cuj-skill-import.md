@@ -1,5 +1,9 @@
 # CUJ: Skill Pack Import (Expanding Capabilities)
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** Org Owner | **Context:** Onboarding a new department (e.g., Marketing).
 **Success Metrics:** Success notification < 3s, All new roles visible in `Hire` modal, Skill IDs registered.
 
@@ -30,3 +34,8 @@ The CEO wants to expand the company's capabilities. They find a "Marketing Speci
 ## 5. Security & Privacy
 - **Source Trust**: System warns if the Skill Pack URL is not from the `ohc.local` verified registry.
 - **Resource Limits**: Skill packs cannot define `MaxTokens` exceeding the Org's global cap.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.

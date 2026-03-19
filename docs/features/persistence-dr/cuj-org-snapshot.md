@@ -1,5 +1,9 @@
 # CUJ: Org Snapshot and Restore
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** Org Admin / DR Engineer
 **Goal:** Create a snapshot of the current org state and later restore from it.
 **Success Metrics:** 100% state fidelity after restore. Restore completes in <5s.
@@ -26,3 +30,13 @@ A major reorganisation is planned, and the admin needs a "safe point" to return 
 ## Security & Privacy Considerations
 - Snapshots contain the entire org state, including sensitive transcripts.
 - Only users with "Snapshot" permissions can restore.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.
+
+## Edge Cases
+- **Timeout:** Task aborts and escalates to human CEO.
+- **Rate Limit:** Agent backoffs using exponential retry.
+- **Loss of Context:** Supervisor agent reconstructs state from snapshot.

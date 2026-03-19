@@ -42,3 +42,8 @@ A high-level summary of the testing strategy for the Cross-Org Collaboration fea
 
 ## 6. Environment & Prerequisites
 - Two distinct OHC Hubs running on separate subnets/clusters to simulate B2B routing.
+
+## Implementation Details
+- Tests written in Go (using `testing` package and Table-Driven Test pattern).
+- >95% coverage requirement per `AGENTS.md`.
+- Hermetic testing enforced via Bazel `test //...`.

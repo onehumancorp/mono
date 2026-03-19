@@ -1,5 +1,9 @@
 # CUJ: Send Message Updates UI and Backend Transcript
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** Manager / Org Admin | **Context:** Intervening or guiding an ongoing virtual meeting.
 **Success Metrics:** Message appears in UI < 1s, Persisted in DB, other agents receive pub/sub event.
 
@@ -31,3 +35,8 @@ Collaboration is happening in a virtual meeting room, and the human manager need
 ## 5. Security & Privacy
 - **Access Control**: Hub verifies the `UserID` has `MANAGER` permissions for the specific `OrgID`.
 - **Encryption**: Messages are encrypted at-rest using the Snapshot Fabric key.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.

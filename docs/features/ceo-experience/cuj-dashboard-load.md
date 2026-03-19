@@ -1,5 +1,9 @@
 # CUJ: Dashboard Load (The Organization Command Center)
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** CEO / Org Admin | **Context:** Daily check-in on company status.
 **Success Metrics:** Full render < 2s, Active agent count accurate, Latest messages displayed.
 
@@ -30,3 +34,8 @@ The CEO logs into the One Human Corp platform. They expect a high-level view of 
 
 ## 5. Security & Privacy
 - **Access Control**: Data scoped strictly to the authenticated user's `OrgID`.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.

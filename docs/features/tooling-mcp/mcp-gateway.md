@@ -57,3 +57,14 @@ MCP servers are deployed as independent sidecars or centralized deployments in K
 - **Phase 1**: Static registration and basic routing (COMPLETE).
 - **Phase 2**: Dynamic discovery and mTLS-backed tool server connections (IN-PROGRESS).
 - **Phase 3**: "Tool Marketplace" where users can install new community MCP servers (BACKLOG).
+
+## 7. Implementation Details
+- **Stack:** Go 1.25, Bazel 9.0.0, Postgres, Redis.
+- **Deployment:** Kubernetes via custom OHC Operator.
+- **Communication:** Pub/Sub for async, gRPC/MCP for sync tool calls.
+- **Code Organization:** Services located in `srcs/` and proto definitions in `srcs/proto/`.
+
+## 8. Edge Cases
+- **Network Partitions:** Fallback to cached state and retry logic for tool calls.
+- **Database Unavailability:** Circuit breakers open, gracefully degrade to read-only mode if possible.
+- **Context Window Bloat:** Agent memory is forcefully summarized to fit within token limits, potentially losing subtle historical nuances.

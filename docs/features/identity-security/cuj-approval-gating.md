@@ -1,5 +1,9 @@
 # CUJ: Approval Gating for High-Risk Actions
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** Compliance Officer / Human Approver
 **Goal:** Ensure that an agent's high-risk action cannot proceed without human sign-off.
 **Success Metrics:** High-risk actions are blocked until approval is received. 100% audit fidelity.
@@ -31,3 +35,13 @@ An agent wants to perform a high-risk action (e.g., spending >$500 or production
 ## Security & Privacy Considerations
 - Access control ensures only authorized users can approve actions.
 - All decisions are logged in the persistent audit log.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.
+
+## Edge Cases
+- **Timeout:** Task aborts and escalates to human CEO.
+- **Rate Limit:** Agent backoffs using exponential retry.
+- **Loss of Context:** Supervisor agent reconstructs state from snapshot.

@@ -1,5 +1,9 @@
 # CUJ: Hire an Agent (Onboarding AI Workforce)
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** Org Admin / CEO | **Context:** High-load project requiring specialist burst capacity.
 **Success Metrics:** Agent state = `IDLE`, SPIFFE SVID issued < 500ms, UI reflect in < 100ms.
 
@@ -35,3 +39,8 @@ The CEO identifies a gap in the workforce (e.g., lack of security oversight) and
 ## 5. Security & Privacy
 - **Audit Log**: `OrgAdmin[kevin] HIRED Agent[SecBot] as ROLE[SECURITY_ENGINEER]` logged to CNPG.
 - **Validation**: Role must exist in `domain.RoleProfiles` to prevent injection of unprivileged agent types.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.
