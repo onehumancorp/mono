@@ -1,5 +1,9 @@
 # CUJ: Complex Feature Scoping via Core Orchestration
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** CEO / User
 **Goal:** Define a complex feature and have the AI team scope it out autonomously.
 **Success Metrics:** Successful generation of a PRD (Product Requirement Document) within 5 minutes.
@@ -27,3 +31,13 @@ The CEO wants to add a new "Advanced Analytics" feature to their product but doe
 ### Failure 1: Infinite Collaboration Loop
 - **System Behavior:** Agents keep debating without consensus.
 - **Recovery Step:** The Hub detects "Context Bloat" and prompts the CEO for intervention or triggers a "Delegate" action.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.
+
+## Edge Cases
+- **Timeout:** Task aborts and escalates to human CEO.
+- **Rate Limit:** Agent backoffs using exponential retry.
+- **Loss of Context:** Supervisor agent reconstructs state from snapshot.

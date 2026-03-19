@@ -57,3 +57,14 @@ CI runners are dynamically provisioned as Kubernetes `Jobs`. Build caching is ha
 - **Pipeline Latency**: Tracked from `CodeReady` to `TestsPassed`.
 - **Failure Analysis**: Errors from `bazel test` are scraped and fed back to the SWE agent for automatic fix attempts.
 - **Resource Usage**: CPU/Memory footprint of CI jobs is logged to the Billing Engine.
+
+## 7. Implementation Details
+- **Stack:** Go 1.25, Bazel 9.0.0, Postgres, Redis.
+- **Deployment:** Kubernetes via custom OHC Operator.
+- **Communication:** Pub/Sub for async, gRPC/MCP for sync tool calls.
+- **Code Organization:** Services located in `srcs/` and proto definitions in `srcs/proto/`.
+
+## 8. Edge Cases
+- **Network Partitions:** Fallback to cached state and retry logic for tool calls.
+- **Database Unavailability:** Circuit breakers open, gracefully degrade to read-only mode if possible.
+- **Context Window Bloat:** Agent memory is forcefully summarized to fit within token limits, potentially losing subtle historical nuances.

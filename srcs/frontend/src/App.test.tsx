@@ -245,8 +245,8 @@ describe("App – navigation tabs", () => {
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
-    expect(screen.getByText("Virtual Meeting Rooms")).toBeInTheDocument();
-    expect(screen.getByText("Dispatch Message")).toBeInTheDocument();
+    expect(screen.getByText("Virtual War Room")).toBeInTheDocument();
+    expect(screen.getByText("Context Efficiency Active")).toBeInTheDocument();
   });
 
   it("shows meeting participants in meetings tab", async () => {
@@ -255,8 +255,8 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
     await waitFor(() => {
-      const chips = document.querySelectorAll(".participant-chip");
-      expect(chips.length).toBeGreaterThan(0);
+      const participants = document.querySelectorAll(".war-room-participant");
+      expect(participants.length).toBeGreaterThan(0);
     });
   });
 
@@ -927,16 +927,10 @@ describe("App – form field coverage", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
 
-    // Dispatch Message form fields in meetings tab use <select> for agent fields.
-    // Capture references before any changes. Option text: "{name} ({id})".
-    const fromCombo = screen.getByDisplayValue("PM (pm-1)");
-    const toCombo = screen.getByDisplayValue("SWE (swe-1)");
-    fireEvent.change(fromCombo, { target: { value: "swe-1" } });
-    fireEvent.change(toCombo, { target: { value: "pm-1" } });
-    const mtgInputs = screen.getAllByDisplayValue("launch-readiness");
-    fireEvent.change(mtgInputs[0], { target: { value: "launch-readiness" } });
-    const typeInputs = screen.getAllByDisplayValue("task");
-    fireEvent.change(typeInputs[0], { target: { value: "update" } });
+    // The War Room form only surfaces the "content" textarea for the CEO
+    const inputArea = screen.getByPlaceholderText(/Inject direction/i);
+    fireEvent.change(inputArea, { target: { value: "Updated direction" } });
+    expect(screen.getByDisplayValue("Updated direction")).toBeInTheDocument();
   });
 
   it("changes the meeting select in the overview Active Meetings panel", async () => {
@@ -1308,7 +1302,7 @@ describe("App – meetings tab agenda coverage", () => {
 
     // navigate to Meetings tab
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
-    await screen.findByText("Virtual Meeting Rooms");
+    await screen.findByText("Virtual War Room");
 
     expect(screen.getByText("Discuss launch blockers for meetings tab")).toBeInTheDocument();
   });
@@ -2101,6 +2095,8 @@ describe("App – Discord wizard", () => {
     fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
     await screen.findByText("Step 3 — Test Succeeded ✓");
     fireEvent.click(screen.getByRole("button", { name: /complete setup/i }));
+    await screen.findByText("Discord Connected!");
+    fireEvent.click(screen.getByRole("button", { name: /done/i }));
     await waitFor(() => expect(screen.queryByText("Connect Discord Webhook")).not.toBeInTheDocument());
   });
 
@@ -2369,7 +2365,7 @@ describe("App – Meetings tab form onChange", () => {
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
-    await screen.findByText("Virtual Meeting Rooms");
+    await screen.findByText("Virtual War Room");
 
     // Find "To" select by its option text (agents from dashboardPayload)
     const toSelects = screen.getAllByRole("combobox");
@@ -2473,7 +2469,7 @@ describe("App – meetings meetingId onChange explicit", () => {
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
-    await screen.findByText("Virtual Meeting Rooms");
+    await screen.findByText("Virtual War Room");
 
     const comboboxes = screen.getAllByRole("combobox");
     const meetingSelect = comboboxes.find(el => {
@@ -2485,5 +2481,59 @@ describe("App – meetings meetingId onChange explicit", () => {
       fireEvent.change(meetingSelect, { target: { value: "meeting-2" } });
       await waitFor(() => expect((meetingSelect as HTMLSelectElement).value).toBe("meeting-2"));
     }
+  });
+});
+
+// ── War Room Enter key handler coverage ───────────────────────────────────────
+
+describe("App – War Room Enter key submit", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("pressing Enter (non-shift) in the war room textarea triggers submit", async () => {
+    let messageSent = false;
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/messages") {
+        messageSent = true;
+        return mockJson({});
+      }
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
+    await screen.findByText("Virtual War Room");
+
+    const textarea = screen.getByPlaceholderText(/Inject direction/i);
+    fireEvent.change(textarea, { target: { value: "Hello meeting" } });
+    // Fire Enter key to trigger submit via the onKeyDown handler
+    fireEvent.keyDown(textarea, { key: "Enter", shiftKey: false, bubbles: true, cancelable: true });
+    await waitFor(() => expect(messageSent).toBe(true));
+  });
+
+  it("pressing Shift+Enter in the war room textarea does NOT submit", async () => {
+    let messageSent = false;
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/messages") {
+        messageSent = true;
+        return mockJson({});
+      }
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
+    await screen.findByText("Virtual War Room");
+
+    const textarea = screen.getByPlaceholderText(/Inject direction/i);
+    fireEvent.change(textarea, { target: { value: "Multi-line" } });
+    fireEvent.keyDown(textarea, { key: "Enter", shiftKey: true, bubbles: true, cancelable: true });
+    // Give time to confirm no submit occurred
+    await new Promise((r) => setTimeout(r, 100));
+    expect(messageSent).toBe(false);
   });
 });

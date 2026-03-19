@@ -1,0 +1,444 @@
+package dashboard
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+)
+
+// Tests for missing coverage in handlers
+
+func TestHandleB2BAgreements_MethodNotAllowed(t *testing.T) {
+	app, _ := newTestServer(t)
+	req := httptest.NewRequest(http.MethodPost, "/api/b2b/agreements", nil)
+	rec := httptest.NewRecorder()
+	app.handleB2BAgreements(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+}
+
+func TestHandleB2BHandshake_Errors(t *testing.T) {
+	app, _ := newTestServer(t)
+
+	// Wrong method
+	req := httptest.NewRequest(http.MethodGet, "/api/b2b/handshake", nil)
+	rec := httptest.NewRecorder()
+	app.handleB2BHandshake(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	// Invalid JSON
+	req = httptest.NewRequest(http.MethodPost, "/api/b2b/handshake", strings.NewReader("bad json"))
+	rec = httptest.NewRecorder()
+	app.handleB2BHandshake(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Missing fields
+	req = httptest.NewRequest(http.MethodPost, "/api/b2b/handshake", strings.NewReader(`{}`))
+	rec = httptest.NewRecorder()
+	app.handleB2BHandshake(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandleB2BRevoke_Errors(t *testing.T) {
+	app, _ := newTestServer(t)
+
+	// Wrong method
+	req := httptest.NewRequest(http.MethodGet, "/api/b2b/revoke", nil)
+	rec := httptest.NewRecorder()
+	app.handleB2BRevoke(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	// Invalid JSON
+	req = httptest.NewRequest(http.MethodPost, "/api/b2b/revoke", strings.NewReader("bad json"))
+	rec = httptest.NewRecorder()
+	app.handleB2BRevoke(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Missing agreementId
+	req = httptest.NewRequest(http.MethodPost, "/api/b2b/revoke", strings.NewReader(`{}`))
+	rec = httptest.NewRecorder()
+	app.handleB2BRevoke(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Not found
+	req = httptest.NewRequest(http.MethodPost, "/api/b2b/revoke", strings.NewReader(`{"agreementId":"missing"}`))
+	rec = httptest.NewRecorder()
+	app.handleB2BRevoke(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("expected 404, got %d", rec.Code)
+	}
+}
+
+func TestHandleIncidents_Errors(t *testing.T) {
+	app, _ := newTestServer(t)
+
+	// Wrong method
+	req := httptest.NewRequest(http.MethodDelete, "/api/incidents", nil)
+	rec := httptest.NewRecorder()
+	app.handleIncidents(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	// Invalid JSON
+	req = httptest.NewRequest(http.MethodPost, "/api/incidents", strings.NewReader("bad json"))
+	rec = httptest.NewRecorder()
+	app.handleIncidents(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Missing fields
+	req = httptest.NewRequest(http.MethodPost, "/api/incidents", strings.NewReader(`{}`))
+	rec = httptest.NewRecorder()
+	app.handleIncidents(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandleIncidentStatus_Errors(t *testing.T) {
+	app, _ := newTestServer(t)
+
+	// Wrong method
+	req := httptest.NewRequest(http.MethodGet, "/api/incidents/status", nil)
+	rec := httptest.NewRecorder()
+	app.handleIncidentStatus(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	// Invalid JSON
+	req = httptest.NewRequest(http.MethodPost, "/api/incidents/status", strings.NewReader("bad json"))
+	rec = httptest.NewRecorder()
+	app.handleIncidentStatus(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Missing fields
+	req = httptest.NewRequest(http.MethodPost, "/api/incidents/status", strings.NewReader(`{}`))
+	rec = httptest.NewRecorder()
+	app.handleIncidentStatus(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Not found
+	req = httptest.NewRequest(http.MethodPost, "/api/incidents/status", strings.NewReader(`{"incidentId":"missing", "status":"resolved"}`))
+	rec = httptest.NewRecorder()
+	app.handleIncidentStatus(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("expected 404, got %d", rec.Code)
+	}
+}
+
+func TestHandleComputeProfiles_Errors(t *testing.T) {
+	app, _ := newTestServer(t)
+
+	// Wrong method
+	req := httptest.NewRequest(http.MethodDelete, "/api/compute/profiles", nil)
+	rec := httptest.NewRecorder()
+	app.handleComputeProfiles(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	// Invalid JSON
+	req = httptest.NewRequest(http.MethodPost, "/api/compute/profiles", strings.NewReader("bad json"))
+	rec = httptest.NewRecorder()
+	app.handleComputeProfiles(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Missing roleId
+	req = httptest.NewRequest(http.MethodPost, "/api/compute/profiles", strings.NewReader(`{}`))
+	rec = httptest.NewRecorder()
+	app.handleComputeProfiles(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandleClusterStatus_Errors(t *testing.T) {
+	app, _ := newTestServer(t)
+
+	// Wrong method
+	req := httptest.NewRequest(http.MethodPost, "/api/clusters/eu/status", nil)
+	rec := httptest.NewRecorder()
+	app.handleClusterStatus(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	// Missing region (path parsing)
+	req = httptest.NewRequest(http.MethodGet, "/api/clusters", nil)
+	rec = httptest.NewRecorder()
+	app.handleClusterStatus(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandleBudgetAlerts_Errors(t *testing.T) {
+	app, _ := newTestServer(t)
+
+	// Wrong method
+	req := httptest.NewRequest(http.MethodDelete, "/api/billing/alerts", nil)
+	rec := httptest.NewRecorder()
+	app.handleBudgetAlerts(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	// Invalid JSON
+	req = httptest.NewRequest(http.MethodPost, "/api/billing/alerts", strings.NewReader("bad json"))
+	rec = httptest.NewRecorder()
+	app.handleBudgetAlerts(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Invalid threshold
+	req = httptest.NewRequest(http.MethodPost, "/api/billing/alerts", strings.NewReader(`{"thresholdUsd":0}`))
+	rec = httptest.NewRecorder()
+	app.handleBudgetAlerts(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandlePipelines_Errors(t *testing.T) {
+	app, _ := newTestServer(t)
+
+	// Wrong method
+	req := httptest.NewRequest(http.MethodDelete, "/api/pipelines", nil)
+	rec := httptest.NewRecorder()
+	app.handlePipelines(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	// Invalid JSON
+	req = httptest.NewRequest(http.MethodPost, "/api/pipelines", strings.NewReader("bad json"))
+	rec = httptest.NewRecorder()
+	app.handlePipelines(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Missing name
+	req = httptest.NewRequest(http.MethodPost, "/api/pipelines", strings.NewReader(`{}`))
+	rec = httptest.NewRecorder()
+	app.handlePipelines(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandlePipelinePromote_Errors(t *testing.T) {
+	app, _ := newTestServer(t)
+
+	// Wrong method
+	req := httptest.NewRequest(http.MethodGet, "/api/pipelines/promote", nil)
+	rec := httptest.NewRecorder()
+	app.handlePipelinePromote(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	// Invalid JSON
+	req = httptest.NewRequest(http.MethodPost, "/api/pipelines/promote", strings.NewReader("bad json"))
+	rec = httptest.NewRecorder()
+	app.handlePipelinePromote(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Missing pipelineId
+	req = httptest.NewRequest(http.MethodPost, "/api/pipelines/promote", strings.NewReader(`{}`))
+	rec = httptest.NewRecorder()
+	app.handlePipelinePromote(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Not found
+	req = httptest.NewRequest(http.MethodPost, "/api/pipelines/promote", strings.NewReader(`{"pipelineId":"missing"}`))
+	rec = httptest.NewRecorder()
+	app.handlePipelinePromote(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("expected 404, got %d", rec.Code)
+	}
+
+	// Not in STAGING
+	app.pipelines = append(app.pipelines, Pipeline{ID: "pipe-1", Status: PipelineStatusPending})
+	req = httptest.NewRequest(http.MethodPost, "/api/pipelines/promote", strings.NewReader(`{"pipelineId":"pipe-1"}`))
+	rec = httptest.NewRecorder()
+	app.handlePipelinePromote(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandlePipelineStatus_Errors(t *testing.T) {
+	app, _ := newTestServer(t)
+
+	// Wrong method
+	req := httptest.NewRequest(http.MethodGet, "/api/pipelines/status", nil)
+	rec := httptest.NewRecorder()
+	app.handlePipelineStatus(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	// Invalid JSON
+	req = httptest.NewRequest(http.MethodPost, "/api/pipelines/status", strings.NewReader("bad json"))
+	rec = httptest.NewRecorder()
+	app.handlePipelineStatus(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Missing fields
+	req = httptest.NewRequest(http.MethodPost, "/api/pipelines/status", strings.NewReader(`{}`))
+	rec = httptest.NewRecorder()
+	app.handlePipelineStatus(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Not found
+	req = httptest.NewRequest(http.MethodPost, "/api/pipelines/status", strings.NewReader(`{"pipelineId":"missing", "status":"STAGING"}`))
+	rec = httptest.NewRecorder()
+	app.handlePipelineStatus(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("expected 404, got %d", rec.Code)
+	}
+}
+
+
+func TestHandleHealthzReadyz(t *testing.T) {
+	_, server := newTestServer(t)
+	defer server.Close()
+
+	tests := []struct {
+		name string
+		path string
+	}{
+		{"Healthz", "/healthz"},
+		{"Readyz", "/readyz"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp, err := http.Get(server.URL + tt.path)
+			if err != nil {
+				t.Fatalf("GET %s returned error: %v", tt.path, err)
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("expected 200, got %d", resp.StatusCode)
+			}
+		})
+	}
+}
+
+func TestHandleIncidentStatus_UpdateRCA(t *testing.T) {
+	tests := []struct {
+		name    string
+		payload string
+		wantRCA string
+	}{
+		{
+			name:    "Update RCA",
+			payload: `{"incidentId":"inc-1", "status":"RESOLVED", "rootCauseAnalysis":"It was DNS"}`,
+			wantRCA: "It was DNS",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			app, server := newTestServer(t)
+			defer server.Close()
+
+			app.incidents = append(app.incidents, Incident{
+				ID:     "inc-1",
+				Status: IncidentStatusInvestigating,
+			})
+
+			req := httptest.NewRequest(http.MethodPost, "/api/incidents/status", strings.NewReader(tt.payload))
+			rec := httptest.NewRecorder()
+			app.handleIncidentStatus(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d", rec.Code)
+			}
+
+			if len(app.incidents) != 1 {
+				t.Fatalf("expected 1 incident, got %d", len(app.incidents))
+			}
+
+			if app.incidents[0].RCA != tt.wantRCA {
+				t.Errorf("expected RCA to be %q, got %q", tt.wantRCA, app.incidents[0].RCA)
+			}
+		})
+	}
+}
+
+func TestHandleBudgetAlerts_NotifyAtPctHandling(t *testing.T) {
+	tests := []struct {
+		name    string
+		payload string
+		wantPct float64
+	}{
+		{
+			name:    "Invalid pct defaults",
+			payload: `{"thresholdUsd":100, "notifyAtPct": 1.5}`,
+			wantPct: defaultBudgetAlertNotifyPct,
+		},
+		{
+			name:    "Valid pct",
+			payload: `{"thresholdUsd":100, "notifyAtPct": 0.5}`,
+			wantPct: 0.5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			app, server := newTestServer(t)
+			defer server.Close()
+
+			req := httptest.NewRequest(http.MethodPost, "/api/billing/alerts", strings.NewReader(tt.payload))
+			rec := httptest.NewRecorder()
+			app.handleBudgetAlerts(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d", rec.Code)
+			}
+
+			if len(app.budgetAlerts) != 1 {
+				t.Fatalf("expected 1 budget alert, got %d", len(app.budgetAlerts))
+			}
+
+			if app.budgetAlerts[0].NotifyAtPct != tt.wantPct {
+				t.Errorf("expected NotifyAtPct to be %v, got %v", tt.wantPct, app.budgetAlerts[0].NotifyAtPct)
+			}
+		})
+	}
+}

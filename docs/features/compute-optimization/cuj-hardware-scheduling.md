@@ -1,5 +1,9 @@
 # CUJ: Hardware-Aware Agent Scheduling (High-Compute Task)
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** Engineering Director / CEO | **Context:** Deploying a high-intensity LLM agent (e.g., Llama-3 70B) for codebase analysis.
 **Success Metrics:** Agent scheduled on GPU node < 10s, VRAM occupancy monitored, No "OOM" failures.
 
@@ -31,3 +35,14 @@ The CEO wants to perform a "Deep Audit" of the entire organizational codebase us
 ## 5. Security & Privacy
 - **Resource Exhaustion Attack**: System limits any single agent to 80% of cluster VRAM unless `OVERRIDE_QUOTA` is enabled by the Org Owner.
 - **Isolation**: High-compute pods use `RuntimeClass: nvidia` for hardware-level isolation.
+
+## 7. Implementation Details
+- **Stack:** Go 1.25, Bazel 9.0.0, Postgres, Redis.
+- **Deployment:** Kubernetes via custom OHC Operator.
+- **Communication:** Pub/Sub for async, gRPC/MCP for sync tool calls.
+- **Code Organization:** Services located in `srcs/` and proto definitions in `srcs/proto/`.
+
+## 8. Edge Cases
+- **Network Partitions:** Fallback to cached state and retry logic for tool calls.
+- **Database Unavailability:** Circuit breakers open, gracefully degrade to read-only mode if possible.
+- **Context Window Bloat:** Agent memory is forcefully summarized to fit within token limits, potentially losing subtle historical nuances.

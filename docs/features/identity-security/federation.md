@@ -60,3 +60,14 @@ type FederatedAgent struct {
 1. **Phase 1**: Implement SPIRE Federation and mTLS cross-cluster ping.
 2. **Phase 2**: Deploy regional Hubs with a shared global Postgres backend.
 3. **Phase 3**: Introduce the `HubRouter` for intelligent task delegation.
+
+## 7. Implementation Details
+- **Stack:** Go 1.25, Bazel 9.0.0, Postgres, Redis.
+- **Deployment:** Kubernetes via custom OHC Operator.
+- **Communication:** Pub/Sub for async, gRPC/MCP for sync tool calls.
+- **Code Organization:** Services located in `srcs/` and proto definitions in `srcs/proto/`.
+
+## 8. Edge Cases
+- **Network Partitions:** Fallback to cached state and retry logic for tool calls.
+- **Database Unavailability:** Circuit breakers open, gracefully degrade to read-only mode if possible.
+- **Context Window Bloat:** Agent memory is forcefully summarized to fit within token limits, potentially losing subtle historical nuances.

@@ -1,5 +1,9 @@
 # CUJ: Cross-Cluster Agent Hiring (Global Scale)
 
+**Author(s):** TPM Agent
+**Status:** Approved
+**Last Updated:** 2026-03-19
+
 **Persona:** CEO / Global Admin | **Context:** Onboarding a new team in a different geographic region (e.g., EU-Central).
 **Success Metrics:** Agent hired < 3s, SVID validated across domains, Latency observed < 50ms.
 
@@ -30,3 +34,8 @@ The CEO of a US-based firm wants to launch a satellite team in Europe to handle 
 ## 5. Security & Privacy
 - **Identity**: Federated JWTs must contain the `org_id` and `trust_domain` claims.
 - **Traffic**: 100% of cross-cluster traffic is routed through a dedicated `WireGuard` or `mTLS` tunnel.
+
+## Implementation Details
+- Relies on event-driven state transitions.
+- Orchestration managed by OHC Hub and K8s Operator.
+- Audited via append-only Postgres log.
