@@ -173,6 +173,18 @@ func TestConnectSSRFPrevention(t *testing.T) {
 			if err == nil {
 				t.Errorf("expected error connecting to blocked URL %q, got nil", u)
 			}
+
+			// Also test that WebhookURL is validated
+			_, err = r.Connect("discord", "", IntegrationCredentials{WebhookURL: u})
+			if err == nil {
+				t.Errorf("expected error connecting to blocked WebhookURL %q, got nil", u)
+			}
+
+			// Test TestConnection validation
+			err = r.TestConnection("discord", IntegrationCredentials{WebhookURL: u})
+			if err == nil {
+				t.Errorf("expected error testing blocked WebhookURL %q, got nil", u)
+			}
 		})
 	}
 }
