@@ -1,27 +1,32 @@
-# CUJ: Skill Pack Import
+# CUJ: Skill Pack Import (Expanding Capabilities)
 
-**Persona:** Platform Admin / Org Owner
-**Goal:** Extend agent capabilities by importing a skill pack.
-**Success Metrics:** New roles or abilities are available immediately.
+**Persona:** Org Owner | **Context:** Onboarding a new department (e.g., Marketing).
+**Success Metrics:** Success notification < 3s, All new roles visible in `Hire` modal, Skill IDs registered.
 
-## Context
-The organisation is entering a new market (e.g., E-commerce) and needs specialized roles.
+## 1. User Journey Overview
+The CEO wants to expand the company's capabilities. They find a "Marketing Specialist Pack" (YAML) and import it. The system must validate the schema, register the new `RoleProfiles`, and immediately make them available for hire.
 
-## Journey Breakdown
-### Step 1: Upload Skill Pack
-- **User Input:** Admin uploads a YAML skill pack or enters the skill URL.
-- **System Action:** `POST /api/skills/import` is called.
-- **Outcome:** Skill pack is parsed and registered.
+## 2. Detailed Step-by-Step Breakdown
 
-### Step 2: Verify Import
-- **User Input:** Admin checks the "Skill Packs" list.
-- **System Action:** `GET /api/skills` returns the new item.
-- **Outcome:** The skill is confirmed as active.
+| Step | User Action | System Trigger | Resulting State | Verification |
+|------|-------------|----------------|-----------------|--------------|
+| 1 | Navigate to "Skill Marketplace". | FE: `fetchAvailablePacks()` | UI: Grid of available skill templates. | Check `#skill-list` items. |
+| 2 | Click "Import YAML" and upload file. | FE: `onFileUpload` | UI: Parsing progress bar. | Check for `file-upload-status` text. |
+| 3 | Review "New Roles" list in modal. | N/A | UI: Displays "SMM Manager", "Copywriter". | Check table contents in modal. |
+| 4 | Click "Finalize Import". | BE: `POST /api/skills/import` | Hub: `RegisterSkillPack(Pack)`. | HTTP 200 OK with `imported_count: 5`. |
 
-## Error Modes & Recovery
-### Failure 1: Invalid Skill Format
-- **System Behavior:** Backend returns 400 Bad Request with "malformed YAML".
-- **Recovery Step:** Admin corrects the file and retries.
+## 3. Edge Cases & Error Recovery
+### 3.1 Scenario: Schema Version Mismatch
+- **Detection**: Backend returns 400 with "V2 schema required, V1 provided."
+- **Recovery Step**: Automatic "Upgrader" utility attempts to convert the YAML format.
+### 3.2 Scenario: Duplicate Role Conflict
+- **Detection**: `RoleID: "SWE"` already exists in the org.
+- **Resolution**: UI asks user to "Overwrite" or "Rename as SWE-Marketing".
 
-## Security & Privacy Considerations
-- Skill packs are audited for malicious scripts or excessive token budget requests.
+## 4. UI/UX Details
+- **Component IDs**: `SkillImportZone`, `RolePreviewTable`.
+- **Visual Cues**: Success triggers a confetti animation on the "Skill Packs" tab.
+
+## 5. Security & Privacy
+- **Source Trust**: System warns if the Skill Pack URL is not from the `ohc.local` verified registry.
+- **Resource Limits**: Skill packs cannot define `MaxTokens` exceeding the Org's global cap.
