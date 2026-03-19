@@ -271,6 +271,10 @@ export type Integration = {
   baseUrl?: string;
   status: IntegrationStatus;
   description?: string;
+  /** True when real credentials (bot token, webhook URL, etc.) are stored server-side. */
+  hasCredentials?: boolean;
+  /** Default delivery channel / chatspace for this integration (e.g. Telegram chat_id). */
+  chatspace?: string;
   createdAt: string;
 };
 
@@ -329,4 +333,31 @@ export type Issue = {
   createdByAgent: string;
   url: string;
   createdAt: string;
+};
+
+// ── Auth / User Management ────────────────────────────────────────────────────
+
+export type UserPublic = {
+  id: string;
+  username: string;
+  email: string;
+  roles: string[];
+  active: boolean;
+  createdAt: string;
+};
+
+export type Role = {
+  id: string;
+  name: string;
+  permissions: string[];
+};
+
+export type LoginResponse = {
+  token: string;
+  user: UserPublic;
+  expiresAt: string;
+};
+
+export type Settings = {
+  minimaxApiKey?: string;
 };

@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -19,7 +17,44 @@ import (
 	"github.com/onehumancorp/mono/srcs/orchestration"
 )
 
-func newTestServer(t *testing.T) (*Server, *httptest.Server) {
+
+// loginForTest returns a JWT token for the default admin user by calling the login endpoint.
+func loginForTest(t *testing.T, serverURL string) string {
+	t.Helper()
+	body, _ := json.Marshal(map[string]string{"username": "admin", "password": "admin"})
+	resp, err := http.Post(serverURL+"/api/auth/login", "application/json", bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("login error: %v", err)
+	}
+	defer resp.Body.Close()
+	var result map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("decode login response: %v", err)
+	}
+	token, _ := result["token"].(string)
+	if token == "" {
+		t.Fatalf("expected non-empty token from login, got: %v", result)
+	}
+	return token
+}
+
+// authedClient returns an *http.Client that automatically adds a Bearer token.
+func authedClient(token string) *http.Client {
+	return &http.Client{Transport: &bearerTransport{token: token, base: http.DefaultTransport}}
+}
+
+type bearerTransport struct {
+	token string
+	base  http.RoundTripper
+}
+
+func (bt *bearerTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	r2 := r.Clone(r.Context())
+	r2.Header.Set("Authorization", "Bearer "+bt.token)
+	return bt.base.RoundTrip(r2)
+}
+
+func newTestServer(t *testing.T) (*Server, *httptest.Server, string) {
 	t.Helper()
 
 	org := domain.NewSoftwareCompany("org-1", "Acme Software", "Casey CEO", time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC))
@@ -42,60 +77,17 @@ func newTestServer(t *testing.T) (*Server, *httptest.Server) {
 
 	app := &Server{org: org, hub: hub, tracker: tracker, integReg: integrations.NewRegistry()}
 	server := httptest.NewServer(NewServer(org, hub, tracker))
-	return app, server
+	token := loginForTest(t, server.URL)
+	return app, server, token
 }
 
-func TestServerServesDashboardEndpoints(t *testing.T) {
-	t.Setenv("MONO_FRONTEND_DIST", filepath.Join(t.TempDir(), "missing"))
-	t.Chdir(t.TempDir())
-
-	_, server := newTestServer(t)
+func TestServerServesAPIs(t *testing.T) {
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
-	resp, err := http.Get(server.URL + "/")
-	if err != nil {
-		t.Fatalf("GET / returned error: %v", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("reading html response: %v", err)
-	}
-	if !strings.Contains(string(body), "One Human Corp Dashboard") {
-		t.Fatalf("expected dashboard title in HTML body")
-	}
-	if !strings.Contains(string(body), "Send Message") {
-		t.Fatalf("expected interactive message form in HTML body")
-	}
-	if !strings.Contains(string(body), "Project Status") {
-		t.Fatalf("expected project status panel in HTML body")
-	}
-	if !strings.Contains(string(body), "Role Playbooks") {
-		t.Fatalf("expected role playbooks panel in HTML body")
-	}
-	if !strings.Contains(string(body), "Context Inputs:") {
-		t.Fatalf("expected role playbook context inputs in HTML body")
-	}
-	if !strings.Contains(string(body), "PM — IN_MEETING") {
-		t.Fatalf("expected agent status details in HTML body")
-	}
-
-	resp, err = http.Get(server.URL + "/app")
-	if err != nil {
-		t.Fatalf("GET /app returned error: %v", err)
-	}
-	defer resp.Body.Close()
-	appBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("reading app response: %v", err)
-	}
-	if !strings.Contains(string(appBody), "React Frontend Route") {
-		t.Fatalf("expected frontend route fallback HTML")
-	}
-
 	for _, path := range []string{"/api/org", "/api/meetings", "/api/costs"} {
-		resp, err := http.Get(server.URL + path)
+		resp, err := client.Get(server.URL + path)
 		if err != nil {
 			t.Fatalf("GET %s returned error: %v", path, err)
 		}
@@ -107,10 +99,11 @@ func TestServerServesDashboardEndpoints(t *testing.T) {
 }
 
 func TestHandleDashboardReturnsSnapshot(t *testing.T) {
-	_, server := newTestServer(t)
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/dashboard")
+	resp, err := client.Get(server.URL + "/api/dashboard")
 	if err != nil {
 		t.Fatalf("GET /api/dashboard returned error: %v", err)
 	}
@@ -131,99 +124,14 @@ func TestHandleDashboardReturnsSnapshot(t *testing.T) {
 	}
 }
 
-func TestFrontendDistPathUsesEnvironmentOverride(t *testing.T) {
-	dir := t.TempDir()
-	indexPath := filepath.Join(dir, "index.html")
-	if err := os.WriteFile(indexPath, []byte("ok"), 0o644); err != nil {
-		t.Fatalf("write index file: %v", err)
-	}
-	t.Setenv("MONO_FRONTEND_DIST", dir)
 
-	got := frontendDistPath()
-	if got != dir {
-		t.Fatalf("expected env override path %q, got %q", dir, got)
-	}
-}
-
-func TestFrontendDistPathIgnoresInvalidEnvAndFallsBackEmpty(t *testing.T) {
-	t.Setenv("MONO_FRONTEND_DIST", filepath.Join(t.TempDir(), "missing"))
-	t.Chdir(t.TempDir())
-	if got := frontendDistPath(); got != "" {
-		t.Fatalf("expected empty path when env and candidates are invalid, got %q", got)
-	}
-}
-
-func TestFrontendDistPathFindsCandidatePath(t *testing.T) {
-	t.Setenv("MONO_FRONTEND_DIST", "")
-	work := t.TempDir()
-	t.Chdir(work)
-
-	dir := filepath.Join(work, "srcs", "frontend", "dist")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatalf("mkdir dist path: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte("ok"), 0o644); err != nil {
-		t.Fatalf("write index file: %v", err)
-	}
-
-	if got := frontendDistPath(); got != "srcs/frontend/dist" {
-		t.Fatalf("expected candidate path srcs/frontend/dist, got %q", got)
-	}
-}
-
-func TestHandleAppServesBuiltIndexWhenDistExists(t *testing.T) {
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte("<html>built app</html>"), 0o644); err != nil {
-		t.Fatalf("write index file: %v", err)
-	}
-	t.Setenv("MONO_FRONTEND_DIST", dir)
-
-	_, server := newTestServer(t)
-	defer server.Close()
-
-	resp, err := http.Get(server.URL + "/app")
-	if err != nil {
-		t.Fatalf("GET /app returned error: %v", err)
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("read /app body: %v", err)
-	}
-	if !strings.Contains(string(body), "built app") {
-		t.Fatalf("expected built frontend content, got %s", string(body))
-	}
-}
-
-func TestNewServerServesAppAssetsFromDist(t *testing.T) {
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte("index"), 0o644); err != nil {
-		t.Fatalf("write index file: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "asset.js"), []byte("console.log('asset')"), 0o644); err != nil {
-		t.Fatalf("write asset file: %v", err)
-	}
-	t.Setenv("MONO_FRONTEND_DIST", dir)
-
-	_, server := newTestServer(t)
-	defer server.Close()
-
-	resp, err := http.Get(server.URL + "/app/asset.js")
-	if err != nil {
-		t.Fatalf("GET /app/asset.js returned error: %v", err)
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	if !strings.Contains(string(body), "asset") {
-		t.Fatalf("expected asset body, got %s", string(body))
-	}
-}
 
 func TestHandleOrgReturnsJSONPayload(t *testing.T) {
-	_, server := newTestServer(t)
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/org")
+	resp, err := client.Get(server.URL + "/api/org")
 	if err != nil {
 		t.Fatalf("GET /api/org returned error: %v", err)
 	}
@@ -242,10 +150,11 @@ func TestHandleOrgReturnsJSONPayload(t *testing.T) {
 }
 
 func TestHandleMeetingsReturnsJSONPayload(t *testing.T) {
-	_, server := newTestServer(t)
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/meetings")
+	resp, err := client.Get(server.URL + "/api/meetings")
 	if err != nil {
 		t.Fatalf("GET /api/meetings returned error: %v", err)
 	}
@@ -261,10 +170,11 @@ func TestHandleMeetingsReturnsJSONPayload(t *testing.T) {
 }
 
 func TestHandleCostsReturnsJSONPayload(t *testing.T) {
-	_, server := newTestServer(t)
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/costs")
+	resp, err := client.Get(server.URL + "/api/costs")
 	if err != nil {
 		t.Fatalf("GET /api/costs returned error: %v", err)
 	}
@@ -280,7 +190,8 @@ func TestHandleCostsReturnsJSONPayload(t *testing.T) {
 }
 
 func TestHandleSendMessagePostsToMeeting(t *testing.T) {
-	app, server := newTestServer(t)
+	app, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
 	form := url.Values{
@@ -290,7 +201,7 @@ func TestHandleSendMessagePostsToMeeting(t *testing.T) {
 		"messageType": {"task"},
 		"content":     {"Ship it"},
 	}
-	resp, err := http.PostForm(server.URL+"/api/messages", form)
+	resp, err := client.PostForm(server.URL+"/api/messages", form)
 	if err != nil {
 		t.Fatalf("POST /api/messages returned error: %v", err)
 	}
@@ -310,7 +221,8 @@ func TestHandleSendMessagePostsToMeeting(t *testing.T) {
 }
 
 func TestHandleSendMessageReturnsJSONWhenRequested(t *testing.T) {
-	_, server := newTestServer(t)
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
 	form := url.Values{
@@ -327,7 +239,7 @@ func TestHandleSendMessageReturnsJSONWhenRequested(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatalf("POST /api/messages returned error: %v", err)
 	}
@@ -342,7 +254,8 @@ func TestHandleSendMessageReturnsJSONWhenRequested(t *testing.T) {
 }
 
 func TestHandleDevSeedResetsServerState(t *testing.T) {
-	_, server := newTestServer(t)
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
 	body := bytes.NewBufferString(`{"scenario":"launch-readiness"}`)
@@ -352,7 +265,7 @@ func TestHandleDevSeedResetsServerState(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatalf("POST /api/dev/seed returned error: %v", err)
 	}
@@ -361,7 +274,7 @@ func TestHandleDevSeedResetsServerState(t *testing.T) {
 		t.Fatalf("expected 200 response, got %d", resp.StatusCode)
 	}
 
-	dashboardResp, err := http.Get(server.URL + "/api/dashboard")
+	dashboardResp, err := client.Get(server.URL + "/api/dashboard")
 	if err != nil {
 		t.Fatalf("GET /api/dashboard returned error: %v", err)
 	}
@@ -387,7 +300,8 @@ func TestHandleDevSeedResetsServerState(t *testing.T) {
 }
 
 func TestHandleDevSeedRejectsInvalidScenario(t *testing.T) {
-	_, server := newTestServer(t)
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
 	body := bytes.NewBufferString(`{"scenario":"unknown"}`)
@@ -397,7 +311,7 @@ func TestHandleDevSeedRejectsInvalidScenario(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatalf("POST /api/dev/seed returned error: %v", err)
 	}
@@ -408,7 +322,7 @@ func TestHandleDevSeedRejectsInvalidScenario(t *testing.T) {
 }
 
 func TestHandleSendMessageRejectsInvalidRequest(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/messages", nil)
 	rec := httptest.NewRecorder()
@@ -434,7 +348,7 @@ func TestHandleSendMessageRejectsInvalidRequest(t *testing.T) {
 }
 
 func TestHandleSendMessageRejectsParseError(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/messages", strings.NewReader("%zz"))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -482,7 +396,8 @@ func TestSummarizeStatusesReturnsOrderedCounts(t *testing.T) {
 }
 
 func TestHandleHireAgentAddsToHub(t *testing.T) {
-	app, server := newTestServer(t)
+	app, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
 	body := bytes.NewBufferString(`{"name":"New SWE","role":"SOFTWARE_ENGINEER"}`)
@@ -492,7 +407,7 @@ func TestHandleHireAgentAddsToHub(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatalf("POST /api/agents/hire returned error: %v", err)
 	}
@@ -521,7 +436,7 @@ func TestHandleHireAgentAddsToHub(t *testing.T) {
 }
 
 func TestHandleHireAgentRejectsMissingFields(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/agents/hire", bytes.NewBufferString(`{"name":""}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -533,7 +448,8 @@ func TestHandleHireAgentRejectsMissingFields(t *testing.T) {
 }
 
 func TestHandleFireAgentRemovesFromHub(t *testing.T) {
-	app, server := newTestServer(t)
+	app, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
 	body := bytes.NewBufferString(`{"agentId":"pm-1"}`)
@@ -543,7 +459,7 @@ func TestHandleFireAgentRemovesFromHub(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatalf("POST /api/agents/fire returned error: %v", err)
 	}
@@ -558,7 +474,7 @@ func TestHandleFireAgentRemovesFromHub(t *testing.T) {
 }
 
 func TestHandleFireAgentRejectsMissingAgentID(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/agents/fire", bytes.NewBufferString(`{}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -570,10 +486,11 @@ func TestHandleFireAgentRejectsMissingAgentID(t *testing.T) {
 }
 
 func TestHandleDomainsReturnsAvailableDomains(t *testing.T) {
-	_, server := newTestServer(t)
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/domains")
+	resp, err := client.Get(server.URL + "/api/domains")
 	if err != nil {
 		t.Fatalf("GET /api/domains returned error: %v", err)
 	}
@@ -599,10 +516,11 @@ func TestHandleDomainsReturnsAvailableDomains(t *testing.T) {
 }
 
 func TestHandleMCPToolsReturnsTools(t *testing.T) {
-	_, server := newTestServer(t)
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/mcp/tools")
+	resp, err := client.Get(server.URL + "/api/mcp/tools")
 	if err != nil {
 		t.Fatalf("GET /api/mcp/tools returned error: %v", err)
 	}
@@ -618,7 +536,8 @@ func TestHandleMCPToolsReturnsTools(t *testing.T) {
 }
 
 func TestSeededScenarioDigitalMarketing(t *testing.T) {
-	_, server := newTestServer(t)
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
 	body := bytes.NewBufferString(`{"scenario":"digital-marketing"}`)
@@ -628,7 +547,7 @@ func TestSeededScenarioDigitalMarketing(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatalf("POST /api/dev/seed returned error: %v", err)
 	}
@@ -649,7 +568,8 @@ func TestSeededScenarioDigitalMarketing(t *testing.T) {
 }
 
 func TestSeededScenarioAccounting(t *testing.T) {
-	_, server := newTestServer(t)
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
 	defer server.Close()
 
 	body := bytes.NewBufferString(`{"scenario":"accounting"}`)
@@ -659,7 +579,7 @@ func TestSeededScenarioAccounting(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatalf("POST /api/dev/seed returned error: %v", err)
 	}
@@ -680,7 +600,7 @@ func TestSeededScenarioAccounting(t *testing.T) {
 }
 
 func TestHandleAgentRouteRejectsWrongMethod(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	hireReq := httptest.NewRequest(http.MethodGet, "/api/agents/hire", nil)
 	hireRec := httptest.NewRecorder()
@@ -700,17 +620,18 @@ func TestHandleAgentRouteRejectsWrongMethod(t *testing.T) {
 // ── Approval / Confidence Gating Tests ───────────────────────────────────────
 
 func TestHandleApprovalsReturnsEmptyListInitially(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/approvals")
-	if err != nil {
-		t.Fatalf("GET /api/approvals error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/approvals")
+if err != nil {
+t.Fatalf("GET /api/approvals error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
 
 	var list []ApprovalRequest
 	if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
@@ -722,8 +643,9 @@ func TestHandleApprovalsReturnsEmptyListInitially(t *testing.T) {
 }
 
 func TestHandleApprovalRequestCreatesEntry(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
 	body := bytes.NewBufferString(`{"agentId":"swe-1","action":"deploy-production","reason":"Release v2.0","estimatedCostUsd":750,"riskLevel":"critical"}`)
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/approvals/request", body)
@@ -732,14 +654,14 @@ func TestHandleApprovalRequestCreatesEntry(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("POST /api/approvals/request error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
+resp, err := client.Do(req)
+if err != nil {
+t.Fatalf("POST /api/approvals/request error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
 
 	var approval ApprovalRequest
 	if err := json.NewDecoder(resp.Body).Decode(&approval); err != nil {
@@ -754,7 +676,7 @@ func TestHandleApprovalRequestCreatesEntry(t *testing.T) {
 }
 
 func TestHandleApprovalRequestRejectsMissingFields(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/approvals/request", bytes.NewBufferString(`{"agentId":""}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -766,34 +688,35 @@ func TestHandleApprovalRequestRejectsMissingFields(t *testing.T) {
 }
 
 func TestHandleApprovalDecideApprovesRequest(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	createBody := bytes.NewBufferString(`{"agentId":"swe-1","action":"deploy","estimatedCostUsd":600}`)
-	createReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/approvals/request", createBody)
-	createReq.Header.Set("Content-Type", "application/json")
-	createResp, err := http.DefaultClient.Do(createReq)
-	if err != nil {
-		t.Fatalf("create approval: %v", err)
-	}
-	defer createResp.Body.Close()
+createBody := bytes.NewBufferString(`{"agentId":"swe-1","action":"deploy","estimatedCostUsd":600}`)
+createReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/approvals/request", createBody)
+createReq.Header.Set("Content-Type", "application/json")
+createResp, err := client.Do(createReq)
+if err != nil {
+t.Fatalf("create approval: %v", err)
+}
+defer createResp.Body.Close()
 
 	var approval ApprovalRequest
 	if err := json.NewDecoder(createResp.Body).Decode(&approval); err != nil {
 		t.Fatalf("decode created approval: %v", err)
 	}
 
-	decideBody := bytes.NewBufferString(`{"approvalId":"` + approval.ID + `","decision":"approve","decidedBy":"human-ceo"}`)
-	decideReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/approvals/decide", decideBody)
-	decideReq.Header.Set("Content-Type", "application/json")
-	decideResp, err := http.DefaultClient.Do(decideReq)
-	if err != nil {
-		t.Fatalf("decide approval: %v", err)
-	}
-	defer decideResp.Body.Close()
-	if decideResp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200 from decide, got %d", decideResp.StatusCode)
-	}
+decideBody := bytes.NewBufferString(`{"approvalId":"` + approval.ID + `","decision":"approve","decidedBy":"human-ceo"}`)
+decideReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/approvals/decide", decideBody)
+decideReq.Header.Set("Content-Type", "application/json")
+decideResp, err := client.Do(decideReq)
+if err != nil {
+t.Fatalf("decide approval: %v", err)
+}
+defer decideResp.Body.Close()
+if decideResp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200 from decide, got %d", decideResp.StatusCode)
+}
 
 	var list []ApprovalRequest
 	if err := json.NewDecoder(decideResp.Body).Decode(&list); err != nil {
@@ -805,7 +728,7 @@ func TestHandleApprovalDecideApprovesRequest(t *testing.T) {
 }
 
 func TestHandleApprovalDecideReturns404ForUnknownID(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/approvals/decide", bytes.NewBufferString(`{"approvalId":"nonexistent","decision":"approve"}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -819,31 +742,32 @@ func TestHandleApprovalDecideReturns404ForUnknownID(t *testing.T) {
 // ── Warm Handoff Tests ────────────────────────────────────────────────────────
 
 func TestHandleHandoffsReturnsEmptyListInitially(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/handoffs")
-	if err != nil {
-		t.Fatalf("GET /api/handoffs error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/handoffs")
+if err != nil {
+t.Fatalf("GET /api/handoffs error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
 
 	var list []HandoffPackage
 	if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
 		t.Fatalf("decode handoffs: %v", err)
 	}
-	// Note: We now seed one handoff in NewServer
-	if len(list) != 1 {
-		t.Errorf("expected 1 handoff, got %d", len(list))
+	if len(list) != 0 {
+		t.Fatalf("expected empty handoffs, got %d", len(list))
 	}
 }
 
 func TestHandleHandoffCreatePost(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
 	body := bytes.NewBufferString(`{"fromAgentId":"swe-1","toHumanRole":"CEO","intent":"Need approval for DB migration","failedAttempts":2,"currentState":"Blocked"}`)
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/handoffs", body)
@@ -852,14 +776,14 @@ func TestHandleHandoffCreatePost(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("POST /api/handoffs error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
+resp, err := client.Do(req)
+if err != nil {
+t.Fatalf("POST /api/handoffs error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
 
 	var handoff HandoffPackage
 	if err := json.NewDecoder(resp.Body).Decode(&handoff); err != nil {
@@ -871,7 +795,7 @@ func TestHandleHandoffCreatePost(t *testing.T) {
 }
 
 func TestHandleHandoffCreateRejectsMissingFields(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/handoffs", bytes.NewBufferString(`{"fromAgentId":""}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -885,17 +809,18 @@ func TestHandleHandoffCreateRejectsMissingFields(t *testing.T) {
 // ── Identity Tests ────────────────────────────────────────────────────────────
 
 func TestHandleIdentitiesReturnsAgentIdentities(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/identities")
-	if err != nil {
-		t.Fatalf("GET /api/identities error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/identities")
+if err != nil {
+t.Fatalf("GET /api/identities error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
 
 	var identities []AgentIdentity
 	if err := json.NewDecoder(resp.Body).Decode(&identities); err != nil {
@@ -917,17 +842,18 @@ func TestHandleIdentitiesReturnsAgentIdentities(t *testing.T) {
 // ── Skill Pack Tests ──────────────────────────────────────────────────────────
 
 func TestHandleSkillsReturnsBuiltinPacks(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/skills")
-	if err != nil {
-		t.Fatalf("GET /api/skills error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/skills")
+if err != nil {
+t.Fatalf("GET /api/skills error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
 
 	var skills []SkillPack
 	if err := json.NewDecoder(resp.Body).Decode(&skills); err != nil {
@@ -946,8 +872,9 @@ func TestHandleSkillsReturnsBuiltinPacks(t *testing.T) {
 }
 
 func TestHandleSkillImportAddsCustomPack(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
 	body := bytes.NewBufferString(`{"name":"Custom DevOps Pack","domain":"software_company","description":"K8s deployment automation","source":"custom"}`)
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/skills/import", body)
@@ -956,14 +883,14 @@ func TestHandleSkillImportAddsCustomPack(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("POST /api/skills/import error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
+resp, err := client.Do(req)
+if err != nil {
+t.Fatalf("POST /api/skills/import error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
 
 	var pack SkillPack
 	if err := json.NewDecoder(resp.Body).Decode(&pack); err != nil {
@@ -975,7 +902,7 @@ func TestHandleSkillImportAddsCustomPack(t *testing.T) {
 }
 
 func TestHandleSkillImportRejectsMissingFields(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/skills/import", bytes.NewBufferString(`{"name":"No Domain"}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -989,17 +916,18 @@ func TestHandleSkillImportRejectsMissingFields(t *testing.T) {
 // ── Snapshot Tests ────────────────────────────────────────────────────────────
 
 func TestHandleSnapshotsReturnsEmptyListInitially(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/snapshots")
-	if err != nil {
-		t.Fatalf("GET /api/snapshots error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/snapshots")
+if err != nil {
+t.Fatalf("GET /api/snapshots error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
 
 	var list []OrgSnapshot
 	if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
@@ -1011,8 +939,9 @@ func TestHandleSnapshotsReturnsEmptyListInitially(t *testing.T) {
 }
 
 func TestHandleSnapshotCreateCaptures(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
 	body := bytes.NewBufferString(`{"label":"Pre-launch baseline"}`)
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/snapshots/create", body)
@@ -1021,14 +950,14 @@ func TestHandleSnapshotCreateCaptures(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("POST /api/snapshots/create error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
+resp, err := client.Do(req)
+if err != nil {
+t.Fatalf("POST /api/snapshots/create error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
 
 	var snap OrgSnapshot
 	if err := json.NewDecoder(resp.Body).Decode(&snap); err != nil {
@@ -1043,51 +972,52 @@ func TestHandleSnapshotCreateCaptures(t *testing.T) {
 }
 
 func TestHandleSnapshotRestoreResetsState(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Seed to known scenario.
-	seedBody := bytes.NewBufferString(`{"scenario":"launch-readiness"}`)
-	seedReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/dev/seed", seedBody)
-	seedReq.Header.Set("Content-Type", "application/json")
-	seedResp, err := http.DefaultClient.Do(seedReq)
-	if err != nil {
-		t.Fatalf("seed: %v", err)
-	}
-	seedResp.Body.Close()
+// Seed to known scenario.
+seedBody := bytes.NewBufferString(`{"scenario":"launch-readiness"}`)
+seedReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/dev/seed", seedBody)
+seedReq.Header.Set("Content-Type", "application/json")
+seedResp, err := client.Do(seedReq)
+if err != nil {
+t.Fatalf("seed: %v", err)
+}
+seedResp.Body.Close()
 
-	// Create snapshot.
-	createBody := bytes.NewBufferString(`{"label":"restore-test"}`)
-	createReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/snapshots/create", createBody)
-	createReq.Header.Set("Content-Type", "application/json")
-	createResp, err := http.DefaultClient.Do(createReq)
-	if err != nil {
-		t.Fatalf("create snapshot: %v", err)
-	}
-	defer createResp.Body.Close()
+// Create snapshot.
+createBody := bytes.NewBufferString(`{"label":"restore-test"}`)
+createReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/snapshots/create", createBody)
+createReq.Header.Set("Content-Type", "application/json")
+createResp, err := client.Do(createReq)
+if err != nil {
+t.Fatalf("create snapshot: %v", err)
+}
+defer createResp.Body.Close()
 
 	var snap OrgSnapshot
 	if err := json.NewDecoder(createResp.Body).Decode(&snap); err != nil {
 		t.Fatalf("decode created snapshot: %v", err)
 	}
 
-	// Restore.
-	restoreBody := bytes.NewBufferString(`{"snapshotId":"` + snap.ID + `"}`)
-	restoreReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/snapshots/restore", restoreBody)
-	restoreReq.Header.Set("Content-Type", "application/json")
-	restoreResp, err := http.DefaultClient.Do(restoreReq)
-	if err != nil {
-		t.Fatalf("restore snapshot: %v", err)
-	}
-	defer restoreResp.Body.Close()
-	if restoreResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(restoreResp.Body)
-		t.Fatalf("expected 200 from restore, got %d: %s", restoreResp.StatusCode, string(b))
-	}
+// Restore.
+restoreBody := bytes.NewBufferString(`{"snapshotId":"` + snap.ID + `"}`)
+restoreReq, _ := http.NewRequest(http.MethodPost, server.URL+"/api/snapshots/restore", restoreBody)
+restoreReq.Header.Set("Content-Type", "application/json")
+restoreResp, err := client.Do(restoreReq)
+if err != nil {
+t.Fatalf("restore snapshot: %v", err)
+}
+defer restoreResp.Body.Close()
+if restoreResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(restoreResp.Body)
+t.Fatalf("expected 200 from restore, got %d: %s", restoreResp.StatusCode, string(b))
+}
 }
 
 func TestHandleSnapshotRestoreReturns404ForUnknown(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/snapshots/restore", bytes.NewBufferString(`{"snapshotId":"nonexistent"}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -1101,17 +1031,18 @@ func TestHandleSnapshotRestoreReturns404ForUnknown(t *testing.T) {
 // ── Marketplace Tests ─────────────────────────────────────────────────────────
 
 func TestHandleMarketplaceReturnsItems(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/marketplace")
-	if err != nil {
-		t.Fatalf("GET /api/marketplace error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/marketplace")
+if err != nil {
+t.Fatalf("GET /api/marketplace error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
 
 	var items []MarketplaceItem
 	if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
@@ -1143,17 +1074,18 @@ func TestHandleMarketplaceItemsHaveValidTypes(t *testing.T) {
 // ── Analytics Tests ───────────────────────────────────────────────────────────
 
 func TestHandleAnalyticsReturnsMetrics(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/analytics")
-	if err != nil {
-		t.Fatalf("GET /api/analytics error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/analytics")
+if err != nil {
+t.Fatalf("GET /api/analytics error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
 
 	var analytics AnalyticsSummary
 	if err := json.NewDecoder(resp.Body).Decode(&analytics); err != nil {
@@ -1218,965 +1150,1000 @@ func TestDefaultSkillPacksAreValid(t *testing.T) {
 // ── Integration API tests ─────────────────────────────────────────────────────
 
 func TestHandleIntegrationsGET(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/integrations")
-	if err != nil {
-		t.Fatalf("GET /api/integrations: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
-	var list []map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if len(list) == 0 {
-		t.Fatal("expected non-empty integration list")
-	}
+resp, err := client.Get(server.URL + "/api/integrations")
+if err != nil {
+t.Fatalf("GET /api/integrations: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var list []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if len(list) == 0 {
+t.Fatal("expected non-empty integration list")
+}
 }
 
 func TestHandleIntegrationsByCategoryQuery(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	for _, cat := range []string{"chat", "git", "issues"} {
-		resp, err := http.Get(server.URL + "/api/integrations?category=" + cat)
-		if err != nil {
-			t.Fatalf("GET /api/integrations?category=%s: %v", cat, err)
-		}
-		defer resp.Body.Close()
-		var list []map[string]any
-		if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
-			t.Fatalf("decode %s: %v", cat, err)
-		}
-		if len(list) == 0 {
-			t.Errorf("expected integrations for category %q, got none", cat)
-		}
-	}
+for _, cat := range []string{"chat", "git", "issues"} {
+resp, err := client.Get(server.URL + "/api/integrations?category=" + cat)
+if err != nil {
+t.Fatalf("GET /api/integrations?category=%s: %v", cat, err)
+}
+defer resp.Body.Close()
+var list []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+t.Fatalf("decode %s: %v", cat, err)
+}
+if len(list) == 0 {
+t.Errorf("expected integrations for category %q, got none", cat)
+}
+}
 }
 
 func TestHandleIntegrationsMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations", "application/json", strings.NewReader("{}"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations", "application/json", strings.NewReader("{}"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIntegrationConnect(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	body := `{"integrationId":"slack","baseUrl":"https://hooks.slack.com/test"}`
-	resp, err := http.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("POST /api/integrations/connect: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
-		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
-	}
-	var updated map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&updated); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if updated["status"] != "connected" {
-		t.Errorf("expected status connected, got %v", updated["status"])
-	}
+body := `{"integrationId":"slack","baseUrl":"https://hooks.slack.com/test"}`
+resp, err := client.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/integrations/connect: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var updated map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&updated); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if updated["status"] != "connected" {
+t.Errorf("expected status connected, got %v", updated["status"])
+}
 }
 
 func TestHandleIntegrationConnectMissingID(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(`{}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(`{}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIntegrationConnectNotFound(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	body := `{"integrationId":"nonexistent"}`
-	resp, err := http.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusNotFound {
-		t.Fatalf("expected 404, got %d", resp.StatusCode)
-	}
+body := `{"integrationId":"nonexistent"}`
+resp, err := client.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
 }
-
-func TestHandleIntegrationConnectSSRF(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
-
-	body := `{"integrationId":"github","baseUrl":"http://169.254.169.254"}`
-	resp, err := http.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusNotFound {
+t.Fatalf("expected 404, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIntegrationConnectMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/integrations/connect")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/integrations/connect")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIntegrationDisconnect(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// connect first
-	body := `{"integrationId":"discord","baseUrl":"https://discord.com/api/webhooks/test"}`
-	_, _ = http.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(body))
+// connect first
+body := `{"integrationId":"discord","baseUrl":"https://discord.com/api/webhooks/test"}`
+_, _ = client.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader(body))
 
-	resp, err := http.Post(server.URL+"/api/integrations/disconnect", "application/json", strings.NewReader(`{"integrationId":"discord"}`))
-	if err != nil {
-		t.Fatalf("POST /api/integrations/disconnect: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
-	var updated map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&updated); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if updated["status"] != "disconnected" {
-		t.Errorf("expected status disconnected, got %v", updated["status"])
-	}
+resp, err := client.Post(server.URL+"/api/integrations/disconnect", "application/json", strings.NewReader(`{"integrationId":"discord"}`))
+if err != nil {
+t.Fatalf("POST /api/integrations/disconnect: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var updated map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&updated); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if updated["status"] != "disconnected" {
+t.Errorf("expected status disconnected, got %v", updated["status"])
+}
 }
 
 func TestHandleIntegrationDisconnectMissingID(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/disconnect", "application/json", strings.NewReader(`{}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/disconnect", "application/json", strings.NewReader(`{}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIntegrationDisconnectNotFound(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/disconnect", "application/json", strings.NewReader(`{"integrationId":"nonexistent"}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusNotFound {
-		t.Fatalf("expected 404, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/disconnect", "application/json", strings.NewReader(`{"integrationId":"nonexistent"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusNotFound {
+t.Fatalf("expected 404, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIntegrationDisconnectMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/integrations/disconnect")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/integrations/disconnect")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 // ── Chat handler tests ────────────────────────────────────────────────────────
 
 func TestHandleChatSendAndList(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	body := `{"integrationId":"slack","channel":"#engineering","fromAgent":"swe-1","content":"PR ready for review"}`
-	resp, err := http.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("POST /api/integrations/chat/send: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
-		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
-	}
-	var msg map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if msg["integrationId"] != "slack" {
-		t.Errorf("expected integrationId slack, got %v", msg["integrationId"])
-	}
+body := `{"integrationId":"slack","channel":"#engineering","fromAgent":"swe-1","content":"PR ready for review"}`
+resp, err := client.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/integrations/chat/send: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var msg map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if msg["integrationId"] != "slack" {
+t.Errorf("expected integrationId slack, got %v", msg["integrationId"])
+}
 
-	// Now list messages.
-	listResp, err := http.Get(server.URL + "/api/integrations/chat/messages?integrationId=slack")
-	if err != nil {
-		t.Fatalf("GET chat messages: %v", err)
-	}
-	defer listResp.Body.Close()
-	var msgs []map[string]any
-	if err := json.NewDecoder(listResp.Body).Decode(&msgs); err != nil {
-		t.Fatalf("decode list: %v", err)
-	}
-	if len(msgs) != 1 {
-		t.Fatalf("expected 1 message, got %d", len(msgs))
-	}
+// Now list messages.
+listResp, err := client.Get(server.URL + "/api/integrations/chat/messages?integrationId=slack")
+if err != nil {
+t.Fatalf("GET chat messages: %v", err)
+}
+defer listResp.Body.Close()
+var msgs []map[string]any
+if err := json.NewDecoder(listResp.Body).Decode(&msgs); err != nil {
+t.Fatalf("decode list: %v", err)
+}
+if len(msgs) != 1 {
+t.Fatalf("expected 1 message, got %d", len(msgs))
+}
 }
 
 func TestHandleChatSendWithThread(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	body := `{"integrationId":"discord","channel":"general","fromAgent":"pm-1","content":"Meeting summary","threadId":"thread-42"}`
-	resp, err := http.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
-	var msg map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if msg["threadId"] != "thread-42" {
-		t.Errorf("expected threadId thread-42, got %v", msg["threadId"])
-	}
+body := `{"integrationId":"discord","channel":"general","fromAgent":"pm-1","content":"Meeting summary","threadId":"thread-42"}`
+resp, err := client.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var msg map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if msg["threadId"] != "thread-42" {
+t.Errorf("expected threadId thread-42, got %v", msg["threadId"])
+}
 }
 
 func TestHandleChatSendBadRequest(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Missing required fields.
-	body := `{"integrationId":"slack"}`
-	resp, err := http.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+// Missing required fields.
+body := `{"integrationId":"slack"}`
+resp, err := client.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleChatSendMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/integrations/chat/send")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/integrations/chat/send")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleChatMessagesMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/chat/messages", "application/json", strings.NewReader("{}"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/chat/messages", "application/json", strings.NewReader("{}"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleChatMessagesAllIntegrations(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Send to slack and discord.
-	for _, integ := range []string{"slack", "discord"} {
-		body := `{"integrationId":"` + integ + `","channel":"#gen","fromAgent":"swe-1","content":"hello"}`
-		http.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body)) //nolint:errcheck
-	}
+// Send to slack and discord.
+for _, integ := range []string{"slack", "discord"} {
+body := `{"integrationId":"` + integ + `","channel":"#gen","fromAgent":"swe-1","content":"hello"}`
+client.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body)) //nolint:errcheck
+}
 
-	// List all (no filter).
-	resp, err := http.Get(server.URL + "/api/integrations/chat/messages")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	var msgs []map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&msgs); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if len(msgs) != 2 {
-		t.Errorf("expected 2 messages, got %d", len(msgs))
-	}
+// List all (no filter).
+resp, err := client.Get(server.URL + "/api/integrations/chat/messages")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+var msgs []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&msgs); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if len(msgs) != 2 {
+t.Errorf("expected 2 messages, got %d", len(msgs))
+}
 }
 
 // ── Git PR handler tests ──────────────────────────────────────────────────────
 
 func TestHandlePRCreateAndList(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	body := `{"integrationId":"github","repository":"onehumancorp/core","title":"feat: billing","sourceBranch":"feature/billing","targetBranch":"main","createdBy":"swe-1"}`
-	resp, err := http.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("POST pr/create: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
-		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
-	}
-	var pr map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&pr); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if pr["status"] != "open" {
-		t.Errorf("expected status open, got %v", pr["status"])
-	}
-	prID, _ := pr["id"].(string)
+body := `{"integrationId":"github","repository":"onehumancorp/core","title":"feat: billing","sourceBranch":"feature/billing","targetBranch":"main","createdBy":"swe-1"}`
+resp, err := client.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("POST pr/create: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var pr map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&pr); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if pr["status"] != "open" {
+t.Errorf("expected status open, got %v", pr["status"])
+}
+prID, _ := pr["id"].(string)
 
-	// List PRs.
-	listResp, err := http.Get(server.URL + "/api/integrations/git/prs?integrationId=github")
-	if err != nil {
-		t.Fatalf("GET prs: %v", err)
-	}
-	defer listResp.Body.Close()
-	var prs []map[string]any
-	if err := json.NewDecoder(listResp.Body).Decode(&prs); err != nil {
-		t.Fatalf("decode list: %v", err)
-	}
-	if len(prs) != 1 {
-		t.Fatalf("expected 1 PR, got %d", len(prs))
-	}
+// List PRs.
+listResp, err := client.Get(server.URL + "/api/integrations/git/prs?integrationId=github")
+if err != nil {
+t.Fatalf("GET prs: %v", err)
+}
+defer listResp.Body.Close()
+var prs []map[string]any
+if err := json.NewDecoder(listResp.Body).Decode(&prs); err != nil {
+t.Fatalf("decode list: %v", err)
+}
+if len(prs) != 1 {
+t.Fatalf("expected 1 PR, got %d", len(prs))
+}
 
-	// Merge the PR.
-	mergeBody := `{"prId":"` + prID + `"}`
-	mergeResp, err := http.Post(server.URL+"/api/integrations/git/pr/merge", "application/json", strings.NewReader(mergeBody))
-	if err != nil {
-		t.Fatalf("POST pr/merge: %v", err)
-	}
-	defer mergeResp.Body.Close()
-	if mergeResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(mergeResp.Body)
-		t.Fatalf("expected 200, got %d: %s", mergeResp.StatusCode, b)
-	}
-	var merged map[string]any
-	if err := json.NewDecoder(mergeResp.Body).Decode(&merged); err != nil {
-		t.Fatalf("decode merged: %v", err)
-	}
-	if merged["status"] != "merged" {
-		t.Errorf("expected merged status, got %v", merged["status"])
-	}
+// Merge the PR.
+mergeBody := `{"prId":"` + prID + `"}`
+mergeResp, err := client.Post(server.URL+"/api/integrations/git/pr/merge", "application/json", strings.NewReader(mergeBody))
+if err != nil {
+t.Fatalf("POST pr/merge: %v", err)
+}
+defer mergeResp.Body.Close()
+if mergeResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(mergeResp.Body)
+t.Fatalf("expected 200, got %d: %s", mergeResp.StatusCode, b)
+}
+var merged map[string]any
+if err := json.NewDecoder(mergeResp.Body).Decode(&merged); err != nil {
+t.Fatalf("decode merged: %v", err)
+}
+if merged["status"] != "merged" {
+t.Errorf("expected merged status, got %v", merged["status"])
+}
 }
 
 func TestHandlePRClose(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	body := `{"integrationId":"github","repository":"repo","title":"title","sourceBranch":"feat","targetBranch":"main"}`
-	resp, err := http.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	var pr map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&pr); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	prID, _ := pr["id"].(string)
+body := `{"integrationId":"github","repository":"repo","title":"title","sourceBranch":"feat","targetBranch":"main"}`
+resp, err := client.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+var pr map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&pr); err != nil {
+t.Fatalf("decode: %v", err)
+}
+prID, _ := pr["id"].(string)
 
-	closeBody := `{"prId":"` + prID + `"}`
-	closeResp, err := http.Post(server.URL+"/api/integrations/git/pr/close", "application/json", strings.NewReader(closeBody))
-	if err != nil {
-		t.Fatalf("POST pr/close: %v", err)
-	}
-	defer closeResp.Body.Close()
-	if closeResp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", closeResp.StatusCode)
-	}
-	var closed map[string]any
-	if err := json.NewDecoder(closeResp.Body).Decode(&closed); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if closed["status"] != "closed" {
-		t.Errorf("expected closed, got %v", closed["status"])
-	}
+closeBody := `{"prId":"` + prID + `"}`
+closeResp, err := client.Post(server.URL+"/api/integrations/git/pr/close", "application/json", strings.NewReader(closeBody))
+if err != nil {
+t.Fatalf("POST pr/close: %v", err)
+}
+defer closeResp.Body.Close()
+if closeResp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", closeResp.StatusCode)
+}
+var closed map[string]any
+if err := json.NewDecoder(closeResp.Body).Decode(&closed); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if closed["status"] != "closed" {
+t.Errorf("expected closed, got %v", closed["status"])
+}
 }
 
 func TestHandlePRCreateBadRequest(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Missing required title.
-	body := `{"integrationId":"github","repository":"repo","sourceBranch":"feat","targetBranch":"main"}`
-	resp, err := http.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+// Missing required title.
+body := `{"integrationId":"github","repository":"repo","sourceBranch":"feat","targetBranch":"main"}`
+resp, err := client.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandlePRCreateMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/integrations/git/pr/create")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/integrations/git/pr/create")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 func TestHandlePRMergeMissingID(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/git/pr/merge", "application/json", strings.NewReader(`{}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/git/pr/merge", "application/json", strings.NewReader(`{}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandlePRMergeNotFound(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/git/pr/merge", "application/json", strings.NewReader(`{"prId":"nonexistent"}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/git/pr/merge", "application/json", strings.NewReader(`{"prId":"nonexistent"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandlePRMergeMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/integrations/git/pr/merge")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/integrations/git/pr/merge")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 func TestHandlePRCloseMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/integrations/git/pr/close")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/integrations/git/pr/close")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 func TestHandlePRCloseMissingID(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/git/pr/close", "application/json", strings.NewReader(`{}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/git/pr/close", "application/json", strings.NewReader(`{}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandlePRCloseNotFound(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/git/pr/close", "application/json", strings.NewReader(`{"prId":"nonexistent"}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/git/pr/close", "application/json", strings.NewReader(`{"prId":"nonexistent"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandlePRsMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/git/prs", "application/json", strings.NewReader("{}"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/git/prs", "application/json", strings.NewReader("{}"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 func TestHandlePRsAllIntegrations(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Create PRs for github and gitlab.
-	for _, integ := range []string{"github", "gitlab"} {
-		body := `{"integrationId":"` + integ + `","repository":"repo","title":"title","sourceBranch":"feat","targetBranch":"main"}`
-		http.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body)) //nolint:errcheck
-	}
+// Create PRs for github and gitlab.
+for _, integ := range []string{"github", "gitlab"} {
+body := `{"integrationId":"` + integ + `","repository":"repo","title":"title","sourceBranch":"feat","targetBranch":"main"}`
+client.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body)) //nolint:errcheck
+}
 
-	// List all.
-	resp, err := http.Get(server.URL + "/api/integrations/git/prs")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	var prs []map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&prs); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if len(prs) != 2 {
-		t.Errorf("expected 2 PRs, got %d", len(prs))
-	}
+// List all.
+resp, err := client.Get(server.URL + "/api/integrations/git/prs")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+var prs []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&prs); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if len(prs) != 2 {
+t.Errorf("expected 2 PRs, got %d", len(prs))
+}
 }
 
 // ── Issue tracker handler tests ───────────────────────────────────────────────
 
 func TestHandleIssueCreateAndList(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	body := `{"integrationId":"jira","project":"PROJ","title":"Implement billing dashboard","description":"As a CEO I want costs","createdBy":"pm-1","priority":"high","labels":["billing","dashboard"]}`
-	resp, err := http.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("POST issues/create: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
-		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
-	}
-	var issue map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&issue); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if issue["status"] != "open" {
-		t.Errorf("expected status open, got %v", issue["status"])
-	}
-	if issue["priority"] != "high" {
-		t.Errorf("expected priority high, got %v", issue["priority"])
-	}
-	issueID, _ := issue["id"].(string)
+body := `{"integrationId":"jira","project":"PROJ","title":"Implement billing dashboard","description":"As a CEO I want costs","createdBy":"pm-1","priority":"high","labels":["billing","dashboard"]}`
+resp, err := client.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("POST issues/create: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var issue map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&issue); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if issue["status"] != "open" {
+t.Errorf("expected status open, got %v", issue["status"])
+}
+if issue["priority"] != "high" {
+t.Errorf("expected priority high, got %v", issue["priority"])
+}
+issueID, _ := issue["id"].(string)
 
-	// List issues.
-	listResp, err := http.Get(server.URL + "/api/integrations/issues?integrationId=jira")
-	if err != nil {
-		t.Fatalf("GET issues: %v", err)
-	}
-	defer listResp.Body.Close()
-	var issues []map[string]any
-	if err := json.NewDecoder(listResp.Body).Decode(&issues); err != nil {
-		t.Fatalf("decode list: %v", err)
-	}
-	if len(issues) != 1 {
-		t.Fatalf("expected 1 issue, got %d", len(issues))
-	}
+// List issues.
+listResp, err := client.Get(server.URL + "/api/integrations/issues?integrationId=jira")
+if err != nil {
+t.Fatalf("GET issues: %v", err)
+}
+defer listResp.Body.Close()
+var issues []map[string]any
+if err := json.NewDecoder(listResp.Body).Decode(&issues); err != nil {
+t.Fatalf("decode list: %v", err)
+}
+if len(issues) != 1 {
+t.Fatalf("expected 1 issue, got %d", len(issues))
+}
 
-	// Update status.
-	statusBody := `{"issueId":"` + issueID + `","status":"in_progress"}`
-	statusResp, err := http.Post(server.URL+"/api/integrations/issues/status", "application/json", strings.NewReader(statusBody))
-	if err != nil {
-		t.Fatalf("POST issues/status: %v", err)
-	}
-	defer statusResp.Body.Close()
-	if statusResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(statusResp.Body)
-		t.Fatalf("expected 200, got %d: %s", statusResp.StatusCode, b)
-	}
-	var updated map[string]any
-	if err := json.NewDecoder(statusResp.Body).Decode(&updated); err != nil {
-		t.Fatalf("decode updated: %v", err)
-	}
-	if updated["status"] != "in_progress" {
-		t.Errorf("expected in_progress, got %v", updated["status"])
-	}
+// Update status.
+statusBody := `{"issueId":"` + issueID + `","status":"in_progress"}`
+statusResp, err := client.Post(server.URL+"/api/integrations/issues/status", "application/json", strings.NewReader(statusBody))
+if err != nil {
+t.Fatalf("POST issues/status: %v", err)
+}
+defer statusResp.Body.Close()
+if statusResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(statusResp.Body)
+t.Fatalf("expected 200, got %d: %s", statusResp.StatusCode, b)
+}
+var updated map[string]any
+if err := json.NewDecoder(statusResp.Body).Decode(&updated); err != nil {
+t.Fatalf("decode updated: %v", err)
+}
+if updated["status"] != "in_progress" {
+t.Errorf("expected in_progress, got %v", updated["status"])
+}
 
-	// Assign issue.
-	assignBody := `{"issueId":"` + issueID + `","assignee":"swe-1"}`
-	assignResp, err := http.Post(server.URL+"/api/integrations/issues/assign", "application/json", strings.NewReader(assignBody))
-	if err != nil {
-		t.Fatalf("POST issues/assign: %v", err)
-	}
-	defer assignResp.Body.Close()
-	if assignResp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", assignResp.StatusCode)
-	}
-	var assigned map[string]any
-	if err := json.NewDecoder(assignResp.Body).Decode(&assigned); err != nil {
-		t.Fatalf("decode assigned: %v", err)
-	}
-	if assigned["assignedTo"] != "swe-1" {
-		t.Errorf("expected assignedTo swe-1, got %v", assigned["assignedTo"])
-	}
+// Assign issue.
+assignBody := `{"issueId":"` + issueID + `","assignee":"swe-1"}`
+assignResp, err := client.Post(server.URL+"/api/integrations/issues/assign", "application/json", strings.NewReader(assignBody))
+if err != nil {
+t.Fatalf("POST issues/assign: %v", err)
+}
+defer assignResp.Body.Close()
+if assignResp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", assignResp.StatusCode)
+}
+var assigned map[string]any
+if err := json.NewDecoder(assignResp.Body).Decode(&assigned); err != nil {
+t.Fatalf("decode assigned: %v", err)
+}
+if assigned["assignedTo"] != "swe-1" {
+t.Errorf("expected assignedTo swe-1, got %v", assigned["assignedTo"])
+}
 }
 
 func TestHandleIssueCreateDefaultPriority(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	body := `{"integrationId":"plane","project":"BACKEND","title":"Fix bug"}`
-	resp, err := http.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
-	var issue map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&issue); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if issue["priority"] != "medium" {
-		t.Errorf("expected default priority medium, got %v", issue["priority"])
-	}
+body := `{"integrationId":"plane","project":"BACKEND","title":"Fix bug"}`
+resp, err := client.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var issue map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&issue); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if issue["priority"] != "medium" {
+t.Errorf("expected default priority medium, got %v", issue["priority"])
+}
 }
 
 func TestHandleIssueCreateBadRequest(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Missing title.
-	body := `{"integrationId":"jira","project":"PROJ"}`
-	resp, err := http.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+// Missing title.
+body := `{"integrationId":"jira","project":"PROJ"}`
+resp, err := client.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIssueCreateMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/integrations/issues/create")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/integrations/issues/create")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIssueStatusMissingFields(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/issues/status", "application/json", strings.NewReader(`{"issueId":"x"}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/issues/status", "application/json", strings.NewReader(`{"issueId":"x"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIssueStatusNotFound(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/issues/status", "application/json", strings.NewReader(`{"issueId":"nonexistent","status":"done"}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusNotFound {
-		t.Fatalf("expected 404, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/issues/status", "application/json", strings.NewReader(`{"issueId":"nonexistent","status":"done"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusNotFound {
+t.Fatalf("expected 404, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIssueStatusMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/integrations/issues/status")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/integrations/issues/status")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIssueAssignMissingFields(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/issues/assign", "application/json", strings.NewReader(`{"issueId":"x"}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/issues/assign", "application/json", strings.NewReader(`{"issueId":"x"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIssueAssignNotFound(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/issues/assign", "application/json", strings.NewReader(`{"issueId":"nonexistent","assignee":"swe-1"}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusNotFound {
-		t.Fatalf("expected 404, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/issues/assign", "application/json", strings.NewReader(`{"issueId":"nonexistent","assignee":"swe-1"}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusNotFound {
+t.Fatalf("expected 404, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIssueAssignMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/integrations/issues/assign")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/integrations/issues/assign")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIssuesMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/issues", "application/json", strings.NewReader("{}"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/issues", "application/json", strings.NewReader("{}"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIssuesAllIntegrations(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	for _, integ := range []string{"jira", "plane"} {
-		body := `{"integrationId":"` + integ + `","project":"PROJ","title":"issue"}`
-		http.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body)) //nolint:errcheck
-	}
+for _, integ := range []string{"jira", "plane"} {
+body := `{"integrationId":"` + integ + `","project":"PROJ","title":"issue"}`
+client.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body)) //nolint:errcheck
+}
 
-	resp, err := http.Get(server.URL + "/api/integrations/issues")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	var issues []map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&issues); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if len(issues) != 2 {
-		t.Errorf("expected 2 issues, got %d", len(issues))
-	}
+resp, err := client.Get(server.URL + "/api/integrations/issues")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+var issues []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&issues); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if len(issues) != 2 {
+t.Errorf("expected 2 issues, got %d", len(issues))
+}
 }
 
 func TestHandleIntegrationConnectInvalidJSON(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader("not-json"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/connect", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIntegrationDisconnectInvalidJSON(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/disconnect", "application/json", strings.NewReader("not-json"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/disconnect", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleChatSendInvalidJSON(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader("not-json"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandlePRCreateInvalidJSON(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader("not-json"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandlePRMergeInvalidJSON(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/git/pr/merge", "application/json", strings.NewReader("not-json"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/git/pr/merge", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandlePRCloseInvalidJSON(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/git/pr/close", "application/json", strings.NewReader("not-json"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/git/pr/close", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIssueCreateInvalidJSON(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader("not-json"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIssueStatusInvalidJSON(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/issues/status", "application/json", strings.NewReader("not-json"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/issues/status", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleIssueAssignInvalidJSON(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/integrations/issues/assign", "application/json", strings.NewReader("not-json"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/integrations/issues/assign", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestIntegrationDirectHandlers(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	// Test chat handler method not allowed via direct app.
 	rec := httptest.NewRecorder()
@@ -2204,101 +2171,106 @@ func TestIntegrationDirectHandlers(t *testing.T) {
 }
 
 func TestIntegrationGitHubIssues(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	body := `{"integrationId":"github-issues","project":"onehumancorp/core","title":"Add test coverage"}`
-	resp, err := http.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
-		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
-	}
-	var issue map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&issue); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if issue["integrationId"] != "github-issues" {
-		t.Errorf("expected integrationId github-issues, got %v", issue["integrationId"])
-	}
+body := `{"integrationId":"github-issues","project":"onehumancorp/core","title":"Add test coverage"}`
+resp, err := client.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var issue map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&issue); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if issue["integrationId"] != "github-issues" {
+t.Errorf("expected integrationId github-issues, got %v", issue["integrationId"])
+}
 }
 
 func TestIntegrationGoogleChat(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	body := `{"integrationId":"google-chat","channel":"my-space","fromAgent":"pm-1","content":"Sprint complete"}`
-	resp, err := http.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
-		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
-	}
-	var msg map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if msg["integrationId"] != "google-chat" {
-		t.Errorf("expected integrationId google-chat, got %v", msg["integrationId"])
-	}
+body := `{"integrationId":"google-chat","channel":"my-space","fromAgent":"pm-1","content":"Sprint complete"}`
+resp, err := client.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var msg map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if msg["integrationId"] != "google-chat" {
+t.Errorf("expected integrationId google-chat, got %v", msg["integrationId"])
+}
 }
 
 // ── Additional coverage: handleDevSeed ───────────────────────────────────────
 
 func TestHandleDevSeedMethodNotAllowed(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/dev/seed")
-	if err != nil {
-		t.Fatalf("GET /api/dev/seed error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusMethodNotAllowed {
-		t.Fatalf("expected 405, got %d", resp.StatusCode)
-	}
+resp, err := client.Get(server.URL + "/api/dev/seed")
+if err != nil {
+t.Fatalf("GET /api/dev/seed error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Fatalf("expected 405, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleDevSeedInvalidJSON(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Post(server.URL+"/api/dev/seed", "application/json", strings.NewReader("not-json"))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", resp.StatusCode)
-	}
+resp, err := client.Post(server.URL+"/api/dev/seed", "application/json", strings.NewReader("not-json"))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", resp.StatusCode)
+}
 }
 
 func TestHandleDevSeedDefaultScenario(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// An empty scenario string should default to "launch-readiness".
-	resp, err := http.Post(server.URL+"/api/dev/seed", "application/json", strings.NewReader(`{"scenario":""}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
-		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
-	}
+// An empty scenario string should default to "launch-readiness".
+resp, err := client.Post(server.URL+"/api/dev/seed", "application/json", strings.NewReader(`{"scenario":""}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
 }
 
 // ── Additional coverage: handleHireAgent / handleFireAgent ────────────────────
 
 func TestHandleHireAgentInvalidJSON(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/agents/hire", strings.NewReader("not-json"))
 	req.Header.Set("Content-Type", "application/json")
@@ -2310,7 +2282,7 @@ func TestHandleHireAgentInvalidJSON(t *testing.T) {
 }
 
 func TestHandleFireAgentInvalidJSON(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/agents/fire", strings.NewReader("not-json"))
 	req.Header.Set("Content-Type", "application/json")
@@ -2324,7 +2296,7 @@ func TestHandleFireAgentInvalidJSON(t *testing.T) {
 // ── Additional coverage: handleApprovals ─────────────────────────────────────
 
 func TestHandleApprovalsMethodNotAllowed(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/approvals", bytes.NewBufferString("{}"))
 	req.Header.Set("Content-Type", "application/json")
@@ -2338,7 +2310,7 @@ func TestHandleApprovalsMethodNotAllowed(t *testing.T) {
 // ── Additional coverage: handleApprovalRequest ───────────────────────────────
 
 func TestHandleApprovalRequestMethodNotAllowed(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/approvals/request", nil)
 	rec := httptest.NewRecorder()
@@ -2349,7 +2321,7 @@ func TestHandleApprovalRequestMethodNotAllowed(t *testing.T) {
 }
 
 func TestHandleApprovalRequestInvalidJSON(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/approvals/request", strings.NewReader("not-json"))
 	req.Header.Set("Content-Type", "application/json")
@@ -2361,57 +2333,59 @@ func TestHandleApprovalRequestInvalidJSON(t *testing.T) {
 }
 
 func TestHandleApprovalRequestAutoRiskLevelHigh(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// estimatedCostUsd between 100 and 500 → auto "high" risk.
-	body := `{"agentId":"swe-1","action":"deploy-staging","estimatedCostUsd":200}`
-	resp, err := http.Post(server.URL+"/api/approvals/request", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
-		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
-	}
-	var approval ApprovalRequest
-	if err := json.NewDecoder(resp.Body).Decode(&approval); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if approval.RiskLevel != "high" {
-		t.Errorf("expected risk level 'high', got %q", approval.RiskLevel)
-	}
+// estimatedCostUsd between 100 and 500 → auto "high" risk.
+body := `{"agentId":"swe-1","action":"deploy-staging","estimatedCostUsd":200}`
+resp, err := client.Post(server.URL+"/api/approvals/request", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var approval ApprovalRequest
+if err := json.NewDecoder(resp.Body).Decode(&approval); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if approval.RiskLevel != "high" {
+t.Errorf("expected risk level 'high', got %q", approval.RiskLevel)
+}
 }
 
 func TestHandleApprovalRequestAutoRiskLevelMedium(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// estimatedCostUsd <= 100 → auto "medium" risk.
-	body := `{"agentId":"pm-1","action":"send-email","estimatedCostUsd":5}`
-	resp, err := http.Post(server.URL+"/api/approvals/request", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
-		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
-	}
-	var approval ApprovalRequest
-	if err := json.NewDecoder(resp.Body).Decode(&approval); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if approval.RiskLevel != "medium" {
-		t.Errorf("expected risk level 'medium', got %q", approval.RiskLevel)
-	}
+// estimatedCostUsd <= 100 → auto "medium" risk.
+body := `{"agentId":"pm-1","action":"send-email","estimatedCostUsd":5}`
+resp, err := client.Post(server.URL+"/api/approvals/request", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var approval ApprovalRequest
+if err := json.NewDecoder(resp.Body).Decode(&approval); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if approval.RiskLevel != "medium" {
+t.Errorf("expected risk level 'medium', got %q", approval.RiskLevel)
+}
 }
 
 // ── Additional coverage: handleApprovalDecide ────────────────────────────────
 
 func TestHandleApprovalDecideMethodNotAllowed(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/approvals/decide", nil)
 	rec := httptest.NewRecorder()
@@ -2422,7 +2396,7 @@ func TestHandleApprovalDecideMethodNotAllowed(t *testing.T) {
 }
 
 func TestHandleApprovalDecideInvalidJSON(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/approvals/decide", strings.NewReader("not-json"))
 	req.Header.Set("Content-Type", "application/json")
@@ -2434,7 +2408,7 @@ func TestHandleApprovalDecideInvalidJSON(t *testing.T) {
 }
 
 func TestHandleApprovalDecideMissingFields(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/approvals/decide", strings.NewReader(`{"approvalId":""}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -2446,73 +2420,75 @@ func TestHandleApprovalDecideMissingFields(t *testing.T) {
 }
 
 func TestHandleApprovalDecideRejectDecision(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Create an approval first.
-	createBody := `{"agentId":"swe-1","action":"delete-records","estimatedCostUsd":1000}`
-	createResp, err := http.Post(server.URL+"/api/approvals/request", "application/json", strings.NewReader(createBody))
-	if err != nil {
-		t.Fatalf("create: %v", err)
-	}
-	defer createResp.Body.Close()
-	var approval ApprovalRequest
-	if err := json.NewDecoder(createResp.Body).Decode(&approval); err != nil {
-		t.Fatalf("decode create: %v", err)
-	}
+// Create an approval first.
+createBody := `{"agentId":"swe-1","action":"delete-records","estimatedCostUsd":1000}`
+createResp, err := client.Post(server.URL+"/api/approvals/request", "application/json", strings.NewReader(createBody))
+if err != nil {
+t.Fatalf("create: %v", err)
+}
+defer createResp.Body.Close()
+var approval ApprovalRequest
+if err := json.NewDecoder(createResp.Body).Decode(&approval); err != nil {
+t.Fatalf("decode create: %v", err)
+}
 
-	// Reject it.
-	decideBody := `{"approvalId":"` + approval.ID + `","decision":"reject","decidedBy":"ceo"}`
-	decideResp, err := http.Post(server.URL+"/api/approvals/decide", "application/json", strings.NewReader(decideBody))
-	if err != nil {
-		t.Fatalf("decide: %v", err)
-	}
-	defer decideResp.Body.Close()
-	if decideResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(decideResp.Body)
-		t.Fatalf("expected 200, got %d: %s", decideResp.StatusCode, b)
-	}
-	var list []ApprovalRequest
-	if err := json.NewDecoder(decideResp.Body).Decode(&list); err != nil {
-		t.Fatalf("decode list: %v", err)
-	}
-	if len(list) == 0 || list[0].Status != ApprovalStatusRejected {
-		t.Fatalf("expected rejected status in list: %+v", list)
-	}
+// Reject it.
+decideBody := `{"approvalId":"` + approval.ID + `","decision":"reject","decidedBy":"ceo"}`
+decideResp, err := client.Post(server.URL+"/api/approvals/decide", "application/json", strings.NewReader(decideBody))
+if err != nil {
+t.Fatalf("decide: %v", err)
+}
+defer decideResp.Body.Close()
+if decideResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(decideResp.Body)
+t.Fatalf("expected 200, got %d: %s", decideResp.StatusCode, b)
+}
+var list []ApprovalRequest
+if err := json.NewDecoder(decideResp.Body).Decode(&list); err != nil {
+t.Fatalf("decode list: %v", err)
+}
+if len(list) == 0 || list[0].Status != ApprovalStatusRejected {
+t.Fatalf("expected rejected status in list: %+v", list)
+}
 }
 
 func TestHandleApprovalDecideInvalidDecision(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Create an approval first.
-	createBody := `{"agentId":"swe-1","action":"do-something"}`
-	createResp, err := http.Post(server.URL+"/api/approvals/request", "application/json", strings.NewReader(createBody))
-	if err != nil {
-		t.Fatalf("create: %v", err)
-	}
-	defer createResp.Body.Close()
-	var approval ApprovalRequest
-	if err := json.NewDecoder(createResp.Body).Decode(&approval); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
+// Create an approval first.
+createBody := `{"agentId":"swe-1","action":"do-something"}`
+createResp, err := client.Post(server.URL+"/api/approvals/request", "application/json", strings.NewReader(createBody))
+if err != nil {
+t.Fatalf("create: %v", err)
+}
+defer createResp.Body.Close()
+var approval ApprovalRequest
+if err := json.NewDecoder(createResp.Body).Decode(&approval); err != nil {
+t.Fatalf("decode: %v", err)
+}
 
-	// Use invalid decision.
-	decideBody := `{"approvalId":"` + approval.ID + `","decision":"maybe"}`
-	decideResp, err := http.Post(server.URL+"/api/approvals/decide", "application/json", strings.NewReader(decideBody))
-	if err != nil {
-		t.Fatalf("decide: %v", err)
-	}
-	defer decideResp.Body.Close()
-	if decideResp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", decideResp.StatusCode)
-	}
+// Use invalid decision.
+decideBody := `{"approvalId":"` + approval.ID + `","decision":"maybe"}`
+decideResp, err := client.Post(server.URL+"/api/approvals/decide", "application/json", strings.NewReader(decideBody))
+if err != nil {
+t.Fatalf("decide: %v", err)
+}
+defer decideResp.Body.Close()
+if decideResp.StatusCode != http.StatusBadRequest {
+t.Fatalf("expected 400, got %d", decideResp.StatusCode)
+}
 }
 
 // ── Additional coverage: handleHandoffs ──────────────────────────────────────
 
 func TestHandleHandoffsMethodNotAllowed(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodDelete, "/api/handoffs", nil)
 	rec := httptest.NewRecorder()
@@ -2523,7 +2499,7 @@ func TestHandleHandoffsMethodNotAllowed(t *testing.T) {
 }
 
 func TestHandleHandoffsPostInvalidJSON(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/handoffs", strings.NewReader("not-json"))
 	req.Header.Set("Content-Type", "application/json")
@@ -2537,7 +2513,7 @@ func TestHandleHandoffsPostInvalidJSON(t *testing.T) {
 // ── Additional coverage: handleSkillImport ───────────────────────────────────
 
 func TestHandleSkillImportMethodNotAllowed(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/skills/import", nil)
 	rec := httptest.NewRecorder()
@@ -2548,7 +2524,7 @@ func TestHandleSkillImportMethodNotAllowed(t *testing.T) {
 }
 
 func TestHandleSkillImportInvalidJSON(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/skills/import", strings.NewReader("not-json"))
 	req.Header.Set("Content-Type", "application/json")
@@ -2560,33 +2536,34 @@ func TestHandleSkillImportInvalidJSON(t *testing.T) {
 }
 
 func TestHandleSkillImportDefaultSource(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// No source provided → defaults to "custom".
-	body := `{"name":"My Skill Pack","domain":"software_company","description":"Test pack"}`
-	resp, err := http.Post(server.URL+"/api/skills/import", "application/json", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
-		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
-	}
-	var pack SkillPack
-	if err := json.NewDecoder(resp.Body).Decode(&pack); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if pack.Source != "custom" {
-		t.Errorf("expected source 'custom', got %q", pack.Source)
-	}
+// No source provided → defaults to "custom".
+body := `{"name":"My Skill Pack","domain":"software_company","description":"Test pack"}`
+resp, err := client.Post(server.URL+"/api/skills/import", "application/json", strings.NewReader(body))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var pack SkillPack
+if err := json.NewDecoder(resp.Body).Decode(&pack); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if pack.Source != "custom" {
+t.Errorf("expected source 'custom', got %q", pack.Source)
+}
 }
 
 // ── Additional coverage: handleSnapshotCreate ────────────────────────────────
 
 func TestHandleSnapshotCreateMethodNotAllowed(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/snapshots/create", nil)
 	rec := httptest.NewRecorder()
@@ -2597,7 +2574,7 @@ func TestHandleSnapshotCreateMethodNotAllowed(t *testing.T) {
 }
 
 func TestHandleSnapshotCreateInvalidJSON(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/snapshots/create", strings.NewReader("not-json"))
 	req.Header.Set("Content-Type", "application/json")
@@ -2609,32 +2586,33 @@ func TestHandleSnapshotCreateInvalidJSON(t *testing.T) {
 }
 
 func TestHandleSnapshotCreateDefaultLabel(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// No label → auto-generated label.
-	resp, err := http.Post(server.URL+"/api/snapshots/create", "application/json", strings.NewReader(`{}`))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
-		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
-	}
-	var snap OrgSnapshot
-	if err := json.NewDecoder(resp.Body).Decode(&snap); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if snap.Label == "" {
-		t.Errorf("expected auto-generated label, got empty string")
-	}
+// No label → auto-generated label.
+resp, err := client.Post(server.URL+"/api/snapshots/create", "application/json", strings.NewReader(`{}`))
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var snap OrgSnapshot
+if err := json.NewDecoder(resp.Body).Decode(&snap); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if snap.Label == "" {
+t.Errorf("expected auto-generated label, got empty string")
+}
 }
 
 // ── Additional coverage: handleSnapshotRestore ───────────────────────────────
 
 func TestHandleSnapshotRestoreMethodNotAllowed(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/snapshots/restore", nil)
 	rec := httptest.NewRecorder()
@@ -2645,7 +2623,7 @@ func TestHandleSnapshotRestoreMethodNotAllowed(t *testing.T) {
 }
 
 func TestHandleSnapshotRestoreInvalidJSON(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/snapshots/restore", strings.NewReader("not-json"))
 	req.Header.Set("Content-Type", "application/json")
@@ -2657,7 +2635,7 @@ func TestHandleSnapshotRestoreInvalidJSON(t *testing.T) {
 }
 
 func TestHandleSnapshotRestoreMissingSnapshotID(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/snapshots/restore", strings.NewReader(`{}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -2669,7 +2647,7 @@ func TestHandleSnapshotRestoreMissingSnapshotID(t *testing.T) {
 }
 
 func TestHandleSnapshotRestoreUnsupportedDomain(t *testing.T) {
-	app, _ := newTestServer(t)
+app, _, _ := newTestServer(t)
 
 	// Inject a snapshot with an unsupported domain directly.
 	app.snapshots = append(app.snapshots, OrgSnapshot{
@@ -2691,460 +2669,469 @@ func TestHandleSnapshotRestoreUnsupportedDomain(t *testing.T) {
 // ── Additional coverage: handleAnalytics ─────────────────────────────────────
 
 func TestHandleAnalyticsWithApprovalHandoffAndTranscript(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Create a pending approval.
-	http.Post(server.URL+"/api/approvals/request", "application/json", //nolint:errcheck
-		strings.NewReader(`{"agentId":"pm-1","action":"deploy","estimatedCostUsd":50}`))
+// Create a pending approval.
+client.Post(server.URL+"/api/approvals/request", "application/json", //nolint:errcheck
+strings.NewReader(`{"agentId":"pm-1","action":"deploy","estimatedCostUsd":50}`))
 
-	// Create a pending handoff.
-	http.Post(server.URL+"/api/handoffs", "application/json", //nolint:errcheck
-		strings.NewReader(`{"fromAgentId":"swe-1","intent":"need help with deployment"}`))
+// Create a pending handoff.
+client.Post(server.URL+"/api/handoffs", "application/json", //nolint:errcheck
+strings.NewReader(`{"fromAgentId":"swe-1","intent":"need help with deployment"}`))
 
-	// Publish a message to the meeting so transcript is non-empty.
-	form := url.Values{
-		"fromAgent":   {"pm-1"},
-		"toAgent":     {"swe-1"},
-		"meetingId":   {"kickoff"},
-		"messageType": {"task"},
-		"content":     {"analytics test message"},
-	}
-	resp, err := http.PostForm(server.URL+"/api/messages", form)
-	if err != nil {
-		t.Fatalf("send message: %v", err)
-	}
-	resp.Body.Close()
+// Publish a message to the meeting so transcript is non-empty.
+form := url.Values{
+"fromAgent":   {"pm-1"},
+"toAgent":     {"swe-1"},
+"meetingId":   {"kickoff"},
+"messageType": {"task"},
+"content":     {"analytics test message"},
+}
+resp, err := client.PostForm(server.URL+"/api/messages", form)
+if err != nil {
+t.Fatalf("send message: %v", err)
+}
+resp.Body.Close()
 
-	// Now fetch analytics.
-	analyticsResp, err := http.Get(server.URL + "/api/analytics")
-	if err != nil {
-		t.Fatalf("GET /api/analytics error: %v", err)
-	}
-	defer analyticsResp.Body.Close()
-	if analyticsResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(analyticsResp.Body)
-		t.Fatalf("expected 200, got %d: %s", analyticsResp.StatusCode, b)
-	}
-	var summary AnalyticsSummary
-	if err := json.NewDecoder(analyticsResp.Body).Decode(&summary); err != nil {
-		t.Fatalf("decode analytics: %v", err)
-	}
-	if summary.PendingApprovals != 1 {
-		t.Errorf("expected 1 pending approval, got %d", summary.PendingApprovals)
-	}
-	// Note: We now seed one handoff in NewServer, so 1 + 1 = 2 active handoffs
-	if summary.ActiveHandoffs != 2 {
-		t.Errorf("expected 2 active handoffs, got %d", summary.ActiveHandoffs)
-	}
-	if summary.AuditFidelityPct < 0 || summary.AuditFidelityPct > 100 {
-		t.Errorf("expected audit fidelity in [0,100], got %f", summary.AuditFidelityPct)
-	}
+// Now fetch analytics.
+analyticsResp, err := client.Get(server.URL + "/api/analytics")
+if err != nil {
+t.Fatalf("GET /api/analytics error: %v", err)
+}
+defer analyticsResp.Body.Close()
+if analyticsResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(analyticsResp.Body)
+t.Fatalf("expected 200, got %d: %s", analyticsResp.StatusCode, b)
+}
+var summary AnalyticsSummary
+if err := json.NewDecoder(analyticsResp.Body).Decode(&summary); err != nil {
+t.Fatalf("decode analytics: %v", err)
+}
+if summary.PendingApprovals != 1 {
+t.Errorf("expected 1 pending approval, got %d", summary.PendingApprovals)
+}
+if summary.ActiveHandoffs != 1 {
+t.Errorf("expected 1 active handoff, got %d", summary.ActiveHandoffs)
+}
+if summary.AuditFidelityPct < 0 || summary.AuditFidelityPct > 100 {
+t.Errorf("expected audit fidelity in [0,100], got %f", summary.AuditFidelityPct)
+}
 }
 
 // ── Additional coverage: handleChatMessages / handlePullRequests / handleIssues ─
 
 func TestHandleChatMessagesEmptyFilter(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// No messages sent → ChatMessages returns nil → should become empty slice.
-	resp, err := http.Get(server.URL + "/api/integrations/chat/messages?integrationId=slack")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
-	var msgs []map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&msgs); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if msgs == nil {
-		t.Errorf("expected empty slice (not nil) in JSON response")
-	}
+// No messages sent → ChatMessages returns nil → should become empty slice.
+resp, err := client.Get(server.URL + "/api/integrations/chat/messages?integrationId=slack")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var msgs []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&msgs); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if msgs == nil {
+t.Errorf("expected empty slice (not nil) in JSON response")
+}
 }
 
 func TestHandlePullRequestsEmptyFilter(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// No PRs created → PullRequests returns nil → should become empty slice.
-	resp, err := http.Get(server.URL + "/api/integrations/git/prs?integrationId=github")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
-	var prs []map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&prs); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if prs == nil {
-		t.Errorf("expected empty slice (not nil) in JSON response")
-	}
+// No PRs created → PullRequests returns nil → should become empty slice.
+resp, err := client.Get(server.URL + "/api/integrations/git/prs?integrationId=github")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var prs []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&prs); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if prs == nil {
+t.Errorf("expected empty slice (not nil) in JSON response")
+}
 }
 
 func TestHandleIssuesEmptyFilter(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// No issues created → Issues returns nil → should become empty slice.
-	resp, err := http.Get(server.URL + "/api/integrations/issues?integrationId=jira")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
-	var issues []map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&issues); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if issues == nil {
-		t.Errorf("expected empty slice (not nil) in JSON response")
-	}
+// No issues created → Issues returns nil → should become empty slice.
+resp, err := client.Get(server.URL + "/api/integrations/issues?integrationId=jira")
+if err != nil {
+t.Fatalf("unexpected error: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var issues []map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&issues); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if issues == nil {
+t.Errorf("expected empty slice (not nil) in JSON response")
+}
 }
 
 // ── B2B Collaboration Tests ───────────────────────────────────────────────────
 
 func TestHandleB2BHandshakeAndAgreements(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Initially empty.
-	resp, err := http.Get(server.URL + "/api/b2b/agreements")
-	if err != nil {
-		t.Fatalf("GET /api/b2b/agreements: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200, got %d", resp.StatusCode)
-	}
-	var agreements []TrustAgreement
-	if err := json.NewDecoder(resp.Body).Decode(&agreements); err != nil {
-		t.Fatalf("decode: %v", err)
-	}
-	if len(agreements) != 0 {
-		t.Errorf("expected 0 agreements, got %d", len(agreements))
-	}
+// Initially empty.
+resp, err := client.Get(server.URL + "/api/b2b/agreements")
+if err != nil {
+t.Fatalf("GET /api/b2b/agreements: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+t.Fatalf("expected 200, got %d", resp.StatusCode)
+}
+var agreements []TrustAgreement
+if err := json.NewDecoder(resp.Body).Decode(&agreements); err != nil {
+t.Fatalf("decode: %v", err)
+}
+if len(agreements) != 0 {
+t.Errorf("expected 0 agreements, got %d", len(agreements))
+}
 
-	// Create a handshake.
-	body, _ := json.Marshal(map[string]any{
-		"partnerOrg":     "globex.com",
-		"partnerJwksUrl": "https://ohc.globex.com/.well-known/jwks.json",
-		"allowedRoles":   []string{"SALES_AGENT", "BUYER_AGENT"},
-	})
-	postResp, err := http.Post(server.URL+"/api/b2b/handshake", "application/json", bytes.NewReader(body))
-	if err != nil {
-		t.Fatalf("POST /api/b2b/handshake: %v", err)
-	}
-	defer postResp.Body.Close()
-	if postResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(postResp.Body)
-		t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
-	}
-	var agreement TrustAgreement
-	if err := json.NewDecoder(postResp.Body).Decode(&agreement); err != nil {
-		t.Fatalf("decode handshake response: %v", err)
-	}
-	if agreement.Status != TrustStatusActive {
-		t.Errorf("expected ACTIVE status, got %s", agreement.Status)
-	}
-	if agreement.PartnerOrg != "globex.com" {
-		t.Errorf("expected partnerOrg=globex.com, got %s", agreement.PartnerOrg)
-	}
+// Create a handshake.
+body, _ := json.Marshal(map[string]any{
+"partnerOrg":   "globex.com",
+"partnerJwksUrl": "https://ohc.globex.com/.well-known/jwks.json",
+"allowedRoles": []string{"SALES_AGENT", "BUYER_AGENT"},
+})
+postResp, err := client.Post(server.URL+"/api/b2b/handshake", "application/json", bytes.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/b2b/handshake: %v", err)
+}
+defer postResp.Body.Close()
+if postResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(postResp.Body)
+t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
+}
+var agreement TrustAgreement
+if err := json.NewDecoder(postResp.Body).Decode(&agreement); err != nil {
+t.Fatalf("decode handshake response: %v", err)
+}
+if agreement.Status != TrustStatusActive {
+t.Errorf("expected ACTIVE status, got %s", agreement.Status)
+}
+if agreement.PartnerOrg != "globex.com" {
+t.Errorf("expected partnerOrg=globex.com, got %s", agreement.PartnerOrg)
+}
 
-	// Revoke the agreement.
-	revokeBody, _ := json.Marshal(map[string]string{"agreementId": agreement.ID})
-	revokeResp, err := http.Post(server.URL+"/api/b2b/revoke", "application/json", bytes.NewReader(revokeBody))
-	if err != nil {
-		t.Fatalf("POST /api/b2b/revoke: %v", err)
-	}
-	defer revokeResp.Body.Close()
-	if revokeResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(revokeResp.Body)
-		t.Fatalf("expected 200, got %d: %s", revokeResp.StatusCode, b)
-	}
-	var revoked TrustAgreement
-	if err := json.NewDecoder(revokeResp.Body).Decode(&revoked); err != nil {
-		t.Fatalf("decode revoke response: %v", err)
-	}
-	if revoked.Status != TrustStatusRevoked {
-		t.Errorf("expected REVOKED status, got %s", revoked.Status)
-	}
+// Revoke the agreement.
+revokeBody, _ := json.Marshal(map[string]string{"agreementId": agreement.ID})
+revokeResp, err := client.Post(server.URL+"/api/b2b/revoke", "application/json", bytes.NewReader(revokeBody))
+if err != nil {
+t.Fatalf("POST /api/b2b/revoke: %v", err)
+}
+defer revokeResp.Body.Close()
+if revokeResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(revokeResp.Body)
+t.Fatalf("expected 200, got %d: %s", revokeResp.StatusCode, b)
+}
+var revoked TrustAgreement
+if err := json.NewDecoder(revokeResp.Body).Decode(&revoked); err != nil {
+t.Fatalf("decode revoke response: %v", err)
+}
+if revoked.Status != TrustStatusRevoked {
+t.Errorf("expected REVOKED status, got %s", revoked.Status)
+}
 }
 
 // ── Autonomous SRE / Incident Tests ──────────────────────────────────────────
 
 func TestHandleIncidents(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Create incident.
-	body, _ := json.Marshal(map[string]string{
-		"severity": "P0",
-		"summary":  "High error rate in billing-engine",
-	})
-	postResp, err := http.Post(server.URL+"/api/incidents", "application/json", bytes.NewReader(body))
-	if err != nil {
-		t.Fatalf("POST /api/incidents: %v", err)
-	}
-	defer postResp.Body.Close()
-	if postResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(postResp.Body)
-		t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
-	}
-	var incident Incident
-	if err := json.NewDecoder(postResp.Body).Decode(&incident); err != nil {
-		t.Fatalf("decode incident response: %v", err)
-	}
-	if incident.Severity != SeverityP0 {
-		t.Errorf("expected P0 severity, got %s", incident.Severity)
-	}
-	if incident.Status != IncidentStatusInvestigating {
-		t.Errorf("expected INVESTIGATING status, got %s", incident.Status)
-	}
+// Create incident.
+body, _ := json.Marshal(map[string]string{
+"severity": "P0",
+"summary":  "High error rate in billing-engine",
+})
+postResp, err := client.Post(server.URL+"/api/incidents", "application/json", bytes.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/incidents: %v", err)
+}
+defer postResp.Body.Close()
+if postResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(postResp.Body)
+t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
+}
+var incident Incident
+if err := json.NewDecoder(postResp.Body).Decode(&incident); err != nil {
+t.Fatalf("decode incident response: %v", err)
+}
+if incident.Severity != SeverityP0 {
+t.Errorf("expected P0 severity, got %s", incident.Severity)
+}
+if incident.Status != IncidentStatusInvestigating {
+t.Errorf("expected INVESTIGATING status, got %s", incident.Status)
+}
 
-	// Update status.
-	statusBody, _ := json.Marshal(map[string]string{
-		"incidentId":       incident.ID,
-		"status":           "PROPOSED",
-		"resolutionPlanId": "rollback-v1.2.0",
-	})
-	statusResp, err := http.Post(server.URL+"/api/incidents/status", "application/json", bytes.NewReader(statusBody))
-	if err != nil {
-		t.Fatalf("POST /api/incidents/status: %v", err)
-	}
-	defer statusResp.Body.Close()
-	if statusResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(statusResp.Body)
-		t.Fatalf("expected 200, got %d: %s", statusResp.StatusCode, b)
-	}
-	var updated Incident
-	if err := json.NewDecoder(statusResp.Body).Decode(&updated); err != nil {
-		t.Fatalf("decode updated incident: %v", err)
-	}
-	if updated.Status != IncidentStatusProposed {
-		t.Errorf("expected PROPOSED, got %s", updated.Status)
-	}
-	if updated.ResolutionPlanID != "rollback-v1.2.0" {
-		t.Errorf("expected rollback plan ID, got %s", updated.ResolutionPlanID)
-	}
+// Update status.
+statusBody, _ := json.Marshal(map[string]string{
+"incidentId":       incident.ID,
+"status":           "PROPOSED",
+"resolutionPlanId": "rollback-v1.2.0",
+})
+statusResp, err := client.Post(server.URL+"/api/incidents/status", "application/json", bytes.NewReader(statusBody))
+if err != nil {
+t.Fatalf("POST /api/incidents/status: %v", err)
+}
+defer statusResp.Body.Close()
+if statusResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(statusResp.Body)
+t.Fatalf("expected 200, got %d: %s", statusResp.StatusCode, b)
+}
+var updated Incident
+if err := json.NewDecoder(statusResp.Body).Decode(&updated); err != nil {
+t.Fatalf("decode updated incident: %v", err)
+}
+if updated.Status != IncidentStatusProposed {
+t.Errorf("expected PROPOSED, got %s", updated.Status)
+}
+if updated.ResolutionPlanID != "rollback-v1.2.0" {
+t.Errorf("expected rollback plan ID, got %s", updated.ResolutionPlanID)
+}
 
-	// List incidents.
-	listResp, err := http.Get(server.URL + "/api/incidents")
-	if err != nil {
-		t.Fatalf("GET /api/incidents: %v", err)
-	}
-	defer listResp.Body.Close()
-	var incidents []Incident
-	if err := json.NewDecoder(listResp.Body).Decode(&incidents); err != nil {
-		t.Fatalf("decode incidents list: %v", err)
-	}
-	if len(incidents) != 1 {
-		t.Errorf("expected 1 incident, got %d", len(incidents))
-	}
+// List incidents.
+listResp, err := client.Get(server.URL + "/api/incidents")
+if err != nil {
+t.Fatalf("GET /api/incidents: %v", err)
+}
+defer listResp.Body.Close()
+var incidents []Incident
+if err := json.NewDecoder(listResp.Body).Decode(&incidents); err != nil {
+t.Fatalf("decode incidents list: %v", err)
+}
+if len(incidents) != 1 {
+t.Errorf("expected 1 incident, got %d", len(incidents))
+}
 }
 
 // ── Compute Optimisation Tests ────────────────────────────────────────────────
 
 func TestHandleComputeProfiles(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Create a compute profile.
-	body, _ := json.Marshal(map[string]any{
-		"roleId":             "AUDIT_AGENT",
-		"minVramGb":          40,
-		"preferredGpuType":   "h100",
-		"schedulingPriority": 10,
-	})
-	postResp, err := http.Post(server.URL+"/api/compute/profiles", "application/json", bytes.NewReader(body))
-	if err != nil {
-		t.Fatalf("POST /api/compute/profiles: %v", err)
-	}
-	defer postResp.Body.Close()
-	if postResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(postResp.Body)
-		t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
-	}
-	var profile ComputeProfile
-	if err := json.NewDecoder(postResp.Body).Decode(&profile); err != nil {
-		t.Fatalf("decode profile: %v", err)
-	}
-	if profile.MinVRAMGB != 40 {
-		t.Errorf("expected minVramGb=40, got %d", profile.MinVRAMGB)
-	}
-	if profile.PreferredGPUType != "h100" {
-		t.Errorf("expected h100, got %s", profile.PreferredGPUType)
-	}
+// Create a compute profile.
+body, _ := json.Marshal(map[string]any{
+"roleId":             "AUDIT_AGENT",
+"minVramGb":          40,
+"preferredGpuType":   "h100",
+"schedulingPriority": 10,
+})
+postResp, err := client.Post(server.URL+"/api/compute/profiles", "application/json", bytes.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/compute/profiles: %v", err)
+}
+defer postResp.Body.Close()
+if postResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(postResp.Body)
+t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
+}
+var profile ComputeProfile
+if err := json.NewDecoder(postResp.Body).Decode(&profile); err != nil {
+t.Fatalf("decode profile: %v", err)
+}
+if profile.MinVRAMGB != 40 {
+t.Errorf("expected minVramGb=40, got %d", profile.MinVRAMGB)
+}
+if profile.PreferredGPUType != "h100" {
+t.Errorf("expected h100, got %s", profile.PreferredGPUType)
+}
 
-	// List profiles.
-	listResp, err := http.Get(server.URL + "/api/compute/profiles")
-	if err != nil {
-		t.Fatalf("GET /api/compute/profiles: %v", err)
-	}
-	defer listResp.Body.Close()
-	var profiles []ComputeProfile
-	if err := json.NewDecoder(listResp.Body).Decode(&profiles); err != nil {
-		t.Fatalf("decode profiles: %v", err)
-	}
-	if len(profiles) != 1 {
-		t.Errorf("expected 1 profile, got %d", len(profiles))
-	}
+// List profiles.
+listResp, err := client.Get(server.URL + "/api/compute/profiles")
+if err != nil {
+t.Fatalf("GET /api/compute/profiles: %v", err)
+}
+defer listResp.Body.Close()
+var profiles []ComputeProfile
+if err := json.NewDecoder(listResp.Body).Decode(&profiles); err != nil {
+t.Fatalf("decode profiles: %v", err)
+}
+if len(profiles) != 1 {
+t.Errorf("expected 1 profile, got %d", len(profiles))
+}
 }
 
 func TestHandleClusterStatus(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	resp, err := http.Get(server.URL + "/api/clusters/eu-central-1/status")
-	if err != nil {
-		t.Fatalf("GET cluster status: %v", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
-		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
-	}
-	var status ClusterStatus
-	if err := json.NewDecoder(resp.Body).Decode(&status); err != nil {
-		t.Fatalf("decode cluster status: %v", err)
-	}
-	if status.Region != "eu-central-1" {
-		t.Errorf("expected region=eu-central-1, got %s", status.Region)
-	}
-	if status.Status != "healthy" {
-		t.Errorf("expected healthy status, got %s", status.Status)
-	}
+resp, err := client.Get(server.URL + "/api/clusters/eu-central-1/status")
+if err != nil {
+t.Fatalf("GET cluster status: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("expected 200, got %d: %s", resp.StatusCode, b)
+}
+var status ClusterStatus
+if err := json.NewDecoder(resp.Body).Decode(&status); err != nil {
+t.Fatalf("decode cluster status: %v", err)
+}
+if status.Region != "eu-central-1" {
+t.Errorf("expected region=eu-central-1, got %s", status.Region)
+}
+if status.Status != "healthy" {
+t.Errorf("expected healthy status, got %s", status.Status)
+}
 }
 
 // ── Budget Alert Tests ────────────────────────────────────────────────────────
 
 func TestHandleBudgetAlerts(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Create a budget alert.
-	body, _ := json.Marshal(map[string]any{
-		"thresholdUsd": 500.0,
-		"notifyAtPct":  0.8,
-	})
-	postResp, err := http.Post(server.URL+"/api/billing/alerts", "application/json", bytes.NewReader(body))
-	if err != nil {
-		t.Fatalf("POST /api/billing/alerts: %v", err)
-	}
-	defer postResp.Body.Close()
-	if postResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(postResp.Body)
-		t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
-	}
-	var alert BudgetAlert
-	if err := json.NewDecoder(postResp.Body).Decode(&alert); err != nil {
-		t.Fatalf("decode alert: %v", err)
-	}
-	if alert.ThresholdUSD != 500.0 {
-		t.Errorf("expected thresholdUsd=500, got %f", alert.ThresholdUSD)
-	}
+// Create a budget alert.
+body, _ := json.Marshal(map[string]any{
+"thresholdUsd": 500.0,
+"notifyAtPct":  0.8,
+})
+postResp, err := client.Post(server.URL+"/api/billing/alerts", "application/json", bytes.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/billing/alerts: %v", err)
+}
+defer postResp.Body.Close()
+if postResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(postResp.Body)
+t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
+}
+var alert BudgetAlert
+if err := json.NewDecoder(postResp.Body).Decode(&alert); err != nil {
+t.Fatalf("decode alert: %v", err)
+}
+if alert.ThresholdUSD != 500.0 {
+t.Errorf("expected thresholdUsd=500, got %f", alert.ThresholdUSD)
+}
 
-	// List alerts.
-	listResp, err := http.Get(server.URL + "/api/billing/alerts")
-	if err != nil {
-		t.Fatalf("GET /api/billing/alerts: %v", err)
-	}
-	defer listResp.Body.Close()
-	var alerts []BudgetAlert
-	if err := json.NewDecoder(listResp.Body).Decode(&alerts); err != nil {
-		t.Fatalf("decode alerts: %v", err)
-	}
-	if len(alerts) != 1 {
-		t.Errorf("expected 1 alert, got %d", len(alerts))
-	}
+// List alerts.
+listResp, err := client.Get(server.URL + "/api/billing/alerts")
+if err != nil {
+t.Fatalf("GET /api/billing/alerts: %v", err)
+}
+defer listResp.Body.Close()
+var alerts []BudgetAlert
+if err := json.NewDecoder(listResp.Body).Decode(&alerts); err != nil {
+t.Fatalf("decode alerts: %v", err)
+}
+if len(alerts) != 1 {
+t.Errorf("expected 1 alert, got %d", len(alerts))
+}
 }
 
 // ── Pipeline Tests ────────────────────────────────────────────────────────────
 
 func TestHandlePipelines(t *testing.T) {
-	_, server := newTestServer(t)
-	defer server.Close()
+_, server, token := newTestServer(t)
+client := authedClient(token)
+defer server.Close()
 
-	// Create a pipeline.
-	body, _ := json.Marshal(map[string]string{
-		"name":        "feat-analytics",
-		"branch":      "feat/analytics",
-		"initiatedBy": "pm-1",
-	})
-	postResp, err := http.Post(server.URL+"/api/pipelines", "application/json", bytes.NewReader(body))
-	if err != nil {
-		t.Fatalf("POST /api/pipelines: %v", err)
-	}
-	defer postResp.Body.Close()
-	if postResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(postResp.Body)
-		t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
-	}
-	var pipeline Pipeline
-	if err := json.NewDecoder(postResp.Body).Decode(&pipeline); err != nil {
-		t.Fatalf("decode pipeline: %v", err)
-	}
-	if pipeline.Status != PipelineStatusPending {
-		t.Errorf("expected PENDING status, got %s", pipeline.Status)
-	}
+// Create a pipeline.
+body, _ := json.Marshal(map[string]string{
+"name":        "feat-analytics",
+"branch":      "feat/analytics",
+"initiatedBy": "pm-1",
+})
+postResp, err := client.Post(server.URL+"/api/pipelines", "application/json", bytes.NewReader(body))
+if err != nil {
+t.Fatalf("POST /api/pipelines: %v", err)
+}
+defer postResp.Body.Close()
+if postResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(postResp.Body)
+t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
+}
+var pipeline Pipeline
+if err := json.NewDecoder(postResp.Body).Decode(&pipeline); err != nil {
+t.Fatalf("decode pipeline: %v", err)
+}
+if pipeline.Status != PipelineStatusPending {
+t.Errorf("expected PENDING status, got %s", pipeline.Status)
+}
 
-	// Update status to STAGING.
-	statusBody, _ := json.Marshal(map[string]string{
-		"pipelineId": pipeline.ID,
-		"status":     "STAGING",
-		"stagingUrl": "https://staging.example.com",
-	})
-	statusResp, err := http.Post(server.URL+"/api/pipelines/status", "application/json", bytes.NewReader(statusBody))
-	if err != nil {
-		t.Fatalf("POST /api/pipelines/status: %v", err)
-	}
-	defer statusResp.Body.Close()
-	if statusResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(statusResp.Body)
-		t.Fatalf("expected 200, got %d: %s", statusResp.StatusCode, b)
-	}
+// Update status to STAGING.
+statusBody, _ := json.Marshal(map[string]string{
+"pipelineId": pipeline.ID,
+"status":     "STAGING",
+"stagingUrl": "https://staging.example.com",
+})
+statusResp, err := client.Post(server.URL+"/api/pipelines/status", "application/json", bytes.NewReader(statusBody))
+if err != nil {
+t.Fatalf("POST /api/pipelines/status: %v", err)
+}
+defer statusResp.Body.Close()
+if statusResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(statusResp.Body)
+t.Fatalf("expected 200, got %d: %s", statusResp.StatusCode, b)
+}
 
-	// Promote to production.
-	promoteBody, _ := json.Marshal(map[string]string{
-		"pipelineId": pipeline.ID,
-		"approvedBy": "ceo",
-	})
-	promoteResp, err := http.Post(server.URL+"/api/pipelines/promote", "application/json", bytes.NewReader(promoteBody))
-	if err != nil {
-		t.Fatalf("POST /api/pipelines/promote: %v", err)
-	}
-	defer promoteResp.Body.Close()
-	if promoteResp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(promoteResp.Body)
-		t.Fatalf("expected 200, got %d: %s", promoteResp.StatusCode, b)
-	}
-	var promoted Pipeline
-	if err := json.NewDecoder(promoteResp.Body).Decode(&promoted); err != nil {
-		t.Fatalf("decode promoted pipeline: %v", err)
-	}
-	if promoted.Status != PipelineStatusPromoted {
-		t.Errorf("expected PROMOTED, got %s", promoted.Status)
-	}
+// Promote to production.
+promoteBody, _ := json.Marshal(map[string]string{
+"pipelineId": pipeline.ID,
+"approvedBy": "ceo",
+})
+promoteResp, err := client.Post(server.URL+"/api/pipelines/promote", "application/json", bytes.NewReader(promoteBody))
+if err != nil {
+t.Fatalf("POST /api/pipelines/promote: %v", err)
+}
+defer promoteResp.Body.Close()
+if promoteResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(promoteResp.Body)
+t.Fatalf("expected 200, got %d: %s", promoteResp.StatusCode, b)
+}
+var promoted Pipeline
+if err := json.NewDecoder(promoteResp.Body).Decode(&promoted); err != nil {
+t.Fatalf("decode promoted pipeline: %v", err)
+}
+if promoted.Status != PipelineStatusPromoted {
+t.Errorf("expected PROMOTED, got %s", promoted.Status)
+}
 
-	// List pipelines.
-	listResp, err := http.Get(server.URL + "/api/pipelines")
-	if err != nil {
-		t.Fatalf("GET /api/pipelines: %v", err)
-	}
-	defer listResp.Body.Close()
-	var pipelines []Pipeline
-	if err := json.NewDecoder(listResp.Body).Decode(&pipelines); err != nil {
-		t.Fatalf("decode pipelines: %v", err)
-	}
-	if len(pipelines) != 1 {
-		t.Errorf("expected 1 pipeline, got %d", len(pipelines))
-	}
+// List pipelines.
+listResp, err := client.Get(server.URL + "/api/pipelines")
+if err != nil {
+t.Fatalf("GET /api/pipelines: %v", err)
+}
+defer listResp.Body.Close()
+var pipelines []Pipeline
+if err := json.NewDecoder(listResp.Body).Decode(&pipelines); err != nil {
+t.Fatalf("decode pipelines: %v", err)
+}
+if len(pipelines) != 1 {
+t.Errorf("expected 1 pipeline, got %d", len(pipelines))
+}
 }

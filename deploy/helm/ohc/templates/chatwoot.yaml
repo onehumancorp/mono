@@ -1,0 +1,129 @@
+{{- if .Values.chatwoot.enabled }}
+---
+# Secret for Chatwoot credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-chatwoot-secret
+type: Opaque
+stringData:
+  secretKeyBase: {{ .Values.chatwoot.secretKeyBase | quote }}
+  adminPassword: {{ .Values.chatwoot.adminPassword | quote }}
+---
+# Migration job – runs db:chatwoot_prepare on install/upgrade
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-chatwoot-migrate
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: {{ .Values.chatwoot.image }}
+          command: ["bundle", "exec", "rails", "db:chatwoot_prepare"]
+          env:
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-chatwoot-secret
+                  key: secretKeyBase
+            - name: DATABASE_URL
+              value: {{ if .Values.chatwoot.databaseUrl }}{{ .Values.chatwoot.databaseUrl | quote }}{{ else }}"postgres://ohc:ohc@{{ .Release.Name }}-postgres:5432/chatwoot?sslmode=disable"{{ end }}
+            - name: REDIS_URL
+              value: {{ if .Values.chatwoot.redisUrl }}{{ .Values.chatwoot.redisUrl | quote }}{{ else }}"redis://{{ .Release.Name }}-redis-master:6379"{{ end }}
+            - name: RAILS_ENV
+              value: "production"
+            - name: INSTALLATION_ENV
+              value: "kubernetes"
+            - name: FORCE_SSL
+              value: "false"
+---
+# Chatwoot web server Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-chatwoot
+spec:
+  replicas: {{ .Values.chatwoot.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-chatwoot
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-chatwoot
+    spec:
+      containers:
+        - name: chatwoot
+          image: {{ .Values.chatwoot.image }}
+          command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+          ports:
+            - containerPort: {{ .Values.chatwoot.service.port }}
+          env:
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-chatwoot-secret
+                  key: secretKeyBase
+            - name: DATABASE_URL
+              value: {{ if .Values.chatwoot.databaseUrl }}{{ .Values.chatwoot.databaseUrl | quote }}{{ else }}"postgres://ohc:ohc@{{ .Release.Name }}-postgres:5432/chatwoot?sslmode=disable"{{ end }}
+            - name: REDIS_URL
+              value: {{ if .Values.chatwoot.redisUrl }}{{ .Values.chatwoot.redisUrl | quote }}{{ else }}"redis://{{ .Release.Name }}-redis-master:6379"{{ end }}
+            - name: RAILS_ENV
+              value: "production"
+            - name: INSTALLATION_ENV
+              value: "kubernetes"
+            - name: DEFAULT_LOCALE
+              value: "en"
+            - name: FORCE_SSL
+              value: "false"
+          readinessProbe:
+            httpGet:
+              path: /auth/sign_in
+              port: {{ .Values.chatwoot.service.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 10
+---
+# Chatwoot Sidekiq worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-chatwoot-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-chatwoot-worker
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-chatwoot-worker
+    spec:
+      containers:
+        - name: chatwoot-worker
+          image: {{ .Values.chatwoot.image }}
+          command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+          env:
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-chatwoot-secret
+                  key: secretKeyBase
+            - name: DATABASE_URL
+              value: {{ if .Values.chatwoot.databaseUrl }}{{ .Values.chatwoot.databaseUrl | quote }}{{ else }}"postgres://ohc:ohc@{{ .Release.Name }}-postgres:5432/chatwoot?sslmode=disable"{{ end }}
+            - name: REDIS_URL
+              value: {{ if .Values.chatwoot.redisUrl }}{{ .Values.chatwoot.redisUrl | quote }}{{ else }}"redis://{{ .Release.Name }}-redis-master:6379"{{ end }}
+            - name: RAILS_ENV
+              value: "production"
+            - name: INSTALLATION_ENV
+              value: "kubernetes"
+            - name: FORCE_SSL
+              value: "false"
+{{- end }}

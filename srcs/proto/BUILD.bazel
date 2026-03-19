@@ -1,52 +1,54 @@
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@rules_go//go:def.bzl", "go_library")
 
 proto_library(
     name = "common_proto",
     srcs = ["common.proto"],
-    deps = ["@protobuf//:go_features_proto"],
     visibility = ["//visibility:public"],
+    deps = ["@protobuf//:go_features_proto"],
 )
 
 proto_library(
     name = "agent_proto",
     srcs = ["agent.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         ":common_proto",
         "@protobuf//:go_features_proto",
     ],
-    visibility = ["//visibility:public"],
 )
 
 proto_library(
     name = "organization_proto",
     srcs = ["organization.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         ":common_proto",
         "@protobuf//:go_features_proto",
     ],
-    visibility = ["//visibility:public"],
 )
 
 proto_library(
     name = "billing_proto",
     srcs = ["billing.proto"],
-    deps = ["@protobuf//:go_features_proto"],
     visibility = ["//visibility:public"],
+    deps = ["@protobuf//:go_features_proto"],
 )
 
 proto_library(
     name = "skills_proto",
     srcs = ["skills.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         ":common_proto",
         "@protobuf//:go_features_proto",
     ],
-    visibility = ["//visibility:public"],
 )
 
 proto_library(
     name = "app_proto",
     srcs = ["app.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         ":agent_proto",
         ":billing_proto",
@@ -54,7 +56,27 @@ proto_library(
         ":skills_proto",
         "@protobuf//:go_features_proto",
     ],
+)
+
+proto_library(
+    name = "hub_proto",
+    srcs = ["hub.proto"],
     visibility = ["//visibility:public"],
+    deps = ["@protobuf//:go_features_proto"],
+)
+
+# hub_go_proto uses the hand-crafted stub in ohc/orchestration/hub.pb.go
+# (edition 2024 is not yet supported by the bundled protoc-gen-go version).
+go_library(
+    name = "hub_go_proto",
+    srcs = ["ohc/orchestration/hub.pb.go"],
+    importpath = "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//status",
+    ],
 )
 
 exports_files([
@@ -63,4 +85,5 @@ exports_files([
     "billing.proto",
     "common.proto",
     "organization.proto",
+    "hub.proto",
 ])

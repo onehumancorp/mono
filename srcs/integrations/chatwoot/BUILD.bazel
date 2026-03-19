@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "chatwoot",
+    srcs = [
+        "client.go",
+        "setup.go",
+    ],
+    importpath = "github.com/onehumancorp/mono/srcs/integrations/chatwoot",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "chatwoot_test",
+    srcs = ["chatwoot_test.go"],
+    deps = [":chatwoot"],
+)

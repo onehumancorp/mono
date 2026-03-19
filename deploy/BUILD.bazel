@@ -1,4 +1,69 @@
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+exports_files([
+    "deploy_dev.sh",
+    "docker-compose.yml",
+])
+
+# Package backend binary
+pkg_tar(
+    name = "backend_pkg",
+    srcs = ["//srcs/cmd/ohc"],
+    package_dir = "/usr/local/bin",
+)
+
+oci_image(
+    name = "backend_image",
+    base = "@distroless_static",
+    entrypoint = ["/usr/local/bin/ohc"],
+    tars = [":backend_pkg"],
+)
+
+oci_load(
+    name = "backend_load",
+    image = ":backend_image",
+    repo_tags = ["onehumancorp/mono-backend:bazel"],
+)
+
+# Build frontend static assets in a rule
+# Note: npm build in a genrule is slightly discouraged but kept here for simplicity
+# unless we move to rules_js.
+genrule(
+    name = "frontend_static_assets",
+    srcs = ["//srcs/frontend:all_srcs"],
+    outs = ["frontend_dist.tar"],
+    cmd = "export PATH=$$PATH:/home/kevin/.nvm/versions/node/v24.0.1/bin && export HOME=/tmp && cd srcs/frontend && npm install && npm run build && tar -C dist -cf ../../$@ .",
+    tags = [
+        "local",
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+pkg_tar(
+    name = "frontend_server_pkg",
+    srcs = ["//srcs/frontend/server/cmd/frontend:frontend"],
+    package_dir = "/usr/local/bin",
+)
+
+# Combine static assets and server binary
+oci_image(
+    name = "frontend_image",
+    base = "@distroless_static",
+    entrypoint = ["/usr/local/bin/frontend"],
+    tars = [
+        ":frontend_server_pkg",
+        ":frontend_static_assets",
+    ],
+)
+
+oci_load(
+    name = "frontend_load",
+    image = ":frontend_image",
+    repo_tags = ["onehumancorp/mono-frontend:bazel"],
+)
 
 sh_test(
     name = "deploy_artifacts_test",
@@ -15,6 +80,7 @@ sh_test(
 # Run with: bazel test //deploy:kind_e2e_test
 sh_test(
     name = "kind_e2e_test",
+    size = "large",
     srcs = ["tests/kind_e2e_test.sh"],
     data = glob([
         "docker/**/*",
@@ -22,13 +88,12 @@ sh_test(
         "docker-compose.yml",
     ]) + [
         "//:go.mod",
-        "//srcs/cmd/ohc:ohc",
+        "//srcs/cmd/ohc",
     ],
     tags = [
+        "large",
+        "manual",
         "no-remote-exec",
         "requires-docker",
-        "manual",
-        "large",
     ],
-    size = "large",
 )

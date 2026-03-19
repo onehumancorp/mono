@@ -5,6 +5,13 @@ go_library(
     srcs = ["service.go"],
     importpath = "github.com/onehumancorp/mono/srcs/orchestration",
     visibility = ["//visibility:public"],
+    deps = [
+        "//srcs/proto:hub_go_proto",
+        "//srcs/telemetry",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//status",
+    ],
 )
 
 go_test(
