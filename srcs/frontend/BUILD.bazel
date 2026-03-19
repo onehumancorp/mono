@@ -1,5 +1,15 @@
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
+# Copy generated proto TypeScript types into the frontend source tree so they
+# are available to the npm build and vitest test runner.
+genrule(
+    name = "proto_types_ts",
+    srcs = ["//srcs/proto:proto_types_ts"],
+    outs = ["src/proto_types.ts"],
+    cmd = "cp $< $@",
+    visibility = ["//visibility:public"],
+)
+
 filegroup(
     name = "srcs",
     srcs = glob(
@@ -13,7 +23,7 @@ filegroup(
             "node_modules/**",
             "dist/**",
         ],
-    ),
+    ) + [":proto_types_ts"],
     visibility = ["//visibility:public"],
 )
 
@@ -32,7 +42,7 @@ filegroup(
             "dist/**",
             "tests/screenshots/**",
         ],
-    ),
+    ) + [":proto_types_ts"],
     visibility = ["//visibility:public"],
 )
 

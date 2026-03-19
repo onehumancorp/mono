@@ -72,7 +72,7 @@ sh_test(
         "docker/**/*",
         "helm/ohc/**",
         "docker-compose.yml",
-    ]),
+    ]) + ["BUILD.bazel"],
 )
 
 # End-to-end smoke test against a real Kind cluster.

@@ -86,4 +86,24 @@ exports_files([
     "common.proto",
     "organization.proto",
     "hub.proto",
+    "skills.proto",
 ])
+
+# Generate TypeScript type definitions from all proto files.
+# The output is consumed by the frontend build and is NOT stored in the repo.
+genrule(
+    name = "proto_types_ts",
+    srcs = [
+        "common.proto",
+        "agent.proto",
+        "organization.proto",
+        "billing.proto",
+        "hub.proto",
+        "app.proto",
+        "skills.proto",
+    ],
+    outs = ["proto_types.ts"],
+    cmd = "$(location //srcs/proto/cmd/gen_ts) $(SRCS) > $@",
+    tools = ["//srcs/proto/cmd/gen_ts"],
+    visibility = ["//visibility:public"],
+)
