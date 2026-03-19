@@ -88,13 +88,31 @@ type Summary struct {
 	Agents              []AgentSummary `json:"agents"`
 }
 
+// ⚡ BOLT: [Global mutex contention] - Randomized Selection from Top 5
+// Mitigated global mutex contention in the Cost/Token Tracking Engine by sharding usages.
+
+const numShards = 64
+
+type trackerShard struct {
+	mu     sync.RWMutex
+	usages []Usage
+}
+
 // Tracker calculates and stores LLM token consumption safely across concurrent calls.
 //
 // Constraints: Uses an internal read-write mutex for thread-safe event ingestion.
 type Tracker struct {
-	mu      sync.RWMutex
 	catalog map[string]Price
-	usages  []Usage
+	shards  [numShards]*trackerShard
+}
+
+func getShardIndex(orgID string) uint32 {
+	var hash uint32 = 2166136261
+	for i := 0; i < len(orgID); i++ {
+		hash ^= uint32(orgID[i])
+		hash *= 16777619
+	}
+	return hash % numShards
 }
 
 // NewTracker constructs a Tracker configured with the specified model pricing catalog.
@@ -109,7 +127,11 @@ func NewTracker(catalog map[string]Price) *Tracker {
 		copied[model] = price
 	}
 
-	return &Tracker{catalog: copied}
+	t := &Tracker{catalog: copied}
+	for i := 0; i < numShards; i++ {
+		t.shards[i] = &trackerShard{}
+	}
+	return t
 }
 
 // Track calculates the USD cost for a token consumption event and persists it in memory.
@@ -123,9 +145,6 @@ func NewTracker(catalog map[string]Price) *Tracker {
 //
 // Side Effects: Modifies the internal append-only slice of usages.
 func (t *Tracker) Track(usage Usage) (Usage, error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
 	price, ok := t.catalog[usage.Model]
 	if !ok {
 		return Usage{}, errors.New("unknown model pricing")
@@ -134,7 +153,11 @@ func (t *Tracker) Track(usage Usage) (Usage, error) {
 	usage.CostUSD = (float64(usage.PromptTokens)/1_000_000.0)*price.InputPerMillionUSD +
 		(float64(usage.CompletionTokens)/1_000_000.0)*price.OutputPerMillionUSD
 	usage.OccurredAt = usage.OccurredAt.UTC()
-	t.usages = append(t.usages, usage)
+
+	shard := t.shards[getShardIndex(usage.OrganizationID)]
+	shard.mu.Lock()
+	shard.usages = append(shard.usages, usage)
+	shard.mu.Unlock()
 
 	telemetry.RecordTokenUsage(context.Background(), usage.AgentID, usage.AgentRole, usage.Model, "prompt", usage.PromptTokens)
 	telemetry.RecordTokenUsage(context.Background(), usage.AgentID, usage.AgentRole, usage.Model, "completion", usage.CompletionTokens)
@@ -149,14 +172,15 @@ func (t *Tracker) Track(usage Usage) (Usage, error) {
 //
 // Returns: A Summary record detailing the organization's total spend, token count, and per-agent metrics.
 func (t *Tracker) Summary(organizationID string) Summary {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+	shard := t.shards[getShardIndex(organizationID)]
+	shard.mu.RLock()
+	defer shard.mu.RUnlock()
 
 	byAgent := map[string]AgentSummary{}
 	var totalCost float64
 	var totalTokens int64
 
-	for _, usage := range t.usages {
+	for _, usage := range shard.usages {
 		if usage.OrganizationID != organizationID {
 			continue
 		}
