@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"html/template"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -426,6 +428,43 @@ func (s *Server) handleApp(w http.ResponseWriter, r *http.Request) {
 </html>`))
 }
 
+func validateURL(u string) error {
+	parsed, err := url.ParseRequestURI(u)
+	if err != nil {
+		return errors.New("invalid URL")
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return errors.New("invalid URL scheme")
+	}
+
+	host := parsed.Hostname()
+	if host == "localhost" {
+		return errors.New("localhost is not allowed")
+	}
+
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		// If we can't resolve it, we check if it's a literal IP.
+		// If it's not a literal IP and we can't resolve it, fail closed.
+		ip := net.ParseIP(host)
+		if ip == nil {
+			return errors.New("could not resolve hostname")
+		}
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			return errors.New("internal, private, or link-local IPs are not allowed")
+		}
+		return nil
+	}
+
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			return errors.New("hostname resolves to an internal, private, or link-local IP")
+		}
+	}
+
+	return nil
+}
+
 func (s *Server) handleIndex(w http.ResponseWriter, _ *http.Request) {
 	snapshot := s.snapshot()
 	page := template.Must(template.New("dashboard").Parse(`<!doctype html>
@@ -796,12 +835,12 @@ func seededDigitalMarketing(now time.Time) (domain.Organization, *orchestration.
 	hub.OpenMeetingWithAgenda("campaign-kickoff", "Plan Q2 acquisition campaigns and assign channel ownership.", []string{"growth-1", "content-1", "seo-1"})
 
 	_ = hub.Publish(orchestration.Message{
-		ID:        "seed-dma-1",
-		FromAgent: "growth-1",
-		ToAgent:   "content-1",
-		Type:      orchestration.EventTask,
-		Content:   "Draft top-of-funnel blog series targeting enterprise SaaS buyers.",
-		MeetingID: "campaign-kickoff",
+		ID:         "seed-dma-1",
+		FromAgent:  "growth-1",
+		ToAgent:    "content-1",
+		Type:       orchestration.EventTask,
+		Content:    "Draft top-of-funnel blog series targeting enterprise SaaS buyers.",
+		MeetingID:  "campaign-kickoff",
 		OccurredAt: now.Add(-5 * time.Minute),
 	})
 
@@ -827,12 +866,12 @@ func seededAccounting(now time.Time) (domain.Organization, *orchestration.Hub, *
 	hub.OpenMeetingWithAgenda("month-close", "Reconcile April ledger, prepare estimated tax liability, and review payroll entries.", []string{"bookkeeper-1", "tax-1", "cfo-1"})
 
 	_ = hub.Publish(orchestration.Message{
-		ID:        "seed-acc-1",
-		FromAgent: "cfo-1",
-		ToAgent:   "bookkeeper-1",
-		Type:      orchestration.EventTask,
-		Content:   "Reconcile bank feeds and categorize uncategorized transactions before EOD.",
-		MeetingID: "month-close",
+		ID:         "seed-acc-1",
+		FromAgent:  "cfo-1",
+		ToAgent:    "bookkeeper-1",
+		Type:       orchestration.EventTask,
+		Content:    "Reconcile bank feeds and categorize uncategorized transactions before EOD.",
+		MeetingID:  "month-close",
 		OccurredAt: now.Add(-3 * time.Minute),
 	})
 
@@ -879,813 +918,819 @@ func summarizeStatuses(agents []orchestration.Agent) []statusCount {
 // ── Approval / Confidence Gating Handlers ─────────────────────────────────────
 
 func (s *Server) handleApprovals(w http.ResponseWriter, r *http.Request) {
-switch r.Method {
-case http.MethodGet:
-s.mu.RLock()
-list := append([]ApprovalRequest(nil), s.approvals...)
-s.mu.RUnlock()
-writeJSON(w, list)
-default:
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-}
+	switch r.Method {
+	case http.MethodGet:
+		s.mu.RLock()
+		list := append([]ApprovalRequest(nil), s.approvals...)
+		s.mu.RUnlock()
+		writeJSON(w, list)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 func (s *Server) handleApprovalRequest(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-var req approvalCreateRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.AgentID == "" || req.Action == "" {
-http.Error(w, "agentId and action are required", http.StatusBadRequest)
-return
-}
+	var req approvalCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.AgentID == "" || req.Action == "" {
+		http.Error(w, "agentId and action are required", http.StatusBadRequest)
+		return
+	}
 
-now := time.Now().UTC()
-approval := ApprovalRequest{
-ID:               s.org.ID + "-approval-" + now.Format("20060102150405000"),
-AgentID:          req.AgentID,
-Action:           req.Action,
-Reason:           req.Reason,
-EstimatedCostUSD: req.EstimatedCostUSD,
-RiskLevel:        req.RiskLevel,
-Status:           ApprovalStatusPending,
-CreatedAt:        now,
-}
-if approval.RiskLevel == "" {
-if approval.EstimatedCostUSD > 500 {
-approval.RiskLevel = "critical"
-} else if approval.EstimatedCostUSD > 100 {
-approval.RiskLevel = "high"
-} else {
-approval.RiskLevel = "medium"
-}
-}
+	now := time.Now().UTC()
+	approval := ApprovalRequest{
+		ID:               s.org.ID + "-approval-" + now.Format("20060102150405000"),
+		AgentID:          req.AgentID,
+		Action:           req.Action,
+		Reason:           req.Reason,
+		EstimatedCostUSD: req.EstimatedCostUSD,
+		RiskLevel:        req.RiskLevel,
+		Status:           ApprovalStatusPending,
+		CreatedAt:        now,
+	}
+	if approval.RiskLevel == "" {
+		if approval.EstimatedCostUSD > 500 {
+			approval.RiskLevel = "critical"
+		} else if approval.EstimatedCostUSD > 100 {
+			approval.RiskLevel = "high"
+		} else {
+			approval.RiskLevel = "medium"
+		}
+	}
 
-s.mu.Lock()
-s.approvals = append(s.approvals, approval)
-s.mu.Unlock()
+	s.mu.Lock()
+	s.approvals = append(s.approvals, approval)
+	s.mu.Unlock()
 
-writeJSON(w, approval)
+	writeJSON(w, approval)
 }
 
 func (s *Server) handleApprovalDecide(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-var req approvalDecideRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.ApprovalID == "" || req.Decision == "" {
-http.Error(w, "approvalId and decision are required", http.StatusBadRequest)
-return
-}
+	var req approvalDecideRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.ApprovalID == "" || req.Decision == "" {
+		http.Error(w, "approvalId and decision are required", http.StatusBadRequest)
+		return
+	}
 
-var newStatus ApprovalStatus
-switch req.Decision {
-case "approve":
-newStatus = ApprovalStatusApproved
-case "reject":
-newStatus = ApprovalStatusRejected
-default:
-http.Error(w, "decision must be 'approve' or 'reject'", http.StatusBadRequest)
-return
-}
+	var newStatus ApprovalStatus
+	switch req.Decision {
+	case "approve":
+		newStatus = ApprovalStatusApproved
+	case "reject":
+		newStatus = ApprovalStatusRejected
+	default:
+		http.Error(w, "decision must be 'approve' or 'reject'", http.StatusBadRequest)
+		return
+	}
 
-now := time.Now().UTC()
-s.mu.Lock()
-found := false
-for i, a := range s.approvals {
-if a.ID == req.ApprovalID {
-s.approvals[i].Status = newStatus
-s.approvals[i].DecidedAt = &now
-s.approvals[i].DecidedBy = req.DecidedBy
-found = true
-break
-}
-}
-s.mu.Unlock()
+	now := time.Now().UTC()
+	s.mu.Lock()
+	found := false
+	for i, a := range s.approvals {
+		if a.ID == req.ApprovalID {
+			s.approvals[i].Status = newStatus
+			s.approvals[i].DecidedAt = &now
+			s.approvals[i].DecidedBy = req.DecidedBy
+			found = true
+			break
+		}
+	}
+	s.mu.Unlock()
 
-if !found {
-http.Error(w, "approval not found", http.StatusNotFound)
-return
-}
+	if !found {
+		http.Error(w, "approval not found", http.StatusNotFound)
+		return
+	}
 
-s.mu.RLock()
-list := append([]ApprovalRequest(nil), s.approvals...)
-s.mu.RUnlock()
-writeJSON(w, list)
+	s.mu.RLock()
+	list := append([]ApprovalRequest(nil), s.approvals...)
+	s.mu.RUnlock()
+	writeJSON(w, list)
 }
 
 // ── Warm Handoff Handlers ─────────────────────────────────────────────────────
 
 func (s *Server) handleHandoffs(w http.ResponseWriter, r *http.Request) {
-switch r.Method {
-case http.MethodGet:
-s.mu.RLock()
-list := append([]HandoffPackage(nil), s.handoffs...)
-s.mu.RUnlock()
-writeJSON(w, list)
-case http.MethodPost:
-var req handoffCreateRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.FromAgentID == "" || req.Intent == "" {
-http.Error(w, "fromAgentId and intent are required", http.StatusBadRequest)
-return
-}
-now := time.Now().UTC()
-handoff := HandoffPackage{
-ID:             s.org.ID + "-handoff-" + now.Format("20060102150405000"),
-FromAgentID:    req.FromAgentID,
-ToHumanRole:    req.ToHumanRole,
-Intent:         req.Intent,
-FailedAttempts: req.FailedAttempts,
-CurrentState:   req.CurrentState,
-Status:         "pending",
-CreatedAt:      now,
-}
-s.mu.Lock()
-s.handoffs = append(s.handoffs, handoff)
-s.mu.Unlock()
-writeJSON(w, handoff)
-default:
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-}
+	switch r.Method {
+	case http.MethodGet:
+		s.mu.RLock()
+		list := append([]HandoffPackage(nil), s.handoffs...)
+		s.mu.RUnlock()
+		writeJSON(w, list)
+	case http.MethodPost:
+		var req handoffCreateRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+			return
+		}
+		if req.FromAgentID == "" || req.Intent == "" {
+			http.Error(w, "fromAgentId and intent are required", http.StatusBadRequest)
+			return
+		}
+		now := time.Now().UTC()
+		handoff := HandoffPackage{
+			ID:             s.org.ID + "-handoff-" + now.Format("20060102150405000"),
+			FromAgentID:    req.FromAgentID,
+			ToHumanRole:    req.ToHumanRole,
+			Intent:         req.Intent,
+			FailedAttempts: req.FailedAttempts,
+			CurrentState:   req.CurrentState,
+			Status:         "pending",
+			CreatedAt:      now,
+		}
+		s.mu.Lock()
+		s.handoffs = append(s.handoffs, handoff)
+		s.mu.Unlock()
+		writeJSON(w, handoff)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 // ── Identity Management Handler ───────────────────────────────────────────────
 
 func (s *Server) handleIdentities(w http.ResponseWriter, _ *http.Request) {
-s.mu.RLock()
-agents := s.hub.Agents()
-org := s.org
-s.mu.RUnlock()
+	s.mu.RLock()
+	agents := s.hub.Agents()
+	org := s.org
+	s.mu.RUnlock()
 
-now := time.Now().UTC()
-identities := make([]AgentIdentity, 0, len(agents))
-for _, agent := range agents {
-identities = append(identities, AgentIdentity{
-AgentID:     agent.ID,
-SVID:        "spiffe://onehumancorp.io/" + org.ID + "/" + agent.ID,
-TrustDomain: "onehumancorp.io",
-IssuedAt:    now,
-ExpiresAt:   now.Add(24 * time.Hour),
-})
-}
-writeJSON(w, identities)
+	now := time.Now().UTC()
+	identities := make([]AgentIdentity, 0, len(agents))
+	for _, agent := range agents {
+		identities = append(identities, AgentIdentity{
+			AgentID:     agent.ID,
+			SVID:        "spiffe://onehumancorp.io/" + org.ID + "/" + agent.ID,
+			TrustDomain: "onehumancorp.io",
+			IssuedAt:    now,
+			ExpiresAt:   now.Add(24 * time.Hour),
+		})
+	}
+	writeJSON(w, identities)
 }
 
 // ── Skill Pack Handlers ───────────────────────────────────────────────────────
 
 func (s *Server) handleSkills(w http.ResponseWriter, _ *http.Request) {
-s.mu.RLock()
-list := append([]SkillPack(nil), s.skills...)
-s.mu.RUnlock()
-writeJSON(w, list)
+	s.mu.RLock()
+	list := append([]SkillPack(nil), s.skills...)
+	s.mu.RUnlock()
+	writeJSON(w, list)
 }
 
 func (s *Server) handleSkillImport(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-var req skillImportRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.Name == "" || req.Domain == "" {
-http.Error(w, "name and domain are required", http.StatusBadRequest)
-return
-}
+	var req skillImportRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.Name == "" || req.Domain == "" {
+		http.Error(w, "name and domain are required", http.StatusBadRequest)
+		return
+	}
 
-now := time.Now().UTC()
-source := req.Source
-if source == "" {
-source = "custom"
-}
-pack := SkillPack{
-ID:          s.org.ID + "-skill-" + now.Format("20060102150405000"),
-Name:        req.Name,
-Domain:      req.Domain,
-Description: req.Description,
-Source:      source,
-Author:      req.Author,
-Roles:       req.Roles,
-ImportedAt:  now,
-}
-if pack.Roles == nil {
-pack.Roles = []SkillPackRole{}
-}
+	now := time.Now().UTC()
+	source := req.Source
+	if source == "" {
+		source = "custom"
+	}
+	pack := SkillPack{
+		ID:          s.org.ID + "-skill-" + now.Format("20060102150405000"),
+		Name:        req.Name,
+		Domain:      req.Domain,
+		Description: req.Description,
+		Source:      source,
+		Author:      req.Author,
+		Roles:       req.Roles,
+		ImportedAt:  now,
+	}
+	if pack.Roles == nil {
+		pack.Roles = []SkillPackRole{}
+	}
 
-s.mu.Lock()
-s.skills = append(s.skills, pack)
-s.mu.Unlock()
+	s.mu.Lock()
+	s.skills = append(s.skills, pack)
+	s.mu.Unlock()
 
-writeJSON(w, pack)
+	writeJSON(w, pack)
 }
 
 // ── Snapshot Handlers ─────────────────────────────────────────────────────────
 
 func (s *Server) handleSnapshots(w http.ResponseWriter, _ *http.Request) {
-s.mu.RLock()
-list := append([]OrgSnapshot(nil), s.snapshots...)
-s.mu.RUnlock()
-writeJSON(w, list)
+	s.mu.RLock()
+	list := append([]OrgSnapshot(nil), s.snapshots...)
+	s.mu.RUnlock()
+	writeJSON(w, list)
 }
 
 func (s *Server) handleSnapshotCreate(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-var req snapshotCreateRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
+	var req snapshotCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
 
-s.mu.Lock()
-meetings := s.hub.Meetings()
-agents := s.hub.Agents()
-msgCount := 0
-for _, m := range meetings {
-msgCount += len(m.Transcript)
-}
-now := time.Now().UTC()
-label := req.Label
-if label == "" {
-label = "Snapshot " + now.Format("2006-01-02 15:04")
-}
-snap := OrgSnapshot{
-ID:           s.org.ID + "-snap-" + now.Format("20060102150405000"),
-Label:        label,
-OrgID:        s.org.ID,
-OrgName:      s.org.Name,
-Domain:       s.org.Domain,
-AgentCount:   len(agents),
-MeetingCount: len(meetings),
-MessageCount: msgCount,
-CreatedAt:    now,
-}
-s.snapshots = append(s.snapshots, snap)
-s.mu.Unlock()
+	s.mu.Lock()
+	meetings := s.hub.Meetings()
+	agents := s.hub.Agents()
+	msgCount := 0
+	for _, m := range meetings {
+		msgCount += len(m.Transcript)
+	}
+	now := time.Now().UTC()
+	label := req.Label
+	if label == "" {
+		label = "Snapshot " + now.Format("2006-01-02 15:04")
+	}
+	snap := OrgSnapshot{
+		ID:           s.org.ID + "-snap-" + now.Format("20060102150405000"),
+		Label:        label,
+		OrgID:        s.org.ID,
+		OrgName:      s.org.Name,
+		Domain:       s.org.Domain,
+		AgentCount:   len(agents),
+		MeetingCount: len(meetings),
+		MessageCount: msgCount,
+		CreatedAt:    now,
+	}
+	s.snapshots = append(s.snapshots, snap)
+	s.mu.Unlock()
 
-writeJSON(w, snap)
+	writeJSON(w, snap)
 }
 
 func (s *Server) handleSnapshotRestore(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-var req snapshotRestoreRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.SnapshotID == "" {
-http.Error(w, "snapshotId is required", http.StatusBadRequest)
-return
-}
+	var req snapshotRestoreRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.SnapshotID == "" {
+		http.Error(w, "snapshotId is required", http.StatusBadRequest)
+		return
+	}
 
-s.mu.RLock()
-var target *OrgSnapshot
-for i, snap := range s.snapshots {
-if snap.ID == req.SnapshotID {
-target = &s.snapshots[i]
-break
-}
-}
-s.mu.RUnlock()
+	s.mu.RLock()
+	var target *OrgSnapshot
+	for i, snap := range s.snapshots {
+		if snap.ID == req.SnapshotID {
+			target = &s.snapshots[i]
+			break
+		}
+	}
+	s.mu.RUnlock()
 
-if target == nil {
-http.Error(w, "snapshot not found", http.StatusNotFound)
-return
-}
+	if target == nil {
+		http.Error(w, "snapshot not found", http.StatusNotFound)
+		return
+	}
 
-org, hub, tracker, err := seededScenarioByDomain(target.Domain, time.Now().UTC())
-if err != nil {
-http.Error(w, err.Error(), http.StatusBadRequest)
-return
-}
+	org, hub, tracker, err := seededScenarioByDomain(target.Domain, time.Now().UTC())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-s.mu.Lock()
-s.org = org
-s.hub = hub
-s.tracker = tracker
-snapshot := s.snapshotLocked()
-s.mu.Unlock()
+	s.mu.Lock()
+	s.org = org
+	s.hub = hub
+	s.tracker = tracker
+	snapshot := s.snapshotLocked()
+	s.mu.Unlock()
 
-writeJSON(w, snapshot)
+	writeJSON(w, snapshot)
 }
 
 // seededScenarioByDomain re-seeds an org from its domain identifier.
 func seededScenarioByDomain(dom string, now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
-switch dom {
-case "software_company":
-return seededLaunchReadiness(now)
-case "digital_marketing_agency":
-return seededDigitalMarketing(now)
-case "accounting_firm":
-return seededAccounting(now)
-default:
-return domain.Organization{}, nil, nil, errors.New("unsupported domain for restore")
-}
+	switch dom {
+	case "software_company":
+		return seededLaunchReadiness(now)
+	case "digital_marketing_agency":
+		return seededDigitalMarketing(now)
+	case "accounting_firm":
+		return seededAccounting(now)
+	default:
+		return domain.Organization{}, nil, nil, errors.New("unsupported domain for restore")
+	}
 }
 
 // ── Marketplace Handler ───────────────────────────────────────────────────────
 
 func (s *Server) handleMarketplace(w http.ResponseWriter, _ *http.Request) {
-writeJSON(w, defaultMarketplaceItems())
+	writeJSON(w, defaultMarketplaceItems())
 }
 
 // ── Analytics Handler ─────────────────────────────────────────────────────────
 
 func (s *Server) handleAnalytics(w http.ResponseWriter, _ *http.Request) {
-s.mu.RLock()
-agents := s.hub.Agents()
-org := s.org
-summary := s.tracker.Summary(org.ID)
-pendingApprovals := 0
-for _, a := range s.approvals {
-if a.Status == ApprovalStatusPending {
-pendingApprovals++
-}
-}
-activeHandoffs := 0
-for _, h := range s.handoffs {
-if h.Status == "pending" {
-activeHandoffs++
-}
-}
-s.mu.RUnlock()
+	s.mu.RLock()
+	agents := s.hub.Agents()
+	org := s.org
+	summary := s.tracker.Summary(org.ID)
+	pendingApprovals := 0
+	for _, a := range s.approvals {
+		if a.Status == ApprovalStatusPending {
+			pendingApprovals++
+		}
+	}
+	activeHandoffs := 0
+	for _, h := range s.handoffs {
+		if h.Status == "pending" {
+			activeHandoffs++
+		}
+	}
+	s.mu.RUnlock()
 
-totalHumans := 0
-for _, m := range org.Members {
-if m.IsHuman {
-totalHumans++
-}
-}
-totalAgents := len(agents)
+	totalHumans := 0
+	for _, m := range org.Members {
+		if m.IsHuman {
+			totalHumans++
+		}
+	}
+	totalAgents := len(agents)
 
-var ratio float64
-if totalHumans > 0 {
-ratio = float64(totalAgents) / float64(totalHumans)
-}
+	var ratio float64
+	if totalHumans > 0 {
+		ratio = float64(totalAgents) / float64(totalHumans)
+	}
 
-meetings := s.hub.Meetings()
-totalMsgs := 0
-auditedMsgs := 0
-agentSet := map[string]bool{}
-for _, a := range agents {
-agentSet[a.ID] = true
-}
-for _, m := range meetings {
-for _, msg := range m.Transcript {
-totalMsgs++
-if agentSet[msg.FromAgent] {
-auditedMsgs++
-}
-}
-}
-auditFidelity := 100.0
-if totalMsgs > 0 {
-auditFidelity = float64(auditedMsgs) / float64(totalMsgs) * 100
-}
+	meetings := s.hub.Meetings()
+	totalMsgs := 0
+	auditedMsgs := 0
+	agentSet := map[string]bool{}
+	for _, a := range agents {
+		agentSet[a.ID] = true
+	}
+	for _, m := range meetings {
+		for _, msg := range m.Transcript {
+			totalMsgs++
+			if agentSet[msg.FromAgent] {
+				auditedMsgs++
+			}
+		}
+	}
+	auditFidelity := 100.0
+	if totalMsgs > 0 {
+		auditFidelity = float64(auditedMsgs) / float64(totalMsgs) * 100
+	}
 
-writeJSON(w, AnalyticsSummary{
-HumanAgentRatio:     ratio,
-TotalAgents:         totalAgents,
-TotalHumans:         totalHumans,
-AuditFidelityPct:    auditFidelity,
-ResumptionLatencyMS: 4800,
-PendingApprovals:    pendingApprovals,
-ActiveHandoffs:      activeHandoffs,
-TokenVelocity:       summary.TotalTokens,
-})
+	writeJSON(w, AnalyticsSummary{
+		HumanAgentRatio:     ratio,
+		TotalAgents:         totalAgents,
+		TotalHumans:         totalHumans,
+		AuditFidelityPct:    auditFidelity,
+		ResumptionLatencyMS: 4800,
+		PendingApprovals:    pendingApprovals,
+		ActiveHandoffs:      activeHandoffs,
+		TokenVelocity:       summary.TotalTokens,
+	})
 }
 
 // ── Default Data Factories ────────────────────────────────────────────────────
 
 func defaultSkillPacks() []SkillPack {
-now := time.Now().UTC()
-return []SkillPack{
-{
-ID:          "builtin-core-ai",
-Name:        "Core AI Skills",
-Domain:      "all",
-Description: "Foundational reasoning, summarization, and context management capabilities shared by all agents.",
-Source:      "builtin",
-Roles: []SkillPackRole{
-{Role: "ALL", BasePrompt: "You are a highly capable AI agent. Summarize long discussions before passing context to the next agent."},
-},
-ImportedAt: now,
-},
-{
-ID:          "builtin-software-dev",
-Name:        "Software Development Mastery",
-Domain:      "software_company",
-Description: "Advanced engineering skills: clean code, TDD, security-first development, and CI/CD automation.",
-Source:      "builtin",
-Roles: []SkillPackRole{
-{Role: "SOFTWARE_ENGINEER", BasePrompt: "Write well-tested, secure, and maintainable code. Follow TDD practices."},
-{Role: "QA_TESTER", BasePrompt: "Design comprehensive test suites covering edge cases and regressions."},
-},
-ImportedAt: now,
-},
-{
-ID:          "builtin-marketing-automation",
-Name:        "Marketing Automation Suite",
-Domain:      "digital_marketing_agency",
-Description: "Data-driven growth hacking, SEO optimization, and paid media management at scale.",
-Source:      "builtin",
-Roles: []SkillPackRole{
-{Role: "GROWTH_AGENT", BasePrompt: "Identify high-value acquisition channels using data. Run A/B tests continuously."},
-},
-ImportedAt: now,
-},
-{
-ID:          "builtin-financial-ops",
-Name:        "Financial Operations Pack",
-Domain:      "accounting_firm",
-Description: "GAAP-compliant bookkeeping, tax optimization, and audit preparation.",
-Source:      "builtin",
-Roles: []SkillPackRole{
-{Role: "BOOKKEEPER", BasePrompt: "Maintain double-entry books with 100% accuracy. Reconcile all accounts daily."},
-},
-ImportedAt: now,
-},
-}
+	now := time.Now().UTC()
+	return []SkillPack{
+		{
+			ID:          "builtin-core-ai",
+			Name:        "Core AI Skills",
+			Domain:      "all",
+			Description: "Foundational reasoning, summarization, and context management capabilities shared by all agents.",
+			Source:      "builtin",
+			Roles: []SkillPackRole{
+				{Role: "ALL", BasePrompt: "You are a highly capable AI agent. Summarize long discussions before passing context to the next agent."},
+			},
+			ImportedAt: now,
+		},
+		{
+			ID:          "builtin-software-dev",
+			Name:        "Software Development Mastery",
+			Domain:      "software_company",
+			Description: "Advanced engineering skills: clean code, TDD, security-first development, and CI/CD automation.",
+			Source:      "builtin",
+			Roles: []SkillPackRole{
+				{Role: "SOFTWARE_ENGINEER", BasePrompt: "Write well-tested, secure, and maintainable code. Follow TDD practices."},
+				{Role: "QA_TESTER", BasePrompt: "Design comprehensive test suites covering edge cases and regressions."},
+			},
+			ImportedAt: now,
+		},
+		{
+			ID:          "builtin-marketing-automation",
+			Name:        "Marketing Automation Suite",
+			Domain:      "digital_marketing_agency",
+			Description: "Data-driven growth hacking, SEO optimization, and paid media management at scale.",
+			Source:      "builtin",
+			Roles: []SkillPackRole{
+				{Role: "GROWTH_AGENT", BasePrompt: "Identify high-value acquisition channels using data. Run A/B tests continuously."},
+			},
+			ImportedAt: now,
+		},
+		{
+			ID:          "builtin-financial-ops",
+			Name:        "Financial Operations Pack",
+			Domain:      "accounting_firm",
+			Description: "GAAP-compliant bookkeeping, tax optimization, and audit preparation.",
+			Source:      "builtin",
+			Roles: []SkillPackRole{
+				{Role: "BOOKKEEPER", BasePrompt: "Maintain double-entry books with 100% accuracy. Reconcile all accounts daily."},
+			},
+			ImportedAt: now,
+		},
+	}
 }
 
 func defaultMarketplaceItems() []MarketplaceItem {
-return []MarketplaceItem{
-{
-ID:          "mkt-tiger-team",
-Name:        "Tiger Team Sprint Pack",
-Type:        "skill_pack",
-Author:      "OneHumanCorp",
-Description: "Spin up a temporary 5-agent strike force for a time-boxed launch sprint.",
-Downloads:   1420,
-Rating:      4.8,
-Tags:        []string{"sprint", "launch", "team"},
-},
-{
-ID:          "mkt-ecommerce-domain",
-Name:        "E-Commerce Operations Domain",
-Type:        "domain",
-Author:      "Community",
-Description: "Full e-commerce organization with catalog, inventory, customer support, and growth roles.",
-Downloads:   892,
-Rating:      4.6,
-Tags:        []string{"ecommerce", "retail", "domain"},
-},
-{
-ID:          "mkt-crm-integration",
-Name:        "CRM Intelligence Pack",
-Type:        "tool",
-Author:      "SalesStack",
-Description: "Bi-directional Salesforce / HubSpot sync for Sales and Growth agents.",
-Downloads:   2100,
-Rating:      4.9,
-Tags:        []string{"crm", "sales", "integration"},
-},
-{
-ID:          "mkt-code-review-agent",
-Name:        "Autonomous Code Review Agent",
-Type:        "agent",
-Author:      "DevBot Labs",
-Description: "Specialized SWE agent trained on your codebase conventions. Reviews PRs for style, correctness, and test coverage.",
-Downloads:   3750,
-Rating:      4.7,
-Tags:        []string{"code-review", "engineering", "agent"},
-},
-{
-ID:          "mkt-guardian-agent",
-Name:        "Guardian Agent Pro",
-Type:        "agent",
-Author:      "SafeOps",
-Description: "Advanced confidence-gating agent with configurable spend thresholds and Slack/email HITL notifications.",
-Downloads:   980,
-Rating:      4.8,
-Tags:        []string{"security", "approval", "hitl"},
-},
-}
+	return []MarketplaceItem{
+		{
+			ID:          "mkt-tiger-team",
+			Name:        "Tiger Team Sprint Pack",
+			Type:        "skill_pack",
+			Author:      "OneHumanCorp",
+			Description: "Spin up a temporary 5-agent strike force for a time-boxed launch sprint.",
+			Downloads:   1420,
+			Rating:      4.8,
+			Tags:        []string{"sprint", "launch", "team"},
+		},
+		{
+			ID:          "mkt-ecommerce-domain",
+			Name:        "E-Commerce Operations Domain",
+			Type:        "domain",
+			Author:      "Community",
+			Description: "Full e-commerce organization with catalog, inventory, customer support, and growth roles.",
+			Downloads:   892,
+			Rating:      4.6,
+			Tags:        []string{"ecommerce", "retail", "domain"},
+		},
+		{
+			ID:          "mkt-crm-integration",
+			Name:        "CRM Intelligence Pack",
+			Type:        "tool",
+			Author:      "SalesStack",
+			Description: "Bi-directional Salesforce / HubSpot sync for Sales and Growth agents.",
+			Downloads:   2100,
+			Rating:      4.9,
+			Tags:        []string{"crm", "sales", "integration"},
+		},
+		{
+			ID:          "mkt-code-review-agent",
+			Name:        "Autonomous Code Review Agent",
+			Type:        "agent",
+			Author:      "DevBot Labs",
+			Description: "Specialized SWE agent trained on your codebase conventions. Reviews PRs for style, correctness, and test coverage.",
+			Downloads:   3750,
+			Rating:      4.7,
+			Tags:        []string{"code-review", "engineering", "agent"},
+		},
+		{
+			ID:          "mkt-guardian-agent",
+			Name:        "Guardian Agent Pro",
+			Type:        "agent",
+			Author:      "SafeOps",
+			Description: "Advanced confidence-gating agent with configurable spend thresholds and Slack/email HITL notifications.",
+			Downloads:   980,
+			Rating:      4.8,
+			Tags:        []string{"security", "approval", "hitl"},
+		},
+	}
 }
 
 // ── Integration request/response types ────────────────────────────────────────
 
 type integrationConnectRequest struct {
-IntegrationID string `json:"integrationId"`
-BaseURL       string `json:"baseUrl,omitempty"`
+	IntegrationID string `json:"integrationId"`
+	BaseURL       string `json:"baseUrl,omitempty"`
 }
 
 type integrationDisconnectRequest struct {
-IntegrationID string `json:"integrationId"`
+	IntegrationID string `json:"integrationId"`
 }
 
 type chatSendRequest struct {
-IntegrationID string `json:"integrationId"`
-Channel       string `json:"channel"`
-FromAgent     string `json:"fromAgent"`
-Content       string `json:"content"`
-ThreadID      string `json:"threadId,omitempty"`
+	IntegrationID string `json:"integrationId"`
+	Channel       string `json:"channel"`
+	FromAgent     string `json:"fromAgent"`
+	Content       string `json:"content"`
+	ThreadID      string `json:"threadId,omitempty"`
 }
 
 type prCreateRequest struct {
-IntegrationID string `json:"integrationId"`
-Repository    string `json:"repository"`
-Title         string `json:"title"`
-Body          string `json:"body,omitempty"`
-SourceBranch  string `json:"sourceBranch"`
-TargetBranch  string `json:"targetBranch"`
-CreatedBy     string `json:"createdBy,omitempty"`
+	IntegrationID string `json:"integrationId"`
+	Repository    string `json:"repository"`
+	Title         string `json:"title"`
+	Body          string `json:"body,omitempty"`
+	SourceBranch  string `json:"sourceBranch"`
+	TargetBranch  string `json:"targetBranch"`
+	CreatedBy     string `json:"createdBy,omitempty"`
 }
 
 type prActionRequest struct {
-PRID string `json:"prId"`
+	PRID string `json:"prId"`
 }
 
 type issueCreateRequest struct {
-IntegrationID string   `json:"integrationId"`
-Project       string   `json:"project"`
-Title         string   `json:"title"`
-Description   string   `json:"description,omitempty"`
-CreatedBy     string   `json:"createdBy,omitempty"`
-Priority      string   `json:"priority,omitempty"`
-Labels        []string `json:"labels,omitempty"`
+	IntegrationID string   `json:"integrationId"`
+	Project       string   `json:"project"`
+	Title         string   `json:"title"`
+	Description   string   `json:"description,omitempty"`
+	CreatedBy     string   `json:"createdBy,omitempty"`
+	Priority      string   `json:"priority,omitempty"`
+	Labels        []string `json:"labels,omitempty"`
 }
 
 type issueStatusRequest struct {
-IssueID string `json:"issueId"`
-Status  string `json:"status"`
+	IssueID string `json:"issueId"`
+	Status  string `json:"status"`
 }
 
 type issueAssignRequest struct {
-IssueID  string `json:"issueId"`
-Assignee string `json:"assignee"`
+	IssueID  string `json:"issueId"`
+	Assignee string `json:"assignee"`
 }
 
 // ── Integration handlers ──────────────────────────────────────────────────────
 
 func (s *Server) handleIntegrations(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodGet {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-category := r.URL.Query().Get("category")
-if category != "" {
-writeJSON(w, s.integReg.IntegrationsByCategory(integrations.Category(category)))
-return
-}
-writeJSON(w, s.integReg.Integrations())
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	category := r.URL.Query().Get("category")
+	if category != "" {
+		writeJSON(w, s.integReg.IntegrationsByCategory(integrations.Category(category)))
+		return
+	}
+	writeJSON(w, s.integReg.Integrations())
 }
 
 func (s *Server) handleIntegrationConnect(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req integrationConnectRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.IntegrationID == "" {
-http.Error(w, "integrationId is required", http.StatusBadRequest)
-return
-}
-updated, err := s.integReg.Connect(req.IntegrationID, req.BaseURL)
-if err != nil {
-http.Error(w, err.Error(), http.StatusNotFound)
-return
-}
-writeJSON(w, updated)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req integrationConnectRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.IntegrationID == "" {
+		http.Error(w, "integrationId is required", http.StatusBadRequest)
+		return
+	}
+	if req.BaseURL != "" {
+		if err := validateURL(req.BaseURL); err != nil {
+			http.Error(w, "invalid or disallowed base URL", http.StatusBadRequest)
+			return
+		}
+	}
+	updated, err := s.integReg.Connect(req.IntegrationID, req.BaseURL)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	writeJSON(w, updated)
 }
 
 func (s *Server) handleIntegrationDisconnect(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req integrationDisconnectRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.IntegrationID == "" {
-http.Error(w, "integrationId is required", http.StatusBadRequest)
-return
-}
-updated, err := s.integReg.Disconnect(req.IntegrationID)
-if err != nil {
-http.Error(w, err.Error(), http.StatusNotFound)
-return
-}
-writeJSON(w, updated)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req integrationDisconnectRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.IntegrationID == "" {
+		http.Error(w, "integrationId is required", http.StatusBadRequest)
+		return
+	}
+	updated, err := s.integReg.Disconnect(req.IntegrationID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	writeJSON(w, updated)
 }
 
 // ── Chat handlers ─────────────────────────────────────────────────────────────
 
 func (s *Server) handleChatMessages(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodGet {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-integrationID := r.URL.Query().Get("integrationId")
-msgs := s.integReg.ChatMessages(integrationID)
-if msgs == nil {
-msgs = []integrations.ChatMessage{}
-}
-writeJSON(w, msgs)
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	integrationID := r.URL.Query().Get("integrationId")
+	msgs := s.integReg.ChatMessages(integrationID)
+	if msgs == nil {
+		msgs = []integrations.ChatMessage{}
+	}
+	writeJSON(w, msgs)
 }
 
 func (s *Server) handleChatSend(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req chatSendRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-msg, err := s.integReg.SendChatMessage(req.IntegrationID, req.Channel, req.FromAgent, req.Content, req.ThreadID, time.Now().UTC())
-if err != nil {
-http.Error(w, err.Error(), http.StatusBadRequest)
-return
-}
-writeJSON(w, msg)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req chatSendRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	msg, err := s.integReg.SendChatMessage(req.IntegrationID, req.Channel, req.FromAgent, req.Content, req.ThreadID, time.Now().UTC())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, msg)
 }
 
 // ── Git handlers ──────────────────────────────────────────────────────────────
 
 func (s *Server) handlePullRequests(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodGet {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-integrationID := r.URL.Query().Get("integrationId")
-prs := s.integReg.PullRequests(integrationID)
-if prs == nil {
-prs = []integrations.PullRequest{}
-}
-writeJSON(w, prs)
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	integrationID := r.URL.Query().Get("integrationId")
+	prs := s.integReg.PullRequests(integrationID)
+	if prs == nil {
+		prs = []integrations.PullRequest{}
+	}
+	writeJSON(w, prs)
 }
 
 func (s *Server) handlePRCreate(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req prCreateRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-pr, err := s.integReg.CreatePullRequest(req.IntegrationID, req.Repository, req.Title, req.Body, req.SourceBranch, req.TargetBranch, req.CreatedBy, time.Now().UTC())
-if err != nil {
-http.Error(w, err.Error(), http.StatusBadRequest)
-return
-}
-writeJSON(w, pr)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req prCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	pr, err := s.integReg.CreatePullRequest(req.IntegrationID, req.Repository, req.Title, req.Body, req.SourceBranch, req.TargetBranch, req.CreatedBy, time.Now().UTC())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, pr)
 }
 
 func (s *Server) handlePRMerge(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req prActionRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.PRID == "" {
-http.Error(w, "prId is required", http.StatusBadRequest)
-return
-}
-pr, err := s.integReg.MergePullRequest(req.PRID)
-if err != nil {
-http.Error(w, err.Error(), http.StatusBadRequest)
-return
-}
-writeJSON(w, pr)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req prActionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.PRID == "" {
+		http.Error(w, "prId is required", http.StatusBadRequest)
+		return
+	}
+	pr, err := s.integReg.MergePullRequest(req.PRID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, pr)
 }
 
 func (s *Server) handlePRClose(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req prActionRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.PRID == "" {
-http.Error(w, "prId is required", http.StatusBadRequest)
-return
-}
-pr, err := s.integReg.ClosePullRequest(req.PRID)
-if err != nil {
-http.Error(w, err.Error(), http.StatusBadRequest)
-return
-}
-writeJSON(w, pr)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req prActionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.PRID == "" {
+		http.Error(w, "prId is required", http.StatusBadRequest)
+		return
+	}
+	pr, err := s.integReg.ClosePullRequest(req.PRID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, pr)
 }
 
 // ── Issue tracker handlers ────────────────────────────────────────────────────
 
 func (s *Server) handleIssues(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodGet {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-integrationID := r.URL.Query().Get("integrationId")
-issues := s.integReg.Issues(integrationID)
-if issues == nil {
-issues = []integrations.Issue{}
-}
-writeJSON(w, issues)
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	integrationID := r.URL.Query().Get("integrationId")
+	issues := s.integReg.Issues(integrationID)
+	if issues == nil {
+		issues = []integrations.Issue{}
+	}
+	writeJSON(w, issues)
 }
 
 func (s *Server) handleIssueCreate(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req issueCreateRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-issue, err := s.integReg.CreateIssue(req.IntegrationID, req.Project, req.Title, req.Description, req.CreatedBy, integrations.IssuePriority(req.Priority), req.Labels, time.Now().UTC())
-if err != nil {
-http.Error(w, err.Error(), http.StatusBadRequest)
-return
-}
-writeJSON(w, issue)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req issueCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	issue, err := s.integReg.CreateIssue(req.IntegrationID, req.Project, req.Title, req.Description, req.CreatedBy, integrations.IssuePriority(req.Priority), req.Labels, time.Now().UTC())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, issue)
 }
 
 func (s *Server) handleIssueUpdateStatus(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req issueStatusRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.IssueID == "" || req.Status == "" {
-http.Error(w, "issueId and status are required", http.StatusBadRequest)
-return
-}
-issue, err := s.integReg.UpdateIssueStatus(req.IssueID, integrations.IssueStatus(req.Status))
-if err != nil {
-http.Error(w, err.Error(), http.StatusNotFound)
-return
-}
-writeJSON(w, issue)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req issueStatusRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.IssueID == "" || req.Status == "" {
+		http.Error(w, "issueId and status are required", http.StatusBadRequest)
+		return
+	}
+	issue, err := s.integReg.UpdateIssueStatus(req.IssueID, integrations.IssueStatus(req.Status))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	writeJSON(w, issue)
 }
 
 func (s *Server) handleIssueAssign(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req issueAssignRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.IssueID == "" || req.Assignee == "" {
-http.Error(w, "issueId and assignee are required", http.StatusBadRequest)
-return
-}
-issue, err := s.integReg.AssignIssue(req.IssueID, req.Assignee)
-if err != nil {
-http.Error(w, err.Error(), http.StatusNotFound)
-return
-}
-writeJSON(w, issue)
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req issueAssignRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.IssueID == "" || req.Assignee == "" {
+		http.Error(w, "issueId and assignee are required", http.StatusBadRequest)
+		return
+	}
+	issue, err := s.integReg.AssignIssue(req.IssueID, req.Assignee)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	writeJSON(w, issue)
 }
 
 // ── B2B Collaboration ─────────────────────────────────────────────────────────
@@ -1694,98 +1739,102 @@ writeJSON(w, issue)
 type TrustAgreementStatus string
 
 const (
-TrustStatusPending  TrustAgreementStatus = "PENDING"
-TrustStatusActive   TrustAgreementStatus = "ACTIVE"
-TrustStatusRevoked  TrustAgreementStatus = "REVOKED"
+	TrustStatusPending TrustAgreementStatus = "PENDING"
+	TrustStatusActive  TrustAgreementStatus = "ACTIVE"
+	TrustStatusRevoked TrustAgreementStatus = "REVOKED"
 )
 
 // TrustAgreement is a federated trust relationship between two OHC organisations.
 // It enables cross-org agent collaboration using SPIFFE-federated JWTs.
 type TrustAgreement struct {
-ID           string               `json:"id"`
-PartnerOrg   string               `json:"partnerOrg"`
-PartnerJWKS  string               `json:"partnerJwksUrl"`
-AllowedRoles []string             `json:"allowedRoles"`
-Status       TrustAgreementStatus `json:"status"`
-CreatedAt    time.Time            `json:"createdAt"`
+	ID           string               `json:"id"`
+	PartnerOrg   string               `json:"partnerOrg"`
+	PartnerJWKS  string               `json:"partnerJwksUrl"`
+	AllowedRoles []string             `json:"allowedRoles"`
+	Status       TrustAgreementStatus `json:"status"`
+	CreatedAt    time.Time            `json:"createdAt"`
 }
 
 type b2bHandshakeRequest struct {
-PartnerOrg   string   `json:"partnerOrg"`
-PartnerJWKS  string   `json:"partnerJwksUrl"`
-AllowedRoles []string `json:"allowedRoles"`
+	PartnerOrg   string   `json:"partnerOrg"`
+	PartnerJWKS  string   `json:"partnerJwksUrl"`
+	AllowedRoles []string `json:"allowedRoles"`
 }
 
 func (s *Server) handleB2BAgreements(w http.ResponseWriter, r *http.Request) {
-switch r.Method {
-case http.MethodGet:
-s.mu.RLock()
-agreements := append([]TrustAgreement(nil), s.trustAgreements...)
-s.mu.RUnlock()
-writeJSON(w, agreements)
-default:
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-}
+	switch r.Method {
+	case http.MethodGet:
+		s.mu.RLock()
+		agreements := append([]TrustAgreement(nil), s.trustAgreements...)
+		s.mu.RUnlock()
+		writeJSON(w, agreements)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 func (s *Server) handleB2BHandshake(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req b2bHandshakeRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.PartnerOrg == "" || req.PartnerJWKS == "" {
-http.Error(w, "partnerOrg and partnerJwksUrl are required", http.StatusBadRequest)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req b2bHandshakeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.PartnerOrg == "" || req.PartnerJWKS == "" {
+		http.Error(w, "partnerOrg and partnerJwksUrl are required", http.StatusBadRequest)
+		return
+	}
+	if err := validateURL(req.PartnerJWKS); err != nil {
+		http.Error(w, "invalid or disallowed partner JWKS URL", http.StatusBadRequest)
+		return
+	}
 
-agreement := TrustAgreement{
-ID:           "ta-" + strings.ReplaceAll(req.PartnerOrg, ".", "-") + "-" + time.Now().Format("20060102150405"),
-PartnerOrg:   req.PartnerOrg,
-PartnerJWKS:  req.PartnerJWKS,
-AllowedRoles: req.AllowedRoles,
-Status:       TrustStatusActive,
-CreatedAt:    time.Now().UTC(),
-}
+	agreement := TrustAgreement{
+		ID:           "ta-" + strings.ReplaceAll(req.PartnerOrg, ".", "-") + "-" + time.Now().Format("20060102150405"),
+		PartnerOrg:   req.PartnerOrg,
+		PartnerJWKS:  req.PartnerJWKS,
+		AllowedRoles: req.AllowedRoles,
+		Status:       TrustStatusActive,
+		CreatedAt:    time.Now().UTC(),
+	}
 
-s.mu.Lock()
-s.trustAgreements = append(s.trustAgreements, agreement)
-s.mu.Unlock()
+	s.mu.Lock()
+	s.trustAgreements = append(s.trustAgreements, agreement)
+	s.mu.Unlock()
 
-writeJSON(w, agreement)
+	writeJSON(w, agreement)
 }
 
 func (s *Server) handleB2BRevoke(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req struct {
-AgreementID string `json:"agreementId"`
-}
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.AgreementID == "" {
-http.Error(w, "agreementId is required", http.StatusBadRequest)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req struct {
+		AgreementID string `json:"agreementId"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.AgreementID == "" {
+		http.Error(w, "agreementId is required", http.StatusBadRequest)
+		return
+	}
 
-s.mu.Lock()
-defer s.mu.Unlock()
-for i, ag := range s.trustAgreements {
-if ag.ID == req.AgreementID {
-s.trustAgreements[i].Status = TrustStatusRevoked
-writeJSON(w, s.trustAgreements[i])
-return
-}
-}
-http.Error(w, "agreement not found", http.StatusNotFound)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, ag := range s.trustAgreements {
+		if ag.ID == req.AgreementID {
+			s.trustAgreements[i].Status = TrustStatusRevoked
+			writeJSON(w, s.trustAgreements[i])
+			return
+		}
+	}
+	http.Error(w, "agreement not found", http.StatusNotFound)
 }
 
 // ── Autonomous SRE / Incident Management ─────────────────────────────────────
@@ -1794,202 +1843,202 @@ http.Error(w, "agreement not found", http.StatusNotFound)
 type IncidentSeverity string
 
 const (
-SeverityP0 IncidentSeverity = "P0"
-SeverityP1 IncidentSeverity = "P1"
-SeverityP2 IncidentSeverity = "P2"
+	SeverityP0 IncidentSeverity = "P0"
+	SeverityP1 IncidentSeverity = "P1"
+	SeverityP2 IncidentSeverity = "P2"
 )
 
 // IncidentStatus reflects the investigation lifecycle state.
 type IncidentStatus string
 
 const (
-IncidentStatusInvestigating IncidentStatus = "INVESTIGATING"
-IncidentStatusProposed      IncidentStatus = "PROPOSED"
-IncidentStatusResolved      IncidentStatus = "RESOLVED"
+	IncidentStatusInvestigating IncidentStatus = "INVESTIGATING"
+	IncidentStatusProposed      IncidentStatus = "PROPOSED"
+	IncidentStatusResolved      IncidentStatus = "RESOLVED"
 )
 
 // Incident represents an operational event requiring SRE attention.
 type Incident struct {
-ID               string           `json:"id"`
-Severity         IncidentSeverity `json:"severity"`
-Summary          string           `json:"summary"`
-RCA              string           `json:"rootCauseAnalysis"`
-ResolutionPlanID string           `json:"resolutionPlanId,omitempty"`
-Status           IncidentStatus   `json:"status"`
-CreatedAt        time.Time        `json:"createdAt"`
-UpdatedAt        time.Time        `json:"updatedAt"`
+	ID               string           `json:"id"`
+	Severity         IncidentSeverity `json:"severity"`
+	Summary          string           `json:"summary"`
+	RCA              string           `json:"rootCauseAnalysis"`
+	ResolutionPlanID string           `json:"resolutionPlanId,omitempty"`
+	Status           IncidentStatus   `json:"status"`
+	CreatedAt        time.Time        `json:"createdAt"`
+	UpdatedAt        time.Time        `json:"updatedAt"`
 }
 
 type incidentCreateRequest struct {
-Severity string `json:"severity"`
-Summary  string `json:"summary"`
-RCA      string `json:"rootCauseAnalysis,omitempty"`
+	Severity string `json:"severity"`
+	Summary  string `json:"summary"`
+	RCA      string `json:"rootCauseAnalysis,omitempty"`
 }
 
 type incidentStatusRequest struct {
-IncidentID       string `json:"incidentId"`
-Status           string `json:"status"`
-ResolutionPlanID string `json:"resolutionPlanId,omitempty"`
-RCA              string `json:"rootCauseAnalysis,omitempty"`
+	IncidentID       string `json:"incidentId"`
+	Status           string `json:"status"`
+	ResolutionPlanID string `json:"resolutionPlanId,omitempty"`
+	RCA              string `json:"rootCauseAnalysis,omitempty"`
 }
 
 func (s *Server) handleIncidents(w http.ResponseWriter, r *http.Request) {
-switch r.Method {
-case http.MethodGet:
-s.mu.RLock()
-incidents := append([]Incident(nil), s.incidents...)
-s.mu.RUnlock()
-writeJSON(w, incidents)
-case http.MethodPost:
-var req incidentCreateRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.Severity == "" || req.Summary == "" {
-http.Error(w, "severity and summary are required", http.StatusBadRequest)
-return
-}
-now := time.Now().UTC()
-incident := Incident{
-ID:        "inc-" + now.Format("20060102150405"),
-Severity:  IncidentSeverity(req.Severity),
-Summary:   req.Summary,
-RCA:       req.RCA,
-Status:    IncidentStatusInvestigating,
-CreatedAt: now,
-UpdatedAt: now,
-}
-s.mu.Lock()
-s.incidents = append(s.incidents, incident)
-s.mu.Unlock()
-writeJSON(w, incident)
-default:
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-}
+	switch r.Method {
+	case http.MethodGet:
+		s.mu.RLock()
+		incidents := append([]Incident(nil), s.incidents...)
+		s.mu.RUnlock()
+		writeJSON(w, incidents)
+	case http.MethodPost:
+		var req incidentCreateRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+			return
+		}
+		if req.Severity == "" || req.Summary == "" {
+			http.Error(w, "severity and summary are required", http.StatusBadRequest)
+			return
+		}
+		now := time.Now().UTC()
+		incident := Incident{
+			ID:        "inc-" + now.Format("20060102150405"),
+			Severity:  IncidentSeverity(req.Severity),
+			Summary:   req.Summary,
+			RCA:       req.RCA,
+			Status:    IncidentStatusInvestigating,
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+		s.mu.Lock()
+		s.incidents = append(s.incidents, incident)
+		s.mu.Unlock()
+		writeJSON(w, incident)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 func (s *Server) handleIncidentStatus(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req incidentStatusRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.IncidentID == "" || req.Status == "" {
-http.Error(w, "incidentId and status are required", http.StatusBadRequest)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req incidentStatusRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.IncidentID == "" || req.Status == "" {
+		http.Error(w, "incidentId and status are required", http.StatusBadRequest)
+		return
+	}
 
-s.mu.Lock()
-defer s.mu.Unlock()
-for i, inc := range s.incidents {
-if inc.ID == req.IncidentID {
-s.incidents[i].Status = IncidentStatus(req.Status)
-s.incidents[i].UpdatedAt = time.Now().UTC()
-if req.ResolutionPlanID != "" {
-s.incidents[i].ResolutionPlanID = req.ResolutionPlanID
-}
-if req.RCA != "" {
-s.incidents[i].RCA = req.RCA
-}
-writeJSON(w, s.incidents[i])
-return
-}
-}
-http.Error(w, "incident not found", http.StatusNotFound)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, inc := range s.incidents {
+		if inc.ID == req.IncidentID {
+			s.incidents[i].Status = IncidentStatus(req.Status)
+			s.incidents[i].UpdatedAt = time.Now().UTC()
+			if req.ResolutionPlanID != "" {
+				s.incidents[i].ResolutionPlanID = req.ResolutionPlanID
+			}
+			if req.RCA != "" {
+				s.incidents[i].RCA = req.RCA
+			}
+			writeJSON(w, s.incidents[i])
+			return
+		}
+	}
+	http.Error(w, "incident not found", http.StatusNotFound)
 }
 
 // ── Compute Optimization / Hardware-Aware Scheduling ─────────────────────────
 
 // ComputeProfile defines the hardware requirements for a given agent role.
 type ComputeProfile struct {
-RoleID              string    `json:"roleId"`
-MinVRAMGB           int       `json:"minVramGb"`
-PreferredGPUType    string    `json:"preferredGpuType"` // "h100", "a10g", "cpu"
-SchedulingPriority  int       `json:"schedulingPriority"`
-CreatedAt           time.Time `json:"createdAt"`
+	RoleID             string    `json:"roleId"`
+	MinVRAMGB          int       `json:"minVramGb"`
+	PreferredGPUType   string    `json:"preferredGpuType"` // "h100", "a10g", "cpu"
+	SchedulingPriority int       `json:"schedulingPriority"`
+	CreatedAt          time.Time `json:"createdAt"`
 }
 
 type computeProfileRequest struct {
-RoleID             string `json:"roleId"`
-MinVRAMGB          int    `json:"minVramGb"`
-PreferredGPUType   string `json:"preferredGpuType"`
-SchedulingPriority int    `json:"schedulingPriority"`
+	RoleID             string `json:"roleId"`
+	MinVRAMGB          int    `json:"minVramGb"`
+	PreferredGPUType   string `json:"preferredGpuType"`
+	SchedulingPriority int    `json:"schedulingPriority"`
 }
 
 // ClusterStatus reflects the health of a remote Kubernetes cluster region.
 type ClusterStatus struct {
-Region         string    `json:"region"`
-Status         string    `json:"status"` // healthy, degraded, offline
-LatencyMS      int       `json:"latencyMs"`
-AvailableNodes int       `json:"availableNodes"`
-CheckedAt      time.Time `json:"checkedAt"`
+	Region         string    `json:"region"`
+	Status         string    `json:"status"` // healthy, degraded, offline
+	LatencyMS      int       `json:"latencyMs"`
+	AvailableNodes int       `json:"availableNodes"`
+	CheckedAt      time.Time `json:"checkedAt"`
 }
 
 func (s *Server) handleComputeProfiles(w http.ResponseWriter, r *http.Request) {
-switch r.Method {
-case http.MethodGet:
-s.mu.RLock()
-profiles := append([]ComputeProfile(nil), s.computeProfiles...)
-s.mu.RUnlock()
-writeJSON(w, profiles)
-case http.MethodPost:
-var req computeProfileRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.RoleID == "" {
-http.Error(w, "roleId is required", http.StatusBadRequest)
-return
-}
-profile := ComputeProfile{
-RoleID:             req.RoleID,
-MinVRAMGB:          req.MinVRAMGB,
-PreferredGPUType:   req.PreferredGPUType,
-SchedulingPriority: req.SchedulingPriority,
-CreatedAt:          time.Now().UTC(),
-}
-s.mu.Lock()
-s.computeProfiles = append(s.computeProfiles, profile)
-s.mu.Unlock()
-writeJSON(w, profile)
-default:
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-}
+	switch r.Method {
+	case http.MethodGet:
+		s.mu.RLock()
+		profiles := append([]ComputeProfile(nil), s.computeProfiles...)
+		s.mu.RUnlock()
+		writeJSON(w, profiles)
+	case http.MethodPost:
+		var req computeProfileRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+			return
+		}
+		if req.RoleID == "" {
+			http.Error(w, "roleId is required", http.StatusBadRequest)
+			return
+		}
+		profile := ComputeProfile{
+			RoleID:             req.RoleID,
+			MinVRAMGB:          req.MinVRAMGB,
+			PreferredGPUType:   req.PreferredGPUType,
+			SchedulingPriority: req.SchedulingPriority,
+			CreatedAt:          time.Now().UTC(),
+		}
+		s.mu.Lock()
+		s.computeProfiles = append(s.computeProfiles, profile)
+		s.mu.Unlock()
+		writeJSON(w, profile)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 func (s *Server) handleClusterStatus(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodGet {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-// Extract region from URL path: /api/clusters/{region}/status
-parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-region := ""
-for i, p := range parts {
-if p == "clusters" && i+1 < len(parts) {
-region = parts[i+1]
-break
-}
-}
-if region == "" {
-http.Error(w, "region is required in path", http.StatusBadRequest)
-return
-}
-// Simulated cluster health response (would call k8s API in production)
-status := ClusterStatus{
-Region:         region,
-Status:         "healthy",
-LatencyMS:      3,
-AvailableNodes: 5,
-CheckedAt:      time.Now().UTC(),
-}
-writeJSON(w, status)
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	// Extract region from URL path: /api/clusters/{region}/status
+	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	region := ""
+	for i, p := range parts {
+		if p == "clusters" && i+1 < len(parts) {
+			region = parts[i+1]
+			break
+		}
+	}
+	if region == "" {
+		http.Error(w, "region is required in path", http.StatusBadRequest)
+		return
+	}
+	// Simulated cluster health response (would call k8s API in production)
+	status := ClusterStatus{
+		Region:         region,
+		Status:         "healthy",
+		LatencyMS:      3,
+		AvailableNodes: 5,
+		CheckedAt:      time.Now().UTC(),
+	}
+	writeJSON(w, status)
 }
 
 // ── Budget Alerts ─────────────────────────────────────────────────────────────
@@ -1999,66 +2048,66 @@ const defaultBudgetAlertNotifyPct = 0.8
 
 // BudgetAlert defines a spending threshold with notification behaviour.
 type BudgetAlert struct {
-ID             string    `json:"id"`
-OrganizationID string    `json:"organizationId"`
-ThresholdUSD   float64   `json:"thresholdUsd"`
-NotifyAtPct    float64   `json:"notifyAtPct"` // e.g. 0.8 → notify at 80 %
-Triggered      bool      `json:"triggered"`
-CreatedAt      time.Time `json:"createdAt"`
+	ID             string    `json:"id"`
+	OrganizationID string    `json:"organizationId"`
+	ThresholdUSD   float64   `json:"thresholdUsd"`
+	NotifyAtPct    float64   `json:"notifyAtPct"` // e.g. 0.8 → notify at 80 %
+	Triggered      bool      `json:"triggered"`
+	CreatedAt      time.Time `json:"createdAt"`
 }
 
 type budgetAlertRequest struct {
-OrganizationID string  `json:"organizationId"`
-ThresholdUSD   float64 `json:"thresholdUsd"`
-NotifyAtPct    float64 `json:"notifyAtPct"`
+	OrganizationID string  `json:"organizationId"`
+	ThresholdUSD   float64 `json:"thresholdUsd"`
+	NotifyAtPct    float64 `json:"notifyAtPct"`
 }
 
 func (s *Server) handleBudgetAlerts(w http.ResponseWriter, r *http.Request) {
-switch r.Method {
-case http.MethodGet:
-s.mu.RLock()
-alerts := append([]BudgetAlert(nil), s.budgetAlerts...)
-s.mu.RUnlock()
-// Evaluate triggered state against current spend.
-summary := s.tracker.Summary(s.org.ID)
-for i, a := range alerts {
-alerts[i].Triggered = summary.TotalCostUSD >= a.ThresholdUSD*a.NotifyAtPct
-}
-writeJSON(w, alerts)
-case http.MethodPost:
-var req budgetAlertRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.ThresholdUSD <= 0 {
-http.Error(w, "thresholdUsd must be greater than zero", http.StatusBadRequest)
-return
-}
-if req.NotifyAtPct <= 0 || req.NotifyAtPct > 1 {
-req.NotifyAtPct = defaultBudgetAlertNotifyPct // default 80 %
-}
-orgID := req.OrganizationID
-if orgID == "" {
-s.mu.RLock()
-orgID = s.org.ID
-s.mu.RUnlock()
-}
-alert := BudgetAlert{
-ID:             "alert-" + time.Now().Format("20060102150405"),
-OrganizationID: orgID,
-ThresholdUSD:   req.ThresholdUSD,
-NotifyAtPct:    req.NotifyAtPct,
-Triggered:      false,
-CreatedAt:      time.Now().UTC(),
-}
-s.mu.Lock()
-s.budgetAlerts = append(s.budgetAlerts, alert)
-s.mu.Unlock()
-writeJSON(w, alert)
-default:
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-}
+	switch r.Method {
+	case http.MethodGet:
+		s.mu.RLock()
+		alerts := append([]BudgetAlert(nil), s.budgetAlerts...)
+		s.mu.RUnlock()
+		// Evaluate triggered state against current spend.
+		summary := s.tracker.Summary(s.org.ID)
+		for i, a := range alerts {
+			alerts[i].Triggered = summary.TotalCostUSD >= a.ThresholdUSD*a.NotifyAtPct
+		}
+		writeJSON(w, alerts)
+	case http.MethodPost:
+		var req budgetAlertRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+			return
+		}
+		if req.ThresholdUSD <= 0 {
+			http.Error(w, "thresholdUsd must be greater than zero", http.StatusBadRequest)
+			return
+		}
+		if req.NotifyAtPct <= 0 || req.NotifyAtPct > 1 {
+			req.NotifyAtPct = defaultBudgetAlertNotifyPct // default 80 %
+		}
+		orgID := req.OrganizationID
+		if orgID == "" {
+			s.mu.RLock()
+			orgID = s.org.ID
+			s.mu.RUnlock()
+		}
+		alert := BudgetAlert{
+			ID:             "alert-" + time.Now().Format("20060102150405"),
+			OrganizationID: orgID,
+			ThresholdUSD:   req.ThresholdUSD,
+			NotifyAtPct:    req.NotifyAtPct,
+			Triggered:      false,
+			CreatedAt:      time.Now().UTC(),
+		}
+		s.mu.Lock()
+		s.budgetAlerts = append(s.budgetAlerts, alert)
+		s.mu.Unlock()
+		writeJSON(w, alert)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 // ── Automated SDLC / Pipelines ────────────────────────────────────────────────
@@ -2067,136 +2116,136 @@ http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 type PipelineStatus string
 
 const (
-PipelineStatusPending      PipelineStatus = "PENDING"
-PipelineStatusImplementing PipelineStatus = "IMPLEMENTING"
-PipelineStatusTesting      PipelineStatus = "TESTING"
-PipelineStatusStaging      PipelineStatus = "STAGING"
-PipelineStatusPromoted     PipelineStatus = "PROMOTED"
-PipelineStatusFailed       PipelineStatus = "FAILED"
+	PipelineStatusPending      PipelineStatus = "PENDING"
+	PipelineStatusImplementing PipelineStatus = "IMPLEMENTING"
+	PipelineStatusTesting      PipelineStatus = "TESTING"
+	PipelineStatusStaging      PipelineStatus = "STAGING"
+	PipelineStatusPromoted     PipelineStatus = "PROMOTED"
+	PipelineStatusFailed       PipelineStatus = "FAILED"
 )
 
 // Pipeline represents an autonomous implementation pipeline from spec to production.
 type Pipeline struct {
-ID          string         `json:"id"`
-Name        string         `json:"name"`
-Status      PipelineStatus `json:"status"`
-Branch      string         `json:"branch"`
-StagingURL  string         `json:"stagingUrl,omitempty"`
-InitiatedBy string         `json:"initiatedBy"`
-CreatedAt   time.Time      `json:"createdAt"`
-UpdatedAt   time.Time      `json:"updatedAt"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Status      PipelineStatus `json:"status"`
+	Branch      string         `json:"branch"`
+	StagingURL  string         `json:"stagingUrl,omitempty"`
+	InitiatedBy string         `json:"initiatedBy"`
+	CreatedAt   time.Time      `json:"createdAt"`
+	UpdatedAt   time.Time      `json:"updatedAt"`
 }
 
 type pipelineCreateRequest struct {
-Name        string `json:"name"`
-Branch      string `json:"branch"`
-InitiatedBy string `json:"initiatedBy"`
+	Name        string `json:"name"`
+	Branch      string `json:"branch"`
+	InitiatedBy string `json:"initiatedBy"`
 }
 
 type pipelinePromoteRequest struct {
-PipelineID string `json:"pipelineId"`
-ApprovedBy string `json:"approvedBy"`
+	PipelineID string `json:"pipelineId"`
+	ApprovedBy string `json:"approvedBy"`
 }
 
 func (s *Server) handlePipelines(w http.ResponseWriter, r *http.Request) {
-switch r.Method {
-case http.MethodGet:
-s.mu.RLock()
-pipelines := append([]Pipeline(nil), s.pipelines...)
-s.mu.RUnlock()
-writeJSON(w, pipelines)
-case http.MethodPost:
-var req pipelineCreateRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.Name == "" {
-http.Error(w, "name is required", http.StatusBadRequest)
-return
-}
-now := time.Now().UTC()
-pipeline := Pipeline{
-ID:          "pipeline-" + now.Format("20060102150405"),
-Name:        req.Name,
-Status:      PipelineStatusPending,
-Branch:      req.Branch,
-InitiatedBy: req.InitiatedBy,
-CreatedAt:   now,
-UpdatedAt:   now,
-}
-s.mu.Lock()
-s.pipelines = append(s.pipelines, pipeline)
-s.mu.Unlock()
-writeJSON(w, pipeline)
-default:
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-}
+	switch r.Method {
+	case http.MethodGet:
+		s.mu.RLock()
+		pipelines := append([]Pipeline(nil), s.pipelines...)
+		s.mu.RUnlock()
+		writeJSON(w, pipelines)
+	case http.MethodPost:
+		var req pipelineCreateRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+			return
+		}
+		if req.Name == "" {
+			http.Error(w, "name is required", http.StatusBadRequest)
+			return
+		}
+		now := time.Now().UTC()
+		pipeline := Pipeline{
+			ID:          "pipeline-" + now.Format("20060102150405"),
+			Name:        req.Name,
+			Status:      PipelineStatusPending,
+			Branch:      req.Branch,
+			InitiatedBy: req.InitiatedBy,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+		s.mu.Lock()
+		s.pipelines = append(s.pipelines, pipeline)
+		s.mu.Unlock()
+		writeJSON(w, pipeline)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 func (s *Server) handlePipelinePromote(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req pipelinePromoteRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.PipelineID == "" {
-http.Error(w, "pipelineId is required", http.StatusBadRequest)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req pipelinePromoteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.PipelineID == "" {
+		http.Error(w, "pipelineId is required", http.StatusBadRequest)
+		return
+	}
 
-s.mu.Lock()
-defer s.mu.Unlock()
-for i, p := range s.pipelines {
-if p.ID == req.PipelineID {
-if s.pipelines[i].Status != PipelineStatusStaging {
-http.Error(w, "pipeline must be in STAGING status to promote", http.StatusBadRequest)
-return
-}
-s.pipelines[i].Status = PipelineStatusPromoted
-s.pipelines[i].UpdatedAt = time.Now().UTC()
-writeJSON(w, s.pipelines[i])
-return
-}
-}
-http.Error(w, "pipeline not found", http.StatusNotFound)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, p := range s.pipelines {
+		if p.ID == req.PipelineID {
+			if s.pipelines[i].Status != PipelineStatusStaging {
+				http.Error(w, "pipeline must be in STAGING status to promote", http.StatusBadRequest)
+				return
+			}
+			s.pipelines[i].Status = PipelineStatusPromoted
+			s.pipelines[i].UpdatedAt = time.Now().UTC()
+			writeJSON(w, s.pipelines[i])
+			return
+		}
+	}
+	http.Error(w, "pipeline not found", http.StatusNotFound)
 }
 
 func (s *Server) handlePipelineStatus(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-return
-}
-var req struct {
-PipelineID string `json:"pipelineId"`
-Status     string `json:"status"`
-StagingURL string `json:"stagingUrl,omitempty"`
-}
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-return
-}
-if req.PipelineID == "" || req.Status == "" {
-http.Error(w, "pipelineId and status are required", http.StatusBadRequest)
-return
-}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req struct {
+		PipelineID string `json:"pipelineId"`
+		Status     string `json:"status"`
+		StagingURL string `json:"stagingUrl,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.PipelineID == "" || req.Status == "" {
+		http.Error(w, "pipelineId and status are required", http.StatusBadRequest)
+		return
+	}
 
-s.mu.Lock()
-defer s.mu.Unlock()
-for i, p := range s.pipelines {
-if p.ID == req.PipelineID {
-s.pipelines[i].Status = PipelineStatus(req.Status)
-s.pipelines[i].UpdatedAt = time.Now().UTC()
-if req.StagingURL != "" {
-s.pipelines[i].StagingURL = req.StagingURL
-}
-writeJSON(w, s.pipelines[i])
-return
-}
-}
-http.Error(w, "pipeline not found", http.StatusNotFound)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, p := range s.pipelines {
+		if p.ID == req.PipelineID {
+			s.pipelines[i].Status = PipelineStatus(req.Status)
+			s.pipelines[i].UpdatedAt = time.Now().UTC()
+			if req.StagingURL != "" {
+				s.pipelines[i].StagingURL = req.StagingURL
+			}
+			writeJSON(w, s.pipelines[i])
+			return
+		}
+	}
+	http.Error(w, "pipeline not found", http.StatusNotFound)
 }
