@@ -6,10 +6,12 @@ go_library(
     importpath = "github.com/onehumancorp/mono/srcs/dashboard",
     visibility = ["//visibility:public"],
     deps = [
+        "//srcs/auth",
         "//srcs/billing",
         "//srcs/domain",
         "//srcs/integrations",
         "//srcs/orchestration",
+        "//srcs/telemetry",
     ],
 )
 

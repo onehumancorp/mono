@@ -4,10 +4,30 @@ go_test(
     name = "frontend_backend_test",
     srcs = ["frontend_backend_test.go"],
     deps = [
+        "//srcs/auth",
         "//srcs/billing",
         "//srcs/dashboard",
         "//srcs/domain",
         "//srcs/frontend/server:server_lib",
+        "//srcs/integrations",
+        "//srcs/orchestration",
+    ],
+)
+
+go_test(
+    name = "integration_test",
+    srcs = [
+        "agent_interaction_test.go",
+        "frontend_backend_test.go",
+    ],
+    deps = [
+        "//srcs/auth",
+        "//srcs/billing",
+        "//srcs/dashboard",
+        "//srcs/domain",
+        "//srcs/frontend/server:server_lib",
+        "//srcs/integrations",
+        "//srcs/integrations/chatwoot",
         "//srcs/orchestration",
     ],
 )

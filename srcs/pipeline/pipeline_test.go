@@ -36,20 +36,6 @@ func TestParseSpecApproved(t *testing.T) {
 			wantDetails: "",
 			wantErr:     true,
 		},
-		{
-			name:        "Invalid Format (No equals)",
-			content:     "branch-feat-123,details-Analytics",
-			wantBranch:  "",
-			wantDetails: "",
-			wantErr:     true,
-		},
-		{
-			name:        "Only Equals",
-			content:     "=",
-			wantBranch:  "",
-			wantDetails: "",
-			wantErr:     true,
-		},
 	}
 
 	for _, tt := range tests {

@@ -1,0 +1,75 @@
+edition = "2024";
+
+package ohc.orchestration;
+
+import "google/protobuf/go_features.proto";
+
+option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration;orchestrationpb";
+// OPAQUE API is default for edition 2024
+
+message Agent {
+  string id = 1;
+  string name = 2;
+  string role = 3;
+  string organization_id = 4;
+  string status = 5;
+}
+
+message Message {
+  string id = 1;
+  string from_agent = 2;
+  string to_agent = 3;
+  string type = 4;
+  string content = 5;
+  string meeting_id = 6;
+  int64 occurred_at_unix = 7;
+}
+
+message MeetingRoom {
+  string id = 1;
+  string agenda = 2;
+  repeated string participants = 3;
+  repeated Message transcript = 4;
+}
+
+message RegisterAgentRequest {
+  Agent agent = 1;
+}
+
+message RegisterAgentResponse {
+  bool success = 1;
+}
+
+message OpenMeetingRequest {
+  string meeting_id = 1;
+  string agenda = 2;
+  repeated string participants = 3;
+}
+
+message PublishMessageRequest {
+  Message message = 1;
+}
+
+message PublishMessageResponse {
+  bool success = 1;
+}
+
+message StreamMessagesRequest {
+  string agent_id = 1;
+}
+
+message ReasonRequest {
+  string prompt = 1;
+}
+
+message ReasonResponse {
+  string content = 1;
+}
+
+service HubService {
+  rpc RegisterAgent(RegisterAgentRequest) returns (RegisterAgentResponse);
+  rpc OpenMeeting(OpenMeetingRequest) returns (MeetingRoom);
+  rpc Publish(PublishMessageRequest) returns (PublishMessageResponse);
+  rpc StreamMessages(StreamMessagesRequest) returns (stream Message);
+  rpc Reason(ReasonRequest) returns (ReasonResponse);
+}

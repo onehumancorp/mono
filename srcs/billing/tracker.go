@@ -1,10 +1,13 @@
 package billing
 
 import (
+	"context"
 	"errors"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
 // Price represents the cost rates for a specific large language model.
@@ -50,6 +53,9 @@ var DefaultCatalog = map[string]Price{
 	// Google — Gemini 2.5 family
 	"gemini-2.5-pro":     {InputPerMillionUSD: 1.25, OutputPerMillionUSD: 10.00},
 	"gemini-2.5-flash":   {InputPerMillionUSD: 0.15, OutputPerMillionUSD: 0.60},
+	// MiniMax — M2.7 family
+	"minimax-m2.7":       {InputPerMillionUSD: 1.00, OutputPerMillionUSD: 1.00},
+	"minimax-m2.7-turbo": {InputPerMillionUSD: 0.50, OutputPerMillionUSD: 0.50},
 }
 
 // Usage models a single inference event's token consumption and associated cost.
@@ -57,6 +63,7 @@ var DefaultCatalog = map[string]Price{
 // Constraints: Must include valid AgentID, OrganizationID, and Model identifiers.
 type Usage struct {
 	AgentID          string    `json:"agentId"`
+	AgentRole        string    `json:"agentRole"`
 	OrganizationID   string    `json:"organizationId"`
 	Model            string    `json:"model"`
 	PromptTokens     int64     `json:"promptTokens"`
@@ -88,12 +95,6 @@ type Tracker struct {
 	mu      sync.RWMutex
 	catalog map[string]Price
 	usages  []Usage
-
-	// ⚡ BOLT: [Pre-aggregate cost and token metrics by org and agent to eliminate O(N) read-lock iteration in the Cost Tracking Engine] - Randomized Selection from Top 5
-	orgTotalCost   map[string]float64
-	orgTotalTokens map[string]int64
-	agentCost      map[string]map[string]float64
-	agentTokens    map[string]map[string]int64
 }
 
 // NewTracker constructs a Tracker configured with the specified model pricing catalog.
@@ -108,13 +109,7 @@ func NewTracker(catalog map[string]Price) *Tracker {
 		copied[model] = price
 	}
 
-	return &Tracker{
-		catalog:        copied,
-		orgTotalCost:   make(map[string]float64),
-		orgTotalTokens: make(map[string]int64),
-		agentCost:      make(map[string]map[string]float64),
-		agentTokens:    make(map[string]map[string]int64),
-	}
+	return &Tracker{catalog: copied}
 }
 
 // Track calculates the USD cost for a token consumption event and persists it in memory.
@@ -141,19 +136,8 @@ func (t *Tracker) Track(usage Usage) (Usage, error) {
 	usage.OccurredAt = usage.OccurredAt.UTC()
 	t.usages = append(t.usages, usage)
 
-	orgID := usage.OrganizationID
-	agentID := usage.AgentID
-	tokens := usage.PromptTokens + usage.CompletionTokens
-
-	t.orgTotalCost[orgID] += usage.CostUSD
-	t.orgTotalTokens[orgID] += tokens
-
-	if t.agentCost[orgID] == nil {
-		t.agentCost[orgID] = make(map[string]float64)
-		t.agentTokens[orgID] = make(map[string]int64)
-	}
-	t.agentCost[orgID][agentID] += usage.CostUSD
-	t.agentTokens[orgID][agentID] += tokens
+	telemetry.RecordTokenUsage(context.Background(), usage.AgentID, usage.AgentRole, usage.Model, "prompt", usage.PromptTokens)
+	telemetry.RecordTokenUsage(context.Background(), usage.AgentID, usage.AgentRole, usage.Model, "completion", usage.CompletionTokens)
 
 	return usage, nil
 }
@@ -168,24 +152,27 @@ func (t *Tracker) Summary(organizationID string) Summary {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
-	totalCost := t.orgTotalCost[organizationID]
-	totalTokens := t.orgTotalTokens[organizationID]
+	byAgent := map[string]AgentSummary{}
+	var totalCost float64
+	var totalTokens int64
 
-	var agents []AgentSummary
-	if aCosts, ok := t.agentCost[organizationID]; ok {
-		aTokens := t.agentTokens[organizationID]
-		agents = make([]AgentSummary, 0, len(aCosts))
-		for agentID, cost := range aCosts {
-			agents = append(agents, AgentSummary{
-				AgentID:   agentID,
-				CostUSD:   cost,
-				TokenUsed: aTokens[agentID],
-			})
+	for _, usage := range t.usages {
+		if usage.OrganizationID != organizationID {
+			continue
 		}
-	} else {
-		agents = make([]AgentSummary, 0)
+		agent := byAgent[usage.AgentID]
+		agent.AgentID = usage.AgentID
+		agent.CostUSD += usage.CostUSD
+		agent.TokenUsed += usage.PromptTokens + usage.CompletionTokens
+		byAgent[usage.AgentID] = agent
+		totalCost += usage.CostUSD
+		totalTokens += usage.PromptTokens + usage.CompletionTokens
 	}
 
+	agents := make([]AgentSummary, 0, len(byAgent))
+	for _, summary := range byAgent {
+		agents = append(agents, summary)
+	}
 	sort.Slice(agents, func(i, j int) bool {
 		return agents[i].AgentID < agents[j].AgentID
 	})

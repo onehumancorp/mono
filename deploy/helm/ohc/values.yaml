@@ -27,3 +27,23 @@ cnpg:
     size: 1Gi
   database: ohc
   owner: ohc
+
+# Chatwoot – open-source chat platform used for all chat room communication
+# (agent-to-agent, agent-to-human, agent-to-customer, human-to-customer).
+chatwoot:
+  enabled: true
+  image: chatwoot/chatwoot:v3.15.1
+  replicas: 1
+  service:
+    port: 3000
+  # Secret key base – MUST be overridden in production with a 64+ char random string.
+  secretKeyBase: changeme_secret_key_base_at_least_64_chars_long_for_production
+  # Admin credentials used by OHC backend to auto-configure the inbox.
+  adminEmail: admin@ohc.local
+  adminPassword: changeme
+  # PostgreSQL connection for Chatwoot's own schema.
+  # When cnpg.enabled=true, override this to point to the CNPG cluster.
+  databaseUrl: ""   # defaults to in-cluster postgres service
+  # Redis URL – defaults to the same Redis as the OHC backend.
+  redisUrl: ""      # defaults to in-cluster redis service
+

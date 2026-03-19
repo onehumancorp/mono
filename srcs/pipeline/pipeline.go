@@ -62,10 +62,10 @@ func NewOrchestrator(hub *orchestration.Hub) *Orchestrator {
 // ParseSpecApproved extracts branch and details from the message content.
 func ParseSpecApproved(content string) (SpecApprovedEvent, error) {
 	// Simple mock parsing. Expecting "branch=feat-123,details=..."
-	if content == "" {
+	parts := strings.Split(content, ",")
+	if len(parts) == 0 {
 		return SpecApprovedEvent{}, errors.New("invalid spec approved content")
 	}
-	parts := strings.Split(content, ",")
 
 	var event SpecApprovedEvent
 	for _, part := range parts {

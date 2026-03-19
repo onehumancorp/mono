@@ -1,0 +1,12 @@
+{{- if .Values.chatwoot.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-chatwoot
+spec:
+  selector:
+    app: {{ .Release.Name }}-chatwoot
+  ports:
+    - port: {{ .Values.chatwoot.service.port }}
+      targetPort: {{ .Values.chatwoot.service.port }}
+{{- end }}

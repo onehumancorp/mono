@@ -34,6 +34,19 @@ spec:
                   name: {{ .Values.cnpg.clusterName }}-app
                   key: password
             {{- end }}
+            {{- if .Values.chatwoot.enabled }}
+            - name: CHATWOOT_ENABLED
+              value: "true"
+            - name: CHATWOOT_URL
+              value: "http://{{ .Release.Name }}-chatwoot:{{ .Values.chatwoot.service.port }}"
+            - name: CHATWOOT_ADMIN_EMAIL
+              value: "{{ .Values.chatwoot.adminEmail }}"
+            - name: CHATWOOT_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-chatwoot-secret
+                  key: adminPassword
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /healthz

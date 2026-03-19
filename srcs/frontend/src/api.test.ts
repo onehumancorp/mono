@@ -187,7 +187,7 @@ describe("api", () => {
   });
 
   it("throws for failed message send", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 400, json: async () => ({}) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 400, json: async () => ({}), text: async () => "" })));
 
     await expect(
       sendMessage({
@@ -230,7 +230,7 @@ describe("api – new endpoints", () => {
   });
 
   it("hireAgent throws on non-OK response", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 422, json: async () => ({}) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 422, json: async () => ({}), text: async () => "" })));
     await expect(hireAgent("X", "Y")).rejects.toThrow("422");
   });
 
@@ -248,7 +248,7 @@ describe("api – new endpoints", () => {
   });
 
   it("fireAgent throws on non-OK response", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}), text: async () => "" })));
     await expect(fireAgent("nobody")).rejects.toThrow("404");
   });
 
@@ -288,7 +288,7 @@ describe("api – new endpoints", () => {
   });
 
   it("seedScenario throws on non-OK response", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 400, json: async () => ({}) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 400, json: async () => ({}), text: async () => "" })));
     await expect(seedScenario("bad")).rejects.toThrow("400");
   });
 
@@ -385,7 +385,7 @@ describe("integration api", () => {
   it("connects an integration", async () => {
     const updated = { id: "slack", status: "connected" };
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => updated })));
-    await expect(connectIntegration("slack", "https://hooks.slack.com/test")).resolves.toEqual(updated);
+    await expect(connectIntegration("slack", { baseUrl: "https://hooks.slack.com/test" })).resolves.toEqual(updated);
   });
 
   it("disconnects an integration", async () => {
@@ -703,5 +703,284 @@ describe("api – projectedMonthlyUSD zero fallback", () => {
     })));
     const result = await fetchCosts2();
     expect(result.projectedMonthlyUSD).toBe(0);
+  });
+});
+
+// ── User management API coverage ─────────────────────────────────────────────
+
+import { createUser, deleteUser, fetchRoles, createRole } from "./api";
+
+describe("user management api", () => {
+  beforeEach(() => {
+    localStorage.setItem("ohc_token", "test-token");
+  });
+
+  afterEach(() => {
+    localStorage.removeItem("ohc_token");
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("createUser posts body and returns created user", async () => {
+    const newUser = { id: "u-1", username: "alice", email: "alice@example.com", roles: ["operator"] };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => newUser })));
+    const result = await createUser({ username: "alice", email: "alice@example.com", password: "secret", roles: ["operator"] });
+    expect(result).toEqual(newUser);
+  });
+
+  it("deleteUser sends DELETE request and completes without error", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 204, json: async () => ({}) })));
+    await expect(deleteUser("u-1")).resolves.toBeUndefined();
+    const fetchMock = vi.mocked(fetch as ReturnType<typeof vi.fn>);
+    expect(fetchMock).toHaveBeenCalledWith("/api/users/u-1", expect.objectContaining({ method: "DELETE" }));
+  });
+
+  it("fetchRoles returns list of roles", async () => {
+    const roles = [{ id: "r-1", name: "admin", permissions: [] }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => roles })));
+    await expect(fetchRoles()).resolves.toEqual(roles);
+  });
+
+  it("createRole posts body and returns created role", async () => {
+    const role = { id: "r-2", name: "operator", permissions: ["read"] };
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => role })));
+    const result = await createRole({ name: "operator", permissions: ["read"] });
+    expect(result).toEqual(role);
+  });
+});
+
+// ── Auth functions coverage ───────────────────────────────────────────────────
+
+import { login, logout, fetchMe, setStoredToken, clearStoredToken, testChatIntegration, invokeMCPTool, saveSettings } from "./api";
+
+describe("api – auth functions", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+    localStorage.removeItem("ohc_token");
+  });
+
+  it("setStoredToken stores token in localStorage", () => {
+    setStoredToken("my-token");
+    expect(localStorage.getItem("ohc_token")).toBe("my-token");
+  });
+
+  it("clearStoredToken removes token from localStorage", () => {
+    localStorage.setItem("ohc_token", "tok");
+    clearStoredToken();
+    expect(localStorage.getItem("ohc_token")).toBeNull();
+  });
+
+  it("login success sets token and returns response", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({ token: "abc123", username: "admin" }),
+      text: async () => "",
+    })));
+    const result = await login("admin", "password");
+    expect(result.token).toBe("abc123");
+    expect(localStorage.getItem("ohc_token")).toBe("abc123");
+  });
+
+  it("login failure throws error with response text", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: false, status: 401,
+      json: async () => ({}),
+      text: async () => "Bad credentials",
+    })));
+    await expect(login("admin", "wrong")).rejects.toThrow("Bad credentials");
+  });
+
+  it("login failure throws 'Login failed' when text is empty", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: false, status: 401,
+      json: async () => ({}),
+      text: async () => "",
+    })));
+    await expect(login("admin", "wrong")).rejects.toThrow("Login failed");
+  });
+
+  it("logout calls /api/auth/logout and clears token", async () => {
+    localStorage.setItem("ohc_token", "tok");
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({}),
+      text: async () => "",
+    })));
+    await logout();
+    expect(localStorage.getItem("ohc_token")).toBeNull();
+  });
+
+  it("fetchMe calls /api/auth/me and returns user", async () => {
+    localStorage.setItem("ohc_token", "tok");
+    const user = { id: "u-1", username: "admin", email: "admin@example.com", roles: ["admin"] };
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => user,
+      text: async () => "",
+    })));
+    await expect(fetchMe()).resolves.toEqual(user);
+  });
+});
+
+describe("api – authedGetJSON error paths", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+    localStorage.removeItem("ohc_token");
+  });
+
+  it("authedGetJSON 401 clears token and throws Unauthorized", async () => {
+    localStorage.setItem("ohc_token", "tok");
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: false, status: 401,
+      json: async () => ({}),
+      text: async () => "",
+    })));
+    await expect(fetchMe()).rejects.toThrow("Unauthorized");
+    expect(localStorage.getItem("ohc_token")).toBeNull();
+  });
+
+  it("authedGetJSON non-401 throws Request failed error", async () => {
+    localStorage.setItem("ohc_token", "tok");
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: false, status: 500,
+      json: async () => ({}),
+      text: async () => "",
+    })));
+    await expect(fetchMe()).rejects.toThrow("Request failed for /api/auth/me: 500");
+  });
+});
+
+describe("api – authedPostJSON error paths", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+    localStorage.removeItem("ohc_token");
+  });
+
+  it("authedPostJSON 401 clears token and throws Unauthorized", async () => {
+    localStorage.setItem("ohc_token", "tok");
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: false, status: 401,
+      json: async () => ({}),
+      text: async () => "Unauthorized response",
+    })));
+    const { createUser: createUserAuth } = await import("./api");
+    await expect(createUserAuth({ username: "x", email: "x@x.com", password: "p" })).rejects.toThrow("Unauthorized");
+    expect(localStorage.getItem("ohc_token")).toBeNull();
+  });
+
+  it("authedPostJSON non-401 with error text throws that text", async () => {
+    localStorage.setItem("ohc_token", "tok");
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: false, status: 422,
+      json: async () => ({}),
+      text: async () => "Validation error",
+    })));
+    const { createUser: createUserAuth2 } = await import("./api");
+    await expect(createUserAuth2({ username: "x", email: "x@x.com", password: "p" })).rejects.toThrow("Validation error");
+  });
+
+  it("authedPostJSON non-401 with empty text throws Request failed error", async () => {
+    localStorage.setItem("ohc_token", "tok");
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: false, status: 500,
+      json: async () => ({}),
+      text: async () => "",
+    })));
+    const { createUser: createUserAuth3 } = await import("./api");
+    await expect(createUserAuth3({ username: "x", email: "x@x.com", password: "p" })).rejects.toThrow("Request failed for /api/users: 500");
+  });
+});
+
+describe("api – testChatIntegration, invokeMCPTool, saveSettings", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+    localStorage.removeItem("ohc_token");
+  });
+
+  it("testChatIntegration posts and returns success", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({ success: true }),
+      text: async () => "",
+    })));
+    await expect(testChatIntegration("telegram", { botToken: "tok", chatId: "123" })).resolves.toEqual({ success: true });
+  });
+
+  it("invokeMCPTool posts and returns result", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({ output: "done" }),
+      text: async () => "",
+    })));
+    await expect(invokeMCPTool("git-mcp", "invoke", { repo: "my/repo" })).resolves.toEqual({ output: "done" });
+  });
+
+  it("saveSettings posts and returns updated settings", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({ minimaxApiKey: "new-key" }),
+      text: async () => "",
+    })));
+    await expect(saveSettings({ minimaxApiKey: "new-key" })).resolves.toEqual({ minimaxApiKey: "new-key" });
+  });
+});
+
+describe("api – authed calls without token (empty auth header branch)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+    localStorage.removeItem("ohc_token");
+  });
+
+  it("authedGetJSON uses empty Authorization when no token stored", async () => {
+    // no token in localStorage
+    const user = { id: "u-1", username: "admin", email: "a@b.com", roles: [] };
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => user,
+      text: async () => "",
+    })));
+    await expect(fetchMe()).resolves.toEqual(user);
+  });
+
+  it("authedPostJSON uses empty Authorization when no token stored", async () => {
+    const { createUser: cu } = await import("./api");
+    const newUser = { id: "u-2", username: "x", email: "x@x.com", roles: [] };
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => newUser,
+      text: async () => "",
+    })));
+    await expect(cu({ username: "x", email: "x@x.com", password: "p" })).resolves.toEqual(newUser);
+  });
+
+  it("authedPostJSON text().catch branch when text() throws", async () => {
+    localStorage.setItem("ohc_token", "tok");
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: false, status: 500,
+      json: async () => ({}),
+      text: async () => { throw new Error("no text"); },
+    })));
+    const { createUser: cu } = await import("./api");
+    await expect(cu({ username: "x", email: "x@x.com", password: "p" })).rejects.toThrow("Request failed for /api/users: 500");
+  });
+});
+
+describe("api – deleteUser without token branch", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+    localStorage.removeItem("ohc_token");
+  });
+
+  it("deleteUser uses empty auth header when no token", async () => {
+    // no token stored
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 204, json: async () => ({}), text: async () => "" })));
+    const { deleteUser: du } = await import("./api");
+    await expect(du("u-99")).resolves.toBeUndefined();
   });
 });

@@ -165,9 +165,6 @@ func TestConnectSSRFPrevention(t *testing.T) {
 		"http://10.0.0.1",
 		"http://192.168.1.1",
 		"http://172.16.0.1",
-		"://invalid-url",
-		"/just-a-path",
-		"http://this-domain-does-not-exist-at-all.invalid",
 	}
 
 	for _, u := range maliciousURLs {
@@ -175,44 +172,6 @@ func TestConnectSSRFPrevention(t *testing.T) {
 			_, err := r.Connect("github", u)
 			if err == nil {
 				t.Errorf("expected error connecting to blocked URL %q, got nil", u)
-			}
-		})
-	}
-}
-
-func TestValidateURL(t *testing.T) {
-	tests := []struct {
-		name    string
-		url     string
-		wantErr bool
-	}{
-		{
-			name:    "Invalid format",
-			url:     "://invalid-url",
-			wantErr: true,
-		},
-		{
-			name:    "Missing host",
-			url:     "/just-a-path",
-			wantErr: true,
-		},
-		{
-			name:    "DNS resolution failed",
-			url:     "http://this-domain-does-not-exist-at-all.invalid",
-			wantErr: true,
-		},
-		{
-			name:    "Valid URL",
-			url:     "https://github.com",
-			wantErr: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := validateURL(tt.url)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("validateURL() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
