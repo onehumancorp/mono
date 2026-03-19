@@ -27,11 +27,14 @@ test("CUJ 1: frontend dashboard loads seeded organization command center", async
 
 test("CUJ 2: sending message updates UI and backend transcript", async ({ page, request }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Send Message" })).toBeVisible();
+
+  // Navigate to meetings (War Room)
+  await page.getByRole("button", { name: "Meetings" }).click();
+  await expect(page.getByRole("heading", { name: "Virtual War Room" })).toBeVisible();
 
   const message = `Playwright seeded message ${Date.now()}`;
-  await page.getByLabel("Content").fill(message);
-  await page.getByRole("button", { name: "Send Message" }).click();
+  await page.getByPlaceholder("Inject direction or approve actions as CEO...").fill(message);
+  await page.getByRole("button", { name: "Send" }).click();
 
   await expect(page.getByText(message)).toBeVisible();
 

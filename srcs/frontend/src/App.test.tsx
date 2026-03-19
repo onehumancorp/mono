@@ -227,8 +227,8 @@ describe("App – navigation tabs", () => {
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
-    expect(screen.getByText("Virtual Meeting Rooms")).toBeInTheDocument();
-    expect(screen.getByText("Dispatch Message")).toBeInTheDocument();
+    expect(screen.getByText("Virtual War Room")).toBeInTheDocument();
+    expect(screen.getByText("Context Efficiency Active")).toBeInTheDocument();
   });
 
   it("shows meeting participants in meetings tab", async () => {
@@ -237,8 +237,8 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
     await waitFor(() => {
-      const chips = document.querySelectorAll(".participant-chip");
-      expect(chips.length).toBeGreaterThan(0);
+      const participants = document.querySelectorAll(".war-room-participant");
+      expect(participants.length).toBeGreaterThan(0);
     });
   });
 
@@ -906,15 +906,10 @@ describe("App – form field coverage", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
 
-    // Dispatch Message form fields in meetings tab
-    const fromInputs = screen.getAllByDisplayValue("pm-1");
-    fireEvent.change(fromInputs[0], { target: { value: "ceo-3" } });
-    const toInputs = screen.getAllByDisplayValue("swe-1");
-    fireEvent.change(toInputs[0], { target: { value: "eng-3" } });
-    const mtgInputs = screen.getAllByDisplayValue("launch-readiness");
-    fireEvent.change(mtgInputs[0], { target: { value: "mtg-y" } });
-    const typeInputs = screen.getAllByDisplayValue("task");
-    fireEvent.change(typeInputs[0], { target: { value: "update" } });
+    // The War Room form only surfaces the "content" textarea for the CEO
+    const inputArea = screen.getByPlaceholderText(/Inject direction/i);
+    fireEvent.change(inputArea, { target: { value: "Updated direction" } });
+    expect(screen.getByDisplayValue("Updated direction")).toBeInTheDocument();
   });
 
   it("changes the meeting select in the overview Active Meetings panel", async () => {
@@ -1286,7 +1281,7 @@ describe("App – meetings tab agenda coverage", () => {
 
     // navigate to Meetings tab
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
-    await screen.findByText("Virtual Meeting Rooms");
+    await screen.findByText("Virtual War Room");
 
     expect(screen.getByText("Discuss launch blockers for meetings tab")).toBeInTheDocument();
   });

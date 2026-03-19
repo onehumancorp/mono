@@ -224,7 +224,7 @@ describe("api – new endpoints", () => {
       "/api/agents/hire",
       expect.objectContaining({ method: "POST" })
     );
-    const body = JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1]?.body ?? "{}"));
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1]?.body ?? "{}"));
     expect(body).toEqual({ name: "Alice", role: "SOFTWARE_ENGINEER" });
     expect(result.organization.id).toBe("o");
   });
@@ -242,7 +242,7 @@ describe("api – new endpoints", () => {
       "/api/agents/fire",
       expect.objectContaining({ method: "POST" })
     );
-    const body = JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1]?.body ?? "{}"));
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1]?.body ?? "{}"));
     expect(body).toEqual({ agentId: "swe-1" });
     expect(result.organization.id).toBe("o");
   });
@@ -282,7 +282,7 @@ describe("api – new endpoints", () => {
       "/api/dev/seed",
       expect.objectContaining({ method: "POST" })
     );
-    const body = JSON.parse(String((fetchMock.mock.calls[0] as [string, RequestInit])[1]?.body ?? "{}"));
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1]?.body ?? "{}"));
     expect(body).toEqual({ scenario: "digital-marketing" });
     expect(result.organization.id).toBe("o");
   });
