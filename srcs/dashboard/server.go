@@ -718,7 +718,8 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 	hub.RegisterAgent(orchestration.Agent{ID: "pm-1", Name: "Product Manager", Role: "PRODUCT_MANAGER", OrganizationID: org.ID})
 	hub.RegisterAgent(orchestration.Agent{ID: "swe-1", Name: "Software Engineer", Role: "SOFTWARE_ENGINEER", OrganizationID: org.ID})
 	hub.RegisterAgent(orchestration.Agent{ID: "ux-1", Name: "Design Lead", Role: "DESIGNER", OrganizationID: org.ID})
-	hub.OpenMeetingWithAgenda("launch-readiness", "Review launch blockers, sign-off on reliability checklist, assign post-launch owners.", []string{"pm-1", "swe-1", "ux-1"})
+	hub.RegisterAgent(orchestration.Agent{ID: "CEO", Name: "Human CEO", Role: "CEO", OrganizationID: org.ID})
+	hub.OpenMeetingWithAgenda("launch-readiness", "Review launch blockers, sign-off on reliability checklist, assign post-launch owners.", []string{"pm-1", "swe-1", "ux-1", "CEO"})
 
 	_ = hub.Publish(orchestration.Message{
 		ID:         "seed-1",
@@ -727,16 +728,34 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 		Type:       orchestration.EventTask,
 		Content:    "Ship the reliability checklist before launch.",
 		MeetingID:  "launch-readiness",
-		OccurredAt: now.Add(-4 * time.Minute),
+		OccurredAt: now.Add(-6 * time.Minute),
 	})
 	_ = hub.Publish(orchestration.Message{
 		ID:         "seed-2",
+		FromAgent:  "swe-1",
+		ToAgent:    "pm-1",
+		Type:       orchestration.EventStatus,
+		Content:    "Checklist is 90% complete. Waiting on design assets for the final error states.",
+		MeetingID:  "launch-readiness",
+		OccurredAt: now.Add(-4 * time.Minute),
+	})
+	_ = hub.Publish(orchestration.Message{
+		ID:         "seed-3",
 		FromAgent:  "ux-1",
 		ToAgent:    "pm-1",
 		Type:       orchestration.EventStatus,
-		Content:    "Design QA pass completed with no blockers.",
+		Content:    "Design QA pass completed with no blockers. Assets pushed to main.",
 		MeetingID:  "launch-readiness",
 		OccurredAt: now.Add(-2 * time.Minute),
+	})
+	_ = hub.Publish(orchestration.Message{
+		ID:         "seed-4",
+		FromAgent:  "CEO",
+		ToAgent:    "pm-1",
+		Type:       orchestration.EventApprovalNeeded,
+		Content:    "Looks good. Proceed with the final staging deployment, but keep a close eye on the latency metrics.",
+		MeetingID:  "launch-readiness",
+		OccurredAt: now.Add(-1 * time.Minute),
 	})
 
 	tracker := billing.NewTracker(billing.DefaultCatalog)
