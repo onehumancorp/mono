@@ -1653,3 +1653,837 @@ describe("App – cost and playbooks null-snapshot branches", () => {
     expect(screen.getByText("0%")).toBeInTheDocument();
   });
 });
+
+// ── User management tab coverage ─────────────────────────────────────────────
+
+describe("App – user management tab", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("shows Users tab with empty state when no users", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/users") return mockJson([]);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /users/i }));
+    await screen.findByText("User Management");
+    await waitFor(() => expect(screen.getByText("No users yet.")).toBeInTheDocument());
+  });
+
+  it("shows list of users in Users tab", async () => {
+    const mockUsers = [
+      { id: "u-1", username: "alice", email: "alice@example.com", roles: ["admin"] },
+      { id: "u-2", username: "bob", email: "bob@example.com", roles: ["operator"] },
+    ];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/users") return mockJson(mockUsers);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /users/i }));
+    await screen.findByText("User Management");
+    await waitFor(() => expect(screen.getByText("alice")).toBeInTheDocument());
+    expect(screen.getByText("bob")).toBeInTheDocument();
+  });
+
+  it("create user form fields can be filled", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/users") return mockJson([]);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /users/i }));
+    await screen.findByText("User Management");
+
+    fireEvent.change(screen.getByPlaceholderText("e.g. alice"), { target: { value: "charlie" } });
+    fireEvent.change(screen.getByPlaceholderText("alice@example.com"), { target: { value: "charlie@example.com" } });
+    fireEvent.change(screen.getByPlaceholderText("••••••••"), { target: { value: "password123" } });
+    fireEvent.change(screen.getByDisplayValue("operator"), { target: { value: "admin" } });
+
+    expect((screen.getByPlaceholderText("e.g. alice") as HTMLInputElement).value).toBe("charlie");
+    expect((screen.getByPlaceholderText("alice@example.com") as HTMLInputElement).value).toBe("charlie@example.com");
+    expect((screen.getByDisplayValue("admin") as HTMLSelectElement).value).toBe("admin");
+  });
+
+  it("submits create user form and refreshes list", async () => {
+    const newUser = { id: "u-3", username: "charlie", email: "charlie@example.com", roles: ["admin"] };
+    let userList: unknown[] = [];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/users" && (!init || init.method !== "POST")) return mockJson(userList);
+      if (input === "/api/users" && init?.method === "POST") {
+        userList = [newUser];
+        return mockJson(newUser);
+      }
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /users/i }));
+    await screen.findByText("User Management");
+    await waitFor(() => expect(screen.getByText("No users yet.")).toBeInTheDocument());
+
+    fireEvent.change(screen.getByPlaceholderText("e.g. alice"), { target: { value: "charlie" } });
+    fireEvent.change(screen.getByPlaceholderText("alice@example.com"), { target: { value: "charlie@example.com" } });
+    fireEvent.change(screen.getByPlaceholderText("••••••••"), { target: { value: "password123" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /create user/i }));
+    await waitFor(() => expect(screen.getByText("charlie")).toBeInTheDocument());
+  });
+
+  it("remove user button calls deleteUser and refreshes list", async () => {
+    const mockUsers = [{ id: "u-1", username: "alice", email: "alice@example.com", roles: ["admin"] }];
+    let userList = [...mockUsers];
+
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/users" && (!init || init.method !== "DELETE")) return mockJson(userList);
+      if (input === "/api/users/u-1" && init?.method === "DELETE") {
+        userList = [];
+        return mockJson({}, 204);
+      }
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /users/i }));
+    await screen.findByText("User Management");
+    await waitFor(() => expect(screen.getByText("alice")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: /remove/i }));
+    await waitFor(() => expect(screen.getByText("No users yet.")).toBeInTheDocument());
+  });
+});
+
+// ── Login / Logout flow coverage ──────────────────────────────────────────────
+
+describe("App – login/logout flows", () => {
+  beforeEach(() => {
+    localStorage.removeItem("ohc_token");
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+    localStorage.removeItem("ohc_token");
+  });
+
+  it("renders login form when no token is stored", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => mockJson({}, 404)));
+    render(<App />);
+    expect(screen.getByText("Sign in to One Human Corp")).toBeInTheDocument();
+    expect(screen.getByLabelText("Username")).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
+  });
+
+  it("onChange handlers update username and password inputs", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => mockJson({}, 404)));
+    render(<App />);
+    const usernameInput = screen.getByLabelText("Username") as HTMLInputElement;
+    const passwordInput = screen.getByLabelText("Password") as HTMLInputElement;
+    fireEvent.change(usernameInput, { target: { value: "admin" } });
+    fireEvent.change(passwordInput, { target: { value: "secret" } });
+    expect(usernameInput.value).toBe("admin");
+    expect(passwordInput.value).toBe("secret");
+  });
+
+  it("successful login shows main app", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/auth/login") return mockJson({ token: "tok", username: "admin" });
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "admin" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "password" } });
+    fireEvent.submit(screen.getByRole("button", { name: /sign in/i }).closest("form")!);
+    await screen.findByText("Acme Software");
+  });
+
+  it("failed login shows error message", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/auth/login") {
+        return { ok: false, status: 401, json: async () => ({}), text: async () => "Bad credentials" };
+      }
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "admin" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "wrong" } });
+    fireEvent.submit(screen.getByRole("button", { name: /sign in/i }).closest("form")!);
+    await screen.findByText("Bad credentials");
+  });
+
+  it("handleLogout signs out and shows login screen", async () => {
+    localStorage.setItem("ohc_token", "test-token");
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/auth/logout") return mockJson({});
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /sign out/i }));
+    await screen.findByText("Sign in to One Human Corp");
+  });
+});
+
+// ── Telegram wizard coverage ──────────────────────────────────────────────────
+
+const mockTelegramIntegrations = [
+  { id: "telegram", name: "Telegram", type: "telegram", category: "chat", status: "disconnected", description: "Telegram Bot", createdAt: "2026-01-01T00:00:00Z" },
+];
+
+function makeFetchWithIntegrations(integrations: unknown[], extraHandlers?: (input: string) => MockResponse | null) {
+  return vi.fn(async (input: string) => {
+    if (input === "/api/dashboard") return mockJson(dashboardPayload);
+    if (input === "/api/integrations") return mockJson(integrations);
+    if (input === "/api/integrations?category=chat") return mockJson(integrations.filter((i: unknown) => (i as { category: string }).category === "chat"));
+    if (extraHandlers) {
+      const result = extraHandlers(input);
+      if (result) return result;
+    }
+    return mockJson({}, 404);
+  });
+}
+
+describe("App – Telegram wizard", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  async function openTelegramWizard() {
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Chat Services");
+    const setupBtns = screen.getAllByRole("button", { name: /setup/i });
+    fireEvent.click(setupBtns[0]);
+    await screen.findByText("Connect Telegram Bot");
+  }
+
+  it("opens Telegram wizard on Setup click", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations));
+    await openTelegramWizard();
+    expect(screen.getByText("Step 1 — Create a Telegram Bot")).toBeInTheDocument();
+  });
+
+  it("closes wizard on ✕ click", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations));
+    await openTelegramWizard();
+    fireEvent.click(screen.getByRole("button", { name: /close/i }));
+    await waitFor(() => expect(screen.queryByText("Connect Telegram Bot")).not.toBeInTheDocument());
+  });
+
+  it("navigates wizard steps: 1→2→3 and fills credentials", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations));
+    await openTelegramWizard();
+
+    // Step 1 → 2
+    fireEvent.click(screen.getByRole("button", { name: /next: enter token/i }));
+    await screen.findByText("Step 2 — Enter Credentials");
+
+    // Fill bot token and chat ID
+    const inputs = screen.getAllByRole("textbox");
+    // chat ID input is textbox (not password), bot token is password type
+    const chatIdInput = inputs.find(el => (el as HTMLInputElement).placeholder?.includes("group"));
+    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), { target: { value: "bot-token-123" } });
+    if (chatIdInput) fireEvent.change(chatIdInput, { target: { value: "-100123" } });
+
+    // Step 2 → 3 (need both fields non-empty)
+    const nextBtn = screen.getByRole("button", { name: /next: test/i });
+    expect(nextBtn).not.toBeDisabled();
+    fireEvent.click(nextBtn);
+    await screen.findByText("Step 3 — Test Connection");
+  });
+
+  it("Send Test Message success advances testSent state", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations, (input) => {
+      if (input === "/api/integrations/chat/test") return mockJson({ success: true });
+      return null;
+    }));
+    await openTelegramWizard();
+    fireEvent.click(screen.getByRole("button", { name: /next: enter token/i }));
+    await screen.findByText("Step 2 — Enter Credentials");
+    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), { target: { value: "bot-token-123" } });
+    const chatInputs = screen.getAllByRole("textbox");
+    const chatIdInput = chatInputs.find(el => (el as HTMLInputElement).placeholder?.includes("group"));
+    if (chatIdInput) fireEvent.change(chatIdInput, { target: { value: "-100123" } });
+    fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
+    await screen.findByText("Step 3 — Test Connection");
+    fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
+    await screen.findByText("Step 3 — Test Succeeded ✓");
+  });
+
+  it("Send Test Message error shows error message", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations, (input) => {
+      if (input === "/api/integrations/chat/test") return mockJson({ error: "Bad token" }, 500);
+      return null;
+    }));
+    await openTelegramWizard();
+    fireEvent.click(screen.getByRole("button", { name: /next: enter token/i }));
+    await screen.findByText("Step 2 — Enter Credentials");
+    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), { target: { value: "tok" } });
+    const chatInputs = screen.getAllByRole("textbox");
+    const chatIdInput = chatInputs.find(el => (el as HTMLInputElement).placeholder?.includes("group"));
+    if (chatIdInput) fireEvent.change(chatIdInput, { target: { value: "-100" } });
+    fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
+    await screen.findByText("Step 3 — Test Connection");
+    fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
+    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+  });
+
+  it("Complete Setup success closes wizard", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations, (input) => {
+      if (input === "/api/integrations/chat/test") return mockJson({ success: true });
+      if (input === "/api/integrations/connect") return mockJson({ id: "telegram", name: "Telegram", type: "telegram", category: "chat", status: "connected", description: "Telegram Bot", createdAt: "2026-01-01T00:00:00Z" });
+      return null;
+    }));
+    await openTelegramWizard();
+    fireEvent.click(screen.getByRole("button", { name: /next: enter token/i }));
+    await screen.findByText("Step 2 — Enter Credentials");
+    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), { target: { value: "bot-tok" } });
+    const chatInputs = screen.getAllByRole("textbox");
+    const chatIdInput = chatInputs.find(el => (el as HTMLInputElement).placeholder?.includes("group"));
+    if (chatIdInput) fireEvent.change(chatIdInput, { target: { value: "-100" } });
+    fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
+    await screen.findByText("Step 3 — Test Connection");
+    fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
+    await screen.findByText("Step 3 — Test Succeeded ✓");
+    fireEvent.click(screen.getByRole("button", { name: /complete setup/i }));
+    await waitFor(() => expect(screen.queryByText("Connect Telegram Bot")).not.toBeInTheDocument());
+  });
+
+  it("Complete Setup error shows error message", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations, (input) => {
+      if (input === "/api/integrations/chat/test") return mockJson({ success: true });
+      if (input === "/api/integrations/connect") return mockJson({ error: "Server error" }, 500);
+      return null;
+    }));
+    await openTelegramWizard();
+    fireEvent.click(screen.getByRole("button", { name: /next: enter token/i }));
+    await screen.findByText("Step 2 — Enter Credentials");
+    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), { target: { value: "tok" } });
+    const chatInputs = screen.getAllByRole("textbox");
+    const chatIdInput = chatInputs.find(el => (el as HTMLInputElement).placeholder?.includes("group"));
+    if (chatIdInput) fireEvent.change(chatIdInput, { target: { value: "-100" } });
+    fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
+    await screen.findByText("Step 3 — Test Connection");
+    fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
+    await screen.findByText("Step 3 — Test Succeeded ✓");
+    fireEvent.click(screen.getByRole("button", { name: /complete setup/i }));
+    // wizard stays open on error (connect failed)
+    await waitFor(() => expect(screen.getByText("Connect Telegram Bot")).toBeInTheDocument());
+  });
+
+  it("Back button goes to previous step", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations));
+    await openTelegramWizard();
+    fireEvent.click(screen.getByRole("button", { name: /next: enter token/i }));
+    await screen.findByText("Step 2 — Enter Credentials");
+    fireEvent.click(screen.getByRole("button", { name: /back/i }));
+    await screen.findByText("Step 1 — Create a Telegram Bot");
+  });
+});
+
+// ── Discord wizard coverage ───────────────────────────────────────────────────
+
+const mockDiscordIntegrations = [
+  { id: "discord", name: "Discord", type: "discord", category: "chat", status: "disconnected", description: "Discord Webhook", createdAt: "2026-01-01T00:00:00Z" },
+];
+
+describe("App – Discord wizard", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  async function openDiscordWizard() {
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Chat Services");
+    const setupBtns = screen.getAllByRole("button", { name: /setup/i });
+    fireEvent.click(setupBtns[0]);
+    await screen.findByText("Connect Discord Webhook");
+  }
+
+  it("opens Discord wizard on Setup click", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations));
+    await openDiscordWizard();
+    expect(screen.getByText("Step 1 — Create a Discord Webhook")).toBeInTheDocument();
+  });
+
+  it("closes Discord wizard on ✕ click", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations));
+    await openDiscordWizard();
+    fireEvent.click(screen.getByRole("button", { name: /close/i }));
+    await waitFor(() => expect(screen.queryByText("Connect Discord Webhook")).not.toBeInTheDocument());
+  });
+
+  it("navigates Discord wizard steps 1→2→3", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations));
+    await openDiscordWizard();
+    fireEvent.click(screen.getByRole("button", { name: /next: enter url/i }));
+    await screen.findByText("Step 2 — Enter Webhook URL");
+    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), { target: { value: "https://discord.com/api/webhooks/123/abc" } });
+    fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
+    await screen.findByText("Step 3 — Test Connection");
+  });
+
+  it("Discord Back button navigates to previous step", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations));
+    await openDiscordWizard();
+    fireEvent.click(screen.getByRole("button", { name: /next: enter url/i }));
+    await screen.findByText("Step 2 — Enter Webhook URL");
+    fireEvent.click(screen.getByRole("button", { name: /back/i }));
+    await screen.findByText("Step 1 — Create a Discord Webhook");
+  });
+
+  it("Discord Send Test Message success", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations, (input) => {
+      if (input === "/api/integrations/chat/test") return mockJson({ success: true });
+      return null;
+    }));
+    await openDiscordWizard();
+    fireEvent.click(screen.getByRole("button", { name: /next: enter url/i }));
+    await screen.findByText("Step 2 — Enter Webhook URL");
+    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), { target: { value: "https://discord.com/api/webhooks/123/abc" } });
+    fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
+    await screen.findByText("Step 3 — Test Connection");
+    fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
+    await screen.findByText("Step 3 — Test Succeeded ✓");
+  });
+
+  it("Discord Send Test Message error shows error", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations, (input) => {
+      if (input === "/api/integrations/chat/test") return mockJson({ error: "bad webhook" }, 500);
+      return null;
+    }));
+    await openDiscordWizard();
+    fireEvent.click(screen.getByRole("button", { name: /next: enter url/i }));
+    await screen.findByText("Step 2 — Enter Webhook URL");
+    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), { target: { value: "https://discord.com/api/webhooks/123/abc" } });
+    fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
+    await screen.findByText("Step 3 — Test Connection");
+    fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
+    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+  });
+
+  it("Discord Complete Setup success", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations, (input) => {
+      if (input === "/api/integrations/chat/test") return mockJson({ success: true });
+      if (input === "/api/integrations/connect") return mockJson({ id: "discord", name: "Discord", type: "discord", category: "chat", status: "connected", description: "Discord Webhook", createdAt: "2026-01-01T00:00:00Z" });
+      return null;
+    }));
+    await openDiscordWizard();
+    fireEvent.click(screen.getByRole("button", { name: /next: enter url/i }));
+    await screen.findByText("Step 2 — Enter Webhook URL");
+    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), { target: { value: "https://discord.com/api/webhooks/123/abc" } });
+    fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
+    await screen.findByText("Step 3 — Test Connection");
+    fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
+    await screen.findByText("Step 3 — Test Succeeded ✓");
+    fireEvent.click(screen.getByRole("button", { name: /complete setup/i }));
+    await waitFor(() => expect(screen.queryByText("Connect Discord Webhook")).not.toBeInTheDocument());
+  });
+
+  it("Discord Complete Setup error shows error", async () => {
+    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations, (input) => {
+      if (input === "/api/integrations/chat/test") return mockJson({ success: true });
+      if (input === "/api/integrations/connect") return mockJson({ error: "Server error" }, 500);
+      return null;
+    }));
+    await openDiscordWizard();
+    fireEvent.click(screen.getByRole("button", { name: /next: enter url/i }));
+    await screen.findByText("Step 2 — Enter Webhook URL");
+    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), { target: { value: "https://discord.com/api/webhooks/123/abc" } });
+    fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
+    await screen.findByText("Step 3 — Test Connection");
+    fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
+    await screen.findByText("Step 3 — Test Succeeded ✓");
+    fireEvent.click(screen.getByRole("button", { name: /complete setup/i }));
+    // wizard stays open on error (connect failed)
+    await waitFor(() => expect(screen.getByText("Connect Discord Webhook")).toBeInTheDocument());
+  });
+});
+
+// ── MCP Invoke modal coverage ─────────────────────────────────────────────────
+
+describe("App – MCP invoke modal (communication category)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  const commTool = { id: "slack-mcp", name: "Slack MCP", description: "Send Slack messages", category: "communication", status: "available" };
+
+  it("opens MCP invoke modal for communication tool and exercises form fields", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/mcp/tools") return mockJson([commTool]);
+      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByText("MCP Tool Gateway");
+    await waitFor(() => expect(screen.getByText("Slack MCP")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
+    await screen.findByText("Invoke: Slack MCP");
+
+    // Exercise communication fields
+    fireEvent.change(screen.getByPlaceholderText(/e.g. -1001234567890 or #general/), { target: { value: "#general" } });
+    const textareas = screen.getAllByRole("textbox");
+    const msgArea = textareas.find(el => el.tagName.toLowerCase() === "textarea");
+    if (msgArea) fireEvent.change(msgArea, { target: { value: "Hello!" } });
+
+    // Close button (footer) - use getAllByRole to handle multiple "Close" buttons
+    const closeBtns = screen.getAllByRole("button", { name: /^close$/i });
+    fireEvent.click(closeBtns[closeBtns.length - 1]);
+    await waitFor(() => expect(screen.queryByText("Invoke: Slack MCP")).not.toBeInTheDocument());
+  });
+
+  it("invokes tool successfully and shows result", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/mcp/tools") return mockJson([commTool]);
+      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/mcp/tools/invoke") return mockJson({ status: "sent" });
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByText("MCP Tool Gateway");
+    await waitFor(() => expect(screen.getByText("Slack MCP")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
+    await screen.findByText("Invoke: Slack MCP");
+    fireEvent.click(screen.getByRole("button", { name: /invoke tool/i }));
+    await waitFor(() => expect(screen.getByText("Result")).toBeInTheDocument());
+  });
+
+  it("invokes tool with error and shows error", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/mcp/tools") return mockJson([commTool]);
+      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/mcp/tools/invoke") return mockJson({ error: "tool error" }, 500);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByText("MCP Tool Gateway");
+    await waitFor(() => expect(screen.getByText("Slack MCP")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
+    await screen.findByText("Invoke: Slack MCP");
+    fireEvent.click(screen.getByRole("button", { name: /invoke tool/i }));
+    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+  });
+
+  it("closes MCP modal with ✕ button", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/mcp/tools") return mockJson([commTool]);
+      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByText("MCP Tool Gateway");
+    await waitFor(() => expect(screen.getByText("Slack MCP")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
+    await screen.findByText("Invoke: Slack MCP");
+    // Click the header ✕ close button (first of the "Close" buttons)
+    const allCloseBtns = screen.getAllByRole("button", { name: /close/i });
+    fireEvent.click(allCloseBtns[0]);
+    await waitFor(() => expect(screen.queryByText("Invoke: Slack MCP")).not.toBeInTheDocument());
+  });
+});
+
+describe("App – MCP invoke modal (code category)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  const codeTool = { id: "git-mcp", name: "Git MCP", description: "Create PRs", category: "code", status: "available" };
+
+  it("shows code category form fields and exercises them", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/mcp/tools") return mockJson([codeTool]);
+      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByText("MCP Tool Gateway");
+    await waitFor(() => expect(screen.getByText("Git MCP")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
+    await screen.findByText("Invoke: Git MCP");
+
+    fireEvent.change(screen.getByPlaceholderText("owner/repo"), { target: { value: "my/repo" } });
+    fireEvent.change(screen.getByPlaceholderText("feat: description"), { target: { value: "feat: new feature" } });
+    fireEvent.change(screen.getByPlaceholderText("feature/my-branch"), { target: { value: "feature/test" } });
+    // target branch has default "main"
+    const targetBranchInput = screen.getByDisplayValue("main") as HTMLInputElement;
+    fireEvent.change(targetBranchInput, { target: { value: "develop" } });
+    expect(targetBranchInput.value).toBe("develop");
+  });
+});
+
+describe("App – MCP invoke modal (project_management category)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  const pmTool = { id: "jira-mcp", name: "Jira MCP", description: "Create issues", category: "project_management", status: "available" };
+
+  it("shows project_management category form fields and exercises them", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/mcp/tools") return mockJson([pmTool]);
+      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByText("MCP Tool Gateway");
+    await waitFor(() => expect(screen.getByText("Jira MCP")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
+    await screen.findByText("Invoke: Jira MCP");
+
+    fireEvent.change(screen.getByPlaceholderText("e.g. PROJ"), { target: { value: "PROJ" } });
+    fireEvent.change(screen.getByPlaceholderText("Issue title"), { target: { value: "New bug" } });
+    // priority select - find by default value "medium"
+    const prioritySelect = screen.getByDisplayValue("Medium") as HTMLSelectElement;
+    fireEvent.change(prioritySelect, { target: { value: "high" } });
+    expect(prioritySelect.value).toBe("high");
+  });
+});
+
+describe("App – MCP invoke modal (other/default category)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  const otherTool = { id: "other-mcp", name: "Other MCP", description: "Other tool", category: "monitoring", status: "available" };
+
+  it("shows default invocation message for unknown category", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/mcp/tools") return mockJson([otherTool]);
+      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByText("MCP Tool Gateway");
+    await waitFor(() => expect(screen.getByText("Other MCP")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
+    await screen.findByText("Invoke: Other MCP");
+    expect(screen.getByText(/default invocation/i)).toBeInTheDocument();
+  });
+});
+
+// ── handleSaveSettings coverage ───────────────────────────────────────────────
+
+describe("App – handleSaveSettings", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("saves settings successfully and shows notice", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/settings" && (!init || init.method !== "POST")) return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings" && init?.method === "POST") return mockJson({ minimaxApiKey: "new-key" });
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByText("AI Model Configuration");
+    fireEvent.change(screen.getByPlaceholderText("sk-cp-..."), { target: { value: "new-key" } });
+    fireEvent.click(screen.getByRole("button", { name: /save settings/i }));
+    await screen.findByText("Settings saved successfully.");
+  });
+
+  it("settings save failure does not show success notice", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/settings" && (!init || init.method !== "POST")) return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings" && init?.method === "POST") return mockJson({ error: "Server error" }, 500);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await screen.findByText("AI Model Configuration");
+    fireEvent.click(screen.getByRole("button", { name: /save settings/i }));
+    // Wait for save to complete - button should be re-enabled (savingSettings=false)
+    await waitFor(() => expect(screen.getByRole("button", { name: /save settings/i })).not.toBeDisabled());
+    expect(screen.queryByText("Settings saved successfully.")).not.toBeInTheDocument();
+  });
+});
+
+// ── Meetings tab form onChange handlers ───────────────────────────────────────
+
+describe("App – Meetings tab form onChange", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("changes toAgent and meetingId selects", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
+    await screen.findByText("Virtual Meeting Rooms");
+
+    // Find "To" select by its option text (agents from dashboardPayload)
+    const toSelects = screen.getAllByRole("combobox");
+    // First select in meeting form should be "To" agent
+    const toAgentSelect = toSelects.find(el => {
+      const opts = Array.from((el as HTMLSelectElement).options);
+      return opts.some(o => o.text.includes("PM") || o.text.includes("SWE"));
+    });
+    if (toAgentSelect) {
+      fireEvent.change(toAgentSelect, { target: { value: "pm-1" } });
+      expect((toAgentSelect as HTMLSelectElement).value).toBe("pm-1");
+    }
+
+    // meetingId select
+    const meetingSelects = screen.getAllByRole("combobox");
+    const meetingSelect = meetingSelects.find(el => {
+      const opts = Array.from((el as HTMLSelectElement).options);
+      return opts.some(o => o.text.includes("launch-readiness"));
+    });
+    if (meetingSelect) {
+      fireEvent.change(meetingSelect, { target: { value: "launch-readiness" } });
+      expect((meetingSelect as HTMLSelectElement).value).toBe("launch-readiness");
+    }
+  });
+});
+
+// ── Nav item click (setActiveNav) ─────────────────────────────────────────────
+
+describe("App – nav item click", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("clicking nav items changes the active section", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    await screen.findByText("Agent Network");
+
+    fireEvent.click(screen.getByRole("button", { name: /cost/i }));
+    await screen.findByText("Burn Rate Forecast");
+
+    fireEvent.click(screen.getByRole("button", { name: /overview/i }));
+    await screen.findByText("Acme Software");
+  });
+});
+
+// ── Integrations tab – connected integration with chatspace/hasCredentials ────
+
+describe("App – integrations connected branch coverage", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("shows chatspace and hasCredentials for connected integrations", async () => {
+    const connectedIntegrations = [
+      { id: "slack", name: "Slack", type: "slack", category: "chat", status: "connected", description: "Slack integration", createdAt: "2026-01-01T00:00:00Z", chatspace: "my-workspace", hasCredentials: true },
+    ];
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson(connectedIntegrations);
+      if (input === "/api/integrations?category=chat") return mockJson(connectedIntegrations);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
+    await screen.findByText("Chat Services");
+    await waitFor(() => expect(screen.getByText(/Chatspace:/)).toBeInTheDocument());
+    expect(screen.getByText(/Credentials configured ✓/)).toBeInTheDocument();
+  });
+});
+
+// ── Meetings form meetingId onChange coverage ─────────────────────────────────
+
+describe("App – meetings meetingId onChange explicit", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("changing meeting select updates selectedMeetingID", async () => {
+    const payload = {
+      ...dashboardPayload,
+      meetings: [
+        { id: "meeting-1", participants: [], transcript: [] },
+        { id: "meeting-2", participants: [], transcript: [] },
+      ],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(payload);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
+    await screen.findByText("Virtual Meeting Rooms");
+
+    const comboboxes = screen.getAllByRole("combobox");
+    const meetingSelect = comboboxes.find(el => {
+      const opts = Array.from((el as HTMLSelectElement).options);
+      return opts.some(o => o.value === "meeting-2");
+    });
+    expect(meetingSelect).toBeDefined();
+    if (meetingSelect) {
+      fireEvent.change(meetingSelect, { target: { value: "meeting-2" } });
+      await waitFor(() => expect((meetingSelect as HTMLSelectElement).value).toBe("meeting-2"));
+    }
+  });
+});
