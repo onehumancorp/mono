@@ -331,3 +331,114 @@ func TestHandlePipelineStatus_Errors(t *testing.T) {
 		t.Errorf("expected 404, got %d", rec.Code)
 	}
 }
+
+
+func TestHandleHealthzReadyz(t *testing.T) {
+	_, server := newTestServer(t)
+	defer server.Close()
+
+	tests := []struct {
+		name string
+		path string
+	}{
+		{"Healthz", "/healthz"},
+		{"Readyz", "/readyz"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp, err := http.Get(server.URL + tt.path)
+			if err != nil {
+				t.Fatalf("GET %s returned error: %v", tt.path, err)
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("expected 200, got %d", resp.StatusCode)
+			}
+		})
+	}
+}
+
+func TestHandleIncidentStatus_UpdateRCA(t *testing.T) {
+	tests := []struct {
+		name    string
+		payload string
+		wantRCA string
+	}{
+		{
+			name:    "Update RCA",
+			payload: `{"incidentId":"inc-1", "status":"RESOLVED", "rootCauseAnalysis":"It was DNS"}`,
+			wantRCA: "It was DNS",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			app, server := newTestServer(t)
+			defer server.Close()
+
+			app.incidents = append(app.incidents, Incident{
+				ID:     "inc-1",
+				Status: IncidentStatusInvestigating,
+			})
+
+			req := httptest.NewRequest(http.MethodPost, "/api/incidents/status", strings.NewReader(tt.payload))
+			rec := httptest.NewRecorder()
+			app.handleIncidentStatus(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d", rec.Code)
+			}
+
+			if len(app.incidents) != 1 {
+				t.Fatalf("expected 1 incident, got %d", len(app.incidents))
+			}
+
+			if app.incidents[0].RCA != tt.wantRCA {
+				t.Errorf("expected RCA to be %q, got %q", tt.wantRCA, app.incidents[0].RCA)
+			}
+		})
+	}
+}
+
+func TestHandleBudgetAlerts_NotifyAtPctHandling(t *testing.T) {
+	tests := []struct {
+		name    string
+		payload string
+		wantPct float64
+	}{
+		{
+			name:    "Invalid pct defaults",
+			payload: `{"thresholdUsd":100, "notifyAtPct": 1.5}`,
+			wantPct: defaultBudgetAlertNotifyPct,
+		},
+		{
+			name:    "Valid pct",
+			payload: `{"thresholdUsd":100, "notifyAtPct": 0.5}`,
+			wantPct: 0.5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			app, server := newTestServer(t)
+			defer server.Close()
+
+			req := httptest.NewRequest(http.MethodPost, "/api/billing/alerts", strings.NewReader(tt.payload))
+			rec := httptest.NewRecorder()
+			app.handleBudgetAlerts(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected 200, got %d", rec.Code)
+			}
+
+			if len(app.budgetAlerts) != 1 {
+				t.Fatalf("expected 1 budget alert, got %d", len(app.budgetAlerts))
+			}
+
+			if app.budgetAlerts[0].NotifyAtPct != tt.wantPct {
+				t.Errorf("expected NotifyAtPct to be %v, got %v", tt.wantPct, app.budgetAlerts[0].NotifyAtPct)
+			}
+		})
+	}
+}
