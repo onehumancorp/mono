@@ -296,6 +296,11 @@ func (r *Registry) Connect(id, baseURL string, creds ...IntegrationCredentials) 
 			return Integration{}, err
 		}
 	}
+	if len(creds) > 0 && creds[0].WebhookURL != "" {
+		if err := validateURL(creds[0].WebhookURL); err != nil {
+			return Integration{}, err
+		}
+	}
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -441,6 +446,9 @@ func (r *Registry) TestConnection(id string, creds IntegrationCredentials) error
 	case IntegrationTypeDiscord:
 		if active.WebhookURL == "" {
 			return errors.New("webhook URL is required")
+		}
+		if err := validateURL(active.WebhookURL); err != nil {
+			return err
 		}
 		return sendDiscordWebhook(active.WebhookURL, "One Human Corp",
 			"✅ Test message — Discord integration confirmed!")
