@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -300,7 +301,13 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 		authStore:       store,
 		authHandlers:    auth.NewHandlers(store),
 	}
+	// Load Minimax API key from environment on startup.
+	if key := os.Getenv("MINIMAX_API_KEY"); key != "" {
+		hub.SetMinimaxAPIKey(key)
+		server.settings.MinimaxAPIKey = key
+	}
 	mux := http.NewServeMux()
+	mux.HandleFunc("/", server.handleIndex)
 	mux.HandleFunc("/api/dashboard", server.handleDashboard)
 	mux.HandleFunc("/api/org", server.handleOrg)
 	mux.HandleFunc("/api/meetings", server.handleMeetings)
@@ -385,7 +392,25 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	return telemetry.Middleware(auth.Middleware(store)(mux))
 }
 
+const indexHTML = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>One Human Corp Dashboard</title>
+</head>
+<body>
+  <h1>One Human Corp Dashboard</h1>
+  <p>Send Message to an agent or meeting room using the API.</p>
+  <p>View Role Playbooks and agent skill sets in the Settings panel.</p>
+  <div id="root"></div>
+</body>
+</html>`
 
+func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(indexHTML))
+}
 
 func (s *Server) handleOrg(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
