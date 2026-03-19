@@ -14,6 +14,8 @@ package integrations
 
 import (
 	"errors"
+	"net"
+	"net/url"
 	"sync"
 	"time"
 )
@@ -226,6 +228,35 @@ func (r *Registry) Integration(id string) (Integration, bool) {
 	return Integration{}, false
 }
 
+// validateURL checks if a given URL string is safe from SSRF attacks.
+// It explicitly blocks loopback, private, unspecified, and link-local IP addresses.
+// It fails closed on DNS resolution errors.
+func validateURL(u string) error {
+	parsedURL, err := url.ParseRequestURI(u)
+	if err != nil {
+		return errors.New("invalid URL format")
+	}
+
+	host := parsedURL.Hostname()
+	if host == "" {
+		return errors.New("URL must contain a host")
+	}
+
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		// Fail closed on DNS resolution error
+		return errors.New("DNS resolution failed")
+	}
+
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			return errors.New("URL resolves to a blocked IP address")
+		}
+	}
+
+	return nil
+}
+
 // Connect enables an integration by marking it connected and setting its API base URL.
 //
 // Parameters:
@@ -234,6 +265,12 @@ func (r *Registry) Integration(id string) (Integration, bool) {
 //
 // Returns: The updated Integration, or an error if it was not found.
 func (r *Registry) Connect(id, baseURL string) (Integration, error) {
+	if baseURL != "" {
+		if err := validateURL(baseURL); err != nil {
+			return Integration{}, err
+		}
+	}
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

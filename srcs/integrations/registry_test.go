@@ -154,6 +154,29 @@ func TestConnectNotFound(t *testing.T) {
 	}
 }
 
+func TestConnectSSRFPrevention(t *testing.T) {
+	r := NewRegistry()
+
+	maliciousURLs := []string{
+		"http://localhost",
+		"http://127.0.0.1",
+		"http://[::1]",
+		"http://169.254.169.254/latest/meta-data/",
+		"http://10.0.0.1",
+		"http://192.168.1.1",
+		"http://172.16.0.1",
+	}
+
+	for _, u := range maliciousURLs {
+		t.Run(u, func(t *testing.T) {
+			_, err := r.Connect("github", u)
+			if err == nil {
+				t.Errorf("expected error connecting to blocked URL %q, got nil", u)
+			}
+		})
+	}
+}
+
 func TestDisconnectUpdatesStatus(t *testing.T) {
 	r := NewRegistry()
 	_, _ = r.Connect("discord", "https://discord.com/api/webhooks/test")
