@@ -198,7 +198,7 @@ export async function sendMessage(form: {
  * @returns A Promise resolving to the updated DashboardSnapshot.
  */
 export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
-  return postJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
+  return authedPostJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
 }
 
 /**
@@ -208,7 +208,7 @@ export function hireAgent(name: string, role: string): Promise<DashboardSnapshot
  * @returns A Promise resolving to the updated DashboardSnapshot.
  */
 export function fireAgent(agentId: string): Promise<DashboardSnapshot> {
-  return postJSON<DashboardSnapshot>("/api/agents/fire", { agentId });
+  return authedPostJSON<DashboardSnapshot>("/api/agents/fire", { agentId });
 }
 
 /**
