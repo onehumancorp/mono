@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"errors"
-	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -119,7 +116,6 @@ func TestNewDemoHandlerServesDashboard(t *testing.T) {
 func TestRunUsesDefaultAddress(t *testing.T) {
 	var addr string
 	var body string
-	var logs bytes.Buffer
 
 	err := run(
 		time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC),
@@ -131,16 +127,12 @@ func TestRunUsesDefaultAddress(t *testing.T) {
 			body = rec.Body.String()
 			return nil
 		},
-		log.New(&logs, "", 0),
 	)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
 	}
 	if addr != defaultAddress {
 		t.Fatalf("expected address %q, got %q", defaultAddress, addr)
-	}
-	if !strings.Contains(logs.String(), defaultAddress) {
-		t.Fatalf("expected log output to mention %s", defaultAddress)
 	}
 	if !strings.Contains(body, "One Human Corp Dashboard") {
 		t.Fatalf("expected dashboard HTML to be served")
@@ -151,7 +143,7 @@ func TestRunReturnsListenError(t *testing.T) {
 	wantErr := errors.New("listen failed")
 	err := run(time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC), func(string, http.Handler) error {
 		return wantErr
-	}, log.New(io.Discard, "", 0))
+	})
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("expected listen error %v, got %v", wantErr, err)
 	}

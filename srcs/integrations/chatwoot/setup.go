@@ -2,7 +2,7 @@ package chatwoot
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"time"
 )
@@ -44,7 +44,7 @@ func (c *Client) Setup() error {
 			break
 		}
 		if i < maxAttempts-1 {
-			log.Printf("chatwoot setup: attempt %d/%d failed: %v; retrying in %s", i+1, maxAttempts, lastErr, retryDelay)
+			slog.Warn("chatwoot setup attempt failed", "attempt", i+1, "maxAttempts", maxAttempts, "error", lastErr, "retryDelay", retryDelay)
 			time.Sleep(retryDelay)
 		}
 	}
@@ -57,7 +57,7 @@ func (c *Client) Setup() error {
 		return fmt.Errorf("chatwoot setup: ensure inbox: %w", err)
 	}
 
-	log.Printf("chatwoot setup: ready (account_id=%d)", c.AccountID)
+	slog.Info("chatwoot setup: ready", "account_id", c.AccountID)
 	return nil
 }
 
