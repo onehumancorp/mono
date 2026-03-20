@@ -132,11 +132,27 @@ function normalizeDashboard(response: Record<string, unknown>): DashboardSnapsho
   };
 }
 
+/**
+ * Fetches the accumulated API token costs and usage metrics for the organization.
+ *
+ * @returns A Promise resolving to the CostSummary object containing breakdown by agent and model.
+ * @throws An Error if the request fails or returns a non-2xx status code.
+ *
+ * Side Effects: Executes an HTTP GET request to /api/costs.
+ */
 export async function fetchCosts(): Promise<CostSummary> {
   const response = await getJSON<Record<string, unknown>>("/api/costs");
   return normalizeCosts(response);
 }
 
+/**
+ * Fetches a complete, normalized snapshot of the organization's current orchestration state.
+ *
+ * @returns A Promise resolving to a DashboardSnapshot containing organization details, active meetings, and real-time costs.
+ * @throws An Error if the request fails or returns a non-2xx status code.
+ *
+ * Side Effects: Executes an HTTP GET request to /api/dashboard.
+ */
 export async function fetchDashboard(): Promise<DashboardSnapshot> {
   const response = await getJSON<Record<string, unknown>>("/api/dashboard");
   return normalizeDashboard(response);
@@ -440,7 +456,16 @@ export function disconnectIntegration(integrationId: string): Promise<Integratio
   return postJSON<Integration>("/api/integrations/disconnect", { integrationId });
 }
 
-/** Send a test message to validate credentials before saving them. */
+/**
+ * Sends a test message to validate credentials before saving them.
+ *
+ * @param integrationId - The identifier of the chat service being tested.
+ * @param config - The credential parameters required to send the test message.
+ * @returns A Promise resolving to an object indicating success.
+ * @throws An Error if the test message fails to send.
+ *
+ * Side Effects: Executes an HTTP POST request to /api/integrations/chat/test.
+ */
 export function testChatIntegration(
   integrationId: string,
   config: { botToken?: string; chatId?: string; webhookUrl?: string },
@@ -578,9 +603,18 @@ export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
 }
 
-/** Invoke an MCP tool with the given action and parameters.
- *  Communication tools route to the underlying connected integration.
- *  Git/issue tools create PRs or tickets in the connected platform.
+/**
+ * Invokes an MCP tool with the given action and parameters.
+ * Communication tools route to the underlying connected integration.
+ * Git/issue tools create PRs or tickets in the connected platform.
+ *
+ * @param toolId - The unique identifier of the target MCP tool.
+ * @param action - The specific action or operation to execute.
+ * @param params - A key-value map of parameters required by the tool.
+ * @returns A Promise resolving to the opaque JSON result returned by the tool.
+ * @throws An Error if the tool invocation fails.
+ *
+ * Side Effects: Executes an HTTP POST request to /api/mcp/tools/invoke.
  */
 export function invokeMCPTool(
   toolId: string,
@@ -590,10 +624,27 @@ export function invokeMCPTool(
   return postJSON<Record<string, unknown>>("/api/mcp/tools/invoke", { toolId, action, params });
 }
 
+/**
+ * Fetches the user's or organization's global settings and preferences.
+ *
+ * @returns A Promise resolving to the Settings object.
+ * @throws An Error if the request fails.
+ *
+ * Side Effects: Executes an HTTP GET request to /api/settings.
+ */
 export function fetchSettings(): Promise<Settings> {
   return getJSON<Settings>("/api/settings");
 }
 
+/**
+ * Saves and updates the global settings and preferences.
+ *
+ * @param settings - The updated settings object to persist.
+ * @returns A Promise resolving to the successfully saved Settings.
+ * @throws An Error if the save operation fails.
+ *
+ * Side Effects: Executes an HTTP POST request to /api/settings.
+ */
 export function saveSettings(settings: Settings): Promise<Settings> {
   return postJSON<Settings>("/api/settings", settings);
 }
@@ -602,14 +653,33 @@ export function saveSettings(settings: Settings): Promise<Settings> {
 
 const TOKEN_KEY = "ohc_token";
 
+/**
+ * Retrieves the currently stored authentication JWT token from local storage.
+ *
+ * @returns The token string if it exists, otherwise null.
+ *
+ * Side Effects: Reads from window.localStorage.
+ */
 export function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+/**
+ * Persists an authentication JWT token in local storage.
+ *
+ * @param token - The raw JWT string to store.
+ *
+ * Side Effects: Writes to window.localStorage.
+ */
 export function setStoredToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
 }
 
+/**
+ * Removes the stored authentication JWT token from local storage.
+ *
+ * Side Effects: Deletes the key from window.localStorage.
+ */
 export function clearStoredToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
@@ -654,6 +724,16 @@ async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
   return (await response.json()) as T;
 }
 
+/**
+ * Authenticates a user and retrieves a JWT token.
+ *
+ * @param username - The user's account identifier.
+ * @param password - The user's secret password.
+ * @returns A Promise resolving to the LoginResponse containing the issued token.
+ * @throws An Error if authentication fails or credentials are invalid.
+ *
+ * Side Effects: Executes an HTTP POST request to /api/auth/login and stores the resulting token in local storage.
+ */
 export async function login(username: string, password: string): Promise<LoginResponse> {
   const resp = await fetch("/api/auth/login", {
     method: "POST",
@@ -669,6 +749,13 @@ export async function login(username: string, password: string): Promise<LoginRe
   return result;
 }
 
+/**
+ * Invalidates the current session and clears the stored authentication token.
+ *
+ * @returns A Promise resolving when the logout completes.
+ *
+ * Side Effects: Executes an authenticated HTTP POST request to /api/auth/logout and clears local storage.
+ */
 export async function logout(): Promise<void> {
   try {
     await authedPostJSON<void>("/api/auth/logout", {});
@@ -677,14 +764,39 @@ export async function logout(): Promise<void> {
   }
 }
 
+/**
+ * Retrieves the public profile information of the currently authenticated user.
+ *
+ * @returns A Promise resolving to the UserPublic profile.
+ * @throws An Error if the user is unauthenticated or the request fails.
+ *
+ * Side Effects: Executes an authenticated HTTP GET request to /api/auth/me.
+ */
 export function fetchMe(): Promise<UserPublic> {
   return authedGetJSON<UserPublic>("/api/auth/me");
 }
 
+/**
+ * Retrieves a list of all registered users in the system (requires Admin role).
+ *
+ * @returns A Promise resolving to an array of UserPublic profiles.
+ * @throws An Error if the request fails or the caller lacks permissions.
+ *
+ * Side Effects: Executes an authenticated HTTP GET request to /api/users.
+ */
 export function fetchUsers(): Promise<UserPublic[]> {
   return authedGetJSON<UserPublic[]>("/api/users");
 }
 
+/**
+ * Creates a new user account within the system (requires Admin role).
+ *
+ * @param body - The parameters required to create the user, including username, email, password, and optional roles.
+ * @returns A Promise resolving to the newly created UserPublic profile.
+ * @throws An Error if the creation fails, validation fails, or permissions are insufficient.
+ *
+ * Side Effects: Executes an authenticated HTTP POST request to /api/users.
+ */
 export function createUser(body: {
   username: string;
   email: string;
@@ -694,6 +806,15 @@ export function createUser(body: {
   return authedPostJSON<UserPublic>("/api/users", body);
 }
 
+/**
+ * Deletes an existing user account from the system (requires Admin role).
+ *
+ * @param id - The unique identifier of the user to delete.
+ * @returns A Promise resolving when the deletion is successful.
+ * @throws An Error if the deletion fails or the user cannot be found.
+ *
+ * Side Effects: Executes an authenticated HTTP DELETE request to /api/users/:id.
+ */
 export async function deleteUser(id: string): Promise<void> {
   const token = getStoredToken();
   await fetch(`/api/users/${id}`, {
@@ -702,10 +823,27 @@ export async function deleteUser(id: string): Promise<void> {
   });
 }
 
+/**
+ * Retrieves the list of available operational roles and their associated permissions.
+ *
+ * @returns A Promise resolving to an array of Role objects.
+ * @throws An Error if the request fails.
+ *
+ * Side Effects: Executes an authenticated HTTP GET request to /api/roles.
+ */
 export function fetchRoles(): Promise<Role[]> {
   return authedGetJSON<Role[]>("/api/roles");
 }
 
+/**
+ * Creates a new custom role with an optional set of permissions.
+ *
+ * @param body - The role configuration containing its name and permissions.
+ * @returns A Promise resolving to the newly created Role.
+ * @throws An Error if role creation fails.
+ *
+ * Side Effects: Executes an authenticated HTTP POST request to /api/roles.
+ */
 export function createRole(body: { name: string; permissions?: string[] }): Promise<Role> {
   return authedPostJSON<Role>("/api/roles", body);
 }

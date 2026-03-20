@@ -216,6 +216,10 @@ function HireAgentForm({
 /**
  * App is the root dashboard view component serving as the CEO's interface for
  * overseeing virtual operations, tracking costs, and directing the AI workforce.
+ *
+ * @returns The rendered React application element.
+ *
+ * Side Effects: Mounts state and event listeners to manage real-time updates and API interactions.
  */
 export function App() {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
