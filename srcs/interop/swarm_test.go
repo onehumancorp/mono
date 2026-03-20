@@ -10,6 +10,7 @@ func TestSwarmInteropStateSync(t *testing.T) {
 
 	openClaw := NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01")
 	autoGen := NewAutoGenAdapter("spiffe://ohc.os/agent/autogen-01")
+	crewAI := NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01")
 
 	// Simulate shared K8s / LangGraph State
 	sharedState := &State{
@@ -38,9 +39,19 @@ func TestSwarmInteropStateSync(t *testing.T) {
 		t.Errorf("Expected autogen_synced to be true, got %v", sharedState.Data["autogen_synced"])
 	}
 
-	// Step 3: Verify identities in shared state
-	if sharedState.Data["last_identity"] != "spiffe://ohc.os/agent/autogen-01" {
-		t.Errorf("Expected last identity to be AutoGen's, got %v", sharedState.Data["last_identity"])
+	// Step 3: CrewAI syncs state to same shared state
+	err = crewAI.SyncState(ctx, sharedState)
+	if err != nil {
+		t.Fatalf("CrewAI SyncState failed: %v", err)
+	}
+
+	if sharedState.Data["crewai_synced"] != true {
+		t.Errorf("Expected crewai_synced to be true, got %v", sharedState.Data["crewai_synced"])
+	}
+
+	// Step 4: Verify identities in shared state
+	if sharedState.Data["last_identity"] != "spiffe://ohc.os/agent/crewai-01" {
+		t.Errorf("Expected last identity to be CrewAI's, got %v", sharedState.Data["last_identity"])
 	}
 }
 
@@ -82,6 +93,20 @@ func TestExecuteCommand(t *testing.T) {
 			expected: "",
 			wantErr:  true,
 		},
+		{
+			name:     "CrewAI execution",
+			adapter:  NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01"),
+			cmd:      "research-topic",
+			expected: "CrewAI executed: research-topic",
+			wantErr:  false,
+		},
+		{
+			name:     "CrewAI execution empty command",
+			adapter:  NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01"),
+			cmd:      "",
+			expected: "",
+			wantErr:  true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -111,6 +136,12 @@ func TestSyncStateNil(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error when syncing nil state")
 	}
+
+	crewAI := NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01")
+	err = crewAI.SyncState(ctx, nil)
+	if err == nil {
+		t.Errorf("Expected error when syncing nil state")
+	}
 }
 
 func TestStateDataNilInit(t *testing.T) {
@@ -135,6 +166,17 @@ func TestStateDataNilInit(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	if state2.Data == nil {
+		t.Errorf("Expected state.Data to be initialized")
+	}
+
+	// CrewAI Data init test
+	crewAI := NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01")
+	state3 := &State{}
+	err = crewAI.SyncState(ctx, state3)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if state3.Data == nil {
 		t.Errorf("Expected state.Data to be initialized")
 	}
 }
