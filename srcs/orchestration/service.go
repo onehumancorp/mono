@@ -12,10 +12,13 @@ import (
 	"sync"
 	"time"
 
+	"strings"
+
 	"github.com/onehumancorp/mono/srcs/telemetry"
 	pb "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -316,8 +319,36 @@ func NewHubServiceServer(hub *Hub) *HubServiceServer {
 	return &HubServiceServer{hub: hub}
 }
 
+func validateSpiffeIdentity(ctx context.Context, expectedAgentID string) error {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return status.Errorf(codes.Unauthenticated, "missing metadata")
+	}
+
+	spiffeIDs := md.Get("spiffe-id")
+	if len(spiffeIDs) == 0 {
+		return status.Errorf(codes.Unauthenticated, "missing spiffe-id in metadata")
+	}
+
+	spiffeID := spiffeIDs[0]
+	parts := strings.Split(spiffeID, "/")
+	if len(parts) < 5 || parts[0] != "spiffe:" || parts[1] != "" || parts[2] != "onehumancorp.io" {
+		return status.Errorf(codes.PermissionDenied, "invalid spiffe-id format")
+	}
+
+	actualAgentID := parts[4]
+	if expectedAgentID != "" && actualAgentID != expectedAgentID {
+		return status.Errorf(codes.PermissionDenied, "spiffe-id agent mismatch: %s != %s", actualAgentID, expectedAgentID)
+	}
+
+	return nil
+}
+
 func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAgentRequest) (*pb.RegisterAgentResponse, error) {
 	agentReq := req.GetAgent()
+	if err := validateSpiffeIdentity(ctx, agentReq.GetId()); err != nil {
+		return nil, err
+	}
 	agent := Agent{
 		ID:             agentReq.GetId(),
 		Name:           agentReq.GetName(),
@@ -331,6 +362,9 @@ func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAg
 }
 
 func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingRequest) (*pb.MeetingRoom, error) {
+	if err := validateSpiffeIdentity(ctx, ""); err != nil {
+		return nil, err
+	}
 	meeting := s.hub.OpenMeetingWithAgenda(req.GetMeetingId(), req.GetAgenda(), req.GetParticipants())
 	return pb.MeetingRoom_builder{
 		Id:           meeting.ID,
@@ -341,6 +375,9 @@ func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingR
 
 func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRequest) (*pb.PublishMessageResponse, error) {
 	msgReq := req.GetMessage()
+	if err := validateSpiffeIdentity(ctx, msgReq.GetFromAgent()); err != nil {
+		return nil, err
+	}
 	msg := Message{
 		ID:         msgReq.GetId(),
 		FromAgent:  msgReq.GetFromAgent(),
@@ -357,6 +394,9 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 }
 
 func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream pb.HubService_StreamMessagesServer) error {
+	if err := validateSpiffeIdentity(stream.Context(), req.GetAgentId()); err != nil {
+		return err
+	}
 	// Simple polling implementation for demonstration.
 	// In production, use a proper pub/sub or channel-based mechanism.
 	ticker := time.NewTicker(time.Second)
@@ -391,6 +431,9 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 }
 
 func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*pb.ReasonResponse, error) {
+	if err := validateSpiffeIdentity(ctx, ""); err != nil {
+		return nil, err
+	}
 	client := NewMinimaxClient(s.hub.MinimaxAPIKey())
 	content, err := client.Reason(ctx, req.GetPrompt())
 	if err != nil {

@@ -13,6 +13,11 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+func spiffeCtx(ctx context.Context, orgID, agentID string) context.Context {
+	md := metadata.Pairs("spiffe-id", "spiffe://onehumancorp.io/"+orgID+"/"+agentID)
+	return metadata.NewIncomingContext(ctx, md)
+}
+
 func TestRegisterAgentViaGRPC(t *testing.T) {
 	hub := NewHub()
 	srv := NewHubServiceServer(hub)
@@ -27,7 +32,15 @@ func TestRegisterAgentViaGRPC(t *testing.T) {
 		}.Build(),
 	}.Build()
 
-	res, err := srv.RegisterAgent(context.Background(), req)
+	// Missing metadata should fail
+	_, err := srv.RegisterAgent(context.Background(), req)
+	if err == nil {
+		t.Fatal("expected PermissionDenied/Unauthenticated error, got nil")
+	}
+
+	// Valid metadata should succeed
+	ctx := spiffeCtx(context.Background(), "org-1", "test-agent")
+	res, err := srv.RegisterAgent(ctx, req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -56,7 +69,8 @@ func TestOpenMeetingViaGRPC(t *testing.T) {
 		Participants: []string{"p1", "p2"},
 	}.Build()
 
-	res, err := srv.OpenMeeting(context.Background(), req)
+	ctx := spiffeCtx(context.Background(), "org-1", "any")
+	res, err := srv.OpenMeeting(ctx, req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -90,7 +104,15 @@ func TestPublishViaGRPC(t *testing.T) {
 		}.Build(),
 	}.Build()
 
-	res, err := srv.Publish(context.Background(), req)
+	// Spoofing identity should fail
+	badCtx := spiffeCtx(context.Background(), "org-1", "a2")
+	_, err := srv.Publish(badCtx, req)
+	if err == nil {
+		t.Fatal("expected PermissionDenied error due to agent mismatch, got nil")
+	}
+
+	ctx := spiffeCtx(context.Background(), "org-1", "a1")
+	res, err := srv.Publish(ctx, req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -137,7 +159,7 @@ func TestStreamMessagesViaGRPC(t *testing.T) {
 		OccurredAt: time.Now(),
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(spiffeCtx(context.Background(), "org-1", "a2"), 2*time.Second)
 	defer cancel()
 
 	stream := &MockStreamServer{ctx: ctx, messages: make([]*pb.Message, 0)}
@@ -189,7 +211,8 @@ func TestReasonViaMinimaxEmptyKey(t *testing.T) {
 
 	hub.SetMinimaxAPIKey("")
 	req := pb.ReasonRequest_builder{Prompt: "test prompt"}.Build()
-	_, err := srv.Reason(context.Background(), req)
+	ctx := spiffeCtx(context.Background(), "org-1", "any")
+	_, err := srv.Reason(ctx, req)
 	if err == nil {
 		t.Fatalf("expected error due to empty API key")
 	}
@@ -201,7 +224,8 @@ func TestReasonViaMinimaxDummyKey(t *testing.T) {
 
 	hub.SetMinimaxAPIKey("dummy-key")
 	req := pb.ReasonRequest_builder{Prompt: "test prompt"}.Build()
-	_, err := srv.Reason(context.Background(), req)
+	ctx := spiffeCtx(context.Background(), "org-1", "any")
+	_, err := srv.Reason(ctx, req)
 	if err == nil {
 		t.Fatalf("expected error due to invalid API key")
 	}
@@ -229,7 +253,8 @@ func TestPublishViaGRPCError(t *testing.T) {
 		}.Build(),
 	}.Build()
 
-	_, err := srv.Publish(context.Background(), req)
+	ctx := spiffeCtx(context.Background(), "org-1", "missing")
+	_, err := srv.Publish(ctx, req)
 	if err == nil {
 		t.Fatalf("expected error")
 	}
@@ -239,7 +264,7 @@ func TestStreamMessagesViaGRPCCancellation(t *testing.T) {
 	hub := NewHub()
 	srv := NewHubServiceServer(hub)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(spiffeCtx(context.Background(), "org-1", "a2"))
 	cancel() // cancel immediately
 	stream := &MockStreamServer{ctx: ctx, messages: make([]*pb.Message, 0)}
 

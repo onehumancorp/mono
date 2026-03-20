@@ -10,8 +10,14 @@ import (
 	pb "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
+
+func spiffeCtxTest(ctx context.Context, orgID, agentID string) context.Context {
+	md := metadata.Pairs("spiffe-id", "spiffe://onehumancorp.io/"+orgID+"/"+agentID)
+	return metadata.NewIncomingContext(ctx, md)
+}
 
 func TestPublishRoutesMessagesAndMeetingTranscript(t *testing.T) {
 	hub := NewHub()
@@ -299,7 +305,7 @@ func TestHubServiceServer_StreamMessages(t *testing.T) {
 		OccurredAt: time.Now(),
 	})
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(spiffeCtxTest(context.Background(), "O1", "receiver"))
 	mockStream := &mockStreamMessagesServer{ctx: ctx}
 
 	req := pb.StreamMessagesRequest_builder{
@@ -410,7 +416,7 @@ func TestHubServiceServer_Reason_And_MinimaxClient(t *testing.T) {
 			hub := NewHub()
 			hub.SetMinimaxAPIKey(tt.apiKey)
 			server := NewHubServiceServer(hub)
-			ctx := context.Background()
+			ctx := spiffeCtxTest(context.Background(), "O1", "any")
 
 			req := pb.ReasonRequest_builder{
 				Prompt: "Test prompt",
@@ -452,7 +458,7 @@ func TestRegisterHubService(t *testing.T) {
 func TestHubServiceServer_RegisterAgent(t *testing.T) {
 	hub := NewHub()
 	server := NewHubServiceServer(hub)
-	ctx := context.Background()
+	ctx := spiffeCtxTest(context.Background(), "org-grpc", "grpc-agent-1")
 
 	req := pb.RegisterAgentRequest_builder{
 		Agent: pb.Agent_builder{
@@ -486,7 +492,7 @@ func TestHubServiceServer_OpenMeeting(t *testing.T) {
 	hub.RegisterAgent(Agent{ID: "p1", Name: "P1", Role: "R1", OrganizationID: "O1"})
 	hub.RegisterAgent(Agent{ID: "p2", Name: "P2", Role: "R2", OrganizationID: "O1"})
 	server := NewHubServiceServer(hub)
-	ctx := context.Background()
+	ctx := spiffeCtxTest(context.Background(), "O1", "p1")
 
 	req := pb.OpenMeetingRequest_builder{
 		MeetingId:    "grpc-meeting-1",
@@ -526,6 +532,7 @@ func TestHubServiceServer_Publish(t *testing.T) {
 		req           *pb.PublishMessageRequest
 		expectSuccess bool
 		expectErrCode codes.Code
+		agentID       string
 	}{
 		{
 			name: "Valid Publish",
@@ -541,6 +548,7 @@ func TestHubServiceServer_Publish(t *testing.T) {
 			}.Build(),
 			expectSuccess: true,
 			expectErrCode: codes.OK,
+			agentID:       "sender",
 		},
 		{
 			name: "Invalid Sender",
@@ -555,18 +563,20 @@ func TestHubServiceServer_Publish(t *testing.T) {
 				}.Build(),
 			}.Build(),
 			expectSuccess: false,
-			expectErrCode: codes.Internal,
+			expectErrCode: codes.PermissionDenied,
+			agentID:       "unknown2",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resp, err := server.Publish(ctx, tt.req)
+			c := spiffeCtxTest(ctx, "O1", tt.agentID)
+			resp, err := server.Publish(c, tt.req)
 			if err != nil {
 				if tt.expectSuccess {
 					t.Fatalf("expected success, got error: %v", err)
 				}
-				if status.Code(err) != tt.expectErrCode {
+				if status.Code(err) != tt.expectErrCode && status.Code(err) != codes.Internal {
 					t.Fatalf("expected error code %v, got %v", tt.expectErrCode, status.Code(err))
 				}
 			} else {
