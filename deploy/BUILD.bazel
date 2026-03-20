@@ -34,7 +34,7 @@ genrule(
     name = "frontend_static_assets",
     srcs = ["//srcs/frontend:all_srcs"],
     outs = ["frontend_dist.tar"],
-    cmd = "export PATH=$$PATH:/home/kevin/.nvm/versions/node/v24.0.1/bin && export HOME=/tmp && cd srcs/frontend && npm install && npm run build && tar -C dist -cf ../../$@ .",
+    cmd = "export PATH=$$PATH && export HOME=/tmp && cd srcs/frontend && npm install && npm run build && tar -C dist -cf ../../$@ .",
     tags = [
         "local",
         "no-remote-exec",
