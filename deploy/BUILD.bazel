@@ -1,5 +1,5 @@
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 exports_files([
@@ -44,7 +44,7 @@ genrule(
 
 pkg_tar(
     name = "frontend_server_pkg",
-    srcs = ["//srcs/frontend/server/cmd/frontend:frontend"],
+    srcs = ["//srcs/frontend/server/cmd/frontend"],
     package_dir = "/usr/local/bin",
 )
 
