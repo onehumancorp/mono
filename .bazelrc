@@ -104,6 +104,7 @@ common:buildbuddy-official --remote_header=x-buildbuddy-api-key=vGFjlQg7X49NwoQH
 
 # Set buildbuddy as the default configuration for all builds
 build:remote --config=buildbuddy-official
+test:remote --config=buildbuddy-official
 # Avoid local test host overload for targets that cannot run remotely
 # (e.g. no-remote-exec Playwright/integration tests).
 test:remote --local_test_jobs=8
