@@ -408,6 +408,9 @@ func (h *Hub) Publish(message Message) error {
 	// ⚡ BOLT: [Asynchronous telemetry recording to reduce critical path latency] - Randomized Selection from Top 5
 	go telemetry.RecordAgentApiCall(context.Background(), sender.ID, sender.Role, "publish")
 
+	// Structured logging for agent execution traces
+	telemetry.LogAgentExecution(context.Background(), sender.ID, sender.Role, "publish", message.Type, message.Content)
+
 	return nil
 }
 
