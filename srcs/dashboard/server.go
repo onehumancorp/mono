@@ -3,11 +3,14 @@ package dashboard
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/onehumancorp/mono/srcs/auth"
 	"github.com/onehumancorp/mono/srcs/billing"
@@ -152,29 +155,46 @@ type AgentIdentity struct {
 
 // SkillPackRole pairs a role name with its override base prompt.
 type SkillPackRole struct {
-	Role       string `json:"role"`
-	BasePrompt string `json:"basePrompt"`
+	Role       string `json:"role" yaml:"role"`
+	BasePrompt string `json:"basePrompt" yaml:"basePrompt"`
 }
 
 // SkillPack is an importable module that extends or overrides agent capabilities.
 type SkillPack struct {
-	ID          string          `json:"id"`
-	Name        string          `json:"name"`
-	Domain      string          `json:"domain"`
-	Description string          `json:"description"`
-	Source      string          `json:"source"` // builtin | custom | marketplace
-	Author      string          `json:"author,omitempty"`
-	Roles       []SkillPackRole `json:"roles"`
-	ImportedAt  time.Time       `json:"importedAt"`
+	ID          string          `json:"id" yaml:"id"`
+	Name        string          `json:"name" yaml:"name"`
+	Domain      string          `json:"domain" yaml:"domain"`
+	Description string          `json:"description" yaml:"description"`
+	Source      string          `json:"source" yaml:"source"` // builtin | custom | marketplace
+	Author      string          `json:"author,omitempty" yaml:"author,omitempty"`
+	Roles       []SkillPackRole `json:"roles" yaml:"roles"`
+	ImportedAt  time.Time       `json:"importedAt" yaml:"importedAt"`
 }
 
 type skillImportRequest struct {
-	Name        string          `json:"name"`
-	Domain      string          `json:"domain"`
-	Description string          `json:"description"`
-	Source      string          `json:"source"`
-	Author      string          `json:"author,omitempty"`
-	Roles       []SkillPackRole `json:"roles"`
+	Name        string          `json:"name" yaml:"name"`
+	Domain      string          `json:"domain" yaml:"domain"`
+	Description string          `json:"description" yaml:"description"`
+	Source      string          `json:"source" yaml:"source"`
+	Author      string          `json:"author" yaml:"author"`
+	Roles       []SkillPackRole `json:"roles" yaml:"roles"`
+}
+
+// ParseSkillPack attempts to parse a skill pack from JSON or YAML data.
+// It maps the input data directly into a skillImportRequest structure to be validated.
+func ParseSkillPack(data []byte) (skillImportRequest, error) {
+	var req skillImportRequest
+
+	// YAML is a superset of JSON, so yaml.Unmarshal can handle both.
+	if err := yaml.Unmarshal(data, &req); err != nil {
+		return skillImportRequest{}, errors.New("invalid JSON/YAML payload")
+	}
+
+	if req.Name == "" || req.Domain == "" {
+		return skillImportRequest{}, errors.New("name and domain are required")
+	}
+
+	return req, nil
 }
 
 // ── Org Snapshot & Recovery ───────────────────────────────────────────────────
@@ -1163,13 +1183,15 @@ func (s *Server) handleSkillImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req skillImportRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+	bodyData, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "failed to read request body", http.StatusInternalServerError)
 		return
 	}
-	if req.Name == "" || req.Domain == "" {
-		http.Error(w, "name and domain are required", http.StatusBadRequest)
+
+	req, err := ParseSkillPack(bodyData)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

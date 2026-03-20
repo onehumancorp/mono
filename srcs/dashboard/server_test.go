@@ -909,7 +909,7 @@ app, _, _ := newTestServer(t)
 	rec := httptest.NewRecorder()
 	app.handleSkillImport(rec, req)
 	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400 for missing domain, got %d", rec.Code)
+		t.Fatalf("expected 400 for invalid JSON/YAML, got %d", rec.Code)
 	}
 }
 
@@ -2523,10 +2523,112 @@ app, _, _ := newTestServer(t)
 	}
 }
 
+func TestParseSkillPack(t *testing.T) {
+	tests := []struct {
+		name    string
+		data    []byte
+		wantErr bool
+		errMsg  string
+		want    skillImportRequest
+	}{
+		{
+			name: "UT-01: Parse valid YAML Skill Pack",
+			data: []byte(`
+name: "Legal Pack"
+domain: "legal"
+description: "Legal consulting"
+source: "custom"
+author: "admin"
+roles:
+  - role: "lawyer"
+    basePrompt: "You are a lawyer."
+`),
+			wantErr: false,
+			want: skillImportRequest{
+				Name:        "Legal Pack",
+				Domain:      "legal",
+				Description: "Legal consulting",
+				Source:      "custom",
+				Author:      "admin",
+				Roles: []SkillPackRole{
+					{Role: "lawyer", BasePrompt: "You are a lawyer."},
+				},
+			},
+		},
+		{
+			name: "UT-01: Parse valid JSON Skill Pack",
+			data: []byte(`{"name": "JSON Pack", "domain": "finance", "roles": [{"role": "accountant", "basePrompt": "Numbers"}]}`),
+			wantErr: false,
+			want: skillImportRequest{
+				Name:   "JSON Pack",
+				Domain: "finance",
+				Roles: []SkillPackRole{
+					{Role: "accountant", BasePrompt: "Numbers"},
+				},
+			},
+		},
+		{
+			name: "UT-01: Malformed Pack (invalid YAML list)",
+			data: []byte(`
+roles:
+  - role: "swe"
+    basePrompt:
+      - "invalid list instead of string"
+`),
+			wantErr: true,
+			errMsg:  "invalid JSON/YAML payload",
+		},
+		{
+			name:    "UT-01: Missing Name",
+			data:    []byte(`{"domain": "tech"}`),
+			wantErr: true,
+			errMsg:  "name and domain are required",
+		},
+		{
+			name:    "UT-01: Missing Domain",
+			data:    []byte(`{"name": "Some Pack"}`),
+			wantErr: true,
+			errMsg:  "name and domain are required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseSkillPack(tt.data)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("ParseSkillPack() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErr && err.Error() != tt.errMsg {
+				t.Fatalf("ParseSkillPack() error msg = %v, want %v", err.Error(), tt.errMsg)
+			}
+			if !tt.wantErr {
+				// verify contents
+				if got.Name != tt.want.Name || got.Domain != tt.want.Domain || got.Description != tt.want.Description || len(got.Roles) != len(tt.want.Roles) {
+					t.Fatalf("ParseSkillPack() got = %+v, want %+v", got, tt.want)
+				}
+				for i, r := range got.Roles {
+					if r.Role != tt.want.Roles[i].Role || r.BasePrompt != tt.want.Roles[i].BasePrompt {
+						t.Fatalf("ParseSkillPack() roles[%d] = %+v, want %+v", i, r, tt.want.Roles[i])
+					}
+				}
+			}
+		})
+	}
+}
+
 func TestHandleSkillImportInvalidJSON(t *testing.T) {
 app, _, _ := newTestServer(t)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/skills/import", strings.NewReader("not-json"))
+	// In YAML, "not-json" is a valid string, which will unmarshal without error but have empty fields.
+	// So to actually test unmarshal failure, we need something that is invalid YAML
+	// Actually, just sending a map with a number where a struct is expected or something that violates the struct
+	invalidYAML := `
+roles:
+  - role: "swe"
+    basePrompt:
+      - "invalid list instead of string"
+`
+	req := httptest.NewRequest(http.MethodPost, "/api/skills/import", strings.NewReader(invalidYAML))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	app.handleSkillImport(rec, req)
