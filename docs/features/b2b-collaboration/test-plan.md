@@ -44,6 +44,11 @@ A high-level summary of the testing strategy for the Cross-Org Collaboration fea
 - Two distinct OHC Hubs running on separate subnets/clusters to simulate B2B routing.
 
 ## Implementation Details
-- Tests written in Go (using `testing` package and Table-Driven Test pattern).
-- >95% coverage requirement per `AGENTS.md`.
-- Hermetic testing enforced via Bazel `test //...`.
+- **Architecture**: The testing framework simulates cross-cluster federation by spinning up two distinct Go 1.26 `Hub` instances within the Bazel sandbox. Network routing between them is mocked via local memory pipes that strictly enforce mTLS and OIDC validation.
+- **Execution**: Tests run hermetically under Bazel 9.0.0 (`bazelisk test //...`). Client-side mocks are strictly forbidden; frontend integration tests run against real PostgreSQL database seeders representing both `HoldingCompany` instances.
+- **Validation**: >95% test coverage is enforced. The suite uses Table-Driven Tests to validate various B2B trust scenarios (e.g., valid certs, expired certs, spoofed domains).
+
+## Edge Cases
+- **Network Partitions**: Tests simulate random network drops between Hub A and Hub B during an active negotiation to ensure the Redis-backed retry logic correctly queues messages without dropping them.
+- **Trust Domain Revocation**: If Hub B's trust domain is suddenly marked untrusted, the tests verify that Hub A immediately severs the connection and fails closed, preventing any further B2B API access or data leakage.
+- **Context Payload Size Mismatch**: Tests verify that if Hub A sends a message exceeding Hub B's LLM context limit, the protocol falls back to chunking or summarization rather than crashing the receiving agent.

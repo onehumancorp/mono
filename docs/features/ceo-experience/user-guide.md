@@ -195,3 +195,13 @@ A: Any user with the `approver` platform role. Reach out to your administrator t
 
 **Q: How do I add a new integration?**
 A: Integrations are registered at server startup via the `integrations.Registry`. Contact your platform administrator or DevOps team to add a new integration.
+
+## Implementation Details
+- **Architecture**: The Dashboard UI is built with React/Vite/Next.js aesthetics, fetching data from the Go 1.26 backend via REST and Server-Sent Events (SSE).
+- **Deployment**: Deployed via the OHC Kubernetes Operator. The dashboard acts as the primary control plane for the `HoldingCompany` CRD.
+- **State Management**: The UI is fully real-time. Actions like "Hire Agent" or "Send Message" immediately update the append-only `events.jsonl` Postgres log, which the LangGraph checkpointers use to resume agent states.
+
+## Edge Cases
+- **Browser Disconnects**: If the SSE connection to the backend drops, the UI will automatically attempt exponential backoff reconnection and refetch missed events.
+- **High-Volume Meetings**: In Virtual Meeting Rooms with rapid agent interactions, the UI virtualizes the transcript list to prevent DOM bloat and memory leaks in the browser.
+- **Concurrent Approvals**: If two managers attempt to approve the same critical action simultaneously, the backend enforces a transactional lock; the second manager receives a "State Changed" conflict error.

@@ -44,6 +44,11 @@ A high-level summary of the testing strategy for the Hardware-Aware Agent Schedu
 - Kubernetes test cluster with simulated GPU device plugins.
 
 ## Implementation Details
-- Tests written in Go (using `testing` package and Table-Driven Test pattern).
-- >95% coverage requirement per `AGENTS.md`.
-- Hermetic testing enforced via Bazel `test //...`.
+- **Architecture**: The scheduler tests use Go 1.26 table-driven unit tests to validate the scoring algorithms. Integration tests leverage `envtest` (a Kubernetes testing framework) to mock the API server and validate that the `ohc-operator` applies the correct `nodeSelector` and `tolerations` to `TeamMember` pods.
+- **Execution**: Run via `bazelisk test //...` under the Bazel sandbox. Real hardware is not required; the test suite mocks the NVIDIA device plugin responses.
+- **Validation**: >95% test coverage is strictly enforced on the custom scheduling controller logic.
+
+## Edge Cases
+- **Quota Thrashing**: Tests simulate rapidly fluctuating department quotas to ensure the controller implements a 5-minute debounce window, preventing endless pod eviction/creation cycles.
+- **Hardware Exhaustion**: Tests simulate a cluster with 0 available GPU nodes while a high-priority task is queued. The suite verifies the controller correctly downgrades the task's model requirement (e.g., to `gpt-4o-mini`) to schedule it on CPU nodes rather than hanging indefinitely.
+- **Eviction Resumption**: A test forcefully evicts an agent pod mid-inference. It verifies that the new pod, when scheduled, reads from the Postgres `events.jsonl` log and resumes the LangGraph state exactly where it left off, confirming the architecture's fault tolerance.

@@ -44,6 +44,11 @@ A high-level summary of the testing strategy for the Tooling & MCP Gateway featu
 - A mock MCP Server container simulating a generic REST API.
 
 ## Implementation Details
-- Tests written in Go (using `testing` package and Table-Driven Test pattern).
-- >95% coverage requirement per `AGENTS.md`.
-- Hermetic testing enforced via Bazel `test //...`.
+- **Architecture**: The MCP Gateway tests utilize Go 1.26 table-driven unit tests. Integration tests spin up a mock HTTP server conforming to the Model Context Protocol (MCP) spec over gRPC/SSE, ensuring the Hub router correctly proxies JSON-RPC payloads.
+- **Execution**: All tests run hermetically under Bazel 9.0.0 remote execution (`bazelisk test //...`). Tests enforce >95% coverage on the proxy layer and validation middleware.
+- **Validation**: Strict validation of SSVID-based routing and RBAC ensures tests verify that an agent acting as a "SWE" cannot access tools assigned strictly to a "Finance" role.
+
+## Edge Cases
+- **Malicious URLs/SSRF**: The test suite actively attempts Server-Side Request Forgery by feeding the Gateway loopback (`127.0.0.1`, `::1`), private (`10.0.0.0/8`, `192.168.0.0/16`), and link-local (`169.254.x.x`) IPs. The Gateway is verified to explicitly block these and fail closed on DNS resolution errors.
+- **Rate Limits**: Tests mock a `429 Too Many Requests` response from an external tool. They verify the MCP Gateway intercepts this and issues a backoff command to the LangGraph node to prevent LLM thrashing.
+- **Schema Drift**: An integration test alters the mocked tool's response payload schema mid-execution. It verifies the MCP proxy's strict type-checking rejects the invalid LLM-generated JSON and fails closed to prevent database corruption.

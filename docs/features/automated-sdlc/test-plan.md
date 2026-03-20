@@ -45,6 +45,11 @@ A high-level summary of the testing strategy for the Automated Implementation Pi
 - Bazel runner pool available.
 
 ## Implementation Details
-- Tests written in Go (using `testing` package and Table-Driven Test pattern).
-- >95% coverage requirement per `AGENTS.md`.
-- Hermetic testing enforced via Bazel `test //...`.
+- **Architecture**: Tests are written in Go 1.26 using standard library features (`testing`, `gomock`) and follow Table-Driven Test patterns. The system enforces strict >95% test coverage across all modified components.
+- **Execution**: All tests run hermetically under Bazel 9.0.0 remote execution (`bazelisk test //...`). Client-side mocks are strictly forbidden; frontend integration tests run against real PostgreSQL database seeders and a functional MCP Gateway instance to ensure the "Real Data Law".
+- **Environment**: CI environments utilize ephemeral Kubernetes Jobs with read-only filesystems. To prevent `npm install` failures, a custom writable cache directory (`npm_config_cache`) is injected.
+
+## Edge Cases
+- **DNS Resolution Failures**: In strict Bazel sandboxing, tests requiring external DNS (e.g., fetching dependencies) might time out. The test suite explicitly falls back to local `go test` runs if Bazel network sandboxing is overly restrictive during local development.
+- **Flaky E2E Tests**: Staging environment provisioning can occasionally timeout due to K8s node exhaustion. The E2E suite incorporates an intelligent polling retry mechanism before failing the build.
+- **Dangling Preview Namespaces**: Test failures midway through a pipeline run might leave orphaned K8s namespaces. The test harness includes a strict `t.Cleanup()` function to reap temporary staging resources regardless of test outcome.

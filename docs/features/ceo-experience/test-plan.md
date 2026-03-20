@@ -45,6 +45,11 @@ A high-level summary of the testing strategy for the CEO Dashboard feature, ensu
 - Backend mocked or running at `localhost:8080`.
 
 ## Implementation Details
-- Tests written in Go (using `testing` package and Table-Driven Test pattern).
-- >95% coverage requirement per `AGENTS.md`.
-- Hermetic testing enforced via Bazel `test //...`.
+- **Architecture**: The frontend is tested using Vitest for unit tests (Zustand state, D3.js logic) and Playwright for End-to-End UI testing. The Go 1.26 backend uses Table-Driven Tests for the REST/SSE endpoints.
+- **Data Mocks**: In accordance with the "Real Data Law," Playwright E2E tests do not mock the backend. They run against a localized Bazel sandbox containing a seeded PostgreSQL instance populated with the `HoldingCompany` CRD test data.
+- **Validation**: Enforces strict >95% test coverage. Visual regressions are caught using Playwright snapshot testing, ensuring the Apple-standard aesthetic is maintained.
+
+## Edge Cases
+- **SSE Connection Drops**: Playwright tests simulate a network drop to verify the React frontend automatically triggers exponential backoff reconnection and successfully fetches missed events from the LangGraph checkpointer.
+- **Virtualization Overload**: A test seeds a Virtual Meeting Room with 10,000 rapid messages to verify the UI virtualization keeps DOM nodes below 500, preventing browser memory leaks.
+- **Concurrent Approvals**: Tests simulate two CEO browser sessions clicking "Approve" on a critical handoff simultaneously to ensure the backend transactional lock surfaces a "Conflict" error gracefully in the second UI.
