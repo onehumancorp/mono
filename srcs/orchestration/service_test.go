@@ -1,8 +1,16 @@
 package orchestration
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
+
+	pb "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestPublishRoutesMessagesAndMeetingTranscript(t *testing.T) {
@@ -227,5 +235,348 @@ func TestEventTypeConstantsAreDefined(t *testing.T) {
 		if ev == "" {
 			t.Fatalf("expected all event type constants to be non-empty")
 		}
+	}
+}
+
+func TestMinimaxAPIKey(t *testing.T) {
+	tests := []struct {
+		name     string
+		apiKey   string
+		expected string
+	}{
+		{
+			name:     "Empty Key",
+			apiKey:   "",
+			expected: "",
+		},
+		{
+			name:     "Valid Key",
+			apiKey:   "test-key-123",
+			expected: "test-key-123",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hub := NewHub()
+			hub.SetMinimaxAPIKey(tt.apiKey)
+			if got := hub.MinimaxAPIKey(); got != tt.expected {
+				t.Fatalf("expected %q, got %q", tt.expected, got)
+			}
+		})
+	}
+}
+
+// mockStreamMessagesServer implements pb.HubService_StreamMessagesServer
+type mockStreamMessagesServer struct {
+	grpc.ServerStream
+	ctx      context.Context
+	messages []*pb.Message
+}
+
+func (m *mockStreamMessagesServer) Context() context.Context {
+	return m.ctx
+}
+
+func (m *mockStreamMessagesServer) Send(msg *pb.Message) error {
+	m.messages = append(m.messages, msg)
+	return nil
+}
+
+func TestHubServiceServer_StreamMessages(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	server := NewHubServiceServer(hub)
+
+	// Publish a message to the receiver's inbox
+	_ = hub.Publish(Message{
+		ID:         "msg-1",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "Hello Streaming",
+		OccurredAt: time.Now(),
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	mockStream := &mockStreamMessagesServer{ctx: ctx}
+
+	req := pb.StreamMessagesRequest_builder{
+		AgentId: "receiver",
+	}.Build()
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- server.StreamMessages(req, mockStream)
+	}()
+
+	// Allow some time for the stream to poll and send the message
+	time.Sleep(1500 * time.Millisecond)
+
+	// Cancel the context to stop the stream
+	cancel()
+
+	err := <-errCh
+	if err != nil {
+		t.Fatalf("StreamMessages returned error: %v", err)
+	}
+
+	if len(mockStream.messages) != 1 {
+		t.Fatalf("expected 1 message in stream, got %d", len(mockStream.messages))
+	}
+	if mockStream.messages[0].GetContent() != "Hello Streaming" {
+		t.Fatalf("expected 'Hello Streaming', got %q", mockStream.messages[0].GetContent())
+	}
+}
+
+func TestNewMinimaxClient(t *testing.T) {
+	client := NewMinimaxClient("test-key")
+	if client == nil {
+		t.Fatalf("expected non-nil MinimaxClient")
+	}
+	if client.APIKey != "test-key" {
+		t.Fatalf("expected APIKey 'test-key', got %q", client.APIKey)
+	}
+}
+
+func TestHubServiceServer_Reason_And_MinimaxClient(t *testing.T) {
+	// Save the original URL to restore it later
+	originalURL := minimaxAPIURL
+	defer func() { minimaxAPIURL = originalURL }()
+
+	tests := []struct {
+		name          string
+		apiKey        string
+		httpStatus    int
+		httpBody      string
+		expectErr     bool
+		expectContent string
+	}{
+		{
+			name:          "Success",
+			apiKey:        "valid-key",
+			httpStatus:    http.StatusOK,
+			httpBody:      `{"choices": [{"message": {"content": "Reasoned response"}}]}`,
+			expectErr:     false,
+			expectContent: "Reasoned response",
+		},
+		{
+			name:          "Empty API Key",
+			apiKey:        "",
+			httpStatus:    http.StatusOK,
+			httpBody:      "",
+			expectErr:     true,
+			expectContent: "",
+		},
+		{
+			name:          "HTTP Error 500",
+			apiKey:        "valid-key",
+			httpStatus:    http.StatusInternalServerError,
+			httpBody:      `Internal Server Error`,
+			expectErr:     true,
+			expectContent: "",
+		},
+		{
+			name:          "Malformed JSON",
+			apiKey:        "valid-key",
+			httpStatus:    http.StatusOK,
+			httpBody:      `{bad-json}`,
+			expectErr:     true,
+			expectContent: "",
+		},
+		{
+			name:          "Empty Choices",
+			apiKey:        "valid-key",
+			httpStatus:    http.StatusOK,
+			httpBody:      `{"choices": []}`,
+			expectErr:     true,
+			expectContent: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Mock the server
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.httpStatus)
+				w.Write([]byte(tt.httpBody))
+			}))
+			defer ts.Close()
+
+			// Override the package-level URL
+			minimaxAPIURL = ts.URL
+
+			hub := NewHub()
+			hub.SetMinimaxAPIKey(tt.apiKey)
+			server := NewHubServiceServer(hub)
+			ctx := context.Background()
+
+			req := pb.ReasonRequest_builder{
+				Prompt: "Test prompt",
+			}.Build()
+
+			resp, err := server.Reason(ctx, req)
+			if tt.expectErr {
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				if resp.GetContent() != tt.expectContent {
+					t.Fatalf("expected content %q, got %q", tt.expectContent, resp.GetContent())
+				}
+			}
+		})
+	}
+}
+
+func TestRegisterHubService(t *testing.T) {
+	s := grpc.NewServer()
+	hub := NewHub()
+	RegisterHubService(s, hub)
+
+	// Since we cannot easily introspect the server to see if it's registered without a client,
+	// verifying it doesn't panic and testing NewHubServiceServer covers the logic.
+	server := NewHubServiceServer(hub)
+	if server == nil {
+		t.Fatalf("expected NewHubServiceServer to return non-nil server")
+	}
+	if server.hub != hub {
+		t.Fatalf("expected server hub to match passed hub")
+	}
+}
+
+func TestHubServiceServer_RegisterAgent(t *testing.T) {
+	hub := NewHub()
+	server := NewHubServiceServer(hub)
+	ctx := context.Background()
+
+	req := pb.RegisterAgentRequest_builder{
+		Agent: pb.Agent_builder{
+			Id:             "grpc-agent-1",
+			Name:           "GRPC Agent",
+			Role:           "TEST_ROLE",
+			OrganizationId: "org-grpc",
+			Status:         string(StatusIdle),
+		}.Build(),
+	}.Build()
+
+	resp, err := server.RegisterAgent(ctx, req)
+	if err != nil {
+		t.Fatalf("RegisterAgent returned error: %v", err)
+	}
+	if !resp.GetSuccess() {
+		t.Fatalf("expected RegisterAgent to return success")
+	}
+
+	agent, ok := hub.Agent("grpc-agent-1")
+	if !ok {
+		t.Fatalf("expected agent to be registered in hub")
+	}
+	if agent.Name != "GRPC Agent" {
+		t.Fatalf("expected agent name 'GRPC Agent', got %q", agent.Name)
+	}
+}
+
+func TestHubServiceServer_OpenMeeting(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "p1", Name: "P1", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "p2", Name: "P2", Role: "R2", OrganizationID: "O1"})
+	server := NewHubServiceServer(hub)
+	ctx := context.Background()
+
+	req := pb.OpenMeetingRequest_builder{
+		MeetingId:    "grpc-meeting-1",
+		Agenda:       "Discuss gRPC",
+		Participants: []string{"p1", "p2"},
+	}.Build()
+
+	resp, err := server.OpenMeeting(ctx, req)
+	if err != nil {
+		t.Fatalf("OpenMeeting returned error: %v", err)
+	}
+
+	if resp.GetId() != "grpc-meeting-1" {
+		t.Fatalf("expected meeting ID 'grpc-meeting-1', got %q", resp.GetId())
+	}
+	if resp.GetAgenda() != "Discuss gRPC" {
+		t.Fatalf("expected agenda 'Discuss gRPC', got %q", resp.GetAgenda())
+	}
+	if len(resp.GetParticipants()) != 2 {
+		t.Fatalf("expected 2 participants, got %d", len(resp.GetParticipants()))
+	}
+
+	if _, ok := hub.Meeting("grpc-meeting-1"); !ok {
+		t.Fatalf("expected meeting to be created in hub")
+	}
+}
+
+func TestHubServiceServer_Publish(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	server := NewHubServiceServer(hub)
+	ctx := context.Background()
+
+	tests := []struct {
+		name          string
+		req           *pb.PublishMessageRequest
+		expectSuccess bool
+		expectErrCode codes.Code
+	}{
+		{
+			name: "Valid Publish",
+			req: pb.PublishMessageRequest_builder{
+				Message: pb.Message_builder{
+					Id:             "m1",
+					FromAgent:      "sender",
+					ToAgent:        "receiver",
+					Type:           EventTask,
+					Content:        "Hello",
+					OccurredAtUnix: time.Now().Unix(),
+				}.Build(),
+			}.Build(),
+			expectSuccess: true,
+			expectErrCode: codes.OK,
+		},
+		{
+			name: "Invalid Sender",
+			req: pb.PublishMessageRequest_builder{
+				Message: pb.Message_builder{
+					Id:             "m2",
+					FromAgent:      "unknown",
+					ToAgent:        "receiver",
+					Type:           EventTask,
+					Content:        "Hello",
+					OccurredAtUnix: time.Now().Unix(),
+				}.Build(),
+			}.Build(),
+			expectSuccess: false,
+			expectErrCode: codes.Internal,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp, err := server.Publish(ctx, tt.req)
+			if err != nil {
+				if tt.expectSuccess {
+					t.Fatalf("expected success, got error: %v", err)
+				}
+				if status.Code(err) != tt.expectErrCode {
+					t.Fatalf("expected error code %v, got %v", tt.expectErrCode, status.Code(err))
+				}
+			} else {
+				if !tt.expectSuccess {
+					t.Fatalf("expected error, got success")
+				}
+				if !resp.GetSuccess() {
+					t.Fatalf("expected Publish to return success")
+				}
+			}
+		})
 	}
 }
