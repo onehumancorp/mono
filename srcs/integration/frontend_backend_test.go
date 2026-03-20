@@ -363,10 +363,14 @@ func TestTelegramIntegration_SendMessage(t *testing.T) {
 	}))
 	defer telegramSrv.Close()
 
-	// Bypass SSRF check in frontend tests for 127.0.0.1 by providing a mock lookupIP
+	// Bypass SSRF check in frontend tests for 127.0.0.1 by providing a mock lookupIP and allowing local IPs
+	oldAllowLocalIPs := integrations.AllowLocalIPsForTesting
+	integrations.AllowLocalIPsForTesting = true
+	defer func() { integrations.AllowLocalIPsForTesting = oldAllowLocalIPs }()
+
 	origLookupIP := integrations.LookupIPFunc
 	integrations.LookupIPFunc = func(host string) ([]net.IP, error) {
-		return []net.IP{net.ParseIP("8.8.8.8")}, nil
+		return []net.IP{net.ParseIP("127.0.0.1")}, nil
 	}
 	defer func() { integrations.LookupIPFunc = origLookupIP }()
 
