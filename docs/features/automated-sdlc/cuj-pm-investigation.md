@@ -1,4 +1,4 @@
-# PM Investigation: Critical User Journeys (CUJs)
+# CUJ: PM Investigation: Critical User Journeys (CUJs)
 
 **Author(s):** TPM Agent
 **Status:** Approved
@@ -19,6 +19,7 @@ This document provides an overview of the Critical User Journeys (CUJs) for the 
 | 07 | Billing Tracking | Finance | [cuj-07-billing-cost-tracking.md](../billing-finance/cuj-cost-tracking.md) |
 | 08 | Skill Pack Import | Admin | [cuj-08-skill-pack-import.md](../tooling-mcp/cuj-skill-import.md) |
 | 09 | Org Snapshot | Admin | [cuj-09-org-snapshot.md](../persistence-dr/cuj-org-snapshot.md) |
+| 10 | PM Investigation | PM Agent | [cuj-scoping.md](cuj-scoping.md) |
 
 ## Metrics & KPIs
 
