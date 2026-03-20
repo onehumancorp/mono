@@ -155,7 +155,7 @@ describe("App", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
 
-    await screen.findByText("Failed to send message: 400");
+    await screen.findByText("Request failed for /api/messages: 400");
   });
 
   it("refreshes snapshot when refresh button is pressed", async () => {
@@ -2326,6 +2326,43 @@ describe("App – MCP invoke modal (other/default category)", () => {
     fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
     await screen.findByText("Invoke: Other MCP");
     expect(screen.getByText(/default invocation/i)).toBeInTheDocument();
+  });
+
+  it("handles settings fetch domains api error", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/domains") return mockJson({error: "fail"}, 500);
+      if (input === "/api/mcp/tools") return mockJson([]);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+  });
+
+  it("handles users API error", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/users") return mockJson({error: "fail"}, 500);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /users/i }));
+  });
+
+  it("handles integrations fetch API error", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/integrations") return mockJson({error: "fail"}, 500);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
   });
 });
 
