@@ -3,10 +3,10 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "interop",
     srcs = [
-        "types.go",
         "autogen_adapter.go",
-        "openclaw_adapter.go",
         "crewai_adapter.go",
+        "openclaw_adapter.go",
+        "types.go",
     ],
     importpath = "github.com/onehumancorp/mono/srcs/interop",
     visibility = ["//visibility:public"],
