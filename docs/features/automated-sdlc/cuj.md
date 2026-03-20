@@ -26,3 +26,11 @@ A high-level view of how the human CEO interacts with the Automated SDLC feature
 - **Context Bloat**: Deep technical discussions between PMs and SWEs may exceed token limits. The SDLC engine forces periodic, intelligent summarization of the `events.jsonl` transcript.
 - **Merge Conflicts**: If two SWE agents attempt to merge conflicting pull requests concurrently, a conflict-resolution Virtual Meeting Room is launched to negotiate the final code.
 - **Unstable Environments**: If staging environment provisioning fails, the pipeline immediately alerts the SRE agent and rolls the CI job back to a safe state, informing the CEO of the delay.
+
+## 5. UI/UX Details
+- **Component IDs**: Rendered in the CEO Dashboard via `VirtualMeetingRoomViewer`.
+- **Visual Cues**: Agent status indicators show when a PM is drafting specs or a SWE is actively coding.
+
+## 6. Security & Privacy
+- All transcripts within Virtual Meeting Rooms are encrypted at rest.
+- The pipeline utilizes short-lived, least-privilege tokens for CI jobs to prevent unauthorized code modifications.
