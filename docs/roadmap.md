@@ -113,6 +113,17 @@ When the CEO defines an issue or sets a goal, the entire company is mobilized co
 - **NVIDIA/TPU Resource Scheduling**: Automated placement of high-density LLM agents on GPU nodes. See [compute-optimization/hardware-scheduling.md](features/compute-optimization/hardware-scheduling.md).
 - **VRAM Quota Management**: Department-level GPU budgets to prevent runaway compute costs.
 
+### Phase 8: Advanced Agentic Capabilities (The "Top 50" Mandate)
+*Goal: Integrate the most critical features identified across leading AI frameworks (CrewAI, AutoGen, LangGraph) to establish OHC as the definitive orchestration platform.*
+- **Long-Term Episodic Memory**: Implement cross-session memory using vector databases to recall past interactions and tool success, drastically reducing repeated token usage.
+- **Dynamic Tool Discovery (MCP)**: Allow agents to autonomously query a registry for new tools at runtime, minimizing the need for hardcoded configurations and reducing error loops.
+- **Stateful Execution Graph**: Migrate complex cyclic workflows to a LangGraph-style stateful execution model, enabling deterministic retries and persistence.
+- **Native Vision & Multimodal Reasoning**: Embed multimodal support so agents can directly parse screenshots and UI elements, eliminating OCR middleware latency.
+- **Hierarchical Task Delegation**: Empower Manager agents to dynamically spawn sub-agents with narrow contexts, ensuring optimal token allocation per task.
+
+**OHC Advantage Analysis:**
+While frameworks like CrewAI and AutoGen provide these features in isolation, "One Human Corp" deploys them natively on Kubernetes. Our advantage lies in combining **Stateful Execution Graphs** with **K8s CSI Snapshots**, meaning an agent's episodic memory and cyclic state are perfectly synchronized with the underlying infrastructure. Furthermore, our **Dynamic Tool Discovery** leverages our existing MCP Tool Gateway, allowing zero-trust, RBAC-enforced tool resolution that competing frameworks cannot offer out-of-the-box. Every feature prioritizes token efficiency by aggressively managing context boundaries.
+
 ---
 
 ## One Human Corp: Cloud-Native Hybrid Architecture as Code
