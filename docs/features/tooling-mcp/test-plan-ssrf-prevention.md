@@ -33,3 +33,8 @@ This test plan details the testing strategy for the SSRF prevention feature in t
 - The tests will be added to `srcs/integrations/registry_test.go`.
 - The tests should achieve >95% coverage for the `validateURL` function and related branches in `Connect()` and `TestConnection()`.
 - Tests will follow standard Go testing practices and inherit patterns from existing `*_test.go` files.
+
+## 5. Edge Cases
+- **DNS Rebinding:** Ensure the test suite considers DNS resolution and specifically tests `net.LookupIP` mocking.
+- **Protocol Mismatch:** Testing malformed URL formats.
+- **Missing host:** Validation of URL parsing logic when host is missing.

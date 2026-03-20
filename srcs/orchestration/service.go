@@ -463,5 +463,3 @@ func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, erro
 
 	return result.Choices[0].Message.Content, nil
 }
-
-var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"

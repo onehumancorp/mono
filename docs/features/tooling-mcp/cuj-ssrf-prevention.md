@@ -47,3 +47,12 @@ This Customer User Journey (CUJ) describes the interactions and expected outcome
 ## 4. Exceptions and Error Scenarios
 - If the URL format is invalid, the system should return "invalid URL format".
 - If the URL is missing a hostname, the system should return "URL must contain a host".
+
+## 5. Implementation Details
+- Uses Go's `net.ParseIP` and `net.LookupIP` to validate hostnames against an explicitly defined denylist of private, loopback, and reserved IP ranges (e.g., `127.0.0.0/8`, `10.0.0.0/8`, `169.254.0.0/16`).
+- Fails closed on DNS resolution errors.
+
+## 6. Edge Cases
+- **DNS Rebinding Attacks:** The system should resolve the IP address and perform validation *before* establishing the connection to mitigate time-of-check to time-of-use (TOCTOU) race conditions.
+- **IPv6 and Alternate Representations:** The system correctly handles IPv6 loopback (`::1`) and non-standard IP representations (e.g., octal or hex formats, if applicable) by relying on standard Go `net` package parsing.
+- **Missing Protocol/Host:** The system rejects URLs missing a scheme or host entirely.
