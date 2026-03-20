@@ -220,6 +220,30 @@ func ValidateOIDCToken(tokenStr string, cfg OIDCConfig) (*Claims, error) {
 		return nil, errors.New("token expired")
 	}
 
+	if raw.Iss != cfg.IssuerURL {
+		return nil, fmt.Errorf("invalid issuer: got %q, want %q", raw.Iss, cfg.IssuerURL)
+	}
+
+	if cfg.ClientID != "" {
+		validAud := false
+		switch aud := raw.Aud.(type) {
+		case string:
+			if aud == cfg.ClientID {
+				validAud = true
+			}
+		case []interface{}:
+			for _, a := range aud {
+				if s, ok := a.(string); ok && s == cfg.ClientID {
+					validAud = true
+					break
+				}
+			}
+		}
+		if !validAud {
+			return nil, errors.New("invalid audience")
+		}
+	}
+
 	// Merge roles: top-level roles + realm_access.roles
 	roles := append(raw.Roles, raw.RealmAccess.Roles...)
 	if len(roles) == 0 {

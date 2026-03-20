@@ -162,10 +162,10 @@ token, _ := s.IssueToken(u)
 
 parts := strings.Split(token, ".")
 sig := []byte(parts[2])
-if sig[len(sig)-1] == 'A' {
-sig[len(sig)-1] = 'B'
+	if sig[0] == 'A' {
+		sig[0] = 'B'
 } else {
-sig[len(sig)-1] = 'A'
+		sig[0] = 'A'
 }
 badToken := parts[0] + "." + parts[1] + "." + string(sig)
 
@@ -521,6 +521,7 @@ pay := map[string]any{
 "email":              "oidc@test.com",
 "preferred_username": "oidcuser",
 "iss":                issuer,
+"aud":                "test-client",
 "iat":                time.Now().Unix(),
 "exp":                exp,
 "jti":                "test-jti-1",
