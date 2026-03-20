@@ -392,6 +392,44 @@ func TestSummarizeStatusesReturnsOrderedCounts(t *testing.T) {
 	}
 }
 
+func TestHandleHireAgentRejectsInvalidRole(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/agents/hire", bytes.NewBufferString(`{"name":"Bad Agent","role":"SUPER_ADMIN"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.handleHireAgent(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 for invalid role, got %d", rec.Code)
+	}
+}
+
+func TestHandleHireAgentEnforcesQuota(t *testing.T) {
+	app, _, _ := newTestServer(t)
+	// Fill up agents to hit the limit of 10
+	app.mu.Lock()
+	for i := len(app.hub.Agents()); i < 10; i++ {
+		app.hub.RegisterAgent(orchestration.Agent{ID: "dummy-" + string(rune(i)), Name: "Dummy", Role: "SOFTWARE_ENGINEER", OrganizationID: app.org.ID})
+	}
+	app.mu.Unlock()
+
+	req := httptest.NewRequest(http.MethodPost, "/api/agents/hire", bytes.NewBufferString(`{"name":"Extra Agent","role":"SOFTWARE_ENGINEER"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.handleHireAgent(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 for quota exceeded, got %d", rec.Code)
+	}
+	var resp map[string]string
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if resp["reason"] != "quota_exceeded" {
+		t.Fatalf("expected reason quota_exceeded, got %s", resp["reason"])
+	}
+}
+
 func TestHandleHireAgentAddsToHub(t *testing.T) {
 	app, server, token := newTestServer(t)
 	client := authedClient(token)

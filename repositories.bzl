@@ -158,6 +158,12 @@ def go_repositories():
         version = "v1.1.0",
     )
     go_repository(
+        name = "com_github_microsoft_go_winio",
+        importpath = "github.com/Microsoft/go-winio",
+        sum = "h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=",
+        version = "v0.6.2",
+    )
+    go_repository(
         name = "com_github_modern_go_concurrent",
         importpath = "github.com/modern-go/concurrent",
         sum = "h1:TRLaZ9cD/w8PVh93nsPXa1VrQ6jlwL5oN8l14QlcNfg=",
@@ -228,6 +234,12 @@ def go_repositories():
         importpath = "github.com/rogpeppe/go-internal",
         sum = "h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=",
         version = "v1.14.1",
+    )
+    go_repository(
+        name = "com_github_sirupsen_logrus",
+        importpath = "github.com/sirupsen/logrus",
+        sum = "h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=",
+        version = "v1.9.3",
     )
     go_repository(
         name = "com_github_spiffe_go_spiffe_v2",
@@ -342,6 +354,12 @@ def go_repositories():
         importpath = "google.golang.org/grpc",
         sum = "h1:sybAEdRIEtvcD68Gx7dmnwjZKlyfuc61Dyo9pGXXkKE=",
         version = "v1.79.3",
+    )
+    go_repository(
+        name = "org_golang_google_grpc_examples",
+        importpath = "google.golang.org/grpc/examples",
+        sum = "h1:ExN12ndbJ608cboPYflpTny6mXSzPrDLh0iTaVrRrds=",
+        version = "v0.0.0-20250407062114-b368379ef8f6",
     )
     go_repository(
         name = "org_golang_google_protobuf",

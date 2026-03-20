@@ -4,6 +4,7 @@ go 1.26
 
 require (
 	github.com/prometheus/client_golang v1.23.2
+	github.com/spiffe/go-spiffe/v2 v2.6.0
 	go.opentelemetry.io/otel v1.42.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.64.0
 	go.opentelemetry.io/otel/metric v1.42.0
@@ -13,8 +14,10 @@ require (
 )
 
 require (
+	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect

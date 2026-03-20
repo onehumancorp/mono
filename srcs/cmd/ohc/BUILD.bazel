@@ -13,6 +13,8 @@ go_library(
         "//srcs/integrations/chatwoot",
         "//srcs/orchestration",
         "//srcs/telemetry",
+        "@com_github_spiffe_go_spiffe_v2//spiffegrpc/grpccredentials",
+        "@com_github_spiffe_go_spiffe_v2//workloadapi",
         "@org_golang_google_grpc//:grpc",
     ],
 )

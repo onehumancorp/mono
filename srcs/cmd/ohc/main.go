@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/spiffe/go-spiffe/v2/spiffegrpc/grpccredentials"
+	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"google.golang.org/grpc"
 
 	"github.com/onehumancorp/mono/srcs/auth"
@@ -76,7 +80,23 @@ func run(now time.Time, listen listenFunc, logger *log.Logger) error {
 			logger.Printf("failed to listen for gRPC: %v", err)
 			return
 		}
-		s := grpc.NewServer()
+		var opts []grpc.ServerOption
+
+		// Phase 2 – SPIFFE mTLS Enforcement
+		if os.Getenv("SPIFFE_ENDPOINT_SOCKET") != "" {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			x509Source, err := workloadapi.NewX509Source(ctx)
+			if err != nil {
+				logger.Fatalf("failed to create X509 source: %v", err)
+			}
+			defer x509Source.Close()
+			tlsCreds := grpccredentials.MTLSServerCredentials(x509Source, x509Source, nil)
+			opts = append(opts, grpc.Creds(tlsCreds))
+			logger.Printf("SPIFFE mTLS enabled for gRPC server")
+		}
+
+		s := grpc.NewServer(opts...)
 		orchestration.RegisterHubService(s, hub)
 		logger.Printf("serving gRPC on :9090")
 		if err := s.Serve(lis); err != nil {
