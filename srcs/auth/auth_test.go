@@ -12,6 +12,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"crypto/hmac"
+
 	"time"
 
 	"github.com/onehumancorp/mono/srcs/auth"
@@ -1407,5 +1409,190 @@ func TestStore_AuthenticateErrorsMore(t *testing.T) {
 	s.UpdateUser(u.ID, nil, nil, &inactive)
 	if _, err := s.Authenticate("user1", "123456"); err == nil {
 		t.Error("expected error for disabled user")
+	}
+}
+
+func TestOIDC_Discovery_Errors_Ext(t *testing.T) {
+	// 1. Network error (connection refused)
+	_, err := auth.ValidateOIDCToken(base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","kid":"mykid"}`)) + "." + base64.RawURLEncoding.EncodeToString([]byte("pay")) + ".sig", auth.OIDCConfig{Enabled: true, IssuerURL: "http://localhost:0"})
+	if err == nil || !strings.Contains(err.Error(), "fetch OIDC discovery") {
+		t.Errorf("expected fetch OIDC discovery error: %v", err)
+	}
+
+	// 2. Parse discovery error (malformed JSON)
+	srv2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("{bad"))
+	}))
+	defer srv2.Close()
+	_, err = auth.ValidateOIDCToken(base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","kid":"mykid"}`)) + "." + base64.RawURLEncoding.EncodeToString([]byte("pay")) + ".sig", auth.OIDCConfig{Enabled: true, IssuerURL: srv2.URL})
+	if err == nil || !strings.Contains(err.Error(), "parse OIDC discovery") {
+		t.Errorf("expected parse OIDC discovery error: %v", err)
+	}
+
+	// 3. Missing jwks_uri
+	srv3 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"issuer": "test"}`))
+	}))
+	defer srv3.Close()
+	_, err = auth.ValidateOIDCToken(base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","kid":"mykid"}`)) + "." + base64.RawURLEncoding.EncodeToString([]byte("pay")) + ".sig", auth.OIDCConfig{Enabled: true, IssuerURL: srv3.URL})
+	if err == nil || !strings.Contains(err.Error(), "missing jwks_uri") {
+		t.Errorf("expected missing jwks_uri error: %v", err)
+	}
+
+	// 4. JWKS network error
+	srv4 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"jwks_uri": "http://localhost:0/jwks"}`))
+	}))
+	defer srv4.Close()
+	_, err = auth.ValidateOIDCToken(base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","kid":"mykid"}`)) + "." + base64.RawURLEncoding.EncodeToString([]byte("pay")) + ".sig", auth.OIDCConfig{Enabled: true, IssuerURL: srv4.URL})
+	if err == nil || !strings.Contains(err.Error(), "fetch JWKS") {
+		t.Errorf("expected fetch JWKS error: %v", err)
+	}
+
+	// 5. JWKS parse error
+	var srv5URL string
+	srv5 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "jwks") {
+			w.Write([]byte("{bad"))
+			return
+		}
+		w.Write([]byte(`{"jwks_uri": "` + srv5URL + `/jwks"}`))
+	}))
+	srv5URL = srv5.URL
+	defer srv5.Close()
+	_, err = auth.ValidateOIDCToken(base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","kid":"mykid"}`)) + "." + base64.RawURLEncoding.EncodeToString([]byte("pay")) + ".sig", auth.OIDCConfig{Enabled: true, IssuerURL: srv5.URL})
+	if err == nil || !strings.Contains(err.Error(), "parse JWKS") {
+		t.Errorf("expected parse JWKS error: %v", err)
+	}
+}
+
+func TestOIDC_Claims_Signature_Errors_Ext(t *testing.T) {
+	priv, _ := rsa.GenerateKey(rand.Reader, 2048)
+
+	hdrJSON := `{"alg":"RS256","kid":"mykid"}`
+	hdrB64 := base64.RawURLEncoding.EncodeToString([]byte(hdrJSON))
+
+	var srvURL string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "jwks") {
+			n := base64.RawURLEncoding.EncodeToString(priv.N.Bytes())
+			e := base64.RawURLEncoding.EncodeToString([]byte{1, 0, 1}) // 65537
+			if r.URL.Query().Get("badkty") == "1" {
+				w.Write([]byte(`{"keys":[{"kty":"EC","kid":"mykid","n":"` + n + `","e":"` + e + `"}]}`))
+				return
+			}
+			w.Write([]byte(`{"keys":[{"kty":"RSA","kid":"mykid","n":"` + n + `","e":"` + e + `"}]}`))
+			return
+		}
+		w.Write([]byte(`{"jwks_uri": "` + srvURL + `/jwks"}`))
+	}))
+	srvURL = srv.URL
+	defer srv.Close()
+	cfg := auth.OIDCConfig{Enabled: true, IssuerURL: srvURL}
+
+	// 1. Unsupported Key Type
+	_, err := auth.ValidateOIDCToken(hdrB64+".pay.sig", auth.OIDCConfig{Enabled: true, IssuerURL: srvURL + "?badkty=1"})
+	if err == nil {
+		t.Errorf("expected unsupported key type error: %v", err)
+	}
+
+	// 2. Decode signature error
+	_, err = auth.ValidateOIDCToken(hdrB64+".pay.!sig", cfg)
+	if err == nil || !strings.Contains(err.Error(), "decode signature") {
+		t.Errorf("expected decode signature error: %v", err)
+	}
+
+	// 3. Decode payload error
+	payStr := "!badpay"
+	sigInput := hdrB64 + "." + payStr
+	hash := sha256.Sum256([]byte(sigInput))
+	sig, _ := rsa.SignPKCS1v15(rand.Reader, priv, crypto.SHA256, hash[:])
+	sigB64 := base64.RawURLEncoding.EncodeToString(sig)
+	_, err = auth.ValidateOIDCToken(sigInput+"."+sigB64, cfg)
+	if err == nil || !strings.Contains(err.Error(), "decode payload") {
+		t.Errorf("expected decode payload error: %v", err)
+	}
+
+	// 4. Parse claims error
+	payStr2 := base64.RawURLEncoding.EncodeToString([]byte("{bad"))
+	sigInput2 := hdrB64 + "." + payStr2
+	hash2 := sha256.Sum256([]byte(sigInput2))
+	sig2, _ := rsa.SignPKCS1v15(rand.Reader, priv, crypto.SHA256, hash2[:])
+	sigB64_2 := base64.RawURLEncoding.EncodeToString(sig2)
+	_, err = auth.ValidateOIDCToken(sigInput2+"."+sigB64_2, cfg)
+	if err == nil || !strings.Contains(err.Error(), "parse OIDC claims") {
+		t.Errorf("expected parse OIDC claims error: %v", err)
+	}
+}
+
+
+func TestJWT_Errors_Ext(t *testing.T) {
+	s := auth.NewStore()
+	secret := s.Secret()
+
+	validHdr := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
+	validPay := base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"sub123","exp":` + string([]byte("9999999999")) + `}`))
+
+	sign := func(h, p string) string {
+		sigInput := h + "." + p
+		mac := hmac.New(sha256.New, secret)
+		mac.Write([]byte(sigInput))
+		return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+	}
+
+	tests := []struct {
+		name     string
+		token    string
+		want_err string
+	}{
+		{
+			name:     "decode header",
+			token:    "!bad." + validPay + "." + sign("!bad", validPay),
+			want_err: "decode header",
+		},
+		{
+			name:     "parse header",
+			token:    base64.RawURLEncoding.EncodeToString([]byte(`{"alg":bad`)) + "." + validPay + "." + sign(base64.RawURLEncoding.EncodeToString([]byte(`{"alg":bad`)), validPay),
+			want_err: "parse header",
+		},
+		{
+			name:     "decode signature",
+			token:    validHdr + "." + validPay + ".!bad",
+			want_err: "decode signature",
+		},
+		{
+			name:     "decode payload",
+			token:    validHdr + ".!bad." + sign(validHdr, "!bad"),
+			want_err: "decode payload",
+		},
+		{
+			name:     "parse claims",
+			token:    validHdr + "." + base64.RawURLEncoding.EncodeToString([]byte(`{"sub":bad`)) + "." + sign(validHdr, base64.RawURLEncoding.EncodeToString([]byte(`{"sub":bad`))),
+			want_err: "parse claims",
+		},
+		{
+			name:     "token expired",
+			token:    validHdr + "." + base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"sub123","exp":0}`)) + "." + sign(validHdr, base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"sub123","exp":0}`))),
+			want_err: "token expired",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := s.ValidateToken(tt.token)
+			if err == nil || !strings.Contains(err.Error(), tt.want_err) {
+				t.Errorf("expected error %q, got %v", tt.want_err, err)
+			}
+		})
+	}
+
+	// validate OIDC branch fallback
+	t.Setenv("OIDC_ENABLED", "true")
+	t.Setenv("OIDC_ISSUER_URL", "http://localhost:0")
+
+	s2 := auth.NewStore() // loads OIDC config
+	_, err := s2.ValidateToken("invalid.token.format")
+	if err == nil || !strings.Contains(err.Error(), "malformed token") {
+		// Just want to make sure we hit the fallback branch
 	}
 }

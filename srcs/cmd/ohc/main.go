@@ -22,6 +22,8 @@ const defaultAddress = ":8080"
 type listenFunc func(string, http.Handler) error
 
 var (
+	logPrintf     = log.Printf
+	netListen     = net.Listen
 	nowUTC        = time.Now
 	listenForMain = http.ListenAndServe
 	fatalForMain  = log.Fatal
@@ -58,7 +60,7 @@ func newDemoHandler(now time.Time) (http.Handler, *orchestration.Hub) {
 		go func() {
 			c := chatwoot.NewClientFromEnv()
 			if err := c.Setup(); err != nil {
-				log.Printf("chatwoot setup: %v", err)
+				logPrintf("chatwoot setup: %v", err)
 			}
 		}()
 	}
@@ -71,7 +73,7 @@ func run(now time.Time, listen listenFunc, logger *log.Logger) error {
 
 	// Start gRPC server
 	go func() {
-		lis, err := net.Listen("tcp", ":9090")
+		lis, err := netListen("tcp", ":9090")
 		if err != nil {
 			logger.Printf("failed to listen for gRPC: %v", err)
 			return

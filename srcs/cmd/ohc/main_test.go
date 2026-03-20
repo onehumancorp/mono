@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"net"
+
 )
 
 func TestMainStartsServerWithoutFatal(t *testing.T) {
@@ -208,4 +210,61 @@ func TestMain_TelemetryInitFailure(t *testing.T) {
 
 	// This should run without fatal, but print a warning about telemetry failure
 	main()
+}
+
+
+func TestChatwootSetupFailureLog(t *testing.T) {
+	t.Setenv("CHATWOOT_ENABLED", "true")
+	t.Setenv("CHATWOOT_URL", "http://localhost:0")
+	t.Setenv("GO_TEST", "true")
+t.Setenv("CHATWOOT_TEST_FAST_FAIL", "true")
+
+	originalLogPrintf := logPrintf
+	t.Cleanup(func() { logPrintf = originalLogPrintf })
+
+	logCalled := make(chan struct{})
+	logPrintf = func(format string, v ...any) {
+		if strings.Contains(format, "chatwoot setup") {
+			close(logCalled)
+		}
+	}
+
+	newDemoHandler(time.Now())
+
+	select {
+	case <-logCalled:
+		// success
+	case <-time.After(time.Second):
+		t.Fatal("expected chatwoot setup log but it was not called")
+	}
+}
+
+
+func TestGRPCServeError_Mock(t *testing.T) {
+	originalNetListen := netListen
+	t.Cleanup(func() { netListen = originalNetListen })
+
+	netListen = func(network, address string) (net.Listener, error) {
+		l, err := net.Listen(network, "127.0.0.1:0")
+		if err != nil {
+			return nil, err
+		}
+		l.Close() // Serve will fail with "use of closed network connection"
+		return l, nil
+	}
+
+	var buf bytes.Buffer
+	logger := log.New(&buf, "", 0)
+
+	err := run(time.Now(), func(addr string, h http.Handler) error {
+		time.Sleep(100 * time.Millisecond) // let grpc try to serve
+		return nil
+	}, logger)
+	if err != nil {
+		t.Fatalf("run failed: %v", err)
+	}
+
+	if !strings.Contains(buf.String(), "failed to serve gRPC") {
+		t.Errorf("expected failed to serve gRPC error, got logs:\n%s", buf.String())
+	}
 }
