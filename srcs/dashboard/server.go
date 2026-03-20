@@ -31,6 +31,7 @@ type Server struct {
 	snapshots       []OrgSnapshot
 	integReg        *integrations.Registry
 	trustAgreements []TrustAgreement
+	b2bGateway      *orchestration.B2BGateway
 	incidents       []Incident
 	computeProfiles []ComputeProfile
 	budgetAlerts    []BudgetAlert
@@ -305,6 +306,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 		snapshots:       []OrgSnapshot{},
 		integReg:        integrations.NewRegistry(),
 		trustAgreements: []TrustAgreement{},
+		b2bGateway:      orchestration.NewB2BGateway(hub),
 		incidents:       []Incident{},
 		computeProfiles: []ComputeProfile{},
 		budgetAlerts:    []BudgetAlert{},
@@ -369,6 +371,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/b2b/agreements", server.handleB2BAgreements)
 	mux.HandleFunc("/api/b2b/handshake", server.handleB2BHandshake)
 	mux.HandleFunc("/api/b2b/revoke", server.handleB2BRevoke)
+	mux.HandleFunc("/api/b2b/tunnel", server.b2bGateway.HandleB2BEndpoint)
 	// Phase 5 – Autonomous SRE / Incident Management
 	mux.HandleFunc("/api/incidents", server.handleIncidents)
 	mux.HandleFunc("/api/incidents/status", server.handleIncidentStatus)
@@ -1868,6 +1871,13 @@ func (s *Server) handleB2BHandshake(w http.ResponseWriter, r *http.Request) {
 	s.trustAgreements = append(s.trustAgreements, agreement)
 	s.mu.Unlock()
 
+	s.b2bGateway.AddAgreement(domain.TrustAgreement{
+		ID: agreement.ID,
+		PartnerOrg: agreement.PartnerOrg,
+		PartnerJWKS: agreement.PartnerJWKS,
+		AllowedRoles: agreement.AllowedRoles,
+		Status: string(agreement.Status),
+	})
 	writeJSON(w, agreement)
 }
 
@@ -1893,6 +1903,7 @@ func (s *Server) handleB2BRevoke(w http.ResponseWriter, r *http.Request) {
 	for i, ag := range s.trustAgreements {
 		if ag.ID == req.AgreementID {
 			s.trustAgreements[i].Status = TrustStatusRevoked
+			s.b2bGateway.RemoveAgreement(ag.PartnerOrg)
 			writeJSON(w, s.trustAgreements[i])
 			return
 		}

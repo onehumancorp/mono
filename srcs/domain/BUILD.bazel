@@ -2,13 +2,13 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "domain",
-    srcs = ["organization.go"],
+    srcs = ["organization.go", "b2b.go"],
     importpath = "github.com/onehumancorp/mono/srcs/domain",
     visibility = ["//visibility:public"],
 )
 
 go_test(
     name = "domain_test",
-    srcs = ["organization_test.go"],
+    srcs = ["organization_test.go", "b2b_test.go"],
     embed = [":domain"],
 )

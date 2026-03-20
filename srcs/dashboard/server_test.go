@@ -75,7 +75,7 @@ func newTestServer(t *testing.T) (*Server, *httptest.Server, string) {
 		t.Fatalf("track returned error: %v", err)
 	}
 
-	app := &Server{org: org, hub: hub, tracker: tracker, integReg: integrations.NewRegistry()}
+	app := &Server{org: org, hub: hub, tracker: tracker, integReg: integrations.NewRegistry(), b2bGateway: orchestration.NewB2BGateway(hub)}
 	server := httptest.NewServer(NewServer(org, hub, tracker))
 	token := loginForTest(t, server.URL)
 	return app, server, token

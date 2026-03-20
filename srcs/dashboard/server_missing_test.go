@@ -10,7 +10,7 @@ import (
 // Tests for missing coverage in handlers
 
 func TestHandleB2BAgreements_MethodNotAllowed(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 	req := httptest.NewRequest(http.MethodPost, "/api/b2b/agreements", nil)
 	rec := httptest.NewRecorder()
 	app.handleB2BAgreements(rec, req)
@@ -20,7 +20,7 @@ func TestHandleB2BAgreements_MethodNotAllowed(t *testing.T) {
 }
 
 func TestHandleB2BHandshake_Errors(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	// Wrong method
 	req := httptest.NewRequest(http.MethodGet, "/api/b2b/handshake", nil)
@@ -48,7 +48,7 @@ func TestHandleB2BHandshake_Errors(t *testing.T) {
 }
 
 func TestHandleB2BRevoke_Errors(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	// Wrong method
 	req := httptest.NewRequest(http.MethodGet, "/api/b2b/revoke", nil)
@@ -84,7 +84,7 @@ func TestHandleB2BRevoke_Errors(t *testing.T) {
 }
 
 func TestHandleIncidents_Errors(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	// Wrong method
 	req := httptest.NewRequest(http.MethodDelete, "/api/incidents", nil)
@@ -112,7 +112,7 @@ func TestHandleIncidents_Errors(t *testing.T) {
 }
 
 func TestHandleIncidentStatus_Errors(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	// Wrong method
 	req := httptest.NewRequest(http.MethodGet, "/api/incidents/status", nil)
@@ -148,7 +148,7 @@ func TestHandleIncidentStatus_Errors(t *testing.T) {
 }
 
 func TestHandleComputeProfiles_Errors(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	// Wrong method
 	req := httptest.NewRequest(http.MethodDelete, "/api/compute/profiles", nil)
@@ -176,7 +176,7 @@ func TestHandleComputeProfiles_Errors(t *testing.T) {
 }
 
 func TestHandleClusterStatus_Errors(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	// Wrong method
 	req := httptest.NewRequest(http.MethodPost, "/api/clusters/eu/status", nil)
@@ -196,7 +196,7 @@ func TestHandleClusterStatus_Errors(t *testing.T) {
 }
 
 func TestHandleBudgetAlerts_Errors(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	// Wrong method
 	req := httptest.NewRequest(http.MethodDelete, "/api/billing/alerts", nil)
@@ -224,7 +224,7 @@ func TestHandleBudgetAlerts_Errors(t *testing.T) {
 }
 
 func TestHandlePipelines_Errors(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	// Wrong method
 	req := httptest.NewRequest(http.MethodDelete, "/api/pipelines", nil)
@@ -252,7 +252,7 @@ func TestHandlePipelines_Errors(t *testing.T) {
 }
 
 func TestHandlePipelinePromote_Errors(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	// Wrong method
 	req := httptest.NewRequest(http.MethodGet, "/api/pipelines/promote", nil)
@@ -297,7 +297,7 @@ func TestHandlePipelinePromote_Errors(t *testing.T) {
 }
 
 func TestHandlePipelineStatus_Errors(t *testing.T) {
-	app, _ := newTestServer(t)
+	app, _, _ := newTestServer(t)
 
 	// Wrong method
 	req := httptest.NewRequest(http.MethodGet, "/api/pipelines/status", nil)
@@ -334,7 +334,7 @@ func TestHandlePipelineStatus_Errors(t *testing.T) {
 
 
 func TestHandleHealthzReadyz(t *testing.T) {
-	_, server := newTestServer(t)
+	_, server, _ := newTestServer(t)
 	defer server.Close()
 
 	tests := []struct {
@@ -374,7 +374,7 @@ func TestHandleIncidentStatus_UpdateRCA(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app, server := newTestServer(t)
+			app, server, _ := newTestServer(t)
 			defer server.Close()
 
 			app.incidents = append(app.incidents, Incident{
@@ -421,7 +421,7 @@ func TestHandleBudgetAlerts_NotifyAtPctHandling(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app, server := newTestServer(t)
+			app, server, _ := newTestServer(t)
 			defer server.Close()
 
 			req := httptest.NewRequest(http.MethodPost, "/api/billing/alerts", strings.NewReader(tt.payload))
@@ -441,4 +441,286 @@ func TestHandleBudgetAlerts_NotifyAtPctHandling(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHandleSettings(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Test GET method
+	req := httptest.NewRequest(http.MethodGet, "/api/settings", nil)
+	rec := httptest.NewRecorder()
+	app.handleSettings(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+
+	// Test PUT method (unsupported)
+	req = httptest.NewRequest(http.MethodPut, "/api/settings", strings.NewReader(`{}`))
+	rec = httptest.NewRecorder()
+	app.handleSettings(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+}
+
+func TestHandleSettingsPostValid(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Test POST method with valid JSON
+	req := httptest.NewRequest(http.MethodPost, "/api/settings", strings.NewReader(`{"minimaxApiKey":"test"}`))
+	rec := httptest.NewRecorder()
+	app.handleSettings(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+}
+
+func TestHandleSettingsPostInvalid(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Test POST method with invalid JSON
+	req := httptest.NewRequest(http.MethodPost, "/api/settings", strings.NewReader(`bad json`))
+	rec := httptest.NewRecorder()
+	app.handleSettings(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandleChatTest(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Test GET method (unsupported)
+	req := httptest.NewRequest(http.MethodGet, "/api/integrations/chat/test", nil)
+	rec := httptest.NewRecorder()
+	app.handleChatTest(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+    // Test Invalid JSON
+	req = httptest.NewRequest(http.MethodPost, "/api/integrations/chat/test", strings.NewReader(`bad json`))
+	rec = httptest.NewRecorder()
+	app.handleChatTest(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandleChatTestValid(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Test POST method with valid JSON
+	req := httptest.NewRequest(http.MethodPost, "/api/integrations/chat/test", strings.NewReader(`{"integrationId":"telegram"}`))
+	rec := httptest.NewRecorder()
+	app.handleChatTest(rec, req)
+	if rec.Code != http.StatusBadRequest { // Need credentials logic
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+
+func TestHandleMCPInvoke(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Test GET method (unsupported)
+	req := httptest.NewRequest(http.MethodGet, "/api/mcp/tools/invoke", nil)
+	rec := httptest.NewRecorder()
+	app.handleMCPInvoke(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+    // Test Invalid JSON
+	req = httptest.NewRequest(http.MethodPost, "/api/mcp/tools/invoke", strings.NewReader(`bad json`))
+	rec = httptest.NewRecorder()
+	app.handleMCPInvoke(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandleMCPInvokeValid(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Test POST method with valid JSON
+	req := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/invoke", strings.NewReader(`{"toolId":"slack-mcp", "params":{"integrationId":"slack"}}`))
+	rec := httptest.NewRecorder()
+	app.handleMCPInvoke(rec, req)
+	if rec.Code != http.StatusBadRequest { // Not found tool
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandleChatTestValid3(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Valid POST but missing parameters logic
+	req := httptest.NewRequest(http.MethodPost, "/api/integrations/chat/test", strings.NewReader(`{"integrationId":""}`))
+	rec := httptest.NewRecorder()
+	app.handleChatTest(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandleMCPInvokeValid3(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Valid POST but missing parameters logic
+	req := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/invoke", strings.NewReader(`{"toolId":""}`))
+	rec := httptest.NewRecorder()
+	app.handleMCPInvoke(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestInvokeMCPTool(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	tests := []struct {
+		name    string
+		req     mcpInvokeRequest
+		wantErr bool
+	}{
+		{
+			name: "telegram-mcp missing content",
+			req: mcpInvokeRequest{
+				ToolID: "telegram-mcp",
+				Params: map[string]any{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "slack-mcp missing channel",
+			req: mcpInvokeRequest{
+				ToolID: "slack-mcp",
+				Params: map[string]any{
+					"content": "hello",
+				},
+			},
+			wantErr: true,
+		},
+        {
+			name: "git-mcp",
+			req: mcpInvokeRequest{
+				ToolID: "git-mcp",
+				Params: map[string]any{
+                    "integrationId": "github",
+                    "repository": "repo",
+                    "title": "title",
+                    "body": "body",
+                    "sourceBranch": "source",
+				},
+			},
+			wantErr: false, // we don't have git integrations setup so it doesn't fail due to mock
+		},
+        {
+			name: "jira-mcp",
+			req: mcpInvokeRequest{
+				ToolID: "jira-mcp",
+				Params: map[string]any{
+                    "integrationId": "jira",
+                    "project": "proj",
+                    "title": "title",
+                    "description": "desc",
+				},
+			},
+			wantErr: false, // mock returns nil
+		},
+        {
+			name: "linear-mcp",
+			req: mcpInvokeRequest{
+				ToolID: "linear-mcp",
+				Params: map[string]any{
+                    "integrationId": "linear",
+                    "project": "proj",
+                    "title": "title",
+                    "description": "desc",
+				},
+			},
+			wantErr: false, // mock returns nil
+		},
+		{
+			name: "unknown tool",
+			req: mcpInvokeRequest{
+				ToolID: "unknown-mcp",
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := app.invokeMCPTool(tt.req)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("invokeMCPTool() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestHandleB2BHandshakeValid(t *testing.T) {
+	app, server, _ := newTestServer(t)
+    defer server.Close()
+
+	// Valid payload
+	payload := `{"partnerOrg":"acme.com", "partnerJwksUrl":"https://acme.com/.well-known/jwks.json"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/b2b/handshake", strings.NewReader(payload))
+	rec := httptest.NewRecorder()
+	app.handleB2BHandshake(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+
+    // Verify it updated internal array
+    app.mu.RLock()
+    if len(app.trustAgreements) != 1 {
+        t.Errorf("expected 1 agreement, got %d", len(app.trustAgreements))
+    }
+    app.mu.RUnlock()
+
+    // Verify it updated the gateway
+    if _, ok := app.b2bGateway.GetAgreement("acme.com"); !ok {
+        t.Errorf("expected gateway to have acme.com")
+    }
+}
+
+func TestHandleB2BRevokeValid(t *testing.T) {
+	app, server, _ := newTestServer(t)
+    defer server.Close()
+
+	// Valid payload
+	payload := `{"partnerOrg":"acme.com", "partnerJwksUrl":"https://acme.com/.well-known/jwks.json"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/b2b/handshake", strings.NewReader(payload))
+	rec := httptest.NewRecorder()
+	app.handleB2BHandshake(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+
+    app.mu.RLock()
+    id := app.trustAgreements[0].ID
+    app.mu.RUnlock()
+
+    revokePayload := `{"agreementId":"` + id + `"}`
+	req = httptest.NewRequest(http.MethodPost, "/api/b2b/revoke", strings.NewReader(revokePayload))
+	rec = httptest.NewRecorder()
+	app.handleB2BRevoke(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+
+    // Verify status is REVOKED
+    app.mu.RLock()
+    if app.trustAgreements[0].Status != TrustStatusRevoked {
+        t.Errorf("expected status revoked")
+    }
+    app.mu.RUnlock()
+
+    // Verify gateway no longer has it
+    if _, ok := app.b2bGateway.GetAgreement("acme.com"); ok {
+        t.Errorf("expected gateway to not have acme.com anymore")
+    }
 }

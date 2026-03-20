@@ -2,10 +2,14 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "orchestration",
-    srcs = ["service.go"],
+    srcs = [
+        "service.go",
+        "b2b_gateway.go",
+    ],
     importpath = "github.com/onehumancorp/mono/srcs/orchestration",
     visibility = ["//visibility:public"],
     deps = [
+        "//srcs/domain",
         "//srcs/proto:hub_go_proto",
         "//srcs/telemetry",
         "@org_golang_google_grpc//:grpc",
@@ -16,6 +20,17 @@ go_library(
 
 go_test(
     name = "orchestration_test",
-    srcs = ["service_test.go"],
+    srcs = [
+        "service_test.go",
+        "service_grpc_test.go",
+        "minimax_test.go",
+        "b2b_gateway_test.go",
+    ],
     embed = [":orchestration"],
+    deps = [
+        "//srcs/domain",
+        "//srcs/proto:hub_go_proto",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//credentials/insecure",
+    ],
 )

@@ -395,6 +395,7 @@ func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*
 
 // MinimaxClient handles interaction with the Minimax Model 2.7.
 type MinimaxClient struct {
+	BaseURL string
 	APIKey string
 }
 
@@ -407,7 +408,7 @@ func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, erro
 		return "", errors.New("minimax API key is not configured")
 	}
 
-	url := "https://api.minimax.io/v1/chat/completions"
+	url := c.getURL()
 	payload := map[string]interface{}{
 		"model": "MiniMax-M2.7",
 		"messages": []map[string]string{
@@ -457,4 +458,11 @@ func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, erro
 	}
 
 	return result.Choices[0].Message.Content, nil
+}
+
+func (c *MinimaxClient) getURL() string {
+    if c.BaseURL != "" {
+        return c.BaseURL
+    }
+    return "https://api.minimax.io/v1/chat/completions"
 }
