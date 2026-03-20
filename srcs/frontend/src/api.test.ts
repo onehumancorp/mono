@@ -104,6 +104,12 @@ describe("api", () => {
     await expect(fetchOrganization()).rejects.toThrow("Request failed for /api/org: 500");
   });
 
+  it("throws for failed GET request with json error", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}), text: async () => '{"error":"Agent conflict"}' })));
+
+    await expect(fetchOrganization()).rejects.toThrow("Agent conflict");
+  });
+
   it("fetches dashboard snapshot and normalizes null transcripts", async () => {
     vi.stubGlobal(
       "fetch",
@@ -199,6 +205,51 @@ describe("api", () => {
         content: "x",
       })
     ).rejects.toThrow("Request failed for /api/messages: 400");
+  });
+
+  it("throws for failed message send with json error", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 400, json: async () => ({}), text: async () => '{"error":"Agent conflict"}' })));
+
+    await expect(
+      sendMessage({
+        fromAgent: "pm-1",
+        toAgent: "swe-1",
+        meetingId: "kickoff",
+        messageType: "task",
+        content: "x",
+      })
+    ).rejects.toThrow("Agent conflict");
+  });
+
+  it("throws for failed message send with unparseable json text", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 400, json: async () => ({}), text: async () => '{"error":malformed}' })));
+
+    await expect(
+      sendMessage({
+        fromAgent: "pm-1",
+        toAgent: "swe-1",
+        meetingId: "kickoff",
+        messageType: "task",
+        content: "x",
+      })
+    ).rejects.toThrow('{"error":malformed}');
+  });
+
+  it("throws 401 unauth error and clears token when sending message", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 401 })));
+    localStorage.setItem("ohc_token", "fake-token");
+
+    await expect(
+      sendMessage({
+        fromAgent: "pm-1",
+        toAgent: "swe-1",
+        meetingId: "kickoff",
+        messageType: "task",
+        content: "x",
+      })
+    ).rejects.toThrow("Unauthorized");
+
+    expect(localStorage.getItem("ohc_token")).toBeNull();
   });
 });
 
