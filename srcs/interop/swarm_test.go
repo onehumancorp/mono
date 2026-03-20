@@ -11,6 +11,7 @@ func TestSwarmInteropStateSync(t *testing.T) {
 	openClaw := NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01")
 	autoGen := NewAutoGenAdapter("spiffe://ohc.os/agent/autogen-01")
 	crewAI := NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01")
+	semanticKernel := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01")
 
 	// Simulate shared K8s / LangGraph State
 	sharedState := &State{
@@ -49,9 +50,19 @@ func TestSwarmInteropStateSync(t *testing.T) {
 		t.Errorf("Expected crewai_synced to be true, got %v", sharedState.Data["crewai_synced"])
 	}
 
-	// Step 4: Verify identities in shared state
-	if sharedState.Data["last_identity"] != "spiffe://ohc.os/agent/crewai-01" {
-		t.Errorf("Expected last identity to be CrewAI's, got %v", sharedState.Data["last_identity"])
+	// Step 4: Semantic Kernel syncs state to same shared state
+	err = semanticKernel.SyncState(ctx, sharedState)
+	if err != nil {
+		t.Fatalf("SemanticKernel SyncState failed: %v", err)
+	}
+
+	if sharedState.Data["semantickernel_synced"] != true {
+		t.Errorf("Expected semantickernel_synced to be true, got %v", sharedState.Data["semantickernel_synced"])
+	}
+
+	// Step 5: Verify identities in shared state
+	if sharedState.Data["last_identity"] != "spiffe://ohc.os/agent/semantickernel-01" {
+		t.Errorf("Expected last identity to be Semantic Kernel's, got %v", sharedState.Data["last_identity"])
 	}
 }
 
@@ -107,6 +118,20 @@ func TestExecuteCommand(t *testing.T) {
 			expected: "",
 			wantErr:  true,
 		},
+		{
+			name:     "SemanticKernel execution",
+			adapter:  NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01"),
+			cmd:      "solve-problem",
+			expected: "SemanticKernel executed: solve-problem",
+			wantErr:  false,
+		},
+		{
+			name:     "SemanticKernel execution empty command",
+			adapter:  NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01"),
+			cmd:      "",
+			expected: "",
+			wantErr:  true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -139,6 +164,12 @@ func TestSyncStateNil(t *testing.T) {
 
 	crewAI := NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01")
 	err = crewAI.SyncState(ctx, nil)
+	if err == nil {
+		t.Errorf("Expected error when syncing nil state")
+	}
+
+	semanticKernel := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01")
+	err = semanticKernel.SyncState(ctx, nil)
 	if err == nil {
 		t.Errorf("Expected error when syncing nil state")
 	}
@@ -177,6 +208,17 @@ func TestStateDataNilInit(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	if state3.Data == nil {
+		t.Errorf("Expected state.Data to be initialized")
+	}
+
+	// SemanticKernel Data init test
+	semanticKernel := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01")
+	state4 := &State{}
+	err = semanticKernel.SyncState(ctx, state4)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if state4.Data == nil {
 		t.Errorf("Expected state.Data to be initialized")
 	}
 }
