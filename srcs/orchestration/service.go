@@ -442,16 +442,47 @@ func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 //
 // Returns: A slice of direct Message objects.
 func (h *Hub) Inbox(agentID string) []Message {
+	return h.InboxFrom(agentID, 0)
+}
+
+// ⚡ BOLT: [sync.Pool for high-frequency allocations]
+var messageSlicePool = sync.Pool{
+	New: func() interface{} {
+		s := make([]Message, 0, 16)
+		return &s
+	},
+}
+
+// InboxFrom retrieves undelivered or direct messages routed to a single agent, starting from the given offset.
+// The caller is responsible for returning the slice to messageSlicePool via PutMessageSlice.
+//
+// Parameters:
+//   - agentID: string; The unique identifier of the worker.
+//   - offset: int; The index of the first message to retrieve.
+//
+// Returns: A slice of direct Message objects.
+func (h *Hub) InboxFrom(agentID string, offset int) []Message {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
 	inbox := h.inbox[agentID]
-	if len(inbox) == 0 {
+	if len(inbox) <= offset {
 		return nil
 	}
-	res := make([]Message, len(inbox))
-	copy(res, inbox)
+
+	sp := messageSlicePool.Get().(*[]Message)
+	res := (*sp)[:0]
+	res = append(res, inbox[offset:]...)
 	return res
+}
+
+// PutMessageSlice returns a previously allocated Message slice to the sync.Pool.
+func PutMessageSlice(s []Message) {
+	if cap(s) > 0 {
+		// Optimization: reset slice and put it back in the pool
+		s = s[:0]
+		messageSlicePool.Put(&s)
+	}
 }
 
 // Meeting retrieves the current state and transcript of a specified virtual meeting room.
@@ -611,24 +642,26 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 	var lastCount int
 
 	sendNewMessages := func() error {
-		msgs := s.hub.Inbox(agentID)
-		if len(msgs) > lastCount {
-			for i := lastCount; i < len(msgs); i++ {
-				m := msgs[i]
-				if err := stream.Send(pb.Message_builder{
-					Id:             m.ID,
-					FromAgent:      m.FromAgent,
-					ToAgent:        m.ToAgent,
-					Type:           m.Type,
-					Content:        m.Content,
-					MeetingId:      m.MeetingID,
-					OccurredAtUnix: m.OccurredAt.Unix(),
-				}.Build()); err != nil {
-					return err
-				}
-			}
-			lastCount = len(msgs)
+		msgs := s.hub.InboxFrom(agentID, lastCount)
+		if msgs == nil {
+			return nil
 		}
+		defer PutMessageSlice(msgs)
+
+		for _, m := range msgs {
+			if err := stream.Send(pb.Message_builder{
+				Id:             m.ID,
+				FromAgent:      m.FromAgent,
+				ToAgent:        m.ToAgent,
+				Type:           m.Type,
+				Content:        m.Content,
+				MeetingId:      m.MeetingID,
+				OccurredAtUnix: m.OccurredAt.Unix(),
+			}.Build()); err != nil {
+				return err
+			}
+		}
+		lastCount += len(msgs)
 		return nil
 	}
 

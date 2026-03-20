@@ -110,7 +110,8 @@ func BenchmarkInbox(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = hub.Inbox("agent1")
+		res := hub.Inbox("agent1")
+		PutMessageSlice(res)
 	}
 }
 
