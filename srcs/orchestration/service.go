@@ -87,6 +87,7 @@ type Hub struct {
 	inbox         map[string][]Message
 	meetings      map[string]MeetingRoom
 	minimaxAPIKey string
+	subs          map[string][]chan struct{}
 }
 
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
@@ -97,6 +98,7 @@ func NewHub() *Hub {
 		agents:   map[string]Agent{},
 		inbox:    map[string][]Message{},
 		meetings: map[string]MeetingRoom{},
+		subs:     map[string][]chan struct{}{},
 	}
 }
 
@@ -217,7 +219,21 @@ func (h *Hub) Publish(message Message) error {
 		if _, ok := h.agents[message.ToAgent]; !ok {
 			return errors.New("recipient agent is not registered")
 		}
-		h.inbox[message.ToAgent] = append(h.inbox[message.ToAgent], message)
+
+		// Optimization: Check cap to avoid small reallocations
+		inbox := h.inbox[message.ToAgent]
+		if cap(inbox) == 0 {
+			inbox = make([]Message, 0, 16)
+		}
+		h.inbox[message.ToAgent] = append(inbox, message)
+
+		subs := h.subs[message.ToAgent]
+		for i := 0; i < len(subs); i++ {
+			select {
+			case subs[i] <- struct{}{}:
+			default:
+			}
+		}
 	}
 
 	sender := h.agents[message.FromAgent]
@@ -226,9 +242,23 @@ func (h *Hub) Publish(message Message) error {
 		if !ok {
 			return errors.New("meeting room is not registered")
 		}
+
+		if cap(meeting.Transcript) == 0 {
+			meeting.Transcript = make([]Message, 0, 16)
+		}
 		meeting.Transcript = append(meeting.Transcript, message)
 		h.meetings[message.MeetingID] = meeting
 		sender.Status = StatusInMeeting
+
+		for _, participant := range meeting.Participants {
+			subs := h.subs[participant]
+			for i := 0; i < len(subs); i++ {
+				select {
+				case subs[i] <- struct{}{}:
+				default:
+				}
+			}
+		}
 	} else {
 		sender.Status = StatusActive
 	}
@@ -237,6 +267,31 @@ func (h *Hub) Publish(message Message) error {
 	telemetry.RecordAgentApiCall(context.Background(), sender.ID, sender.Role, "publish")
 
 	return nil
+}
+
+// Subscribe returns a channel that receives real-time messages for the given agent.
+func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	ch := make(chan struct{}, 1)
+	h.subs[agentID] = append(h.subs[agentID], ch)
+
+	unsubscribe := func() {
+		h.mu.Lock()
+		defer h.mu.Unlock()
+		subs := h.subs[agentID]
+		for i, sub := range subs {
+			if sub == ch {
+				// Prevent memory leak from lingering reference in underlying array
+				subs[i] = nil
+				h.subs[agentID] = append(subs[:i], subs[i+1:]...)
+				break
+			}
+		}
+	}
+
+	return ch, unsubscribe
 }
 
 // Inbox retrieves all undelivered or direct messages routed exclusively to a single agent.
@@ -249,7 +304,13 @@ func (h *Hub) Inbox(agentID string) []Message {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	return append([]Message(nil), h.inbox[agentID]...)
+	inbox := h.inbox[agentID]
+	if len(inbox) == 0 {
+		return nil
+	}
+	res := make([]Message, len(inbox))
+	copy(res, inbox)
+	return res
 }
 
 // Meeting retrieves the current state and transcript of a specified virtual meeting room.
@@ -357,34 +418,50 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 }
 
 func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream pb.HubService_StreamMessagesServer) error {
-	// Simple polling implementation for demonstration.
-	// In production, use a proper pub/sub or channel-based mechanism.
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	agentID := req.GetAgentId()
+
+	// 1. Subscribe for new real-time messages to eliminate polling latency.
+	// We must subscribe first to avoid missing any messages published between
+	// draining the inbox and subscribing.
+	ch, unsubscribe := s.hub.Subscribe(agentID)
+	defer unsubscribe()
 
 	var lastCount int
+
+	sendNewMessages := func() error {
+		msgs := s.hub.Inbox(agentID)
+		if len(msgs) > lastCount {
+			for i := lastCount; i < len(msgs); i++ {
+				m := msgs[i]
+				if err := stream.Send(pb.Message_builder{
+					Id:             m.ID,
+					FromAgent:      m.FromAgent,
+					ToAgent:        m.ToAgent,
+					Type:           m.Type,
+					Content:        m.Content,
+					MeetingId:      m.MeetingID,
+					OccurredAtUnix: m.OccurredAt.Unix(),
+				}.Build()); err != nil {
+					return err
+				}
+			}
+			lastCount = len(msgs)
+		}
+		return nil
+	}
+
+	// 2. Drain any pre-existing messages in the inbox.
+	if err := sendNewMessages(); err != nil {
+		return err
+	}
+
 	for {
 		select {
 		case <-stream.Context().Done():
-			return nil
-		case <-ticker.C:
-			msgs := s.hub.Inbox(req.GetAgentId())
-			if len(msgs) > lastCount {
-				for i := lastCount; i < len(msgs); i++ {
-					m := msgs[i]
-					if err := stream.Send(pb.Message_builder{
-						Id:             m.ID,
-						FromAgent:      m.FromAgent,
-						ToAgent:        m.ToAgent,
-						Type:           m.Type,
-						Content:        m.Content,
-						MeetingId:      m.MeetingID,
-						OccurredAtUnix: m.OccurredAt.Unix(),
-					}.Build()); err != nil {
-						return err
-					}
-				}
-				lastCount = len(msgs)
+			return stream.Context().Err()
+		case <-ch:
+			if err := sendNewMessages(); err != nil {
+				return err
 			}
 		}
 	}
@@ -424,22 +501,21 @@ func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, erro
 	}
 
 	url := minimaxAPIURL
-	payload := map[string]interface{}{
-		"model": "MiniMax-M2.7",
-		"messages": []map[string]string{
-			{"role": "user", "content": prompt},
-		},
-	}
-
-	// ⚡ BOLT: [JSON serialization thrashing in LLM API routing] - Randomized Selection from Top 5
-	// Use a sync.Pool for bytes.Buffer and json.Encoder to avoid high-allocation JSON marshalling.
+	// Optimization: construct the JSON payload manually to avoid
+	// maps and slices allocations.
 	buf := bufferPool.Get().(*bytes.Buffer)
 	buf.Reset()
 	defer bufferPool.Put(buf)
 
-	if err := json.NewEncoder(buf).Encode(payload); err != nil {
+	buf.WriteString(`{"model":"MiniMax-M2.7","messages":[{"role":"user","content":`)
+	enc := json.NewEncoder(buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(prompt); err != nil {
 		return "", err
 	}
+	// Encode adds a newline, so we slice it off and add the closing brackets
+	buf.Truncate(buf.Len() - 1)
+	buf.WriteString(`}]}`)
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, buf)
 	if err != nil {

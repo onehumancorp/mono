@@ -153,10 +153,12 @@ func TestStreamMessagesViaGRPC(t *testing.T) {
 			Content:    "new task",
 			OccurredAt: time.Now(),
 		})
+		time.Sleep(50 * time.Millisecond)
+		cancel()
 	}()
 
 	err := srv.StreamMessages(pb.StreamMessagesRequest_builder{AgentId: "a2"}.Build(), stream)
-	if err != nil {
+	if err != nil && err != context.DeadlineExceeded && err != context.Canceled {
 		t.Fatalf("StreamMessages failed: %v", err)
 	}
 
@@ -244,8 +246,8 @@ func TestStreamMessagesViaGRPCCancellation(t *testing.T) {
 	stream := &MockStreamServer{ctx: ctx, messages: make([]*pb.Message, 0)}
 
 	err := srv.StreamMessages(pb.StreamMessagesRequest_builder{AgentId: "a2"}.Build(), stream)
-	if err != nil {
-		t.Fatalf("expected graceful shutdown, got %v", err)
+	if err != nil && err != context.Canceled {
+		t.Fatalf("expected graceful shutdown or context canceled, got %v", err)
 	}
 }
 
