@@ -20,6 +20,11 @@ This document outlines the state of AI agent framework interoperability within t
    - **Integration:** Implements the OHC universal agent interface to map CrewAI roles and tasks to LangGraph state.
    - **Feature:** Seamless task execution and role-based agent assignment across the swarm.
 
+4. **Semantic Kernel**
+   - **Status:** Supported
+   - **Integration:** Implements the OHC universal agent interface for Semantic Kernel. Integrates with the shared state manager and agent command executor.
+   - **Feature:** Enhanced function calling and prompt orchestration directly on the control plane.
+
 ## Architecture
 
 - **MCP Switchboard:** Acts as a proxy for JSON-RPC calls, managing rate-limiting and authorization.
@@ -27,5 +32,4 @@ This document outlines the state of AI agent framework interoperability within t
 - **Identity:** All intra-swarm communications require cryptographically verified SPIRE identities.
 
 ## Future Work
-- Expand support for additional frameworks (e.g., Semantic Kernel).
 - Optimize K8s operator for large-scale swarm scheduling.

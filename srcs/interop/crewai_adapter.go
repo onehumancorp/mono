@@ -5,18 +5,34 @@ import (
 	"fmt"
 )
 
-// CrewAIAdapter implements UniversalAdapter for CrewAI.
+// Summary: CrewAIAdapter implements UniversalAdapter for CrewAI.
+// Intent: CrewAIAdapter implements UniversalAdapter for CrewAI.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type CrewAIAdapter struct {
 	Identity string
 }
 
-// NewCrewAIAdapter creates a new CrewAIAdapter.
+// Summary: NewCrewAIAdapter creates a new CrewAIAdapter.
+// Intent: NewCrewAIAdapter creates a new CrewAIAdapter.
+// Params: identity
+// Returns: *CrewAIAdapter
+// Errors: None
+// Side Effects: None
 func NewCrewAIAdapter(identity string) *CrewAIAdapter {
 	return &CrewAIAdapter{
 		Identity: identity,
 	}
 }
 
+// Summary: SyncState functionality.
+// Intent: SyncState functionality.
+// Params: ctx, state
+// Returns: error
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (a *CrewAIAdapter) SyncState(ctx context.Context, state *State) error {
 	// Mock K8s/LangGraph state sync
 	if state == nil {
@@ -31,6 +47,12 @@ func (a *CrewAIAdapter) SyncState(ctx context.Context, state *State) error {
 	return nil
 }
 
+// Summary: ExecuteCommand functionality.
+// Intent: ExecuteCommand functionality.
+// Params: ctx, cmd
+// Returns: (string, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (a *CrewAIAdapter) ExecuteCommand(ctx context.Context, cmd string) (string, error) {
 	if cmd == "" {
 		return "", fmt.Errorf("empty command")
