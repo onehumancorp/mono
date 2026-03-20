@@ -30,7 +30,7 @@ type Server struct {
 	skills          []SkillPack
 	snapshots       []OrgSnapshot
 	integReg        *integrations.Registry
-	trustAgreements []TrustAgreement
+	trustAgreements []domain.TrustAgreement
 	incidents       []Incident
 	computeProfiles []ComputeProfile
 	budgetAlerts    []BudgetAlert
@@ -291,7 +291,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 		skills:          defaultSkillPacks(),
 		snapshots:       []OrgSnapshot{},
 		integReg:        integrations.NewRegistry(),
-		trustAgreements: []TrustAgreement{},
+		trustAgreements: []domain.TrustAgreement{},
 		incidents:       []Incident{},
 		computeProfiles: []ComputeProfile{},
 		budgetAlerts:    []BudgetAlert{},
@@ -1701,26 +1701,6 @@ func (s *Server) handleIssueAssign(w http.ResponseWriter, r *http.Request) {
 
 // ── B2B Collaboration ─────────────────────────────────────────────────────────
 
-// TrustAgreementStatus represents the lifecycle of a B2B trust agreement.
-type TrustAgreementStatus string
-
-const (
-	TrustStatusPending TrustAgreementStatus = "PENDING"
-	TrustStatusActive  TrustAgreementStatus = "ACTIVE"
-	TrustStatusRevoked TrustAgreementStatus = "REVOKED"
-)
-
-// TrustAgreement is a federated trust relationship between two OHC organisations.
-// It enables cross-org agent collaboration using SPIFFE-federated JWTs.
-type TrustAgreement struct {
-	ID           string               `json:"id"`
-	PartnerOrg   string               `json:"partnerOrg"`
-	PartnerJWKS  string               `json:"partnerJwksUrl"`
-	AllowedRoles []string             `json:"allowedRoles"`
-	Status       TrustAgreementStatus `json:"status"`
-	CreatedAt    time.Time            `json:"createdAt"`
-}
-
 type b2bHandshakeRequest struct {
 	PartnerOrg   string   `json:"partnerOrg"`
 	PartnerJWKS  string   `json:"partnerJwksUrl"`
@@ -1731,7 +1711,7 @@ func (s *Server) handleB2BAgreements(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		s.mu.RLock()
-		agreements := append([]TrustAgreement(nil), s.trustAgreements...)
+		agreements := append([]domain.TrustAgreement(nil), s.trustAgreements...)
 		s.mu.RUnlock()
 		writeJSON(w, agreements)
 	default:
@@ -1754,12 +1734,12 @@ func (s *Server) handleB2BHandshake(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	agreement := TrustAgreement{
+	agreement := domain.TrustAgreement{
 		ID:           "ta-" + strings.ReplaceAll(req.PartnerOrg, ".", "-") + "-" + time.Now().Format("20060102150405"),
 		PartnerOrg:   req.PartnerOrg,
 		PartnerJWKS:  req.PartnerJWKS,
 		AllowedRoles: req.AllowedRoles,
-		Status:       TrustStatusActive,
+		Status:       domain.TrustStatusActive,
 		CreatedAt:    time.Now().UTC(),
 	}
 
@@ -1791,7 +1771,7 @@ func (s *Server) handleB2BRevoke(w http.ResponseWriter, r *http.Request) {
 	defer s.mu.Unlock()
 	for i, ag := range s.trustAgreements {
 		if ag.ID == req.AgreementID {
-			s.trustAgreements[i].Status = TrustStatusRevoked
+			s.trustAgreements[i].Status = domain.TrustStatusRevoked
 			writeJSON(w, s.trustAgreements[i])
 			return
 		}

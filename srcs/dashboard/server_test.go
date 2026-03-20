@@ -2808,7 +2808,7 @@ func TestHandleB2BHandshakeAndAgreements(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d", resp.StatusCode)
 	}
-	var agreements []TrustAgreement
+	var agreements []domain.TrustAgreement
 	if err := json.NewDecoder(resp.Body).Decode(&agreements); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -2831,11 +2831,11 @@ func TestHandleB2BHandshakeAndAgreements(t *testing.T) {
 		b, _ := io.ReadAll(postResp.Body)
 		t.Fatalf("expected 200, got %d: %s", postResp.StatusCode, b)
 	}
-	var agreement TrustAgreement
+	var agreement domain.TrustAgreement
 	if err := json.NewDecoder(postResp.Body).Decode(&agreement); err != nil {
 		t.Fatalf("decode handshake response: %v", err)
 	}
-	if agreement.Status != TrustStatusActive {
+	if agreement.Status != domain.TrustStatusActive {
 		t.Errorf("expected ACTIVE status, got %s", agreement.Status)
 	}
 	if agreement.PartnerOrg != "globex.com" {
@@ -2853,12 +2853,12 @@ func TestHandleB2BHandshakeAndAgreements(t *testing.T) {
 		b, _ := io.ReadAll(revokeResp.Body)
 		t.Fatalf("expected 200, got %d: %s", revokeResp.StatusCode, b)
 	}
-	var revoked TrustAgreement
+	var revoked domain.TrustAgreement
 	if err := json.NewDecoder(revokeResp.Body).Decode(&revoked); err != nil {
 		t.Fatalf("decode revoke response: %v", err)
 	}
-	if revoked.Status != TrustStatusRevoked {
-		t.Errorf("expected REVOKED status, got %s", revoked.Status)
+	if revoked.Status != domain.TrustStatusRevoked {
+		t.Errorf("expected status %s, got %s", domain.TrustStatusRevoked, revoked.Status)
 	}
 }
 
