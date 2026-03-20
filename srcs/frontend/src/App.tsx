@@ -155,7 +155,7 @@ function OrgTree({
   );
 }
 
-/* ── Hire Agent Modal ── */
+/* ── Hire Agent Modal (Wizard) ── */
 function HireAgentForm({
   onHire,
   onClose,
@@ -163,50 +163,125 @@ function HireAgentForm({
   onHire: (name: string, role: string) => void;
   onClose: () => void;
 }) {
+  const [step, setStep] = useState(1);
   const [name, setName] = useState("");
-  const [role, setRole] = useState("SOFTWARE_ENGINEER");
+  const [role, setRole] = useState("");
   const commonRoles = [
     "SOFTWARE_ENGINEER", "PRODUCT_MANAGER", "QA_TESTER", "SECURITY_ENGINEER",
     "DESIGNER", "MARKETING_MANAGER", "GROWTH_AGENT", "CONTENT_STRATEGIST",
     "SEO_SPECIALIST", "BOOKKEEPER", "TAX_SPECIALIST",
   ];
+
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Hire Agent">
-      <div className="modal">
+    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Hire Agent Wizard">
+      <div className="modal modal--wide">
         <div className="modal-header">
           <h2 className="modal-title">Hire New Agent</h2>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Close">✕</button>
         </div>
         <div className="modal-body">
-          <label className="field">
-            <span className="field-label">Agent Name</span>
-            <input
-              className="input"
-              value={name}
-              placeholder="e.g. Senior Engineer 3"
-              onChange={(e) => setName(e.target.value)}
-              autoFocus
-            />
-          </label>
-          <label className="field">
-            <span className="field-label">Role</span>
-            <select className="input" value={role} onChange={(e) => setRole(e.target.value)}>
-              {commonRoles.map((r) => (
-                <option key={r} value={r}>{r.replace(/_/g, " ")}</option>
-              ))}
-            </select>
-          </label>
+          <div className="wizard-steps">
+            {["Select Role", "Details", "Confirm"].map((label, i) => (
+              <div key={label} className={`wizard-step ${step > i + 1 ? "wizard-step--done" : step === i + 1 ? "wizard-step--active" : ""}`}>
+                <span className="wizard-step__num">{step > i + 1 ? "✓" : i + 1}</span>
+                <span className="wizard-step__label">{label}</span>
+              </div>
+            ))}
+          </div>
+
+          {step === 1 && (
+            <div className="wizard-content">
+              <h3 className="wizard-heading">Step 1 — Select Agent Role</h3>
+              <p className="wizard-note">Choose the primary capability profile for this new agent. This dictates their base prompt and tool access.</p>
+              <div className="role-grid">
+                {commonRoles.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    className={`role-select-card ${role === r ? "role-select-card--active" : ""}`}
+                    onClick={() => {
+                      setRole(r);
+                      if (!name) {
+                        setName(`Senior ${r.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}`);
+                      }
+                    }}
+                  >
+                    <RoleAvatar role={r} name={r} />
+                    <span className="role-select-card__name">{r.replace(/_/g, " ")}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="wizard-content">
+              <h3 className="wizard-heading">Step 2 — Agent Details</h3>
+              <label className="field">
+                <span className="field-label">Agent Name</span>
+                <input
+                  className="input input--lg"
+                  value={name}
+                  placeholder={`e.g. Senior ${role ? role.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()) : "Agent"}`}
+                  onChange={(e) => setName(e.target.value)}
+                  autoFocus
+                />
+                <span className="field-hint">This name will appear in transcripts and the org chart.</span>
+              </label>
+              <label className="field">
+                <span className="field-label">Selected Role</span>
+                <div className="role-preview-bar">
+                  <RoleAvatar role={role} name={role} />
+                  <span className="role-preview-bar__name">{role.replace(/_/g, " ")}</span>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setStep(1)}>Change</button>
+                </div>
+              </label>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="wizard-content">
+              <h3 className="wizard-heading">Step 3 — Confirm Deployment</h3>
+              <div className="hire-summary">
+                <div className="hire-summary__avatar-wrap">
+                  <RoleAvatar role={role} name={name} />
+                </div>
+                <div className="hire-summary__info">
+                  <p className="hire-summary__name">{name}</p>
+                  <p className="hire-summary__role">{role.replace(/_/g, " ")}</p>
+                </div>
+              </div>
+              <p className="wizard-success">
+                This agent will be immediately provisioned with a SPIFFE identity, connected to the orchestration hub, and assigned to the default org chart branch.
+              </p>
+            </div>
+          )}
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={!name.trim()}
-            onClick={() => { onHire(name.trim(), role); }}
-          >
-            Hire Agent
-          </button>
+          {step === 1 && (
+            <>
+              <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
+              <button type="button" className="btn btn-primary" disabled={!role} onClick={() => setStep(2)}>Next: Details →</button>
+            </>
+          )}
+          {step === 2 && (
+            <>
+              <button type="button" className="btn btn-ghost" onClick={() => setStep(1)}>Back</button>
+              <button type="button" className="btn btn-primary" disabled={!name.trim()} onClick={() => setStep(3)}>Next: Confirm →</button>
+            </>
+          )}
+          {step === 3 && (
+            <>
+              <button type="button" className="btn btn-ghost" onClick={() => setStep(2)}>Back</button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => { onHire(name.trim(), role); }}
+              >
+                Deploy Agent
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -641,8 +641,10 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 	hub.RegisterAgent(orchestration.Agent{ID: "pm-1", Name: "Product Manager", Role: "PRODUCT_MANAGER", OrganizationID: org.ID})
 	hub.RegisterAgent(orchestration.Agent{ID: "swe-1", Name: "Software Engineer", Role: "SOFTWARE_ENGINEER", OrganizationID: org.ID})
 	hub.RegisterAgent(orchestration.Agent{ID: "ux-1", Name: "Design Lead", Role: "DESIGNER", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "qa-1", Name: "QA Lead", Role: "QA_TESTER", OrganizationID: org.ID})
+	hub.RegisterAgent(orchestration.Agent{ID: "sec-1", Name: "Security Auditor", Role: "SECURITY_ENGINEER", OrganizationID: org.ID})
 	hub.RegisterAgent(orchestration.Agent{ID: "CEO", Name: "Human CEO", Role: "CEO", OrganizationID: org.ID})
-	hub.OpenMeetingWithAgenda("launch-readiness", "Review launch blockers, sign-off on reliability checklist, assign post-launch owners.", []string{"pm-1", "swe-1", "ux-1", "CEO"})
+	hub.OpenMeetingWithAgenda("launch-readiness", "Review launch blockers, sign-off on reliability checklist, assign post-launch owners.", []string{"pm-1", "swe-1", "ux-1", "qa-1", "sec-1", "CEO"})
 
 	_ = hub.Publish(orchestration.Message{
 		ID:         "seed-1",

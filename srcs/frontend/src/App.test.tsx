@@ -430,16 +430,16 @@ describe("App – navigation tabs", () => {
     expect(screen.queryByText("Hire New Agent")).not.toBeInTheDocument();
   });
 
-  it("Hire Agent button is disabled until name is entered", async () => {
+  it("Next Details button is disabled until role is selected", async () => {
     vi.stubGlobal("fetch", makeFetch());
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
-    const hireBtn = screen.getByRole("button", { name: "Hire Agent" });
-    expect(hireBtn).toBeDisabled();
-    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "New Agent" } });
-    expect(hireBtn).not.toBeDisabled();
+    const nextBtn = screen.getByRole("button", { name: /Next: Details/i });
+    expect(nextBtn).toBeDisabled();
+    fireEvent.click(screen.getAllByText("SOFTWARE ENGINEER")[0]);
+    expect(nextBtn).not.toBeDisabled();
   });
 
   it("successfully hires an agent and shows notice", async () => {
@@ -448,8 +448,14 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
-    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "New Agent" } });
-    fireEvent.click(screen.getByRole("button", { name: "Hire Agent" }));
+
+    fireEvent.click(screen.getAllByText("SOFTWARE ENGINEER")[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Next: Details/i }));
+
+    fireEvent.change(screen.getByPlaceholderText(/Senior Software Engineer/i), { target: { value: "New Agent" } });
+    fireEvent.click(screen.getByRole("button", { name: /Next: Confirm/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Deploy Agent" }));
     await screen.findByText(/Agent "New Agent" hired successfully/);
   });
 
@@ -463,8 +469,15 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
-    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "Fail Agent" } });
-    fireEvent.click(screen.getByRole("button", { name: "Hire Agent" }));
+
+    fireEvent.click(screen.getAllByText("SOFTWARE ENGINEER")[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Next: Details/i }));
+
+    fireEvent.change(screen.getByPlaceholderText(/Senior Software Engineer/i), { target: { value: "Fail Agent" } });
+    fireEvent.click(screen.getByRole("button", { name: /Next: Confirm/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Deploy Agent" }));
+
     // error is stored in state; navigate to overview where the form renders it
     await waitFor(() => {
       fireEvent.click(screen.getByRole("button", { name: /overview/i }));
@@ -478,10 +491,15 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
-    const roleSelect = screen.getByDisplayValue("SOFTWARE ENGINEER");
-    fireEvent.change(roleSelect, { target: { value: "PRODUCT_MANAGER" } });
-    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "PM Agent" } });
-    fireEvent.click(screen.getByRole("button", { name: "Hire Agent" }));
+
+    fireEvent.click(screen.getAllByText("PRODUCT MANAGER")[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Next: Details/i }));
+
+    fireEvent.change(screen.getByPlaceholderText(/Senior Product Manager/i), { target: { value: "PM Agent" } });
+    fireEvent.click(screen.getByRole("button", { name: /Next: Confirm/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Deploy Agent" }));
+
     await screen.findByText(/Agent "PM Agent" hired successfully/);
   });
 
@@ -2524,11 +2542,9 @@ describe("App – War Room Approval Cards", () => {
     } as any;
 
     // we use global fetch mock in other tests, let's stick to the same pattern
-    const dashboardSpy = vi.fn(async () => snapshotWithApproval);
-
     vi.stubGlobal(
       "fetch",
-      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      vi.fn(async (input: RequestInfo | URL) => {
         const urlStr = input.toString();
         if (urlStr === "/api/dashboard") return mockJson(snapshotWithApproval);
         if (urlStr === "/api/messages") {
@@ -2559,7 +2575,7 @@ describe("App – War Room Approval Cards", () => {
     // Test Approve click
     fireEvent.click(approveBtn);
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(window.fetch).toHaveBeenCalledWith(
         "/api/messages",
         expect.objectContaining({
           method: "POST",
@@ -2571,7 +2587,7 @@ describe("App – War Room Approval Cards", () => {
     // Test Reject click
     fireEvent.click(rejectBtn);
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(window.fetch).toHaveBeenCalledWith(
         "/api/messages",
         expect.objectContaining({
           method: "POST",

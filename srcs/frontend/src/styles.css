@@ -1263,20 +1263,23 @@ body {
 }
 
 .agent-card {
-  background: var(--bg-card);
+  background: rgba(22, 27, 34, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-card);
   border-radius: var(--r-lg);
   padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   animation: fadeUp 220ms ease both;
 }
 
 .agent-card:hover {
+  transform: translateY(-3px);
   border-color: rgba(47, 129, 247, 0.3);
-  box-shadow: 0 0 0 3px rgba(47, 129, 247, 0.07);
+  box-shadow: 0 8px 32px rgba(47, 129, 247, 0.15);
 }
 
 .agent-card__top {
@@ -1284,6 +1287,11 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.2rem;
+}
+
+.agent-card__top .role-avatar {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .agent-card__name {
@@ -2061,6 +2069,108 @@ select.input {
   color: var(--text-muted);
   margin-top: 0.2rem;
   line-height: 1.5;
+}
+
+/* ── Hire Agent Wizard Styles ── */
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.role-select-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.role-select-card:hover {
+  background: rgba(47, 129, 247, 0.08);
+  border-color: rgba(47, 129, 247, 0.3);
+  transform: translateY(-2px);
+}
+
+.role-select-card--active {
+  background: rgba(47, 129, 247, 0.12);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.role-select-card__name {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.input--lg {
+  font-size: 14px;
+  padding: 0.6rem 0.85rem;
+}
+
+.role-preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.role-preview-bar__name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.hire-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  margin-bottom: 0.5rem;
+}
+
+.hire-summary__avatar-wrap .role-avatar {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+  border-radius: var(--r-md);
+}
+
+.hire-summary__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.hire-summary__name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.hire-summary__role {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* ── Tool item meta line ── */
