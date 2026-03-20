@@ -45,6 +45,11 @@ A high-level summary of the testing strategy for the Autonomous SRE Engine featu
 - ArgoCD deployed in the test cluster.
 
 ## Implementation Details
-- Tests written in Go (using `testing` package and Table-Driven Test pattern).
-- >95% coverage requirement per `AGENTS.md`.
-- Hermetic testing enforced via Bazel `test //...`.
+- **Architecture**: The SRE testing framework leverages Go 1.26 table-driven tests against PostgreSQL event seeders. The OpenTelemetry/Prometheus collector is verified via simulated span injections over local gRPC loops.
+- **Execution**: Run via `bazelisk test //...` across the repository.
+- **Rules of Engagement**: >95% test coverage is strictly enforced. The suite uses Gomock for internal interfaces but connects to a real Kubernetes control plane (minikube/kind) during integration tests.
+
+## Edge Cases
+- **False Positives**: The anomaly detection logic can be overly aggressive. The test suite includes a "noisy neighbor" workload simulation to verify that CPU spikes don't trigger cascading, incorrect alerts.
+- **Break-Glass Escalation**: Tests verify that if an SRE agent requests destructive capabilities (e.g., pod deletion), the system reliably halts execution and creates a Warm Handoff rather than autonomously wrecking the cluster.
+- **Telemetry Disconnect**: If the OpenTelemetry collector drops the connection, tests verify the SRE engine degrades gracefully to basic Kubernetes events instead of crashing.

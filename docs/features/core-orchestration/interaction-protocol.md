@@ -61,3 +61,13 @@ All A2A gRPC traffic is mandatorily encrypted via Mutual TLS (mTLS).
 - **Phase 1**: Hub-mediated Pub/Sub (COMPLETE).
 - **Phase 2**: mTLS-backed gRPC streaming for specialist debates (IN-PROGRESS).
 - **Phase 3**: Cross-cluster A2A for multi-org collaborations (BACKLOG).
+
+## 7. Implementation Details
+- **Architecture**: Microservices built in Go 1.26 leveraging Protobufs and gRPC for high-speed synchronous agent debates, and Redis Pub/Sub for asynchronous state management.
+- **Identity Engine**: SPIFFE/SPIRE integrated to issue unique X.509 SVIDs per agent pod, enabling zero-trust intra-cluster communication.
+- **State Store**: Postgres backing the append-only log architecture, ensuring perfect auditability of agent intent.
+
+## 8. Edge Cases
+- **Stale SVIDs**: If an agent pod's SVID expires mid-conversation, mTLS handshakes fail, and the agent must undergo dynamic re-attestation before resuming.
+- **Context Bloat**: Prolonged multi-agent debates may exceed standard LLM token limits; the Engine utilizes proactive, continuous summarization to cull old transcript history.
+- **Event Storms**: Misbehaving agents entering an infinite retry loop risk overwhelming Redis. The Operator enforces circuit breakers triggering a forced pod restart and Warm Handoff.

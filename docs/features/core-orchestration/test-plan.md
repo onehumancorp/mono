@@ -44,6 +44,11 @@ A high-level summary of the testing strategy for the Core Orchestration Engine f
 - OHC Hub configured with local NATS/Kafka and Redis.
 
 ## Implementation Details
-- Tests written in Go (using `testing` package and Table-Driven Test pattern).
-- >95% coverage requirement per `AGENTS.md`.
-- Hermetic testing enforced via Bazel `test //...`.
+- **Architecture**: Tested via Go 1.26 table-driven tests that utilize standard library features (`testing`, `gomock`). The test suite simulates the `HoldingCompany` CRD and orchestrates multi-agent LangGraph workflows against an in-memory Postgres test fixture to ensure determinism.
+- **Execution**: All tests run hermetically under Bazel 9.0.0 remote execution (`bazelisk test //...`). Mocks are restricted to external LLM provider APIs to ensure tests pass rapidly without incurring token costs or relying on external networks.
+- **Validation**: Strict >95% test coverage is required for all state transition logic within the `Hub`.
+
+## Edge Cases
+- **Cyclic Dependency DAGs**: A test deliberately inputs a circular dependency into the PM's task assignment graph. It verifies the Orchestration Engine's DAG evaluator detects the cycle and raises a `DependencyCycleError` for human review rather than infinitely looping.
+- **Redis Message Loss**: Tests simulate dropping random events from the Redis pub/sub queue. They verify the Engine's reconciliation loop eventually detects the dropped state and triggers a re-fetch from the append-only Postgres log.
+- **Provider API Outages**: Integration tests mock a 503 error from the LLM provider (OpenAI/Anthropic) to verify the Hub pauses active agent workflows and places them in a `ProviderRetry` queue rather than silently dropping or failing tasks.

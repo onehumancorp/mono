@@ -16,3 +16,13 @@ You can read the full transcript of any meeting, even if it has finished. This p
 
 ### Human Intervention
 As CEO, you can drop into any meeting and provide direct guidance. Your input is treated as a "High Priority Goal" by all agents in the room.
+
+## Implementation Details
+- **Architecture**: The protocol orchestrates agent coordination via a Go 1.26 backend using asynchronous pub/sub patterns. Redis handles standard eventing (Fire and Forget), while synchronous multi-agent debates utilize low-latency gRPC streaming.
+- **Security**: All agent-to-agent interactions require Mutual TLS (mTLS) with identity verification via SPIFFE SVIDs, preventing malicious spoofing or rogue agent intrusion.
+- **State Management**: Meeting transcripts and task data are captured natively via append-only Postgres event logs.
+
+## Edge Cases
+- **Message Loss & Redis Failures**: High-load network drops are mitigated by exponential backoff. Failed messages drop into a Redis Dead Letter Queue (DLQ) for DevOps intervention.
+- **Context Flooding**: Lengthy debates triggering LLM context-limit errors are mitigated by an AI summarizer shrinking early transcript context on the fly.
+- **Deadlocks**: If two agents infinitely loop in a disagreement (e.g., SWE vs. Security), the system detects a "timeout" deadlock and escalates a Warm Handoff to a human manager.

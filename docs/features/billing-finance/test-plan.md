@@ -44,6 +44,11 @@ A high-level summary of the testing strategy for the Billing & Finance Engine fe
 - OHC Hub configured with local test database for the billing ledger.
 
 ## Implementation Details
-- Tests written in Go (using `testing` package and Table-Driven Test pattern).
-- >95% coverage requirement per `AGENTS.md`.
-- Hermetic testing enforced via Bazel `test //...`.
+- **Architecture**: Tested via Go 1.26 table-driven tests that utilize gomock for the MCP Gateway middleware interceptor. The integration layer tests against an active, seeded PostgreSQL instance to verify token ledger persistence.
+- **Execution**: Hermetically executed under Bazel 9.0.0 (`bazelisk test //...`). Tests avoid any live external API calls to OpenAI or Anthropic, instead mocking the token response payloads in the interceptor layer.
+- **Validation**: >95% test coverage is strictly enforced. The suite validates accurate float arithmetic for dynamic model-aware pricing.
+
+## Edge Cases
+- **Streaming Token Interruption**: Tests simulate a mid-stream WebSocket failure to ensure the billing engine accurately records the chunk count received up to the failure point, preventing unbilled usage.
+- **Zero-Cost Models**: A test explicitly sets an open-source model's price to `$0.00` to verify that division-by-zero errors do not occur when calculating ROI or efficiency metrics.
+- **Concurrent Threshold Stampedes**: The E2E suite spins up 50 mock agents that simultaneously cross the monthly budget threshold, ensuring the database transaction lock accurately suspends agents without double-billing or race conditions.
