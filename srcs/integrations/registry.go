@@ -412,6 +412,16 @@ func (r *Registry) SendChatMessage(integrationID, channel, fromAgent, content, t
 // TestConnection validates that the provided credentials can reach the external
 // service by sending a short test message.  Use this during setup wizards
 // before persisting credentials.
+//
+// Parameters:
+//   - id: string; The identifier of the integration to test.
+//   - creds: IntegrationCredentials; The credentials to validate.
+//
+// Returns: An error if the connection test fails.
+//
+// Errors: Fails if the integration is missing or if the external API call fails.
+//
+// Side Effects: Triggers real outbound HTTP API calls to Telegram or Discord.
 func (r *Registry) TestConnection(id string, creds IntegrationCredentials) error {
 	r.mu.RLock()
 	integ, ok := r.findIntegration(id)
@@ -456,6 +466,10 @@ func (r *Registry) TestConnection(id string, creds IntegrationCredentials) error
 //   - integrationID: string; Filter by integration. Pass an empty string for all messages.
 //
 // Returns: A slice of ChatMessage records.
+//
+// Errors: None.
+//
+// Side Effects: None. Executes a read-only lock.
 func (r *Registry) ChatMessages(integrationID string) []ChatMessage {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -484,6 +498,10 @@ func (r *Registry) ChatMessages(integrationID string) []ChatMessage {
 //   - now: time.Time; Timestamp.
 //
 // Returns: A PullRequest record of the action, or an error if parameters are invalid.
+//
+// Errors: Fails if the integration is not a git platform or if required fields are missing.
+//
+// Side Effects: Appends a new PullRequest to the internal memory store.
 func (r *Registry) CreatePullRequest(integrationID, repo, title, body, source, target, createdBy string, now time.Time) (PullRequest, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -529,6 +547,10 @@ func (r *Registry) CreatePullRequest(integrationID, repo, title, body, source, t
 //   - prID: string; The unique registry ID of the pull request.
 //
 // Returns: The updated PullRequest record.
+//
+// Errors: Fails if the PR is not found or is not in the open state.
+//
+// Side Effects: Mutates the status of the PullRequest to PRStatusMerged.
 func (r *Registry) MergePullRequest(prID string) (PullRequest, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -551,6 +573,10 @@ func (r *Registry) MergePullRequest(prID string) (PullRequest, error) {
 //   - prID: string; The unique registry ID of the pull request.
 //
 // Returns: The updated PullRequest record.
+//
+// Errors: Fails if the PR is not found or is not in the open state.
+//
+// Side Effects: Mutates the status of the PullRequest to PRStatusClosed.
 func (r *Registry) ClosePullRequest(prID string) (PullRequest, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -573,6 +599,10 @@ func (r *Registry) ClosePullRequest(prID string) (PullRequest, error) {
 //   - integrationID: string; Filter by integration. Pass an empty string to return all.
 //
 // Returns: A slice of PullRequest records.
+//
+// Errors: None.
+//
+// Side Effects: None. Executes a read-only lock.
 func (r *Registry) PullRequests(integrationID string) []PullRequest {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -601,6 +631,10 @@ func (r *Registry) PullRequests(integrationID string) []PullRequest {
 //   - now: time.Time; Current timestamp.
 //
 // Returns: An Issue record of the action, or an error if parameters are invalid.
+//
+// Errors: Fails if the integration is not an issue tracker or required fields are missing.
+//
+// Side Effects: Appends a new Issue to the internal memory store.
 func (r *Registry) CreateIssue(integrationID, project, title, description, createdBy string, priority IssuePriority, labels []string, now time.Time) (Issue, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -650,6 +684,10 @@ func (r *Registry) CreateIssue(integrationID, project, title, description, creat
 //   - status: IssueStatus; The new status phase (e.g., IssueStatusDone).
 //
 // Returns: The updated Issue record.
+//
+// Errors: Fails if the issue cannot be found.
+//
+// Side Effects: Mutates the status of the specific Issue record.
 func (r *Registry) UpdateIssueStatus(issueID string, status IssueStatus) (Issue, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -670,6 +708,10 @@ func (r *Registry) UpdateIssueStatus(issueID string, status IssueStatus) (Issue,
 //   - assignee: string; The identifier of the assigned worker.
 //
 // Returns: The updated Issue record.
+//
+// Errors: Fails if the issue cannot be found.
+//
+// Side Effects: Mutates the AssignedTo field of the specific Issue record.
 func (r *Registry) AssignIssue(issueID, assignee string) (Issue, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -689,6 +731,10 @@ func (r *Registry) AssignIssue(issueID, assignee string) (Issue, error) {
 //   - integrationID: string; Filter by integration. Pass an empty string for all tickets.
 //
 // Returns: A slice of Issue records.
+//
+// Errors: None.
+//
+// Side Effects: None. Executes a read-only lock.
 func (r *Registry) Issues(integrationID string) []Issue {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
