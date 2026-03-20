@@ -32,6 +32,13 @@ A high-level summary of the testing strategy for the Automated Implementation Pi
 | E2E-02 | Staging Rejection| Reject a staging preview | Pipeline rolls back and notifies SWE | Pending |
 | E2E-03 | Production Promote| Approve staging for production | Deployment applied to production namespace | Pending |
 
+### 3.4 UI Components and Constants Testing
+| Test ID | Component | Description | Expected Result | Status |
+|---------|-----------|-------------|-----------------|--------|
+| UI-01 | Active PRs List | Verify rendering of the "Active PRs" list | List displays PRs transitioning states | Pending |
+| UI-02 | Approve Spec Button | Verify "Approve Spec" button functionality | Clicking the button triggers task assignment | Pending |
+| UI-03 | Start Implementation Button | Verify "Start Implementation" button functionality | Clicking the button starts the pipeline | Pending |
+
 ## 4. Edge Cases & Error Handling
 - **Build Failure:** Verify SWE agent correctly receives build errors and attempts automatic fix.
 - **Cost Limit:** Verify deployment pauses when proximity-to-spend limit is reached.
