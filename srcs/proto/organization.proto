@@ -2,11 +2,9 @@ edition = "2024";
 
 package ohc.organization;
 
-import "google/protobuf/go_features.proto";
-import "common.proto";
+import "srcs/proto/common.proto";
 
 option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/organization;organizationpb";
-option features.(pb.go).api = OPAQUE;
 
 message RoleProfile {
   ohc.common.Role role = 1;

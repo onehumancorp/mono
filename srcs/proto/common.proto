@@ -2,10 +2,8 @@ edition = "2024";
 
 package ohc.common;
 
-import "google/protobuf/go_features.proto";
 
 option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/common;commonpb";
-option features.(pb.go).api = OPAQUE;
 
 enum Role {
   ROLE_UNSPECIFIED = 0;

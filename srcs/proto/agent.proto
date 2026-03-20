@@ -2,11 +2,9 @@ edition = "2024";
 
 package ohc.agent;
 
-import "google/protobuf/go_features.proto";
-import "common.proto";
+import "srcs/proto/common.proto";
 
 option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/agent;agentpb";
-option features.(pb.go).api = OPAQUE;
 
 message Agent {
   string id = 1;
