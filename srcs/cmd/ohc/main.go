@@ -86,7 +86,10 @@ func run(now time.Time, listen listenFunc) error {
 			slog.Error("failed to listen for gRPC", "error", err)
 			return
 		}
-		s := grpc.NewServer()
+		s := grpc.NewServer(
+			grpc.UnaryInterceptor(orchestration.SPIFFEAuthInterceptor()),
+			grpc.StreamInterceptor(orchestration.SPIFFEStreamInterceptor()),
+		)
 		orchestration.RegisterHubService(s, hub)
 		slog.Info("serving gRPC on :9090")
 		if err := s.Serve(lis); err != nil {

@@ -4,7 +4,10 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "orchestration",
-    srcs = ["service.go"],
+    srcs = [
+        "auth_interceptor.go",
+        "service.go",
+    ],
     importpath = "github.com/onehumancorp/mono/srcs/orchestration",
     visibility = ["//visibility:public"],
     deps = [
@@ -12,6 +15,8 @@ go_library(
         "//srcs/telemetry",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//credentials",
+        "@org_golang_google_grpc//peer",
         "@org_golang_google_grpc//status",
     ],
 )
@@ -19,6 +24,7 @@ go_library(
 go_test(
     name = "orchestration_test",
     srcs = [
+        "auth_interceptor_test.go",
         "benchmark_test.go",
         "minimax_client_test.go",
         "service_grpc_test.go",
@@ -29,7 +35,9 @@ go_test(
         "//srcs/proto:hub_go_proto",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//credentials",
         "@org_golang_google_grpc//metadata",
+        "@org_golang_google_grpc//peer",
         "@org_golang_google_grpc//status",
     ],
 )
