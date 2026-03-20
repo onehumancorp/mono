@@ -442,15 +442,29 @@ func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 //
 // Returns: A slice of direct Message objects.
 func (h *Hub) Inbox(agentID string) []Message {
+	return h.InboxFrom(agentID, 0)
+}
+
+// InboxFrom retrieves all direct messages routed to a single agent starting from a specific index.
+// This is used for optimising stream latency by avoiding full-copy reallocations.
+//
+// Parameters:
+//   - agentID: string; The unique identifier of the worker.
+//   - startIdx: int; The starting index.
+//
+// Returns: A slice of direct Message objects from the start index to the end.
+func (h *Hub) InboxFrom(agentID string, startIdx int) []Message {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
 	inbox := h.inbox[agentID]
-	if len(inbox) == 0 {
+	if len(inbox) <= startIdx {
 		return nil
 	}
-	res := make([]Message, len(inbox))
-	copy(res, inbox)
+
+	sliceLen := len(inbox) - startIdx
+	res := make([]Message, sliceLen)
+	copy(res, inbox[startIdx:])
 	return res
 }
 
@@ -611,9 +625,9 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 	var lastCount int
 
 	sendNewMessages := func() error {
-		msgs := s.hub.Inbox(agentID)
-		if len(msgs) > lastCount {
-			for i := lastCount; i < len(msgs); i++ {
+		msgs := s.hub.InboxFrom(agentID, lastCount)
+		if len(msgs) > 0 {
+			for i := 0; i < len(msgs); i++ {
 				m := msgs[i]
 				if err := stream.Send(pb.Message_builder{
 					Id:             m.ID,
@@ -627,7 +641,7 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 					return err
 				}
 			}
-			lastCount = len(msgs)
+			lastCount += len(msgs)
 		}
 		return nil
 	}
@@ -675,7 +689,18 @@ var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
 // Errors: None
 // Side Effects: None
 type MinimaxClient struct {
-	APIKey string
+	APIKey     string
+	HTTPClient *http.Client
+}
+
+// defaultHTTPClient is a shared, static *http.Client instances used to optimize connection pooling.
+var defaultHTTPClient = &http.Client{
+	Timeout: 30 * time.Second,
+	Transport: &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 100,
+		IdleConnTimeout:     90 * time.Second,
+	},
 }
 
 // Summary: NewMinimaxClient functionality.
@@ -685,7 +710,10 @@ type MinimaxClient struct {
 // Errors: None
 // Side Effects: None
 func NewMinimaxClient(apiKey string) *MinimaxClient {
-	return &MinimaxClient{APIKey: apiKey}
+	return &MinimaxClient{
+		APIKey:     apiKey,
+		HTTPClient: defaultHTTPClient,
+	}
 }
 
 var bufferPool = sync.Pool{
@@ -730,8 +758,7 @@ func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, erro
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.APIKey)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return "", err
 	}
