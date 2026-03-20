@@ -251,8 +251,8 @@ func (r *Registry) Integration(id string) (Integration, bool) {
 	return Integration{}, false
 }
 
-// lookupIP is a variable to allow mocking net.LookupIP in tests.
-var lookupIP = net.LookupIP
+// LookupIPFunc is a variable to allow mocking net.LookupIP in tests across packages.
+var LookupIPFunc = net.LookupIP
 
 // validateURL checks if a given URL string is safe from SSRF attacks.
 // It explicitly blocks loopback, private, unspecified, and link-local IP addresses.
@@ -272,7 +272,7 @@ func validateURL(u string) error {
 		return errors.New("URL must contain a host")
 	}
 
-	ips, err := lookupIP(host)
+	ips, err := LookupIPFunc(host)
 	if err != nil {
 		// Fail closed on DNS resolution error
 		return errors.New("DNS resolution failed")
@@ -788,6 +788,10 @@ var TelegramAPIBase = "https://api.telegram.org"
 
 // sendTelegramMessage posts a text message to a Telegram chat via the Bot API.
 func sendTelegramMessage(botToken, chatID, text string) error {
+	if err := validateURL(TelegramAPIBase); err != nil {
+		return err
+	}
+
 	apiURL := TelegramAPIBase + "/bot" + botToken + "/sendMessage"
 	payload, err := json.Marshal(map[string]string{
 		"chat_id": chatID,

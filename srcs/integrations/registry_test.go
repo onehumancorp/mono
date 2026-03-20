@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -15,7 +16,7 @@ func mockLookupIP(host string) ([]net.IP, error) {
 	if host == "api.github.com" || host == "api.telegram.org" {
 		return []net.IP{net.ParseIP("140.82.112.3")}, nil
 	}
-	if strings.Contains(host, "127.0.0.1") || host == "localhost" {
+	if host == "127.0.0.1" || host == "localhost" {
 		return []net.IP{net.ParseIP("127.0.0.1")}, nil
 	}
 	if host == "[::1]" || host == "::1" {
@@ -36,20 +37,17 @@ func mockLookupIP(host string) ([]net.IP, error) {
 	if host == "0.0.0.0" {
 		return []net.IP{net.ParseIP("0.0.0.0")}, nil
 	}
-	if strings.HasPrefix(host, "127.") {
-		return []net.IP{net.ParseIP(host)}, nil
-	}
 	if host == "example.com" {
 		return []net.IP{net.ParseIP("93.184.216.34")}, nil
 	}
-	// Default: return a fake public IP to bypass SSRF prevention for httptest servers
+	// Default: return a fake public IP to bypass SSRF prevention for httptest servers.
 	return []net.IP{net.ParseIP("8.8.8.8")}, nil
 }
 
 func TestValidateURL(t *testing.T) {
-	oldLookupIP := lookupIP
-	lookupIP = mockLookupIP
-	defer func() { lookupIP = oldLookupIP }()
+	oldLookupIP := LookupIPFunc
+	LookupIPFunc = mockLookupIP
+	defer func() { LookupIPFunc = oldLookupIP }()
 
 	tests := []struct {
 		name    string
@@ -81,7 +79,7 @@ func TestValidateURL(t *testing.T) {
 
 	// DNS error test
 	t.Run("DNS Resolution Failed", func(t *testing.T) {
-		lookupIP = func(host string) ([]net.IP, error) {
+		LookupIPFunc = func(host string) ([]net.IP, error) {
 			return nil, net.UnknownNetworkError("unknown")
 		}
 		err := validateURL("http://unresolvable.local")
@@ -92,9 +90,9 @@ func TestValidateURL(t *testing.T) {
 }
 
 func TestConnectSSRF(t *testing.T) {
-	oldLookupIP := lookupIP
-	lookupIP = mockLookupIP
-	defer func() { lookupIP = oldLookupIP }()
+	oldLookupIP := LookupIPFunc
+	LookupIPFunc = mockLookupIP
+	defer func() { LookupIPFunc = oldLookupIP }()
 
 	r := NewRegistry()
 
@@ -120,9 +118,9 @@ func TestConnectSSRF(t *testing.T) {
 }
 
 func TestTestConnectionSSRF(t *testing.T) {
-	oldLookupIP := lookupIP
-	lookupIP = mockLookupIP
-	defer func() { lookupIP = oldLookupIP }()
+	oldLookupIP := LookupIPFunc
+	LookupIPFunc = mockLookupIP
+	defer func() { LookupIPFunc = oldLookupIP }()
 
 	r := NewRegistry()
 	_, _ = r.Connect("discord", "")
@@ -771,6 +769,12 @@ func TestSendChatMessageWithCreds(t *testing.T) {
 	}))
 	defer server.Close()
 
+	oldLookup := LookupIPFunc
+	LookupIPFunc = func(host string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("8.8.8.8")}, nil
+	}
+	defer func() { LookupIPFunc = oldLookup }()
+
 	oldBase := TelegramAPIBase
 	TelegramAPIBase = server.URL
 	defer func() { TelegramAPIBase = oldBase }()
@@ -856,6 +860,12 @@ func TestSendTelegramMessage(t *testing.T) {
 	}))
 	defer server.Close()
 
+	oldLookup := LookupIPFunc
+	LookupIPFunc = func(host string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("8.8.8.8")}, nil
+	}
+	defer func() { LookupIPFunc = oldLookup }()
+
 	oldBase := TelegramAPIBase
 	TelegramAPIBase = server.URL
 	defer func() { TelegramAPIBase = oldBase }()
@@ -883,6 +893,12 @@ func TestSendTelegramMessageError(t *testing.T) {
 		rw.Write([]byte(`{"ok": false, "description": "some error"}`))
 	}))
 	defer server.Close()
+
+	oldLookup := LookupIPFunc
+	LookupIPFunc = func(host string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("8.8.8.8")}, nil
+	}
+	defer func() { LookupIPFunc = oldLookup }()
 
 	oldBase := TelegramAPIBase
 	TelegramAPIBase = server.URL
@@ -912,6 +928,12 @@ func TestTestConnectionTelegram(t *testing.T) {
 		rw.Write([]byte(`{"ok": true}`))
 	}))
 	defer server.Close()
+
+	oldLookup := LookupIPFunc
+	LookupIPFunc = func(host string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("8.8.8.8")}, nil
+	}
+	defer func() { LookupIPFunc = oldLookup }()
 
 	oldBase := TelegramAPIBase
 	TelegramAPIBase = server.URL
@@ -1119,9 +1141,9 @@ func TestNewChatIntegrationsStartDisconnected(t *testing.T) {
 }
 
 func TestConnectAndDisconnectTelegram(t *testing.T) {
-	oldLookupIP := lookupIP
-	lookupIP = mockLookupIP
-	defer func() { lookupIP = oldLookupIP }()
+	oldLookupIP := LookupIPFunc
+	LookupIPFunc = mockLookupIP
+	defer func() { LookupIPFunc = oldLookupIP }()
 
 	r := NewRegistry()
 
@@ -1139,5 +1161,110 @@ func TestConnectAndDisconnectTelegram(t *testing.T) {
 	}
 	if disconnected.Status != StatusDisconnected {
 		t.Errorf("expected disconnected, got %q", disconnected.Status)
+	}
+}
+
+func TestSendTelegramMessageErrors(t *testing.T) {
+	oldLookup := LookupIPFunc
+	LookupIPFunc = func(host string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("8.8.8.8")}, nil
+	}
+	defer func() { LookupIPFunc = oldLookup }()
+
+	oldBase := TelegramAPIBase
+	defer func() { TelegramAPIBase = oldBase }()
+
+	// 1. HTTP Post error
+	closedServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
+	closedServer.Close()
+	TelegramAPIBase = closedServer.URL
+	err := sendTelegramMessage("tok", "chat", "msg")
+	if err == nil || !strings.Contains(err.Error(), "telegram API") {
+		t.Errorf("expected HTTP Post error, got %v", err)
+	}
+
+	// 2. Decode error
+	serverDecodeError := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Write([]byte(`{bad json`))
+	}))
+	defer serverDecodeError.Close()
+	TelegramAPIBase = serverDecodeError.URL
+
+	err = sendTelegramMessage("tok", "chat", "msg")
+	if err == nil || !strings.Contains(err.Error(), "telegram decode") {
+		t.Errorf("expected decode error, got %v", err)
+	}
+
+	// 3. API Error (ok = false)
+	serverAPIError := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Write([]byte(`{"ok": false, "description": "some error"}`))
+	}))
+	defer serverAPIError.Close()
+	TelegramAPIBase = serverAPIError.URL
+
+	err = sendTelegramMessage("tok", "chat", "msg")
+	if err == nil || !strings.Contains(err.Error(), "some error") {
+		t.Errorf("expected API error, got %v", err)
+	}
+}
+
+func TestSendDiscordWebhookErrors(t *testing.T) {
+	// 1. API Status error
+	serverStatusError := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer serverStatusError.Close()
+
+	err := sendDiscordWebhook(serverStatusError.URL, "user", "msg")
+	if err == nil || !strings.Contains(err.Error(), "discord API returned status 500") {
+		t.Errorf("expected API error, got %v", err)
+	}
+}
+
+
+func TestTelegramAPIBaseSSRF(t *testing.T) {
+	oldLookupIP := LookupIPFunc
+	LookupIPFunc = mockLookupIP
+	defer func() { LookupIPFunc = oldLookupIP }()
+
+	oldBase := TelegramAPIBase
+	defer func() { TelegramAPIBase = oldBase }()
+
+	// Valid URL server that returns a successful response to prevent making actual external network calls
+	validServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Write([]byte(`{"ok": true}`))
+	}))
+	defer validServer.Close()
+
+	parsed, _ := url.Parse(validServer.URL)
+	validHost := parsed.Hostname()
+
+	oldLookup := LookupIPFunc
+	LookupIPFunc = func(host string) ([]net.IP, error) {
+		if host == validHost {
+			return []net.IP{net.ParseIP("8.8.8.8")}, nil
+		}
+		return mockLookupIP(host)
+	}
+	defer func() { LookupIPFunc = oldLookup }()
+
+	tests := []struct {
+		name    string
+		url     string
+		wantErr bool
+	}{
+		{"Valid URL via Mock", validServer.URL, false},
+		{"Loopback IP", "http://127.0.0.1", true},
+		{"Private IP", "http://10.0.0.1", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			TelegramAPIBase = tt.url
+			err := sendTelegramMessage("tok", "chat", "msg")
+			if (err != nil) != tt.wantErr {
+				t.Errorf("sendTelegramMessage() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }
