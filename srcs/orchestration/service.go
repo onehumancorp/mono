@@ -407,6 +407,12 @@ func NewMinimaxClient(apiKey string) *MinimaxClient {
 	return &MinimaxClient{APIKey: apiKey}
 }
 
+var bufferPool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
+}
+
 func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, error) {
 	if c.APIKey == "" {
 		return "", errors.New("minimax API key is not configured")
@@ -420,12 +426,17 @@ func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, erro
 		},
 	}
 
-	body, err := json.Marshal(payload)
-	if err != nil {
+	// ⚡ BOLT: [JSON serialization thrashing in LLM API routing] - Randomized Selection from Top 5
+	// Use a sync.Pool for bytes.Buffer and json.Encoder to avoid high-allocation JSON marshalling.
+	buf := bufferPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer bufferPool.Put(buf)
+
+	if err := json.NewEncoder(buf).Encode(payload); err != nil {
 		return "", err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, buf)
 	if err != nil {
 		return "", err
 	}
