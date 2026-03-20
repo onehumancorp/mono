@@ -251,6 +251,9 @@ func (r *Registry) Integration(id string) (Integration, bool) {
 	return Integration{}, false
 }
 
+// lookupIP is a variable to allow mocking net.LookupIP in tests.
+var lookupIP = net.LookupIP
+
 // validateURL checks if a given URL string is safe from SSRF attacks.
 // It explicitly blocks loopback, private, unspecified, and link-local IP addresses.
 // It fails closed on DNS resolution errors.
@@ -269,7 +272,7 @@ func validateURL(u string) error {
 		return errors.New("URL must contain a host")
 	}
 
-	ips, err := net.LookupIP(host)
+	ips, err := lookupIP(host)
 	if err != nil {
 		// Fail closed on DNS resolution error
 		return errors.New("DNS resolution failed")
