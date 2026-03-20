@@ -45,7 +45,9 @@ const dashboardPayload = {
     organizationID: "org-1",
     totalTokens: 123,
     totalCostUSD: 0.012345,
-    agents: [{ agentID: "swe-1", model: "gpt-4o", tokenUsed: 120, costUSD: 0.008 }],
+    agents: [
+      { agentID: "swe-1", model: "gpt-4o", tokenUsed: 120, costUSD: 0.008 },
+    ],
   },
   agents: [
     {
@@ -104,11 +106,16 @@ describe("App", () => {
     await screen.findByText("Acme Software");
     expect(screen.getByText("One Human Corp Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Org Chart")).toBeInTheDocument();
-    expect(screen.getByText("Review roadmap", { exact: false })).toBeInTheDocument();
+    expect(
+      screen.getByText("Review roadmap", { exact: false }),
+    ).toBeInTheDocument();
   });
 
   it("shows API error state", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => mockJson({}, 500)));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => mockJson({}, 500)),
+    );
 
     render(<App />);
 
@@ -134,7 +141,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
         "/api/messages",
-        expect.objectContaining({ method: "POST" })
+        expect.objectContaining({ method: "POST" }),
       );
     });
     await screen.findByText("Message delivered to the meeting timeline.");
@@ -170,7 +177,10 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith("/api/dashboard", expect.any(Object));
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/dashboard",
+        expect.any(Object),
+      );
     });
   });
 });
@@ -183,7 +193,12 @@ const richPayload = {
     ceoId: "ceo-1",
     members: [
       { id: "ceo-1", name: "Alice CEO", role: "CEO", isHuman: true },
-      { id: "swe-1", name: "Bob SWE", role: "SOFTWARE_ENGINEER", managerId: "ceo-1" },
+      {
+        id: "swe-1",
+        name: "Bob SWE",
+        role: "SOFTWARE_ENGINEER",
+        managerId: "ceo-1",
+      },
     ],
     roleProfiles: [
       {
@@ -201,9 +216,27 @@ const richPayload = {
     ],
   },
   agents: [
-    { id: "ceo-1", name: "Alice CEO", role: "CEO", organizationId: "org-1", status: "ACTIVE" },
-    { id: "swe-1", name: "Bob SWE", role: "SOFTWARE_ENGINEER", organizationId: "org-1", status: "BLOCKED" },
-    { id: "qa-1", name: "Charlie QA", role: "QA_TESTER", organizationId: "org-1", status: "IDLE" },
+    {
+      id: "ceo-1",
+      name: "Alice CEO",
+      role: "CEO",
+      organizationId: "org-1",
+      status: "ACTIVE",
+    },
+    {
+      id: "swe-1",
+      name: "Bob SWE",
+      role: "SOFTWARE_ENGINEER",
+      organizationId: "org-1",
+      status: "BLOCKED",
+    },
+    {
+      id: "qa-1",
+      name: "Charlie QA",
+      role: "QA_TESTER",
+      organizationId: "org-1",
+      status: "IDLE",
+    },
   ],
   statuses: [
     { status: "ACTIVE", count: 2 },
@@ -221,9 +254,23 @@ function makeFetch() {
   return vi.fn(async (input: string) => {
     if (input === "/api/dashboard") return mockJson(richPayload);
     if (input === "/api/domains")
-      return mockJson([{ id: "software_company", name: "Software Company", description: "SaaS products" }]);
+      return mockJson([
+        {
+          id: "software_company",
+          name: "Software Company",
+          description: "SaaS products",
+        },
+      ]);
     if (input === "/api/mcp/tools")
-      return mockJson([{ id: "git-mcp", name: "Git MCP", description: "Git ops", category: "dev", status: "available" }]);
+      return mockJson([
+        {
+          id: "git-mcp",
+          name: "Git MCP",
+          description: "Git ops",
+          category: "dev",
+          status: "available",
+        },
+      ]);
     if (input === "/api/agents/hire") return mockJson(richPayload);
     if (input === "/api/agents/fire") return mockJson(richPayload);
     if (input === "/api/dev/seed") return mockJson(richPayload);
@@ -262,25 +309,40 @@ describe("App – navigation tabs", () => {
 
   it("shows 'No active meetings' in meetings tab when meeting list is empty", async () => {
     const noMeetings = { ...richPayload, meetings: [] };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(noMeetings);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(noMeetings);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
-    expect(screen.getAllByText("No active meetings.").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("No active meetings.").length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("shows meeting agenda when present", async () => {
     const withAgenda = {
       ...dashboardPayload,
-      meetings: [{ id: "launch-readiness", transcript: [], participants: [], agenda: "Review launch blockers" }],
+      meetings: [
+        {
+          id: "launch-readiness",
+          transcript: [],
+          participants: [],
+          agenda: "Review launch blockers",
+        },
+      ],
     };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(withAgenda);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(withAgenda);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     expect(screen.getByText("Review launch blockers")).toBeInTheDocument();
@@ -291,10 +353,13 @@ describe("App – navigation tabs", () => {
       ...dashboardPayload,
       meetings: [{ id: "empty-mtg", transcript: [], participants: [] }],
     };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(emptyTranscript);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(emptyTranscript);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     expect(screen.getByText("No messages yet.")).toBeInTheDocument();
@@ -303,24 +368,31 @@ describe("App – navigation tabs", () => {
   it("shows — for invalid occurredAt timestamp in transcript", async () => {
     const badTime = {
       ...dashboardPayload,
-      meetings: [{
-        id: "launch-readiness",
-        participants: ["pm-1"],
-        transcript: [{
-          id: "m-bad",
-          fromAgent: "pm-1",
-          toAgent: "swe-1",
-          type: "task",
-          content: "Bad time msg",
-          meetingId: "launch-readiness",
-          occurredAt: "not-a-valid-date",
-        }],
-      }],
+      meetings: [
+        {
+          id: "launch-readiness",
+          participants: ["pm-1"],
+          transcript: [
+            {
+              id: "m-bad",
+              fromAgent: "pm-1",
+              toAgent: "swe-1",
+              type: "task",
+              content: "Bad time msg",
+              meetingId: "launch-readiness",
+              occurredAt: "not-a-valid-date",
+            },
+          ],
+        },
+      ],
     };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(badTime);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(badTime);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Bad time msg");
     // formatTime("not-a-valid-date") → "—"
@@ -336,10 +408,13 @@ describe("App – navigation tabs", () => {
         { id: "mtg-2", transcript: [], participants: ["swe-1"] },
       ],
     };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(twoMeetings);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(twoMeetings);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
@@ -359,7 +434,9 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     expect(screen.getByText("Agent Network")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "+ Hire Agent" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "+ Hire Agent" }),
+    ).toBeInTheDocument();
     // Bob SWE appears in agent-card AND agents-tab org-chart; use getAllByText
     expect(screen.getAllByText("Bob SWE").length).toBeGreaterThan(0);
   });
@@ -377,10 +454,13 @@ describe("App – navigation tabs", () => {
   });
 
   it("shows status IN_MEETING badge in agents tab", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
@@ -391,10 +471,13 @@ describe("App – navigation tabs", () => {
 
   it("shows empty state when no agents registered", async () => {
     const emptyAgents = { ...richPayload, agents: [] };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(emptyAgents);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(emptyAgents);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
@@ -438,7 +521,9 @@ describe("App – navigation tabs", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
     const hireBtn = screen.getByRole("button", { name: "Hire Agent" });
     expect(hireBtn).toBeDisabled();
-    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "New Agent" } });
+    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), {
+      target: { value: "New Agent" },
+    });
     expect(hireBtn).not.toBeDisabled();
   });
 
@@ -448,22 +533,29 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
-    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "New Agent" } });
+    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), {
+      target: { value: "New Agent" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Hire Agent" }));
     await screen.findByText(/Agent "New Agent" hired successfully/);
   });
 
   it("shows error when hire agent fails (visible in overview form)", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(richPayload);
-      if (input === "/api/agents/hire") return mockJson({}, 422);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(richPayload);
+        if (input === "/api/agents/hire") return mockJson({}, 422);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
-    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "Fail Agent" } });
+    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), {
+      target: { value: "Fail Agent" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Hire Agent" }));
     // error is stored in state; navigate to overview where the form renders it
     await waitFor(() => {
@@ -480,7 +572,9 @@ describe("App – navigation tabs", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
     const roleSelect = screen.getByDisplayValue("SOFTWARE ENGINEER");
     fireEvent.change(roleSelect, { target: { value: "PRODUCT_MANAGER" } });
-    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "PM Agent" } });
+    fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), {
+      target: { value: "PM Agent" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Hire Agent" }));
     await screen.findByText(/Agent "PM Agent" hired successfully/);
   });
@@ -490,21 +584,28 @@ describe("App – navigation tabs", () => {
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
-    const removeButtons = await screen.findAllByRole("button", { name: "Remove" });
+    const removeButtons = await screen.findAllByRole("button", {
+      name: "Remove",
+    });
     fireEvent.click(removeButtons[0]);
     await screen.findByText(/removed from org/);
   });
 
   it("shows error when fire agent fails (visible in overview form)", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(richPayload);
-      if (input === "/api/agents/fire") return mockJson({}, 500);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(richPayload);
+        if (input === "/api/agents/fire") return mockJson({}, 500);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
-    const removeButtons = await screen.findAllByRole("button", { name: "Remove" });
+    const removeButtons = await screen.findAllByRole("button", {
+      name: "Remove",
+    });
     fireEvent.click(removeButtons[0]);
     // error is stored in state; navigate to overview where the form renders it
     await waitFor(() => {
@@ -520,7 +621,9 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     // Only swe-1 and qa-1 get Remove buttons (ceo-1 is human)
-    const removeButtons = await screen.findAllByRole("button", { name: "Remove" });
+    const removeButtons = await screen.findAllByRole("button", {
+      name: "Remove",
+    });
     expect(removeButtons.length).toBe(2);
   });
 
@@ -553,11 +656,17 @@ describe("App – navigation tabs", () => {
   });
 
   it("shows 'No cost data yet' when agents list is empty", async () => {
-    const noCost = { ...richPayload, costs: { ...richPayload.costs, agents: [] } };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(noCost);
-      return mockJson({}, 404);
-    }));
+    const noCost = {
+      ...richPayload,
+      costs: { ...richPayload.costs, agents: [] },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(noCost);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /cost/i }));
@@ -565,21 +674,30 @@ describe("App – navigation tabs", () => {
   });
 
   it("shows top token consumers on overview when agents have costs", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     expect(screen.getByText("Top Token Consumers")).toBeInTheDocument();
   });
 
   it("shows 5.0K suffix for token counts in thousands", async () => {
-    const kTokens = { ...dashboardPayload, costs: { ...dashboardPayload.costs, totalTokens: 5_000 } };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(kTokens);
-      return mockJson({}, 404);
-    }));
+    const kTokens = {
+      ...dashboardPayload,
+      costs: { ...dashboardPayload.costs, totalTokens: 5_000 },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(kTokens);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     // embedded in "5.0K tokens used" — use regex
@@ -587,33 +705,51 @@ describe("App – navigation tabs", () => {
   });
 
   it("shows 2.5M suffix for large token counts", async () => {
-    const bigTokens = { ...dashboardPayload, costs: { ...dashboardPayload.costs, totalTokens: 2_500_000 } };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(bigTokens);
-      return mockJson({}, 404);
-    }));
+    const bigTokens = {
+      ...dashboardPayload,
+      costs: { ...dashboardPayload.costs, totalTokens: 2_500_000 },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(bigTokens);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     expect(screen.getByText(/2\.5M/)).toBeInTheDocument();
   });
 
   it("formats tiny cost (< $0.001) with 6 decimal places", async () => {
-    const tinyCost = { ...dashboardPayload, costs: { ...dashboardPayload.costs, totalCostUSD: 0.000005 } };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(tinyCost);
-      return mockJson({}, 404);
-    }));
+    const tinyCost = {
+      ...dashboardPayload,
+      costs: { ...dashboardPayload.costs, totalCostUSD: 0.000005 },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(tinyCost);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     expect(screen.getByText("$0.000005")).toBeInTheDocument();
   });
 
   it("formats cost >= $1 with 2 decimal places", async () => {
-    const largeCost = { ...dashboardPayload, costs: { ...dashboardPayload.costs, totalCostUSD: 2.5 } };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(largeCost);
-      return mockJson({}, 404);
-    }));
+    const largeCost = {
+      ...dashboardPayload,
+      costs: { ...dashboardPayload.costs, totalCostUSD: 2.5 },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(largeCost);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     expect(screen.getByText("$2.50")).toBeInTheDocument();
@@ -635,11 +771,17 @@ describe("App – navigation tabs", () => {
   });
 
   it("shows empty state when no role profiles defined", async () => {
-    const noProfiles = { ...richPayload, organization: { ...richPayload.organization, roleProfiles: [] } };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(noProfiles);
-      return mockJson({}, 404);
-    }));
+    const noProfiles = {
+      ...richPayload,
+      organization: { ...richPayload.organization, roleProfiles: [] },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(noProfiles);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /playbooks/i }));
@@ -657,7 +799,9 @@ describe("App – navigation tabs", () => {
     // "Settings" appears in sidebar button + heading; use heading role to be specific
     await screen.findByRole("heading", { name: /^Settings$/ });
     // "Software Company" appears in domain list + org info domain field; use getAllByText
-    await waitFor(() => expect(screen.getAllByText("Software Company").length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText("Software Company").length).toBeGreaterThan(0),
+    );
     await screen.findByText("Git MCP");
     expect(fetchMock).toHaveBeenCalledWith("/api/domains");
     expect(fetchMock).toHaveBeenCalledWith("/api/mcp/tools");
@@ -674,13 +818,16 @@ describe("App – navigation tabs", () => {
   });
 
   it("shows error when load scenario fails", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(richPayload);
-      if (input === "/api/dev/seed") return mockJson({}, 500);
-      if (input === "/api/domains") return mockJson([]);
-      if (input === "/api/mcp/tools") return mockJson([]);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(richPayload);
+        if (input === "/api/dev/seed") return mockJson({}, 500);
+        if (input === "/api/domains") return mockJson([]);
+        if (input === "/api/mcp/tools") return mockJson([]);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /settings/i }));
@@ -696,8 +843,12 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /settings/i }));
     await screen.findByRole("heading", { name: /^Settings$/ });
-    const scenarioSelect = screen.getByDisplayValue("Software Co — Launch Readiness");
-    fireEvent.change(scenarioSelect, { target: { value: "digital-marketing" } });
+    const scenarioSelect = screen.getByDisplayValue(
+      "Software Co — Launch Readiness",
+    );
+    fireEvent.change(scenarioSelect, {
+      target: { value: "digital-marketing" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Load Scenario" }));
     await screen.findByText(/Loaded scenario: digital-marketing/);
   });
@@ -738,14 +889,22 @@ describe("App – navigation tabs", () => {
         ...dashboardPayload.organization,
         members: [
           { id: "root-1", name: "Root Node", role: "CEO" },
-          { id: "child-1", name: "Child Node", role: "SOFTWARE_ENGINEER", managerId: "root-1" },
+          {
+            id: "child-1",
+            name: "Child Node",
+            role: "SOFTWARE_ENGINEER",
+            managerId: "root-1",
+          },
         ],
       },
     };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(withTree);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(withTree);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     // Root Node appears in org chart + CEO sidebar card; use getAllByText
     await screen.findAllByText("Root Node");
@@ -773,11 +932,17 @@ describe("App – navigation tabs", () => {
   });
 
   it("shows 'No active agents' when all statuses have count 0", async () => {
-    const zeroStatuses = { ...richPayload, statuses: [{ status: "IDLE", count: 0 }] };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(zeroStatuses);
-      return mockJson({}, 404);
-    }));
+    const zeroStatuses = {
+      ...richPayload,
+      statuses: [{ status: "IDLE", count: 0 }],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(zeroStatuses);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     expect(screen.getByText("No active agents.")).toBeInTheDocument();
@@ -793,14 +958,19 @@ describe("App – navigation tabs", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
     await screen.findByText("Message delivered to the meeting timeline.");
     fireEvent.click(screen.getByRole("button", { name: "Dismiss" }));
-    expect(screen.queryByText("Message delivered to the meeting timeline.")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Message delivered to the meeting timeline."),
+    ).not.toBeInTheDocument();
   });
 
   it("shows domain label for Software Company domain", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     // domainLabel("software_company") = "Software Company"
@@ -808,27 +978,36 @@ describe("App – navigation tabs", () => {
   });
 
   it("shows 'Offline' status label when load fails", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => mockJson({}, 500)));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => mockJson({}, 500)),
+    );
     render(<App />);
     await screen.findByText(/Failed to load data/i);
     expect(screen.getByText("Offline")).toBeInTheDocument();
   });
 
   it("shows 'Live' status label when data loads successfully", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     expect(screen.getByText("Live")).toBeInTheDocument();
   });
 
   it("shows updated timestamp in header after data loads", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     expect(screen.getByText(/Updated/)).toBeInTheDocument();
@@ -836,10 +1015,13 @@ describe("App – navigation tabs", () => {
 
   it("formatTokens returns plain number for count < 1000", async () => {
     // dashboardPayload has totalTokens: 123 → renders "123"
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     // "123 tokens used" — via kpi-sub text
@@ -862,15 +1044,23 @@ describe("App – navigation tabs", () => {
         ...richPayload.costs,
         agents: [
           { agentID: "swe-1", model: "gpt-4o", tokenUsed: 500, costUSD: 1.25 },
-          { agentID: "pm-1", model: "gpt-4o-mini", tokenUsed: 200, costUSD: 0.5 },
+          {
+            agentID: "pm-1",
+            model: "gpt-4o-mini",
+            tokenUsed: 200,
+            costUSD: 0.5,
+          },
         ],
         totalCostUSD: 1.75,
       },
     };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(withCosts);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(withCosts);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /cost/i }));
@@ -878,8 +1068,8 @@ describe("App – navigation tabs", () => {
     expect(screen.getByText("$1.25")).toBeInTheDocument();
     // tokenUsed 500 renders as "500 tokens" — use regex
     expect(screen.getByText(/\b500\b/)).toBeInTheDocument();
-  });  // closes last it in App – navigation tabs
-});  // closes App – navigation tabs describe
+  }); // closes last it in App – navigation tabs
+}); // closes App – navigation tabs describe
 
 describe("App – form field coverage", () => {
   afterEach(() => {
@@ -888,11 +1078,14 @@ describe("App – form field coverage", () => {
   });
 
   it("triggers onChange for all overview form fields", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/messages") return mockJson({});
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/messages") return mockJson({});
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
 
@@ -907,22 +1100,32 @@ describe("App – form field coverage", () => {
     // use getAllByDisplayValue and pick the last match (the dispatch form).
     const launchReadinessEls = screen.getAllByDisplayValue("launch-readiness");
     const meetingIdSelect = launchReadinessEls[launchReadinessEls.length - 1];
-    fireEvent.change(meetingIdSelect, { target: { value: "launch-readiness" } });
-    fireEvent.change(screen.getByDisplayValue("task"), { target: { value: "decision" } });
-    fireEvent.change(screen.getByDisplayValue("Review launch blockers and owner assignments"), {
-      target: { value: "Updated content" },
+    fireEvent.change(meetingIdSelect, {
+      target: { value: "launch-readiness" },
     });
+    fireEvent.change(screen.getByDisplayValue("task"), {
+      target: { value: "decision" },
+    });
+    fireEvent.change(
+      screen.getByDisplayValue("Review launch blockers and owner assignments"),
+      {
+        target: { value: "Updated content" },
+      },
+    );
 
     // Verify textarea content updated (select state can't be verified via non-option values)
     expect(screen.getByDisplayValue("Updated content")).toBeInTheDocument();
   });
 
   it("triggers onChange for all meetings-tab Dispatch Message form fields", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/messages") return mockJson({});
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/messages") return mockJson({});
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
@@ -941,28 +1144,39 @@ describe("App – form field coverage", () => {
         { id: "meeting-b", transcript: [], participants: ["swe-1"] },
       ],
     };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(twoMeetings);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(twoMeetings);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     // change the meeting selector in the overview Active Meetings panel
     const selects = screen.getAllByRole("combobox");
-    const meetingSelect = selects.find((s) => (s as HTMLSelectElement).value === "meeting-a");
-    if (meetingSelect) fireEvent.change(meetingSelect, { target: { value: "meeting-b" } });
+    const meetingSelect = selects.find(
+      (s) => (s as HTMLSelectElement).value === "meeting-a",
+    );
+    if (meetingSelect)
+      fireEvent.change(meetingSelect, { target: { value: "meeting-b" } });
   });
 
   it("shows loading state in agents tab org chart before data loads", async () => {
     let resolve!: (v: unknown) => void;
-    const pending = new Promise((r) => { resolve = r; });
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") {
-        await pending;
-        return mockJson(dashboardPayload);
-      }
-      return mockJson({}, 404);
-    }));
+    const pending = new Promise((r) => {
+      resolve = r;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") {
+          await pending;
+          return mockJson(dashboardPayload);
+        }
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     // While loading, navigate to agents tab — snapshot is null, org chart shows Loading...
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
@@ -978,17 +1192,21 @@ describe("api – branch coverage", () => {
   });
 
   it("fetchDashboard handles absent organization field", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({
-      ok: true, status: 200,
-      json: async () => ({
-        // no organization field — triggers ?? {} fallback
-        meetings: [],
-        costs: undefined,  // triggers ?? {} fallback
-        agents: "not-an-array",  // triggers [] fallback
-        statuses: null,  // triggers [] fallback
-        updatedAt: "2026-01-01T00:00:00Z",
-      }),
-    })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          // no organization field — triggers ?? {} fallback
+          meetings: [],
+          costs: undefined, // triggers ?? {} fallback
+          agents: "not-an-array", // triggers [] fallback
+          statuses: null, // triggers [] fallback
+          updatedAt: "2026-01-01T00:00:00Z",
+        }),
+      })),
+    );
     const snap = await fetchDashboard();
     expect(snap.organization.id).toBe("");
     expect(snap.organization.members).toEqual([]);
@@ -998,39 +1216,58 @@ describe("api – branch coverage", () => {
   });
 
   it("normalizeCosts handles projectedMonthlyUsd lowercase variant", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({
-      ok: true, status: 200,
-      json: async () => ({
-        organizationID: "org-lc",
-        totalTokens: 10,
-        totalCostUSD: 0.5,
-        projectedMonthlyUsd: 15.0,  // lowercase variant, but projectedMonthlyUSD is absent
-        agents: [],
-      }),
-    })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          organizationID: "org-lc",
+          totalTokens: 10,
+          totalCostUSD: 0.5,
+          projectedMonthlyUsd: 15.0, // lowercase variant, but projectedMonthlyUSD is absent
+          agents: [],
+        }),
+      })),
+    );
     // projectedMonthlyUSD is undefined → ternary false branch → projectedMonthlyUSD = undefined
     const costs = await fetchCosts();
     expect(costs.projectedMonthlyUSD).toBeUndefined();
   });
 
   it("fetchDashboard with undefined updatedAt uses current ISO timestamp", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({
-      ok: true, status: 200,
-      json: async () => ({
-        organization: { id: "o", name: "N", domain: "d", members: [], roleProfiles: [] },
-        meetings: [],
-        costs: { organizationID: "o", totalTokens: 0, totalCostUSD: 0, agents: [] },
-        agents: [],
-        statuses: [],
-        // no updatedAt — triggers ?? new Date().toISOString()
-      }),
-    })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          organization: {
+            id: "o",
+            name: "N",
+            domain: "d",
+            members: [],
+            roleProfiles: [],
+          },
+          meetings: [],
+          costs: {
+            organizationID: "o",
+            totalTokens: 0,
+            totalCostUSD: 0,
+            agents: [],
+          },
+          agents: [],
+          statuses: [],
+          // no updatedAt — triggers ?? new Date().toISOString()
+        }),
+      })),
+    );
     const snap = await fetchDashboard();
     // should have fallen back to current ISO date
     expect(snap.updatedAt).toBeTruthy();
     expect(snap.updatedAt).not.toBe("undefined");
   });
-});  // closes api – branch coverage describe
+}); // closes api – branch coverage describe
 
 describe("App – integrations nav", () => {
   afterEach(() => {
@@ -1039,27 +1276,59 @@ describe("App – integrations nav", () => {
   });
 
   it("renders integrations nav item", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
-    expect(screen.getByRole("button", { name: /integrations/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /integrations/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows integrations panel when navigating to Integrations", async () => {
     const mockIntegrations = [
-      { id: "slack", name: "Slack", type: "slack", category: "chat", status: "disconnected", description: "Send via Slack", createdAt: "2026-01-01T00:00:00Z" },
-      { id: "github", name: "GitHub", type: "github", category: "git", status: "disconnected", description: "Open PRs on GitHub", createdAt: "2026-01-01T00:00:00Z" },
-      { id: "jira", name: "Jira", type: "jira", category: "issues", status: "disconnected", description: "Track in Jira", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "slack",
+        name: "Slack",
+        type: "slack",
+        category: "chat",
+        status: "disconnected",
+        description: "Send via Slack",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: "github",
+        name: "GitHub",
+        type: "github",
+        category: "git",
+        status: "disconnected",
+        description: "Open PRs on GitHub",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: "jira",
+        name: "Jira",
+        type: "jira",
+        category: "issues",
+        status: "disconnected",
+        description: "Track in Jira",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(mockIntegrations);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson(mockIntegrations);
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1076,15 +1345,27 @@ describe("App – integrations nav", () => {
 
   it("shows Connect button for disconnected integrations", async () => {
     const mockIntegrations = [
-      { id: "slack", name: "Slack", type: "slack", category: "chat", status: "disconnected", description: "Send via Slack", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "slack",
+        name: "Slack",
+        type: "slack",
+        category: "chat",
+        status: "disconnected",
+        description: "Send via Slack",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(mockIntegrations);
-      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[0], status: "connected" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson(mockIntegrations);
+        if (input === "/api/integrations/connect")
+          return mockJson({ ...mockIntegrations[0], status: "connected" });
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1101,22 +1382,36 @@ describe("App – integrations nav", () => {
 
   it("shows Disconnect button for connected integrations", async () => {
     const mockIntegrations = [
-      { id: "slack", name: "Slack", type: "slack", category: "chat", status: "connected", description: "Send via Slack", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "slack",
+        name: "Slack",
+        type: "slack",
+        category: "chat",
+        status: "connected",
+        description: "Send via Slack",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(mockIntegrations);
-      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[0], status: "disconnected" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson(mockIntegrations);
+        if (input === "/api/integrations/disconnect")
+          return mockJson({ ...mockIntegrations[0], status: "disconnected" });
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
     await screen.findByText("Slack");
 
-    const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+    const disconnectBtns = screen.getAllByRole("button", {
+      name: /disconnect/i,
+    });
     expect(disconnectBtns.length).toBeGreaterThan(0);
 
     fireEvent.click(disconnectBtns[0]);
@@ -1124,11 +1419,14 @@ describe("App – integrations nav", () => {
   });
 
   it("shows empty state when no integrations loaded yet", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson([]);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson([]);
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1149,15 +1447,27 @@ describe("App – git and issues integrations", () => {
 
   it("shows git integration connect button and connects successfully", async () => {
     const mockIntegrations = [
-      { id: "github", name: "GitHub", type: "github", category: "git", status: "disconnected", description: "Open PRs on GitHub", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "github",
+        name: "GitHub",
+        type: "github",
+        category: "git",
+        status: "disconnected",
+        description: "Open PRs on GitHub",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(mockIntegrations);
-      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[0], status: "connected" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson(mockIntegrations);
+        if (input === "/api/integrations/connect")
+          return mockJson({ ...mockIntegrations[0], status: "connected" });
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1173,15 +1483,27 @@ describe("App – git and issues integrations", () => {
 
   it("shows git integration disconnect button and disconnects successfully", async () => {
     const mockIntegrations = [
-      { id: "github", name: "GitHub", type: "github", category: "git", status: "connected", description: "Open PRs on GitHub", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "github",
+        name: "GitHub",
+        type: "github",
+        category: "git",
+        status: "connected",
+        description: "Open PRs on GitHub",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(mockIntegrations);
-      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[0], status: "disconnected" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson(mockIntegrations);
+        if (input === "/api/integrations/disconnect")
+          return mockJson({ ...mockIntegrations[0], status: "disconnected" });
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1189,20 +1511,34 @@ describe("App – git and issues integrations", () => {
     await screen.findByText("Git Platforms");
     await screen.findByText("GitHub");
 
-    const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+    const disconnectBtns = screen.getAllByRole("button", {
+      name: /disconnect/i,
+    });
     expect(disconnectBtns.length).toBeGreaterThan(0);
     fireEvent.click(disconnectBtns[0]);
     await screen.findByRole("button", { name: /^connect$/i });
   });
 
   it("shows empty state for git when no git integrations", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson([
-        { id: "slack", name: "Slack", type: "slack", category: "chat", status: "disconnected", description: "Chat", createdAt: "2026-01-01T00:00:00Z" },
-      ]);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations")
+          return mockJson([
+            {
+              id: "slack",
+              name: "Slack",
+              type: "slack",
+              category: "chat",
+              status: "disconnected",
+              description: "Chat",
+              createdAt: "2026-01-01T00:00:00Z",
+            },
+          ]);
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1215,15 +1551,27 @@ describe("App – git and issues integrations", () => {
 
   it("shows issue tracker connect button and connects successfully", async () => {
     const mockIntegrations = [
-      { id: "jira", name: "Jira", type: "jira", category: "issues", status: "disconnected", description: "Track in Jira", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "jira",
+        name: "Jira",
+        type: "jira",
+        category: "issues",
+        status: "disconnected",
+        description: "Track in Jira",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(mockIntegrations);
-      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[0], status: "connected" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson(mockIntegrations);
+        if (input === "/api/integrations/connect")
+          return mockJson({ ...mockIntegrations[0], status: "connected" });
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1239,15 +1587,27 @@ describe("App – git and issues integrations", () => {
 
   it("shows issue tracker disconnect button and disconnects successfully", async () => {
     const mockIntegrations = [
-      { id: "jira", name: "Jira", type: "jira", category: "issues", status: "connected", description: "Track in Jira", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "jira",
+        name: "Jira",
+        type: "jira",
+        category: "issues",
+        status: "connected",
+        description: "Track in Jira",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(mockIntegrations);
-      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[0], status: "disconnected" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson(mockIntegrations);
+        if (input === "/api/integrations/disconnect")
+          return mockJson({ ...mockIntegrations[0], status: "disconnected" });
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1255,20 +1615,34 @@ describe("App – git and issues integrations", () => {
     await screen.findByText("Issue Trackers");
     await screen.findByText("Jira");
 
-    const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+    const disconnectBtns = screen.getAllByRole("button", {
+      name: /disconnect/i,
+    });
     expect(disconnectBtns.length).toBeGreaterThan(0);
     fireEvent.click(disconnectBtns[0]);
     await screen.findByRole("button", { name: /^connect$/i });
   });
 
   it("shows empty state for issues when no issue integrations", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson([
-        { id: "slack", name: "Slack", type: "slack", category: "chat", status: "disconnected", description: "Chat", createdAt: "2026-01-01T00:00:00Z" },
-      ]);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations")
+          return mockJson([
+            {
+              id: "slack",
+              name: "Slack",
+              type: "slack",
+              category: "chat",
+              status: "disconnected",
+              description: "Chat",
+              createdAt: "2026-01-01T00:00:00Z",
+            },
+          ]);
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1290,12 +1664,22 @@ describe("App – meetings tab agenda coverage", () => {
   it("shows meeting agenda in the meetings tab when a meeting has an agenda", async () => {
     const withAgenda = {
       ...dashboardPayload,
-      meetings: [{ id: "launch-readiness", transcript: [], participants: ["pm-1"], agenda: "Discuss launch blockers for meetings tab" }],
+      meetings: [
+        {
+          id: "launch-readiness",
+          transcript: [],
+          participants: ["pm-1"],
+          agenda: "Discuss launch blockers for meetings tab",
+        },
+      ],
     };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(withAgenda);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(withAgenda);
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1304,7 +1688,9 @@ describe("App – meetings tab agenda coverage", () => {
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
     await screen.findByText("Virtual War Room");
 
-    expect(screen.getByText("Discuss launch blockers for meetings tab")).toBeInTheDocument();
+    expect(
+      screen.getByText("Discuss launch blockers for meetings tab"),
+    ).toBeInTheDocument();
   });
 });
 
@@ -1318,14 +1704,35 @@ describe("App – settings branch coverage", () => {
   it("shows — placeholders in settings when snapshot is null (navigated before load)", async () => {
     // Set up a fetch that never resolves for dashboard but resolves for settings deps
     let resolveDashboard: (v: unknown) => void;
-    const dashboardPromise = new Promise((r) => { resolveDashboard = r; });
+    const dashboardPromise = new Promise((r) => {
+      resolveDashboard = r;
+    });
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return dashboardPromise;
-      if (input === "/api/domains") return mockJson([{ id: "software_company", name: "Software Company", description: "SaaS" }]);
-      if (input === "/api/mcp/tools") return mockJson([{ id: "git-mcp", name: "Git MCP", description: "Git ops", category: "dev", status: "maintenance" }]);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return dashboardPromise;
+        if (input === "/api/domains")
+          return mockJson([
+            {
+              id: "software_company",
+              name: "Software Company",
+              description: "SaaS",
+            },
+          ]);
+        if (input === "/api/mcp/tools")
+          return mockJson([
+            {
+              id: "git-mcp",
+              name: "Git MCP",
+              description: "Git ops",
+              category: "dev",
+              status: "maintenance",
+            },
+          ]);
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     // Navigate to settings BEFORE dashboard loads (snapshot is null)
@@ -1347,15 +1754,32 @@ describe("App – settings branch coverage", () => {
   });
 
   it("shows non-available MCP tool with status badge", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/domains") return mockJson([{ id: "d", name: "D", description: "desc" }]);
-      if (input === "/api/mcp/tools") return mockJson([
-        { id: "git-mcp", name: "Git MCP", description: "Git ops", category: "dev", status: "available" },
-        { id: "figma-mcp", name: "Figma MCP", description: "Design ops", category: "design", status: "beta" },
-      ]);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/domains")
+          return mockJson([{ id: "d", name: "D", description: "desc" }]);
+        if (input === "/api/mcp/tools")
+          return mockJson([
+            {
+              id: "git-mcp",
+              name: "Git MCP",
+              description: "Git ops",
+              category: "dev",
+              status: "available",
+            },
+            {
+              id: "figma-mcp",
+              name: "Figma MCP",
+              description: "Design ops",
+              category: "design",
+              status: "beta",
+            },
+          ]);
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1376,56 +1800,106 @@ describe("App – multi-integration connect/disconnect callbacks", () => {
 
   it("connect callback updates correct integration when multiple git integrations exist", async () => {
     const mockIntegrations = [
-      { id: "github", name: "GitHub", type: "github", category: "git", status: "disconnected", description: "Open PRs on GitHub", createdAt: "2026-01-01T00:00:00Z" },
-      { id: "gitea", name: "Gitea", type: "gitea", category: "git", status: "connected", description: "Self-hosted Gitea", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "github",
+        name: "GitHub",
+        type: "github",
+        category: "git",
+        status: "disconnected",
+        description: "Open PRs on GitHub",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: "gitea",
+        name: "Gitea",
+        type: "gitea",
+        category: "git",
+        status: "connected",
+        description: "Self-hosted Gitea",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(mockIntegrations);
-      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[0], status: "connected" });
-      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[1], status: "disconnected" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson(mockIntegrations);
+        if (input === "/api/integrations/connect")
+          return mockJson({ ...mockIntegrations[0], status: "connected" });
+        if (input === "/api/integrations/disconnect")
+          return mockJson({ ...mockIntegrations[1], status: "disconnected" });
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
     await screen.findByText("Git Platforms");
     // GitHub and Gitea names appear in the list (use getAllByText since descriptions differ)
-    await waitFor(() => expect(screen.getAllByText("GitHub").length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText("GitHub").length).toBeGreaterThan(0),
+    );
 
     // Click connect on GitHub (first)
     const connectBtns = screen.getAllByRole("button", { name: /connect/i });
     fireEvent.click(connectBtns[0]);
     // Wait for the list to update
     await waitFor(() => {
-      const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+      const disconnectBtns = screen.getAllByRole("button", {
+        name: /disconnect/i,
+      });
       expect(disconnectBtns.length).toBeGreaterThan(0);
     });
   });
 
   it("disconnect callback updates correct issue integration when multiple exist", async () => {
     const mockIntegrations = [
-      { id: "jira", name: "Jira", type: "jira", category: "issues", status: "connected", description: "Track issues in Jira", createdAt: "2026-01-01T00:00:00Z" },
-      { id: "plane", name: "Plane", type: "plane", category: "issues", status: "disconnected", description: "OSS issue tracker", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "jira",
+        name: "Jira",
+        type: "jira",
+        category: "issues",
+        status: "connected",
+        description: "Track issues in Jira",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: "plane",
+        name: "Plane",
+        type: "plane",
+        category: "issues",
+        status: "disconnected",
+        description: "OSS issue tracker",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(mockIntegrations);
-      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[0], status: "disconnected" });
-      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[1], status: "connected" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson(mockIntegrations);
+        if (input === "/api/integrations/disconnect")
+          return mockJson({ ...mockIntegrations[0], status: "disconnected" });
+        if (input === "/api/integrations/connect")
+          return mockJson({ ...mockIntegrations[1], status: "connected" });
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
     await screen.findByText("Issue Trackers");
-    await waitFor(() => expect(screen.getAllByText("Jira").length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText("Jira").length).toBeGreaterThan(0),
+    );
 
-    const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+    const disconnectBtns = screen.getAllByRole("button", {
+      name: /disconnect/i,
+    });
     fireEvent.click(disconnectBtns[0]);
     await waitFor(() => {
       // Jira should now show "Connect" button
@@ -1445,12 +1919,18 @@ describe("App – playbooks roleProfiles null branch", () => {
   it("shows empty state when roleProfiles is null/undefined in organization", async () => {
     const nullProfiles = {
       ...dashboardPayload,
-      organization: { ...dashboardPayload.organization, roleProfiles: null as unknown as [] },
+      organization: {
+        ...dashboardPayload.organization,
+        roleProfiles: null as unknown as [],
+      },
     };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(nullProfiles);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(nullProfiles);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /playbooks/i }));
@@ -1467,51 +1947,99 @@ describe("App – multi-integration map callback branches", () => {
 
   it("chat connect: both map branches covered with multiple chat integrations", async () => {
     const mockIntegrations = [
-      { id: "slack", name: "Slack", type: "slack", category: "chat", status: "disconnected", description: "Slack messaging", createdAt: "2026-01-01T00:00:00Z" },
-      { id: "discord", name: "Discord", type: "discord", category: "chat", status: "connected", description: "Discord server", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "slack",
+        name: "Slack",
+        type: "slack",
+        category: "chat",
+        status: "disconnected",
+        description: "Slack messaging",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: "discord",
+        name: "Discord",
+        type: "discord",
+        category: "chat",
+        status: "connected",
+        description: "Discord server",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(mockIntegrations);
-      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[0], status: "connected" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson(mockIntegrations);
+        if (input === "/api/integrations/connect")
+          return mockJson({ ...mockIntegrations[0], status: "connected" });
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
     await screen.findByText("Chat Services");
-    await waitFor(() => expect(screen.getAllByText("Slack").length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText("Slack").length).toBeGreaterThan(0),
+    );
 
     const connectBtns = screen.getAllByRole("button", { name: /connect/i });
     fireEvent.click(connectBtns[0]);
     await waitFor(() => {
-      const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+      const disconnectBtns = screen.getAllByRole("button", {
+        name: /disconnect/i,
+      });
       expect(disconnectBtns.length).toBeGreaterThan(1);
     });
   });
 
   it("chat disconnect: both map branches covered with multiple chat integrations", async () => {
     const mockIntegrations = [
-      { id: "slack", name: "Slack", type: "slack", category: "chat", status: "connected", description: "Slack messaging", createdAt: "2026-01-01T00:00:00Z" },
-      { id: "discord", name: "Discord", type: "discord", category: "chat", status: "disconnected", description: "Discord server", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "slack",
+        name: "Slack",
+        type: "slack",
+        category: "chat",
+        status: "connected",
+        description: "Slack messaging",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: "discord",
+        name: "Discord",
+        type: "discord",
+        category: "chat",
+        status: "disconnected",
+        description: "Discord server",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(mockIntegrations);
-      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[0], status: "disconnected" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson(mockIntegrations);
+        if (input === "/api/integrations/disconnect")
+          return mockJson({ ...mockIntegrations[0], status: "disconnected" });
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
     await screen.findByText("Chat Services");
-    await waitFor(() => expect(screen.getAllByText("Slack").length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText("Slack").length).toBeGreaterThan(0),
+    );
 
-    const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+    const disconnectBtns = screen.getAllByRole("button", {
+      name: /disconnect/i,
+    });
     fireEvent.click(disconnectBtns[0]);
     await waitFor(() => {
       const connectBtns = screen.getAllByRole("button", { name: /connect/i });
@@ -1521,24 +2049,48 @@ describe("App – multi-integration map callback branches", () => {
 
   it("git disconnect: both map branches covered with multiple git integrations", async () => {
     const mockIntegrations = [
-      { id: "github", name: "GitHub", type: "github", category: "git", status: "connected", description: "Open PRs on GitHub", createdAt: "2026-01-01T00:00:00Z" },
-      { id: "gitea", name: "Gitea", type: "gitea", category: "git", status: "disconnected", description: "Self-hosted Gitea", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "github",
+        name: "GitHub",
+        type: "github",
+        category: "git",
+        status: "connected",
+        description: "Open PRs on GitHub",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: "gitea",
+        name: "Gitea",
+        type: "gitea",
+        category: "git",
+        status: "disconnected",
+        description: "Self-hosted Gitea",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(mockIntegrations);
-      if (input === "/api/integrations/disconnect") return mockJson({ ...mockIntegrations[0], status: "disconnected" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson(mockIntegrations);
+        if (input === "/api/integrations/disconnect")
+          return mockJson({ ...mockIntegrations[0], status: "disconnected" });
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
     await screen.findByText("Git Platforms");
-    await waitFor(() => expect(screen.getAllByText("GitHub").length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText("GitHub").length).toBeGreaterThan(0),
+    );
 
-    const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+    const disconnectBtns = screen.getAllByRole("button", {
+      name: /disconnect/i,
+    });
     fireEvent.click(disconnectBtns[0]);
     await waitFor(() => {
       const connectBtns = screen.getAllByRole("button", { name: /connect/i });
@@ -1548,27 +2100,51 @@ describe("App – multi-integration map callback branches", () => {
 
   it("issues connect: both map branches covered with multiple issue integrations", async () => {
     const mockIntegrations = [
-      { id: "jira", name: "Jira", type: "jira", category: "issues", status: "disconnected", description: "Track in Jira", createdAt: "2026-01-01T00:00:00Z" },
-      { id: "plane", name: "Plane", type: "plane", category: "issues", status: "connected", description: "OSS issue tracker", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "jira",
+        name: "Jira",
+        type: "jira",
+        category: "issues",
+        status: "disconnected",
+        description: "Track in Jira",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: "plane",
+        name: "Plane",
+        type: "plane",
+        category: "issues",
+        status: "connected",
+        description: "OSS issue tracker",
+        createdAt: "2026-01-01T00:00:00Z",
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(mockIntegrations);
-      if (input === "/api/integrations/connect") return mockJson({ ...mockIntegrations[0], status: "connected" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations") return mockJson(mockIntegrations);
+        if (input === "/api/integrations/connect")
+          return mockJson({ ...mockIntegrations[0], status: "connected" });
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
     await screen.findByText("Issue Trackers");
-    await waitFor(() => expect(screen.getAllByText("Jira").length).toBeGreaterThan(0));
+    await waitFor(() =>
+      expect(screen.getAllByText("Jira").length).toBeGreaterThan(0),
+    );
 
     const connectBtns = screen.getAllByRole("button", { name: /connect/i });
     fireEvent.click(connectBtns[0]);
     await waitFor(() => {
-      const disconnectBtns = screen.getAllByRole("button", { name: /disconnect/i });
+      const disconnectBtns = screen.getAllByRole("button", {
+        name: /disconnect/i,
+      });
       expect(disconnectBtns.length).toBeGreaterThan(1);
     });
   });
@@ -1583,12 +2159,17 @@ describe("App – cost and playbooks null-snapshot branches", () => {
 
   it("cost tab shows zero fallbacks when navigated before data loads", async () => {
     let resolveDashboard: (v: unknown) => void;
-    const neverResolves = new Promise((r) => { resolveDashboard = r; });
+    const neverResolves = new Promise((r) => {
+      resolveDashboard = r;
+    });
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return neverResolves;
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return neverResolves;
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     // Navigate to cost tab BEFORE data loads (snapshot is null)
@@ -1605,12 +2186,17 @@ describe("App – cost and playbooks null-snapshot branches", () => {
 
   it("playbooks tab shows empty state with null-snapshot org roleProfiles", async () => {
     let resolveDashboard: (v: unknown) => void;
-    const neverResolves = new Promise((r) => { resolveDashboard = r; });
+    const neverResolves = new Promise((r) => {
+      resolveDashboard = r;
+    });
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return neverResolves;
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return neverResolves;
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     // Navigate to playbooks tab BEFORE data loads (snapshot is null)
@@ -1633,10 +2219,13 @@ describe("App – cost and playbooks null-snapshot branches", () => {
         agents: [{ agentID: "swe-1", model: "", tokenUsed: 0, costUSD: 0 }],
       },
     };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(zeroProjection);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(zeroProjection);
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1657,30 +2246,48 @@ describe("App – user management tab", () => {
   });
 
   it("shows Users tab with empty state when no users", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/users") return mockJson([]);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/users") return mockJson([]);
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /users/i }));
     await screen.findByText("User Management");
-    await waitFor(() => expect(screen.getByText("No users yet.")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("No users yet.")).toBeInTheDocument(),
+    );
   });
 
   it("shows list of users in Users tab", async () => {
     const mockUsers = [
-      { id: "u-1", username: "alice", email: "alice@example.com", roles: ["admin"] },
-      { id: "u-2", username: "bob", email: "bob@example.com", roles: ["operator"] },
+      {
+        id: "u-1",
+        username: "alice",
+        email: "alice@example.com",
+        roles: ["admin"],
+      },
+      {
+        id: "u-2",
+        username: "bob",
+        email: "bob@example.com",
+        roles: ["operator"],
+      },
     ];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/users") return mockJson(mockUsers);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/users") return mockJson(mockUsers);
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1691,68 +2298,116 @@ describe("App – user management tab", () => {
   });
 
   it("create user form fields can be filled", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/users") return mockJson([]);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/users") return mockJson([]);
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /users/i }));
     await screen.findByText("User Management");
 
-    fireEvent.change(screen.getByPlaceholderText("e.g. alice"), { target: { value: "charlie" } });
-    fireEvent.change(screen.getByPlaceholderText("alice@example.com"), { target: { value: "charlie@example.com" } });
-    fireEvent.change(screen.getByPlaceholderText("••••••••"), { target: { value: "password123" } });
-    fireEvent.change(screen.getByDisplayValue("operator"), { target: { value: "admin" } });
+    fireEvent.change(screen.getByPlaceholderText("e.g. alice"), {
+      target: { value: "charlie" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("alice@example.com"), {
+      target: { value: "charlie@example.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("••••••••"), {
+      target: { value: "password123" },
+    });
+    fireEvent.change(screen.getByDisplayValue("operator"), {
+      target: { value: "admin" },
+    });
 
-    expect((screen.getByPlaceholderText("e.g. alice") as HTMLInputElement).value).toBe("charlie");
-    expect((screen.getByPlaceholderText("alice@example.com") as HTMLInputElement).value).toBe("charlie@example.com");
-    expect((screen.getByDisplayValue("admin") as HTMLSelectElement).value).toBe("admin");
+    expect(
+      (screen.getByPlaceholderText("e.g. alice") as HTMLInputElement).value,
+    ).toBe("charlie");
+    expect(
+      (screen.getByPlaceholderText("alice@example.com") as HTMLInputElement)
+        .value,
+    ).toBe("charlie@example.com");
+    expect((screen.getByDisplayValue("admin") as HTMLSelectElement).value).toBe(
+      "admin",
+    );
   });
 
   it("submits create user form and refreshes list", async () => {
-    const newUser = { id: "u-3", username: "charlie", email: "charlie@example.com", roles: ["admin"] };
+    const newUser = {
+      id: "u-3",
+      username: "charlie",
+      email: "charlie@example.com",
+      roles: ["admin"],
+    };
     let userList: unknown[] = [];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/users" && (!init || init.method !== "POST")) return mockJson(userList);
-      if (input === "/api/users" && init?.method === "POST") {
-        userList = [newUser];
-        return mockJson(newUser);
-      }
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string, init?: RequestInit) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/users" && (!init || init.method !== "POST"))
+          return mockJson(userList);
+        if (input === "/api/users" && init?.method === "POST") {
+          userList = [newUser];
+          return mockJson(newUser);
+        }
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /users/i }));
     await screen.findByText("User Management");
-    await waitFor(() => expect(screen.getByText("No users yet.")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("No users yet.")).toBeInTheDocument(),
+    );
 
-    fireEvent.change(screen.getByPlaceholderText("e.g. alice"), { target: { value: "charlie" } });
-    fireEvent.change(screen.getByPlaceholderText("alice@example.com"), { target: { value: "charlie@example.com" } });
-    fireEvent.change(screen.getByPlaceholderText("••••••••"), { target: { value: "password123" } });
+    fireEvent.change(screen.getByPlaceholderText("e.g. alice"), {
+      target: { value: "charlie" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("alice@example.com"), {
+      target: { value: "charlie@example.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("••••••••"), {
+      target: { value: "password123" },
+    });
 
     fireEvent.click(screen.getByRole("button", { name: /create user/i }));
-    await waitFor(() => expect(screen.getByText("charlie")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("charlie")).toBeInTheDocument(),
+    );
   });
 
   it("remove user button calls deleteUser and refreshes list", async () => {
-    const mockUsers = [{ id: "u-1", username: "alice", email: "alice@example.com", roles: ["admin"] }];
+    const mockUsers = [
+      {
+        id: "u-1",
+        username: "alice",
+        email: "alice@example.com",
+        roles: ["admin"],
+      },
+    ];
     let userList = [...mockUsers];
 
-    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/users" && (!init || init.method !== "DELETE")) return mockJson(userList);
-      if (input === "/api/users/u-1" && init?.method === "DELETE") {
-        userList = [];
-        return mockJson({}, 204);
-      }
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string, init?: RequestInit) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/users" && (!init || init.method !== "DELETE"))
+          return mockJson(userList);
+        if (input === "/api/users/u-1" && init?.method === "DELETE") {
+          userList = [];
+          return mockJson({}, 204);
+        }
+        return mockJson({}, 404);
+      }),
+    );
 
     render(<App />);
     await screen.findByText("Acme Software");
@@ -1761,7 +2416,9 @@ describe("App – user management tab", () => {
     await waitFor(() => expect(screen.getByText("alice")).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: /remove/i }));
-    await waitFor(() => expect(screen.getByText("No users yet.")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("No users yet.")).toBeInTheDocument(),
+    );
   });
 });
 
@@ -1778,7 +2435,10 @@ describe("App – login/logout flows", () => {
   });
 
   it("renders login form when no token is stored", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => mockJson({}, 404)));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => mockJson({}, 404)),
+    );
     render(<App />);
     expect(screen.getByText("Sign in to One Human Corp")).toBeInTheDocument();
     expect(screen.getByLabelText("Username")).toBeInTheDocument();
@@ -1786,7 +2446,10 @@ describe("App – login/logout flows", () => {
   });
 
   it("onChange handlers update username and password inputs", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => mockJson({}, 404)));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => mockJson({}, 404)),
+    );
     render(<App />);
     const usernameInput = screen.getByLabelText("Username") as HTMLInputElement;
     const passwordInput = screen.getByLabelText("Password") as HTMLInputElement;
@@ -1797,39 +2460,66 @@ describe("App – login/logout flows", () => {
   });
 
   it("successful login shows main app", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/auth/login") return mockJson({ token: "tok", username: "admin" });
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/auth/login")
+          return mockJson({ token: "tok", username: "admin" });
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
-    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "admin" } });
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "password" } });
-    fireEvent.submit(screen.getByRole("button", { name: /sign in/i }).closest("form")!);
+    fireEvent.change(screen.getByLabelText("Username"), {
+      target: { value: "admin" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "password" },
+    });
+    fireEvent.submit(
+      screen.getByRole("button", { name: /sign in/i }).closest("form")!,
+    );
     await screen.findByText("Acme Software");
   });
 
   it("failed login shows error message", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/auth/login") {
-        return { ok: false, status: 401, json: async () => ({}), text: async () => "Bad credentials" };
-      }
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/auth/login") {
+          return {
+            ok: false,
+            status: 401,
+            json: async () => ({}),
+            text: async () => "Bad credentials",
+          };
+        }
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
-    fireEvent.change(screen.getByLabelText("Username"), { target: { value: "admin" } });
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "wrong" } });
-    fireEvent.submit(screen.getByRole("button", { name: /sign in/i }).closest("form")!);
+    fireEvent.change(screen.getByLabelText("Username"), {
+      target: { value: "admin" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "wrong" },
+    });
+    fireEvent.submit(
+      screen.getByRole("button", { name: /sign in/i }).closest("form")!,
+    );
     await screen.findByText("Bad credentials");
   });
 
   it("handleLogout signs out and shows login screen", async () => {
     localStorage.setItem("ohc_token", "test-token");
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/auth/logout") return mockJson({});
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/auth/logout") return mockJson({});
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /sign out/i }));
@@ -1840,14 +2530,30 @@ describe("App – login/logout flows", () => {
 // ── Telegram wizard coverage ──────────────────────────────────────────────────
 
 const mockTelegramIntegrations = [
-  { id: "telegram", name: "Telegram", type: "telegram", category: "chat", status: "disconnected", description: "Telegram Bot", createdAt: "2026-01-01T00:00:00Z" },
+  {
+    id: "telegram",
+    name: "Telegram",
+    type: "telegram",
+    category: "chat",
+    status: "disconnected",
+    description: "Telegram Bot",
+    createdAt: "2026-01-01T00:00:00Z",
+  },
 ];
 
-function makeFetchWithIntegrations(integrations: unknown[], extraHandlers?: (input: string) => MockResponse | null) {
+function makeFetchWithIntegrations(
+  integrations: unknown[],
+  extraHandlers?: (input: string) => MockResponse | null,
+) {
   return vi.fn(async (input: string) => {
     if (input === "/api/dashboard") return mockJson(dashboardPayload);
     if (input === "/api/integrations") return mockJson(integrations);
-    if (input === "/api/integrations?category=chat") return mockJson(integrations.filter((i: unknown) => (i as { category: string }).category === "chat"));
+    if (input === "/api/integrations?category=chat")
+      return mockJson(
+        integrations.filter(
+          (i: unknown) => (i as { category: string }).category === "chat",
+        ),
+      );
     if (extraHandlers) {
       const result = extraHandlers(input);
       if (result) return result;
@@ -1875,14 +2581,20 @@ describe("App – Telegram wizard", () => {
   it("opens Telegram wizard on Setup click", async () => {
     vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations));
     await openTelegramWizard();
-    expect(screen.getByText("Step 1 — Create a Telegram Bot")).toBeInTheDocument();
+    expect(
+      screen.getByText("Step 1 — Create a Telegram Bot"),
+    ).toBeInTheDocument();
   });
 
   it("closes wizard on ✕ click", async () => {
     vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations));
     await openTelegramWizard();
     fireEvent.click(screen.getByRole("button", { name: /close/i }));
-    await waitFor(() => expect(screen.queryByText("Connect Telegram Bot")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Connect Telegram Bot"),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   it("navigates wizard steps: 1→2→3 and fills credentials", async () => {
@@ -1896,9 +2608,14 @@ describe("App – Telegram wizard", () => {
     // Fill bot token and chat ID
     const inputs = screen.getAllByRole("textbox");
     // chat ID input is textbox (not password), bot token is password type
-    const chatIdInput = inputs.find(el => (el as HTMLInputElement).placeholder?.includes("group"));
-    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), { target: { value: "bot-token-123" } });
-    if (chatIdInput) fireEvent.change(chatIdInput, { target: { value: "-100123" } });
+    const chatIdInput = inputs.find((el) =>
+      (el as HTMLInputElement).placeholder?.includes("group"),
+    );
+    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), {
+      target: { value: "bot-token-123" },
+    });
+    if (chatIdInput)
+      fireEvent.change(chatIdInput, { target: { value: "-100123" } });
 
     // Step 2 → 3 (need both fields non-empty)
     const nextBtn = screen.getByRole("button", { name: /next: test/i });
@@ -1908,17 +2625,26 @@ describe("App – Telegram wizard", () => {
   });
 
   it("Send Test Message success advances testSent state", async () => {
-    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations, (input) => {
-      if (input === "/api/integrations/chat/test") return mockJson({ success: true });
-      return null;
-    }));
+    vi.stubGlobal(
+      "fetch",
+      makeFetchWithIntegrations(mockTelegramIntegrations, (input) => {
+        if (input === "/api/integrations/chat/test")
+          return mockJson({ success: true });
+        return null;
+      }),
+    );
     await openTelegramWizard();
     fireEvent.click(screen.getByRole("button", { name: /next: enter token/i }));
     await screen.findByText("Step 2 — Enter Credentials");
-    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), { target: { value: "bot-token-123" } });
+    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), {
+      target: { value: "bot-token-123" },
+    });
     const chatInputs = screen.getAllByRole("textbox");
-    const chatIdInput = chatInputs.find(el => (el as HTMLInputElement).placeholder?.includes("group"));
-    if (chatIdInput) fireEvent.change(chatIdInput, { target: { value: "-100123" } });
+    const chatIdInput = chatInputs.find((el) =>
+      (el as HTMLInputElement).placeholder?.includes("group"),
+    );
+    if (chatIdInput)
+      fireEvent.change(chatIdInput, { target: { value: "-100123" } });
     fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
     await screen.findByText("Step 3 — Test Connection");
     fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
@@ -1926,17 +2652,26 @@ describe("App – Telegram wizard", () => {
   });
 
   it("Send Test Message error shows error message", async () => {
-    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations, (input) => {
-      if (input === "/api/integrations/chat/test") return mockJson({ error: "Bad token" }, 500);
-      return null;
-    }));
+    vi.stubGlobal(
+      "fetch",
+      makeFetchWithIntegrations(mockTelegramIntegrations, (input) => {
+        if (input === "/api/integrations/chat/test")
+          return mockJson({ error: "Bad token" }, 500);
+        return null;
+      }),
+    );
     await openTelegramWizard();
     fireEvent.click(screen.getByRole("button", { name: /next: enter token/i }));
     await screen.findByText("Step 2 — Enter Credentials");
-    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), { target: { value: "tok" } });
+    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), {
+      target: { value: "tok" },
+    });
     const chatInputs = screen.getAllByRole("textbox");
-    const chatIdInput = chatInputs.find(el => (el as HTMLInputElement).placeholder?.includes("group"));
-    if (chatIdInput) fireEvent.change(chatIdInput, { target: { value: "-100" } });
+    const chatIdInput = chatInputs.find((el) =>
+      (el as HTMLInputElement).placeholder?.includes("group"),
+    );
+    if (chatIdInput)
+      fireEvent.change(chatIdInput, { target: { value: "-100" } });
     fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
     await screen.findByText("Step 3 — Test Connection");
     fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
@@ -1944,46 +2679,80 @@ describe("App – Telegram wizard", () => {
   });
 
   it("Complete Setup success closes wizard", async () => {
-    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations, (input) => {
-      if (input === "/api/integrations/chat/test") return mockJson({ success: true });
-      if (input === "/api/integrations/connect") return mockJson({ id: "telegram", name: "Telegram", type: "telegram", category: "chat", status: "connected", description: "Telegram Bot", createdAt: "2026-01-01T00:00:00Z" });
-      return null;
-    }));
+    vi.stubGlobal(
+      "fetch",
+      makeFetchWithIntegrations(mockTelegramIntegrations, (input) => {
+        if (input === "/api/integrations/chat/test")
+          return mockJson({ success: true });
+        if (input === "/api/integrations/connect")
+          return mockJson({
+            id: "telegram",
+            name: "Telegram",
+            type: "telegram",
+            category: "chat",
+            status: "connected",
+            description: "Telegram Bot",
+            createdAt: "2026-01-01T00:00:00Z",
+          });
+        return null;
+      }),
+    );
     await openTelegramWizard();
     fireEvent.click(screen.getByRole("button", { name: /next: enter token/i }));
     await screen.findByText("Step 2 — Enter Credentials");
-    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), { target: { value: "bot-tok" } });
+    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), {
+      target: { value: "bot-tok" },
+    });
     const chatInputs = screen.getAllByRole("textbox");
-    const chatIdInput = chatInputs.find(el => (el as HTMLInputElement).placeholder?.includes("group"));
-    if (chatIdInput) fireEvent.change(chatIdInput, { target: { value: "-100" } });
+    const chatIdInput = chatInputs.find((el) =>
+      (el as HTMLInputElement).placeholder?.includes("group"),
+    );
+    if (chatIdInput)
+      fireEvent.change(chatIdInput, { target: { value: "-100" } });
     fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
     await screen.findByText("Step 3 — Test Connection");
     fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
     await screen.findByText("Step 3 — Test Succeeded ✓");
     fireEvent.click(screen.getByRole("button", { name: /complete setup/i }));
-    await waitFor(() => expect(screen.queryByText("Connect Telegram Bot")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Connect Telegram Bot"),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   it("Complete Setup error shows error message", async () => {
-    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockTelegramIntegrations, (input) => {
-      if (input === "/api/integrations/chat/test") return mockJson({ success: true });
-      if (input === "/api/integrations/connect") return mockJson({ error: "Server error" }, 500);
-      return null;
-    }));
+    vi.stubGlobal(
+      "fetch",
+      makeFetchWithIntegrations(mockTelegramIntegrations, (input) => {
+        if (input === "/api/integrations/chat/test")
+          return mockJson({ success: true });
+        if (input === "/api/integrations/connect")
+          return mockJson({ error: "Server error" }, 500);
+        return null;
+      }),
+    );
     await openTelegramWizard();
     fireEvent.click(screen.getByRole("button", { name: /next: enter token/i }));
     await screen.findByText("Step 2 — Enter Credentials");
-    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), { target: { value: "tok" } });
+    fireEvent.change(screen.getByPlaceholderText(/123456:ABC-DEF/), {
+      target: { value: "tok" },
+    });
     const chatInputs = screen.getAllByRole("textbox");
-    const chatIdInput = chatInputs.find(el => (el as HTMLInputElement).placeholder?.includes("group"));
-    if (chatIdInput) fireEvent.change(chatIdInput, { target: { value: "-100" } });
+    const chatIdInput = chatInputs.find((el) =>
+      (el as HTMLInputElement).placeholder?.includes("group"),
+    );
+    if (chatIdInput)
+      fireEvent.change(chatIdInput, { target: { value: "-100" } });
     fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
     await screen.findByText("Step 3 — Test Connection");
     fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
     await screen.findByText("Step 3 — Test Succeeded ✓");
     fireEvent.click(screen.getByRole("button", { name: /complete setup/i }));
     // wizard stays open on error (connect failed)
-    await waitFor(() => expect(screen.getByText("Connect Telegram Bot")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("Connect Telegram Bot")).toBeInTheDocument(),
+    );
   });
 
   it("Back button goes to previous step", async () => {
@@ -1999,7 +2768,15 @@ describe("App – Telegram wizard", () => {
 // ── Discord wizard coverage ───────────────────────────────────────────────────
 
 const mockDiscordIntegrations = [
-  { id: "discord", name: "Discord", type: "discord", category: "chat", status: "disconnected", description: "Discord Webhook", createdAt: "2026-01-01T00:00:00Z" },
+  {
+    id: "discord",
+    name: "Discord",
+    type: "discord",
+    category: "chat",
+    status: "disconnected",
+    description: "Discord Webhook",
+    createdAt: "2026-01-01T00:00:00Z",
+  },
 ];
 
 describe("App – Discord wizard", () => {
@@ -2021,14 +2798,20 @@ describe("App – Discord wizard", () => {
   it("opens Discord wizard on Setup click", async () => {
     vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations));
     await openDiscordWizard();
-    expect(screen.getByText("Step 1 — Create a Discord Webhook")).toBeInTheDocument();
+    expect(
+      screen.getByText("Step 1 — Create a Discord Webhook"),
+    ).toBeInTheDocument();
   });
 
   it("closes Discord wizard on ✕ click", async () => {
     vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations));
     await openDiscordWizard();
     fireEvent.click(screen.getByRole("button", { name: /close/i }));
-    await waitFor(() => expect(screen.queryByText("Connect Discord Webhook")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Connect Discord Webhook"),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   it("navigates Discord wizard steps 1→2→3", async () => {
@@ -2036,7 +2819,9 @@ describe("App – Discord wizard", () => {
     await openDiscordWizard();
     fireEvent.click(screen.getByRole("button", { name: /next: enter url/i }));
     await screen.findByText("Step 2 — Enter Webhook URL");
-    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), { target: { value: "https://discord.com/api/webhooks/123/abc" } });
+    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), {
+      target: { value: "https://discord.com/api/webhooks/123/abc" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
     await screen.findByText("Step 3 — Test Connection");
   });
@@ -2051,14 +2836,20 @@ describe("App – Discord wizard", () => {
   });
 
   it("Discord Send Test Message success", async () => {
-    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations, (input) => {
-      if (input === "/api/integrations/chat/test") return mockJson({ success: true });
-      return null;
-    }));
+    vi.stubGlobal(
+      "fetch",
+      makeFetchWithIntegrations(mockDiscordIntegrations, (input) => {
+        if (input === "/api/integrations/chat/test")
+          return mockJson({ success: true });
+        return null;
+      }),
+    );
     await openDiscordWizard();
     fireEvent.click(screen.getByRole("button", { name: /next: enter url/i }));
     await screen.findByText("Step 2 — Enter Webhook URL");
-    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), { target: { value: "https://discord.com/api/webhooks/123/abc" } });
+    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), {
+      target: { value: "https://discord.com/api/webhooks/123/abc" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
     await screen.findByText("Step 3 — Test Connection");
     fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
@@ -2066,14 +2857,20 @@ describe("App – Discord wizard", () => {
   });
 
   it("Discord Send Test Message error shows error", async () => {
-    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations, (input) => {
-      if (input === "/api/integrations/chat/test") return mockJson({ error: "bad webhook" }, 500);
-      return null;
-    }));
+    vi.stubGlobal(
+      "fetch",
+      makeFetchWithIntegrations(mockDiscordIntegrations, (input) => {
+        if (input === "/api/integrations/chat/test")
+          return mockJson({ error: "bad webhook" }, 500);
+        return null;
+      }),
+    );
     await openDiscordWizard();
     fireEvent.click(screen.getByRole("button", { name: /next: enter url/i }));
     await screen.findByText("Step 2 — Enter Webhook URL");
-    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), { target: { value: "https://discord.com/api/webhooks/123/abc" } });
+    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), {
+      target: { value: "https://discord.com/api/webhooks/123/abc" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
     await screen.findByText("Step 3 — Test Connection");
     fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
@@ -2081,15 +2878,30 @@ describe("App – Discord wizard", () => {
   });
 
   it("Discord Complete Setup success", async () => {
-    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations, (input) => {
-      if (input === "/api/integrations/chat/test") return mockJson({ success: true });
-      if (input === "/api/integrations/connect") return mockJson({ id: "discord", name: "Discord", type: "discord", category: "chat", status: "connected", description: "Discord Webhook", createdAt: "2026-01-01T00:00:00Z" });
-      return null;
-    }));
+    vi.stubGlobal(
+      "fetch",
+      makeFetchWithIntegrations(mockDiscordIntegrations, (input) => {
+        if (input === "/api/integrations/chat/test")
+          return mockJson({ success: true });
+        if (input === "/api/integrations/connect")
+          return mockJson({
+            id: "discord",
+            name: "Discord",
+            type: "discord",
+            category: "chat",
+            status: "connected",
+            description: "Discord Webhook",
+            createdAt: "2026-01-01T00:00:00Z",
+          });
+        return null;
+      }),
+    );
     await openDiscordWizard();
     fireEvent.click(screen.getByRole("button", { name: /next: enter url/i }));
     await screen.findByText("Step 2 — Enter Webhook URL");
-    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), { target: { value: "https://discord.com/api/webhooks/123/abc" } });
+    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), {
+      target: { value: "https://discord.com/api/webhooks/123/abc" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
     await screen.findByText("Step 3 — Test Connection");
     fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
@@ -2097,26 +2909,39 @@ describe("App – Discord wizard", () => {
     fireEvent.click(screen.getByRole("button", { name: /complete setup/i }));
     await screen.findByText("Discord Connected!");
     fireEvent.click(screen.getByRole("button", { name: /done/i }));
-    await waitFor(() => expect(screen.queryByText("Connect Discord Webhook")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Connect Discord Webhook"),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   it("Discord Complete Setup error shows error", async () => {
-    vi.stubGlobal("fetch", makeFetchWithIntegrations(mockDiscordIntegrations, (input) => {
-      if (input === "/api/integrations/chat/test") return mockJson({ success: true });
-      if (input === "/api/integrations/connect") return mockJson({ error: "Server error" }, 500);
-      return null;
-    }));
+    vi.stubGlobal(
+      "fetch",
+      makeFetchWithIntegrations(mockDiscordIntegrations, (input) => {
+        if (input === "/api/integrations/chat/test")
+          return mockJson({ success: true });
+        if (input === "/api/integrations/connect")
+          return mockJson({ error: "Server error" }, 500);
+        return null;
+      }),
+    );
     await openDiscordWizard();
     fireEvent.click(screen.getByRole("button", { name: /next: enter url/i }));
     await screen.findByText("Step 2 — Enter Webhook URL");
-    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), { target: { value: "https://discord.com/api/webhooks/123/abc" } });
+    fireEvent.change(screen.getByPlaceholderText(/https:\/\/discord.com/), {
+      target: { value: "https://discord.com/api/webhooks/123/abc" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /next: test/i }));
     await screen.findByText("Step 3 — Test Connection");
     fireEvent.click(screen.getByRole("button", { name: /send test message/i }));
     await screen.findByText("Step 3 — Test Succeeded ✓");
     fireEvent.click(screen.getByRole("button", { name: /complete setup/i }));
     // wizard stays open on error (connect failed)
-    await waitFor(() => expect(screen.getByText("Connect Discord Webhook")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("Connect Discord Webhook")).toBeInTheDocument(),
+    );
   });
 });
 
@@ -2128,48 +2953,72 @@ describe("App – MCP invoke modal (communication category)", () => {
     vi.clearAllMocks();
   });
 
-  const commTool = { id: "slack-mcp", name: "Slack MCP", description: "Send Slack messages", category: "communication", status: "available" };
+  const commTool = {
+    id: "slack-mcp",
+    name: "Slack MCP",
+    description: "Send Slack messages",
+    category: "communication",
+    status: "available",
+  };
 
   it("opens MCP invoke modal for communication tool and exercises form fields", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/mcp/tools") return mockJson([commTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/mcp/tools") return mockJson([commTool]);
+        if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /settings/i }));
     await screen.findByText("MCP Tool Gateway");
-    await waitFor(() => expect(screen.getByText("Slack MCP")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("Slack MCP")).toBeInTheDocument(),
+    );
     fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
     await screen.findByText("Invoke: Slack MCP");
 
     // Exercise communication fields
-    fireEvent.change(screen.getByPlaceholderText(/e.g. -1001234567890 or #general/), { target: { value: "#general" } });
+    fireEvent.change(
+      screen.getByPlaceholderText(/e.g. -1001234567890 or #general/),
+      { target: { value: "#general" } },
+    );
     const textareas = screen.getAllByRole("textbox");
-    const msgArea = textareas.find(el => el.tagName.toLowerCase() === "textarea");
+    const msgArea = textareas.find(
+      (el) => el.tagName.toLowerCase() === "textarea",
+    );
     if (msgArea) fireEvent.change(msgArea, { target: { value: "Hello!" } });
 
     // Close button (footer) - use getAllByRole to handle multiple "Close" buttons
     const closeBtns = screen.getAllByRole("button", { name: /^close$/i });
     fireEvent.click(closeBtns[closeBtns.length - 1]);
-    await waitFor(() => expect(screen.queryByText("Invoke: Slack MCP")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByText("Invoke: Slack MCP")).not.toBeInTheDocument(),
+    );
   });
 
   it("invokes tool successfully and shows result", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/mcp/tools") return mockJson([commTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
-      if (input === "/api/mcp/tools/invoke") return mockJson({ status: "sent" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/mcp/tools") return mockJson([commTool]);
+        if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+        if (input === "/api/mcp/tools/invoke")
+          return mockJson({ status: "sent" });
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /settings/i }));
     await screen.findByText("MCP Tool Gateway");
-    await waitFor(() => expect(screen.getByText("Slack MCP")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("Slack MCP")).toBeInTheDocument(),
+    );
     fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
     await screen.findByText("Invoke: Slack MCP");
     fireEvent.click(screen.getByRole("button", { name: /invoke tool/i }));
@@ -2177,18 +3026,24 @@ describe("App – MCP invoke modal (communication category)", () => {
   });
 
   it("invokes tool with error and shows error", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/mcp/tools") return mockJson([commTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
-      if (input === "/api/mcp/tools/invoke") return mockJson({ error: "tool error" }, 500);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/mcp/tools") return mockJson([commTool]);
+        if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+        if (input === "/api/mcp/tools/invoke")
+          return mockJson({ error: "tool error" }, 500);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /settings/i }));
     await screen.findByText("MCP Tool Gateway");
-    await waitFor(() => expect(screen.getByText("Slack MCP")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("Slack MCP")).toBeInTheDocument(),
+    );
     fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
     await screen.findByText("Invoke: Slack MCP");
     fireEvent.click(screen.getByRole("button", { name: /invoke tool/i }));
@@ -2196,23 +3051,30 @@ describe("App – MCP invoke modal (communication category)", () => {
   });
 
   it("closes MCP modal with ✕ button", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/mcp/tools") return mockJson([commTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/mcp/tools") return mockJson([commTool]);
+        if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /settings/i }));
     await screen.findByText("MCP Tool Gateway");
-    await waitFor(() => expect(screen.getByText("Slack MCP")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("Slack MCP")).toBeInTheDocument(),
+    );
     fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
     await screen.findByText("Invoke: Slack MCP");
     // Click the header ✕ close button (first of the "Close" buttons)
     const allCloseBtns = screen.getAllByRole("button", { name: /close/i });
     fireEvent.click(allCloseBtns[0]);
-    await waitFor(() => expect(screen.queryByText("Invoke: Slack MCP")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByText("Invoke: Slack MCP")).not.toBeInTheDocument(),
+    );
   });
 });
 
@@ -2222,28 +3084,47 @@ describe("App – MCP invoke modal (code category)", () => {
     vi.clearAllMocks();
   });
 
-  const codeTool = { id: "git-mcp", name: "Git MCP", description: "Create PRs", category: "code", status: "available" };
+  const codeTool = {
+    id: "git-mcp",
+    name: "Git MCP",
+    description: "Create PRs",
+    category: "code",
+    status: "available",
+  };
 
   it("shows code category form fields and exercises them", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/mcp/tools") return mockJson([codeTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/mcp/tools") return mockJson([codeTool]);
+        if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /settings/i }));
     await screen.findByText("MCP Tool Gateway");
-    await waitFor(() => expect(screen.getByText("Git MCP")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("Git MCP")).toBeInTheDocument(),
+    );
     fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
     await screen.findByText("Invoke: Git MCP");
 
-    fireEvent.change(screen.getByPlaceholderText("owner/repo"), { target: { value: "my/repo" } });
-    fireEvent.change(screen.getByPlaceholderText("feat: description"), { target: { value: "feat: new feature" } });
-    fireEvent.change(screen.getByPlaceholderText("feature/my-branch"), { target: { value: "feature/test" } });
+    fireEvent.change(screen.getByPlaceholderText("owner/repo"), {
+      target: { value: "my/repo" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("feat: description"), {
+      target: { value: "feat: new feature" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("feature/my-branch"), {
+      target: { value: "feature/test" },
+    });
     // target branch has default "main"
-    const targetBranchInput = screen.getByDisplayValue("main") as HTMLInputElement;
+    const targetBranchInput = screen.getByDisplayValue(
+      "main",
+    ) as HTMLInputElement;
     fireEvent.change(targetBranchInput, { target: { value: "develop" } });
     expect(targetBranchInput.value).toBe("develop");
   });
@@ -2255,27 +3136,44 @@ describe("App – MCP invoke modal (project_management category)", () => {
     vi.clearAllMocks();
   });
 
-  const pmTool = { id: "jira-mcp", name: "Jira MCP", description: "Create issues", category: "project_management", status: "available" };
+  const pmTool = {
+    id: "jira-mcp",
+    name: "Jira MCP",
+    description: "Create issues",
+    category: "project_management",
+    status: "available",
+  };
 
   it("shows project_management category form fields and exercises them", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/mcp/tools") return mockJson([pmTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/mcp/tools") return mockJson([pmTool]);
+        if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /settings/i }));
     await screen.findByText("MCP Tool Gateway");
-    await waitFor(() => expect(screen.getByText("Jira MCP")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("Jira MCP")).toBeInTheDocument(),
+    );
     fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
     await screen.findByText("Invoke: Jira MCP");
 
-    fireEvent.change(screen.getByPlaceholderText("e.g. PROJ"), { target: { value: "PROJ" } });
-    fireEvent.change(screen.getByPlaceholderText("Issue title"), { target: { value: "New bug" } });
+    fireEvent.change(screen.getByPlaceholderText("e.g. PROJ"), {
+      target: { value: "PROJ" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Issue title"), {
+      target: { value: "New bug" },
+    });
     // priority select - find by default value "medium"
-    const prioritySelect = screen.getByDisplayValue("Medium") as HTMLSelectElement;
+    const prioritySelect = screen.getByDisplayValue(
+      "Medium",
+    ) as HTMLSelectElement;
     fireEvent.change(prioritySelect, { target: { value: "high" } });
     expect(prioritySelect.value).toBe("high");
   });
@@ -2287,20 +3185,31 @@ describe("App – MCP invoke modal (other/default category)", () => {
     vi.clearAllMocks();
   });
 
-  const otherTool = { id: "other-mcp", name: "Other MCP", description: "Other tool", category: "monitoring", status: "available" };
+  const otherTool = {
+    id: "other-mcp",
+    name: "Other MCP",
+    description: "Other tool",
+    category: "monitoring",
+    status: "available",
+  };
 
   it("shows default invocation message for unknown category", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/mcp/tools") return mockJson([otherTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/mcp/tools") return mockJson([otherTool]);
+        if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /settings/i }));
     await screen.findByText("MCP Tool Gateway");
-    await waitFor(() => expect(screen.getByText("Other MCP")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("Other MCP")).toBeInTheDocument(),
+    );
     fireEvent.click(screen.getByRole("button", { name: /invoke/i }));
     await screen.findByText("Invoke: Other MCP");
     expect(screen.getByText(/default invocation/i)).toBeInTheDocument();
@@ -2316,36 +3225,54 @@ describe("App – handleSaveSettings", () => {
   });
 
   it("saves settings successfully and shows notice", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/settings" && (!init || init.method !== "POST")) return mockJson({ minimaxApiKey: "" });
-      if (input === "/api/settings" && init?.method === "POST") return mockJson({ minimaxApiKey: "new-key" });
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string, init?: RequestInit) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/settings" && (!init || init.method !== "POST"))
+          return mockJson({ minimaxApiKey: "" });
+        if (input === "/api/settings" && init?.method === "POST")
+          return mockJson({ minimaxApiKey: "new-key" });
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /settings/i }));
     await screen.findByText("AI Model Configuration");
-    fireEvent.change(screen.getByPlaceholderText("sk-cp-..."), { target: { value: "new-key" } });
+    fireEvent.change(screen.getByPlaceholderText("sk-cp-..."), {
+      target: { value: "new-key" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /save settings/i }));
     await screen.findByText("Settings saved successfully.");
   });
 
   it("settings save failure does not show success notice", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/settings" && (!init || init.method !== "POST")) return mockJson({ minimaxApiKey: "" });
-      if (input === "/api/settings" && init?.method === "POST") return mockJson({ error: "Server error" }, 500);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string, init?: RequestInit) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/settings" && (!init || init.method !== "POST"))
+          return mockJson({ minimaxApiKey: "" });
+        if (input === "/api/settings" && init?.method === "POST")
+          return mockJson({ error: "Server error" }, 500);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /settings/i }));
     await screen.findByText("AI Model Configuration");
     fireEvent.click(screen.getByRole("button", { name: /save settings/i }));
     // Wait for save to complete - button should be re-enabled (savingSettings=false)
-    await waitFor(() => expect(screen.getByRole("button", { name: /save settings/i })).not.toBeDisabled());
-    expect(screen.queryByText("Settings saved successfully.")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /save settings/i }),
+      ).not.toBeDisabled(),
+    );
+    expect(
+      screen.queryByText("Settings saved successfully."),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -2358,10 +3285,13 @@ describe("App – Meetings tab form onChange", () => {
   });
 
   it("changes toAgent and meetingId selects", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
@@ -2370,9 +3300,9 @@ describe("App – Meetings tab form onChange", () => {
     // Find "To" select by its option text (agents from dashboardPayload)
     const toSelects = screen.getAllByRole("combobox");
     // First select in meeting form should be "To" agent
-    const toAgentSelect = toSelects.find(el => {
+    const toAgentSelect = toSelects.find((el) => {
       const opts = Array.from((el as HTMLSelectElement).options);
-      return opts.some(o => o.text.includes("PM") || o.text.includes("SWE"));
+      return opts.some((o) => o.text.includes("PM") || o.text.includes("SWE"));
     });
     if (toAgentSelect) {
       fireEvent.change(toAgentSelect, { target: { value: "pm-1" } });
@@ -2381,13 +3311,17 @@ describe("App – Meetings tab form onChange", () => {
 
     // meetingId select
     const meetingSelects = screen.getAllByRole("combobox");
-    const meetingSelect = meetingSelects.find(el => {
+    const meetingSelect = meetingSelects.find((el) => {
       const opts = Array.from((el as HTMLSelectElement).options);
-      return opts.some(o => o.text.includes("launch-readiness"));
+      return opts.some((o) => o.text.includes("launch-readiness"));
     });
     if (meetingSelect) {
-      fireEvent.change(meetingSelect, { target: { value: "launch-readiness" } });
-      expect((meetingSelect as HTMLSelectElement).value).toBe("launch-readiness");
+      fireEvent.change(meetingSelect, {
+        target: { value: "launch-readiness" },
+      });
+      expect((meetingSelect as HTMLSelectElement).value).toBe(
+        "launch-readiness",
+      );
     }
   });
 });
@@ -2401,10 +3335,13 @@ describe("App – nav item click", () => {
   });
 
   it("clicking nav items changes the active section", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
 
@@ -2429,19 +3366,36 @@ describe("App – integrations connected branch coverage", () => {
 
   it("shows chatspace and hasCredentials for connected integrations", async () => {
     const connectedIntegrations = [
-      { id: "slack", name: "Slack", type: "slack", category: "chat", status: "connected", description: "Slack integration", createdAt: "2026-01-01T00:00:00Z", chatspace: "my-workspace", hasCredentials: true },
+      {
+        id: "slack",
+        name: "Slack",
+        type: "slack",
+        category: "chat",
+        status: "connected",
+        description: "Slack integration",
+        createdAt: "2026-01-01T00:00:00Z",
+        chatspace: "my-workspace",
+        hasCredentials: true,
+      },
     ];
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/integrations") return mockJson(connectedIntegrations);
-      if (input === "/api/integrations?category=chat") return mockJson(connectedIntegrations);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/integrations")
+          return mockJson(connectedIntegrations);
+        if (input === "/api/integrations?category=chat")
+          return mockJson(connectedIntegrations);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
     await screen.findByText("Chat Services");
-    await waitFor(() => expect(screen.getByText(/Chatspace:/)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(/Chatspace:/)).toBeInTheDocument(),
+    );
     expect(screen.getByText(/Credentials configured ✓/)).toBeInTheDocument();
   });
 });
@@ -2462,24 +3416,29 @@ describe("App – meetings meetingId onChange explicit", () => {
         { id: "meeting-2", participants: [], transcript: [] },
       ],
     };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(payload);
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(payload);
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
     await screen.findByText("Virtual War Room");
 
     const comboboxes = screen.getAllByRole("combobox");
-    const meetingSelect = comboboxes.find(el => {
+    const meetingSelect = comboboxes.find((el) => {
       const opts = Array.from((el as HTMLSelectElement).options);
-      return opts.some(o => o.value === "meeting-2");
+      return opts.some((o) => o.value === "meeting-2");
     });
     expect(meetingSelect).toBeDefined();
     if (meetingSelect) {
       fireEvent.change(meetingSelect, { target: { value: "meeting-2" } });
-      await waitFor(() => expect((meetingSelect as HTMLSelectElement).value).toBe("meeting-2"));
+      await waitFor(() =>
+        expect((meetingSelect as HTMLSelectElement).value).toBe("meeting-2"),
+      );
     }
   });
 });
@@ -2559,8 +3518,8 @@ describe("App – War Room Approval Cards", () => {
         "/api/messages",
         expect.objectContaining({
           method: "POST",
-          body: expect.stringContaining("messageType=SpecApproved")
-        })
+          body: expect.stringContaining("messageType=SpecApproved"),
+        }),
       );
     });
 
@@ -2571,8 +3530,8 @@ describe("App – War Room Approval Cards", () => {
         "/api/messages",
         expect.objectContaining({
           method: "POST",
-          body: expect.stringContaining("messageType=direction")
-        })
+          body: expect.stringContaining("messageType=direction"),
+        }),
       );
     });
   });
@@ -2586,14 +3545,17 @@ describe("App – War Room Enter key submit", () => {
 
   it("pressing Enter (non-shift) in the war room textarea triggers submit", async () => {
     let messageSent = false;
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/messages") {
-        messageSent = true;
-        return mockJson({});
-      }
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/messages") {
+          messageSent = true;
+          return mockJson({});
+        }
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
@@ -2602,20 +3564,28 @@ describe("App – War Room Enter key submit", () => {
     const textarea = screen.getByPlaceholderText(/Inject direction/i);
     fireEvent.change(textarea, { target: { value: "Hello meeting" } });
     // Fire Enter key to trigger submit via the onKeyDown handler
-    fireEvent.keyDown(textarea, { key: "Enter", shiftKey: false, bubbles: true, cancelable: true });
+    fireEvent.keyDown(textarea, {
+      key: "Enter",
+      shiftKey: false,
+      bubbles: true,
+      cancelable: true,
+    });
     await waitFor(() => expect(messageSent).toBe(true));
   });
 
   it("pressing Shift+Enter in the war room textarea does NOT submit", async () => {
     let messageSent = false;
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/messages") {
-        messageSent = true;
-        return mockJson({});
-      }
-      return mockJson({}, 404);
-    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string) => {
+        if (input === "/api/dashboard") return mockJson(dashboardPayload);
+        if (input === "/api/messages") {
+          messageSent = true;
+          return mockJson({});
+        }
+        return mockJson({}, 404);
+      }),
+    );
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /meetings/i }));
@@ -2623,7 +3593,12 @@ describe("App – War Room Enter key submit", () => {
 
     const textarea = screen.getByPlaceholderText(/Inject direction/i);
     fireEvent.change(textarea, { target: { value: "Multi-line" } });
-    fireEvent.keyDown(textarea, { key: "Enter", shiftKey: true, bubbles: true, cancelable: true });
+    fireEvent.keyDown(textarea, {
+      key: "Enter",
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
     // Give time to confirm no submit occurred
     await new Promise((r) => setTimeout(r, 100));
     expect(messageSent).toBe(false);

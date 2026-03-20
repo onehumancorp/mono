@@ -7,45 +7,45 @@ type Role string
 
 const (
 	// RoleCEO defines the highest-level operational role, typically held by a human.
-	RoleCEO                 Role = "CEO"
+	RoleCEO Role = "CEO"
 	// RoleProductManager dictates product scopes and converts user stories into action plans.
-	RoleProductManager      Role = "PRODUCT_MANAGER"
+	RoleProductManager Role = "PRODUCT_MANAGER"
 	// RoleSoftwareEngineer writes, refactors, and tests implementation code.
-	RoleSoftwareEngineer    Role = "SOFTWARE_ENGINEER"
+	RoleSoftwareEngineer Role = "SOFTWARE_ENGINEER"
 	// RoleEngineeringDirector coordinates technical efforts across multiple engineers.
 	RoleEngineeringDirector Role = "ENGINEERING_DIRECTOR"
 	// RoleQATester evaluates software implementations against predefined acceptance criteria.
-	RoleQATester            Role = "QA_TESTER"
+	RoleQATester Role = "QA_TESTER"
 	// RoleSecurityEngineer scrutinizes codebase changes for potential vulnerabilities.
-	RoleSecurityEngineer    Role = "SECURITY_ENGINEER"
+	RoleSecurityEngineer Role = "SECURITY_ENGINEER"
 	// RoleDesigner constructs UX/UI wireframes and stylistic concepts.
-	RoleDesigner            Role = "DESIGNER"
+	RoleDesigner Role = "DESIGNER"
 	// RoleMarketingManager organizes product launches and promotional messaging.
-	RoleMarketingManager    Role = "MARKETING_MANAGER"
+	RoleMarketingManager Role = "MARKETING_MANAGER"
 
 	// Digital Marketing Agency roles.
 
 	// RoleGrowthAgent drives lead generation and conversion optimization experiments.
-	RoleGrowthAgent       Role = "GROWTH_AGENT"
+	RoleGrowthAgent Role = "GROWTH_AGENT"
 	// RoleContentStrategist authors articles, blog posts, and campaign copy.
 	RoleContentStrategist Role = "CONTENT_STRATEGIST"
 	// RoleSEOSpecialist audits site health and structures organic search strategy.
-	RoleSEOSpecialist     Role = "SEO_SPECIALIST"
+	RoleSEOSpecialist Role = "SEO_SPECIALIST"
 	// RolePaidMediaManager oversees and optimizes ad spend across commercial platforms.
-	RolePaidMediaManager  Role = "PAID_MEDIA_MANAGER"
+	RolePaidMediaManager Role = "PAID_MEDIA_MANAGER"
 	// RoleAnalyticsEngineer builds data pipelines and dashboards for campaign performance tracking.
 	RoleAnalyticsEngineer Role = "ANALYTICS_ENGINEER"
 
 	// Accounting Firm roles.
 
 	// RoleCFO oversees financial forecasting and strategic fiscal planning.
-	RoleCFO            Role = "CFO"
+	RoleCFO Role = "CFO"
 	// RoleBookkeeper maintains daily ledger entries and transaction reconciliations.
-	RoleBookkeeper     Role = "BOOKKEEPER"
+	RoleBookkeeper Role = "BOOKKEEPER"
 	// RoleTaxSpecialist ensures compliance and minimizes liability under current tax codes.
-	RoleTaxSpecialist  Role = "TAX_SPECIALIST"
+	RoleTaxSpecialist Role = "TAX_SPECIALIST"
 	// RoleAuditManager verifies the accuracy and legal integrity of financial statements.
-	RoleAuditManager   Role = "AUDIT_MANAGER"
+	RoleAuditManager Role = "AUDIT_MANAGER"
 	// RolePayrollManager administers employee compensation and jurisdictional tax filings.
 	RolePayrollManager Role = "PAYROLL_MANAGER"
 )
@@ -320,51 +320,51 @@ func NewDigitalMarketingAgency(id, name, ceoName string, now time.Time) Organiza
 func defaultDigitalMarketingRoleProfiles() []RoleProfile {
 	return []RoleProfile{
 		{
-			Role:         RoleCEO,
-			BasePrompt:   "Drive client acquisition strategy and keep campaigns aligned with business outcomes.",
-			Capabilities: []string{"Approve campaign budgets", "Review client performance", "Set growth targets"},
+			Role:          RoleCEO,
+			BasePrompt:    "Drive client acquisition strategy and keep campaigns aligned with business outcomes.",
+			Capabilities:  []string{"Approve campaign budgets", "Review client performance", "Set growth targets"},
 			ContextInputs: []string{"campaign ROI", "client satisfaction", "revenue pipeline"},
 		},
 		{
-			Role:         RoleMarketingManager,
-			BasePrompt:   "Orchestrate multi-channel marketing operations and coordinate delivery across specializations.",
-			Capabilities: []string{"Plan campaign roadmaps", "Coordinate channel specialists", "Report on KPIs"},
+			Role:          RoleMarketingManager,
+			BasePrompt:    "Orchestrate multi-channel marketing operations and coordinate delivery across specializations.",
+			Capabilities:  []string{"Plan campaign roadmaps", "Coordinate channel specialists", "Report on KPIs"},
 			ContextInputs: []string{"campaign briefs", "channel performance", "client goals"},
 		},
 		{
-			Role:         RoleGrowthAgent,
-			BasePrompt:   "Identify and exploit growth opportunities through data-driven lead generation and conversion optimization.",
-			Capabilities: []string{"Crawl and score leads", "A/B test funnels", "Optimize conversion paths"},
+			Role:          RoleGrowthAgent,
+			BasePrompt:    "Identify and exploit growth opportunities through data-driven lead generation and conversion optimization.",
+			Capabilities:  []string{"Crawl and score leads", "A/B test funnels", "Optimize conversion paths"},
 			ContextInputs: []string{"CRM data", "funnel analytics", "competitor benchmarks"},
 		},
 		{
-			Role:         RoleContentStrategist,
-			BasePrompt:   "Produce high-quality content that positions clients as thought leaders and drives organic acquisition.",
-			Capabilities: []string{"Draft blog posts and copy", "Build content calendars", "Optimize for engagement"},
+			Role:          RoleContentStrategist,
+			BasePrompt:    "Produce high-quality content that positions clients as thought leaders and drives organic acquisition.",
+			Capabilities:  []string{"Draft blog posts and copy", "Build content calendars", "Optimize for engagement"},
 			ContextInputs: []string{"brand guidelines", "audience personas", "keyword research"},
 		},
 		{
-			Role:         RoleSEOSpecialist,
-			BasePrompt:   "Maximize organic search visibility through technical SEO, keyword strategy, and link building.",
-			Capabilities: []string{"Audit site health", "Research keywords", "Build backlink strategy"},
+			Role:          RoleSEOSpecialist,
+			BasePrompt:    "Maximize organic search visibility through technical SEO, keyword strategy, and link building.",
+			Capabilities:  []string{"Audit site health", "Research keywords", "Build backlink strategy"},
 			ContextInputs: []string{"site analytics", "keyword gaps", "competitor authority"},
 		},
 		{
-			Role:         RolePaidMediaManager,
-			BasePrompt:   "Optimize paid acquisition across Google, Meta, and LinkedIn to maximize ROAS within budget.",
-			Capabilities: []string{"Manage ad spend", "Optimize bidding strategies", "Generate performance reports"},
+			Role:          RolePaidMediaManager,
+			BasePrompt:    "Optimize paid acquisition across Google, Meta, and LinkedIn to maximize ROAS within budget.",
+			Capabilities:  []string{"Manage ad spend", "Optimize bidding strategies", "Generate performance reports"},
 			ContextInputs: []string{"ad account data", "ROAS targets", "audience segments"},
 		},
 		{
-			Role:         RoleAnalyticsEngineer,
-			BasePrompt:   "Build data pipelines and dashboards that give the team real-time visibility into campaign performance.",
-			Capabilities: []string{"Build attribution models", "Create KPI dashboards", "Identify data anomalies"},
+			Role:          RoleAnalyticsEngineer,
+			BasePrompt:    "Build data pipelines and dashboards that give the team real-time visibility into campaign performance.",
+			Capabilities:  []string{"Build attribution models", "Create KPI dashboards", "Identify data anomalies"},
 			ContextInputs: []string{"raw event data", "measurement frameworks", "reporting requirements"},
 		},
 		{
-			Role:         RoleDesigner,
-			BasePrompt:   "Produce visuals and creative assets that communicate the brand story and drive engagement.",
-			Capabilities: []string{"Design ad creatives", "Build landing page mockups", "Maintain brand consistency"},
+			Role:          RoleDesigner,
+			BasePrompt:    "Produce visuals and creative assets that communicate the brand story and drive engagement.",
+			Capabilities:  []string{"Design ad creatives", "Build landing page mockups", "Maintain brand consistency"},
 			ContextInputs: []string{"brand kit", "campaign brief", "platform specs"},
 		},
 	}
@@ -407,39 +407,39 @@ func NewAccountingFirm(id, name, ceoName string, now time.Time) Organization {
 func defaultAccountingRoleProfiles() []RoleProfile {
 	return []RoleProfile{
 		{
-			Role:         RoleCEO,
-			BasePrompt:   "Ensure the firm delivers accurate financial services in full compliance with regulations.",
-			Capabilities: []string{"Approve financial reports", "Oversee client engagements", "Manage audit risk"},
+			Role:          RoleCEO,
+			BasePrompt:    "Ensure the firm delivers accurate financial services in full compliance with regulations.",
+			Capabilities:  []string{"Approve financial reports", "Oversee client engagements", "Manage audit risk"},
 			ContextInputs: []string{"client portfolio", "compliance status", "revenue summary"},
 		},
 		{
-			Role:         RoleCFO,
-			BasePrompt:   "Lead financial planning, reporting, and risk management for client engagements.",
-			Capabilities: []string{"Build financial models", "Review balance sheets", "Prepare board reporting"},
+			Role:          RoleCFO,
+			BasePrompt:    "Lead financial planning, reporting, and risk management for client engagements.",
+			Capabilities:  []string{"Build financial models", "Review balance sheets", "Prepare board reporting"},
 			ContextInputs: []string{"ledger data", "forecast assumptions", "regulatory updates"},
 		},
 		{
-			Role:         RoleBookkeeper,
-			BasePrompt:   "Maintain accurate day-to-day financial records and reconcile accounts with precision.",
-			Capabilities: []string{"Categorize transactions", "Reconcile accounts", "Generate P&L statements"},
+			Role:          RoleBookkeeper,
+			BasePrompt:    "Maintain accurate day-to-day financial records and reconcile accounts with precision.",
+			Capabilities:  []string{"Categorize transactions", "Reconcile accounts", "Generate P&L statements"},
 			ContextInputs: []string{"bank feeds", "invoices", "expense receipts"},
 		},
 		{
-			Role:         RoleTaxSpecialist,
-			BasePrompt:   "Minimize tax liability while ensuring complete and timely regulatory compliance.",
-			Capabilities: []string{"Prepare tax returns", "Identify deductions", "Handle IRS correspondence"},
+			Role:          RoleTaxSpecialist,
+			BasePrompt:    "Minimize tax liability while ensuring complete and timely regulatory compliance.",
+			Capabilities:  []string{"Prepare tax returns", "Identify deductions", "Handle IRS correspondence"},
 			ContextInputs: []string{"financial records", "tax code updates", "prior filings"},
 		},
 		{
-			Role:         RoleAuditManager,
-			BasePrompt:   "Conduct thorough audits and validate the integrity of financial statements.",
-			Capabilities: []string{"Design audit plans", "Test internal controls", "Issue audit opinions"},
+			Role:          RoleAuditManager,
+			BasePrompt:    "Conduct thorough audits and validate the integrity of financial statements.",
+			Capabilities:  []string{"Design audit plans", "Test internal controls", "Issue audit opinions"},
 			ContextInputs: []string{"trial balance", "internal policies", "risk registers"},
 		},
 		{
-			Role:         RolePayrollManager,
-			BasePrompt:   "Process payroll accurately and on time, managing compliance across all jurisdictions.",
-			Capabilities: []string{"Run payroll cycles", "Manage tax filings", "Handle employee disputes"},
+			Role:          RolePayrollManager,
+			BasePrompt:    "Process payroll accurately and on time, managing compliance across all jurisdictions.",
+			Capabilities:  []string{"Run payroll cycles", "Manage tax filings", "Handle employee disputes"},
 			ContextInputs: []string{"employee records", "time data", "jurisdiction rules"},
 		},
 	}

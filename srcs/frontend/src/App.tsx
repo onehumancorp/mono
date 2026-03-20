@@ -34,7 +34,15 @@ import type {
 } from "./types";
 
 type LoadState = "idle" | "loading" | "ready" | "error";
-type NavSection = "overview" | "meetings" | "agents" | "cost" | "playbooks" | "integrations" | "settings" | "users";
+type NavSection =
+  | "overview"
+  | "meetings"
+  | "agents"
+  | "cost"
+  | "playbooks"
+  | "integrations"
+  | "settings"
+  | "users";
 
 function formatCost(value: number): string {
   if (value === 0) return "$0.000000";
@@ -136,7 +144,11 @@ function NavIcon({ name }: { name: string }) {
  */
 function RoleAvatar({ role, name }: { role: string; name: string }) {
   const initials = roleInitials(role || name);
-  return <span className="role-avatar" aria-hidden="true">{initials}</span>;
+  return (
+    <span className="role-avatar" aria-hidden="true">
+      {initials}
+    </span>
+  );
 }
 
 /* ── Status Badge ── */
@@ -193,7 +205,10 @@ function OrgTree({
   const children = members.filter((m) => m.managerId === parentId);
   if (children.length === 0) return null;
   return (
-    <ul className="org-tree" style={{ paddingLeft: depth === 0 ? 0 : "1.25rem" }}>
+    <ul
+      className="org-tree"
+      style={{ paddingLeft: depth === 0 ? 0 : "1.25rem" }}
+    >
       {children.map((member) => (
         <li key={member.id} className="org-tree__node">
           <div className="org-tree__row">
@@ -203,7 +218,9 @@ function OrgTree({
                 {member.name}
                 {member.isHuman && <span className="human-tag">YOU</span>}
               </span>
-              <span className="org-tree__role">{member.role.replace(/_/g, " ")}</span>
+              <span className="org-tree__role">
+                {member.role.replace(/_/g, " ")}
+              </span>
             </div>
           </div>
           <OrgTree members={members} parentId={member.id} depth={depth + 1} />
@@ -239,16 +256,36 @@ function HireAgentForm({
   const [name, setName] = useState("");
   const [role, setRole] = useState("SOFTWARE_ENGINEER");
   const commonRoles = [
-    "SOFTWARE_ENGINEER", "PRODUCT_MANAGER", "QA_TESTER", "SECURITY_ENGINEER",
-    "DESIGNER", "MARKETING_MANAGER", "GROWTH_AGENT", "CONTENT_STRATEGIST",
-    "SEO_SPECIALIST", "BOOKKEEPER", "TAX_SPECIALIST",
+    "SOFTWARE_ENGINEER",
+    "PRODUCT_MANAGER",
+    "QA_TESTER",
+    "SECURITY_ENGINEER",
+    "DESIGNER",
+    "MARKETING_MANAGER",
+    "GROWTH_AGENT",
+    "CONTENT_STRATEGIST",
+    "SEO_SPECIALIST",
+    "BOOKKEEPER",
+    "TAX_SPECIALIST",
   ];
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Hire Agent">
+    <div
+      className="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Hire Agent"
+    >
       <div className="modal">
         <div className="modal-header">
           <h2 className="modal-title">Hire New Agent</h2>
-          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close">✕</button>
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
         <div className="modal-body">
           <label className="field">
@@ -263,20 +300,30 @@ function HireAgentForm({
           </label>
           <label className="field">
             <span className="field-label">Role</span>
-            <select className="input" value={role} onChange={(e) => setRole(e.target.value)}>
+            <select
+              className="input"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
               {commonRoles.map((r) => (
-                <option key={r} value={r}>{r.replace(/_/g, " ")}</option>
+                <option key={r} value={r}>
+                  {r.replace(/_/g, " ")}
+                </option>
               ))}
             </select>
           </label>
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
+            Cancel
+          </button>
           <button
             type="button"
             className="btn btn-primary"
             disabled={!name.trim()}
-            onClick={() => { onHire(name.trim(), role); }}
+            onClick={() => {
+              onHire(name.trim(), role);
+            }}
           >
             Hire Agent
           </button>
@@ -316,7 +363,12 @@ export function App() {
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
   const [users, setUsers] = useState<UserPublic[]>([]);
-  const [createUserForm, setCreateUserForm] = useState({ username: "", email: "", password: "", roles: "operator" });
+  const [createUserForm, setCreateUserForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    roles: "operator",
+  });
   const [userActionLoading, setUserActionLoading] = useState(false);
 
   async function handleLogin(e: FormEvent<HTMLFormElement>) {
@@ -343,16 +395,60 @@ export function App() {
   }
 
   // ── Telegram setup wizard ──────────────────────────────────────────────────
-  type TelegramWizardState = { open: boolean; step: number; botToken: string; chatId: string; loading: boolean; error: string; testSent: boolean };
-  const [tgWizard, setTgWizard] = useState<TelegramWizardState>({ open: false, step: 1, botToken: "", chatId: "", loading: false, error: "", testSent: false });
+  type TelegramWizardState = {
+    open: boolean;
+    step: number;
+    botToken: string;
+    chatId: string;
+    loading: boolean;
+    error: string;
+    testSent: boolean;
+  };
+  const [tgWizard, setTgWizard] = useState<TelegramWizardState>({
+    open: false,
+    step: 1,
+    botToken: "",
+    chatId: "",
+    loading: false,
+    error: "",
+    testSent: false,
+  });
 
   // ── Discord setup wizard ───────────────────────────────────────────────────
-  type DiscordWizardState = { open: boolean; step: number; webhookUrl: string; loading: boolean; error: string; testSent: boolean };
-  const [dcWizard, setDcWizard] = useState<DiscordWizardState>({ open: false, step: 1, webhookUrl: "", loading: false, error: "", testSent: false });
+  type DiscordWizardState = {
+    open: boolean;
+    step: number;
+    webhookUrl: string;
+    loading: boolean;
+    error: string;
+    testSent: boolean;
+  };
+  const [dcWizard, setDcWizard] = useState<DiscordWizardState>({
+    open: false,
+    step: 1,
+    webhookUrl: "",
+    loading: false,
+    error: "",
+    testSent: false,
+  });
 
   // ── MCP tool invocation modal ──────────────────────────────────────────────
-  type MCPInvokeState = { open: boolean; tool: MCPTool | null; params: Record<string, string>; loading: boolean; result: string; error: string };
-  const [mcpInvoke, setMcpInvoke] = useState<MCPInvokeState>({ open: false, tool: null, params: {}, loading: false, result: "", error: "" });
+  type MCPInvokeState = {
+    open: boolean;
+    tool: MCPTool | null;
+    params: Record<string, string>;
+    loading: boolean;
+    result: string;
+    error: string;
+  };
+  const [mcpInvoke, setMcpInvoke] = useState<MCPInvokeState>({
+    open: false,
+    tool: null,
+    params: {},
+    loading: false,
+    result: "",
+    error: "",
+  });
 
   const [form, setForm] = useState({
     fromAgent: "pm-1",
@@ -389,7 +485,8 @@ export function App() {
       const data = await fetchDashboard();
       setSnapshot(data);
       setSelectedMeetingID((current) => {
-        if (current && data.meetings.some((m) => m.id === current)) return current;
+        if (current && data.meetings.some((m) => m.id === current))
+          return current;
         return data.meetings[0]?.id ?? "";
       });
       setForm((current) => ({
@@ -411,15 +508,25 @@ export function App() {
 
   useEffect(() => {
     if (activeNav === "settings") {
-      void fetchDomains().then(setDomains).catch(() => { });
-      void fetchMCPTools().then(setMcpTools).catch(() => { });
-      void fetchSettings().then(setSettings).catch(() => { });
+      void fetchDomains()
+        .then(setDomains)
+        .catch(() => {});
+      void fetchMCPTools()
+        .then(setMcpTools)
+        .catch(() => {});
+      void fetchSettings()
+        .then(setSettings)
+        .catch(() => {});
     }
     if (activeNav === "integrations") {
-      void fetchIntegrations().then(setIntegrationsList).catch(() => { });
+      void fetchIntegrations()
+        .then(setIntegrationsList)
+        .catch(() => {});
     }
     if (activeNav === "users") {
-      void fetchUsers().then(setUsers).catch(() => { });
+      void fetchUsers()
+        .then(setUsers)
+        .catch(() => {});
     }
   }, [activeNav]);
 
@@ -494,10 +601,17 @@ export function App() {
   async function handleTelegramTest() {
     setTgWizard((w) => ({ ...w, loading: true, error: "" }));
     try {
-      await testChatIntegration("telegram", { botToken: tgWizard.botToken, chatId: tgWizard.chatId });
+      await testChatIntegration("telegram", {
+        botToken: tgWizard.botToken,
+        chatId: tgWizard.chatId,
+      });
       setTgWizard((w) => ({ ...w, loading: false, testSent: true, step: 3 }));
     } catch (e) {
-      setTgWizard((w) => ({ ...w, loading: false, error: e instanceof Error ? e.message : "Test failed" }));
+      setTgWizard((w) => ({
+        ...w,
+        loading: false,
+        error: e instanceof Error ? e.message : "Test failed",
+      }));
     }
   }
 
@@ -508,11 +622,27 @@ export function App() {
         botToken: tgWizard.botToken,
         chatId: tgWizard.chatId,
       });
-      setIntegrationsList((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
-      setTgWizard({ open: false, step: 1, botToken: "", chatId: "", loading: false, error: "", testSent: false });
-      setNotice("Telegram connected — messages will be delivered to your bot channel.");
+      setIntegrationsList((prev) =>
+        prev.map((i) => (i.id === updated.id ? updated : i)),
+      );
+      setTgWizard({
+        open: false,
+        step: 1,
+        botToken: "",
+        chatId: "",
+        loading: false,
+        error: "",
+        testSent: false,
+      });
+      setNotice(
+        "Telegram connected — messages will be delivered to your bot channel.",
+      );
     } catch (e) {
-      setTgWizard((w) => ({ ...w, loading: false, error: e instanceof Error ? e.message : "Connect failed" }));
+      setTgWizard((w) => ({
+        ...w,
+        loading: false,
+        error: e instanceof Error ? e.message : "Connect failed",
+      }));
     }
   }
 
@@ -523,19 +653,33 @@ export function App() {
       await testChatIntegration("discord", { webhookUrl: dcWizard.webhookUrl });
       setDcWizard((w) => ({ ...w, loading: false, testSent: true, step: 3 }));
     } catch (e) {
-      setDcWizard((w) => ({ ...w, loading: false, error: e instanceof Error ? e.message : "Test failed" }));
+      setDcWizard((w) => ({
+        ...w,
+        loading: false,
+        error: e instanceof Error ? e.message : "Test failed",
+      }));
     }
   }
 
   async function handleDiscordConnect() {
     setDcWizard((w) => ({ ...w, loading: true, error: "" }));
     try {
-      const updated = await connectIntegration("discord", { webhookUrl: dcWizard.webhookUrl });
-      setIntegrationsList((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+      const updated = await connectIntegration("discord", {
+        webhookUrl: dcWizard.webhookUrl,
+      });
+      setIntegrationsList((prev) =>
+        prev.map((i) => (i.id === updated.id ? updated : i)),
+      );
       setDcWizard((w) => ({ ...w, loading: false, step: 4 }));
-      setNotice("Discord connected — messages will be delivered to your webhook channel.");
+      setNotice(
+        "Discord connected — messages will be delivered to your webhook channel.",
+      );
     } catch (e) {
-      setDcWizard((w) => ({ ...w, loading: false, error: e instanceof Error ? e.message : "Connect failed" }));
+      setDcWizard((w) => ({
+        ...w,
+        loading: false,
+        error: e instanceof Error ? e.message : "Connect failed",
+      }));
     }
   }
 
@@ -544,10 +688,22 @@ export function App() {
     if (!mcpInvoke.tool) return;
     setMcpInvoke((s) => ({ ...s, loading: true, error: "", result: "" }));
     try {
-      const res = await invokeMCPTool(mcpInvoke.tool.id, "invoke", mcpInvoke.params);
-      setMcpInvoke((s) => ({ ...s, loading: false, result: JSON.stringify(res, null, 2) }));
+      const res = await invokeMCPTool(
+        mcpInvoke.tool.id,
+        "invoke",
+        mcpInvoke.params,
+      );
+      setMcpInvoke((s) => ({
+        ...s,
+        loading: false,
+        result: JSON.stringify(res, null, 2),
+      }));
     } catch (e) {
-      setMcpInvoke((s) => ({ ...s, loading: false, error: e instanceof Error ? e.message : "Invocation failed" }));
+      setMcpInvoke((s) => ({
+        ...s,
+        loading: false,
+        error: e instanceof Error ? e.message : "Invocation failed",
+      }));
     }
   }
 
@@ -586,7 +742,11 @@ export function App() {
         <div className="login-card">
           <div className="login-logo">OHC</div>
           <h1 className="login-title">Sign in to One Human Corp</h1>
-          <form onSubmit={(e) => { void handleLogin(e); }}>
+          <form
+            onSubmit={(e) => {
+              void handleLogin(e);
+            }}
+          >
             <div className="login-field">
               <label htmlFor="login-username">Username</label>
               <input
@@ -624,39 +784,84 @@ export function App() {
   return (
     <div className="shell">
       {showHireModal && (
-        <HireAgentForm onHire={handleHire} onClose={() => setShowHireModal(false)} />
+        <HireAgentForm
+          onHire={handleHire}
+          onClose={() => setShowHireModal(false)}
+        />
       )}
 
       {/* ── Telegram Setup Wizard ── */}
       {tgWizard.open && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Connect Telegram">
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Connect Telegram"
+        >
           <div className="modal modal--wide">
             <div className="modal-header">
               <h2 className="modal-title">Connect Telegram Bot</h2>
-              <button type="button" className="icon-btn" onClick={() => setTgWizard((w) => ({ ...w, open: false }))} aria-label="Close">✕</button>
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => setTgWizard((w) => ({ ...w, open: false }))}
+                aria-label="Close"
+              >
+                ✕
+              </button>
             </div>
             <div className="modal-body">
               {/* Step indicator */}
               <div className="wizard-steps">
-                {["Create Bot", "Credentials", "Test", "Done"].map((label, i) => (
-                  <div key={label} className={`wizard-step ${tgWizard.step > i + 1 ? "wizard-step--done" : tgWizard.step === i + 1 ? "wizard-step--active" : ""}`}>
-                    <span className="wizard-step__num">{tgWizard.step > i + 1 ? "✓" : i + 1}</span>
-                    <span className="wizard-step__label">{label}</span>
-                  </div>
-                ))}
+                {["Create Bot", "Credentials", "Test", "Done"].map(
+                  (label, i) => (
+                    <div
+                      key={label}
+                      className={`wizard-step ${tgWizard.step > i + 1 ? "wizard-step--done" : tgWizard.step === i + 1 ? "wizard-step--active" : ""}`}
+                    >
+                      <span className="wizard-step__num">
+                        {tgWizard.step > i + 1 ? "✓" : i + 1}
+                      </span>
+                      <span className="wizard-step__label">{label}</span>
+                    </div>
+                  ),
+                )}
               </div>
 
               {tgWizard.step === 1 && (
                 <div className="wizard-content">
-                  <h3 className="wizard-heading">Step 1 — Create a Telegram Bot</h3>
+                  <h3 className="wizard-heading">
+                    Step 1 — Create a Telegram Bot
+                  </h3>
                   <ol className="wizard-list">
-                    <li>Open Telegram and search for <strong>@BotFather</strong>.</li>
-                    <li>Send the command <code>/newbot</code>.</li>
-                    <li>Follow BotFather's instructions — choose a display name and a username ending in <code>bot</code>.</li>
-                    <li>BotFather will reply with your <strong>Bot Token</strong> — a string like <code>123456:ABC-DEF...</code>. Copy it.</li>
-                    <li>Add your bot to the Telegram group or channel where you want messages delivered, then obtain the <strong>Chat ID</strong>.<br /><em>Tip: Forward a message from that chat to @userinfobot to get the chat ID.</em></li>
+                    <li>
+                      Open Telegram and search for <strong>@BotFather</strong>.
+                    </li>
+                    <li>
+                      Send the command <code>/newbot</code>.
+                    </li>
+                    <li>
+                      Follow BotFather's instructions — choose a display name
+                      and a username ending in <code>bot</code>.
+                    </li>
+                    <li>
+                      BotFather will reply with your <strong>Bot Token</strong>{" "}
+                      — a string like <code>123456:ABC-DEF...</code>. Copy it.
+                    </li>
+                    <li>
+                      Add your bot to the Telegram group or channel where you
+                      want messages delivered, then obtain the{" "}
+                      <strong>Chat ID</strong>.<br />
+                      <em>
+                        Tip: Forward a message from that chat to @userinfobot to
+                        get the chat ID.
+                      </em>
+                    </li>
                   </ol>
-                  <p className="wizard-note">The bot token and chat ID stay on the server — they are never sent back to the browser.</p>
+                  <p className="wizard-note">
+                    The bot token and chat ID stay on the server — they are
+                    never sent back to the browser.
+                  </p>
                 </div>
               )}
 
@@ -670,7 +875,9 @@ export function App() {
                       type="password"
                       placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
                       value={tgWizard.botToken}
-                      onChange={(e) => setTgWizard((w) => ({ ...w, botToken: e.target.value }))}
+                      onChange={(e) =>
+                        setTgWizard((w) => ({ ...w, botToken: e.target.value }))
+                      }
                       autoComplete="off"
                     />
                   </label>
@@ -680,60 +887,135 @@ export function App() {
                       className="input"
                       placeholder="-1001234567890  (group) or  123456789  (direct)"
                       value={tgWizard.chatId}
-                      onChange={(e) => setTgWizard((w) => ({ ...w, chatId: e.target.value }))}
+                      onChange={(e) =>
+                        setTgWizard((w) => ({ ...w, chatId: e.target.value }))
+                      }
                       autoComplete="off"
                     />
-                    <span className="field-hint">For a group/channel, the ID is usually a negative number. For a private chat, it's positive.</span>
+                    <span className="field-hint">
+                      For a group/channel, the ID is usually a negative number.
+                      For a private chat, it's positive.
+                    </span>
                   </label>
-                  {tgWizard.error && <p className="field-error" role="alert">{tgWizard.error}</p>}
+                  {tgWizard.error && (
+                    <p className="field-error" role="alert">
+                      {tgWizard.error}
+                    </p>
+                  )}
                 </div>
               )}
 
               {tgWizard.step === 3 && !tgWizard.testSent && (
                 <div className="wizard-content">
                   <h3 className="wizard-heading">Step 3 — Test Connection</h3>
-                  <p>Click <strong>Send Test Message</strong> to verify your bot can reach the chat. A confirmation message will appear in your Telegram.</p>
-                  {tgWizard.error && <p className="field-error" role="alert">{tgWizard.error}</p>}
+                  <p>
+                    Click <strong>Send Test Message</strong> to verify your bot
+                    can reach the chat. A confirmation message will appear in
+                    your Telegram.
+                  </p>
+                  {tgWizard.error && (
+                    <p className="field-error" role="alert">
+                      {tgWizard.error}
+                    </p>
+                  )}
                 </div>
               )}
 
               {tgWizard.step === 3 && tgWizard.testSent && (
                 <div className="wizard-content">
                   <h3 className="wizard-heading">Step 3 — Test Succeeded ✓</h3>
-                  <p className="wizard-success">A test message was sent to your Telegram chat. Check your Telegram to confirm delivery, then click <strong>Complete Setup</strong>.</p>
+                  <p className="wizard-success">
+                    A test message was sent to your Telegram chat. Check your
+                    Telegram to confirm delivery, then click{" "}
+                    <strong>Complete Setup</strong>.
+                  </p>
                 </div>
               )}
 
               {tgWizard.step === 4 && (
                 <div className="wizard-content">
                   <h3 className="wizard-heading">Telegram Connected!</h3>
-                  <p className="wizard-success">Your Telegram bot is now connected. Agent messages and notifications will be delivered to your configured chat.</p>
-                  <p><strong>Chat ID:</strong> <code>{tgWizard.chatId}</code></p>
+                  <p className="wizard-success">
+                    Your Telegram bot is now connected. Agent messages and
+                    notifications will be delivered to your configured chat.
+                  </p>
+                  <p>
+                    <strong>Chat ID:</strong> <code>{tgWizard.chatId}</code>
+                  </p>
                 </div>
               )}
             </div>
             <div className="modal-footer">
               {tgWizard.step > 1 && tgWizard.step < 4 && (
-                <button type="button" className="btn btn-ghost" onClick={() => setTgWizard((w) => ({ ...w, step: w.step - 1 as 1 | 2 | 3 | 4, error: "" }))}>Back</button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() =>
+                    setTgWizard((w) => ({
+                      ...w,
+                      step: (w.step - 1) as 1 | 2 | 3 | 4,
+                      error: "",
+                    }))
+                  }
+                >
+                  Back
+                </button>
               )}
               {tgWizard.step === 1 && (
-                <button type="button" className="btn btn-primary" onClick={() => setTgWizard((w) => ({ ...w, step: 2 }))}>Next: Enter Token →</button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setTgWizard((w) => ({ ...w, step: 2 }))}
+                >
+                  Next: Enter Token →
+                </button>
               )}
               {tgWizard.step === 2 && (
-                <button type="button" className="btn btn-primary" disabled={!tgWizard.botToken.trim() || !tgWizard.chatId.trim()} onClick={() => setTgWizard((w) => ({ ...w, step: 3, error: "" }))}>Next: Test →</button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={
+                    !tgWizard.botToken.trim() || !tgWizard.chatId.trim()
+                  }
+                  onClick={() =>
+                    setTgWizard((w) => ({ ...w, step: 3, error: "" }))
+                  }
+                >
+                  Next: Test →
+                </button>
               )}
               {tgWizard.step === 3 && !tgWizard.testSent && (
-                <button type="button" className="btn btn-primary" disabled={tgWizard.loading} onClick={() => { void handleTelegramTest(); }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={tgWizard.loading}
+                  onClick={() => {
+                    void handleTelegramTest();
+                  }}
+                >
                   {tgWizard.loading ? "Sending…" : "Send Test Message"}
                 </button>
               )}
               {tgWizard.step === 3 && tgWizard.testSent && (
-                <button type="button" className="btn btn-primary" disabled={tgWizard.loading} onClick={() => { void handleTelegramConnect(); }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={tgWizard.loading}
+                  onClick={() => {
+                    void handleTelegramConnect();
+                  }}
+                >
                   {tgWizard.loading ? "Connecting…" : "Complete Setup"}
                 </button>
               )}
               {tgWizard.step === 4 && (
-                <button type="button" className="btn btn-primary" onClick={() => setTgWizard((w) => ({ ...w, open: false }))}>Done</button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setTgWizard((w) => ({ ...w, open: false }))}
+                >
+                  Done
+                </button>
               )}
             </div>
           </div>
@@ -742,33 +1024,72 @@ export function App() {
 
       {/* ── Discord Setup Wizard ── */}
       {dcWizard.open && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Connect Discord">
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Connect Discord"
+        >
           <div className="modal modal--wide">
             <div className="modal-header">
               <h2 className="modal-title">Connect Discord Webhook</h2>
-              <button type="button" className="icon-btn" onClick={() => setDcWizard((w) => ({ ...w, open: false }))} aria-label="Close">✕</button>
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => setDcWizard((w) => ({ ...w, open: false }))}
+                aria-label="Close"
+              >
+                ✕
+              </button>
             </div>
             <div className="modal-body">
               <div className="wizard-steps">
-                {["Create Webhook", "Enter URL", "Test", "Done"].map((label, i) => (
-                  <div key={label} className={`wizard-step ${dcWizard.step > i + 1 ? "wizard-step--done" : dcWizard.step === i + 1 ? "wizard-step--active" : ""}`}>
-                    <span className="wizard-step__num">{dcWizard.step > i + 1 ? "✓" : i + 1}</span>
-                    <span className="wizard-step__label">{label}</span>
-                  </div>
-                ))}
+                {["Create Webhook", "Enter URL", "Test", "Done"].map(
+                  (label, i) => (
+                    <div
+                      key={label}
+                      className={`wizard-step ${dcWizard.step > i + 1 ? "wizard-step--done" : dcWizard.step === i + 1 ? "wizard-step--active" : ""}`}
+                    >
+                      <span className="wizard-step__num">
+                        {dcWizard.step > i + 1 ? "✓" : i + 1}
+                      </span>
+                      <span className="wizard-step__label">{label}</span>
+                    </div>
+                  ),
+                )}
               </div>
 
               {dcWizard.step === 1 && (
                 <div className="wizard-content">
-                  <h3 className="wizard-heading">Step 1 — Create a Discord Webhook</h3>
+                  <h3 className="wizard-heading">
+                    Step 1 — Create a Discord Webhook
+                  </h3>
                   <ol className="wizard-list">
-                    <li>Open Discord and go to the <strong>Server Settings</strong> of your target server.</li>
-                    <li>Click <strong>Integrations</strong> in the left sidebar.</li>
-                    <li>Click <strong>Webhooks</strong>, then <strong>New Webhook</strong>.</li>
-                    <li>Give the webhook a name (e.g. <em>One Human Corp Agents</em>) and choose the channel for notifications.</li>
-                    <li>Click <strong>Copy Webhook URL</strong> — you'll need it in the next step.</li>
+                    <li>
+                      Open Discord and go to the{" "}
+                      <strong>Server Settings</strong> of your target server.
+                    </li>
+                    <li>
+                      Click <strong>Integrations</strong> in the left sidebar.
+                    </li>
+                    <li>
+                      Click <strong>Webhooks</strong>, then{" "}
+                      <strong>New Webhook</strong>.
+                    </li>
+                    <li>
+                      Give the webhook a name (e.g.{" "}
+                      <em>One Human Corp Agents</em>) and choose the channel for
+                      notifications.
+                    </li>
+                    <li>
+                      Click <strong>Copy Webhook URL</strong> — you'll need it
+                      in the next step.
+                    </li>
                   </ol>
-                  <p className="wizard-note">The webhook URL is stored server-side and never returned to the browser.</p>
+                  <p className="wizard-note">
+                    The webhook URL is stored server-side and never returned to
+                    the browser.
+                  </p>
                 </div>
               )}
 
@@ -782,58 +1103,127 @@ export function App() {
                       type="password"
                       placeholder="https://discord.com/api/webhooks/..."
                       value={dcWizard.webhookUrl}
-                      onChange={(e) => setDcWizard((w) => ({ ...w, webhookUrl: e.target.value }))}
+                      onChange={(e) =>
+                        setDcWizard((w) => ({
+                          ...w,
+                          webhookUrl: e.target.value,
+                        }))
+                      }
                       autoComplete="off"
                     />
                   </label>
-                  {dcWizard.error && <p className="field-error" role="alert">{dcWizard.error}</p>}
+                  {dcWizard.error && (
+                    <p className="field-error" role="alert">
+                      {dcWizard.error}
+                    </p>
+                  )}
                 </div>
               )}
 
               {dcWizard.step === 3 && !dcWizard.testSent && (
                 <div className="wizard-content">
                   <h3 className="wizard-heading">Step 3 — Test Connection</h3>
-                  <p>Click <strong>Send Test Message</strong> to verify the webhook can post to your Discord channel.</p>
-                  {dcWizard.error && <p className="field-error" role="alert">{dcWizard.error}</p>}
+                  <p>
+                    Click <strong>Send Test Message</strong> to verify the
+                    webhook can post to your Discord channel.
+                  </p>
+                  {dcWizard.error && (
+                    <p className="field-error" role="alert">
+                      {dcWizard.error}
+                    </p>
+                  )}
                 </div>
               )}
 
               {dcWizard.step === 3 && dcWizard.testSent && (
                 <div className="wizard-content">
                   <h3 className="wizard-heading">Step 3 — Test Succeeded ✓</h3>
-                  <p className="wizard-success">A test message was posted to your Discord channel. Confirm it appeared, then click <strong>Complete Setup</strong>.</p>
+                  <p className="wizard-success">
+                    A test message was posted to your Discord channel. Confirm
+                    it appeared, then click <strong>Complete Setup</strong>.
+                  </p>
                 </div>
               )}
 
               {dcWizard.step === 4 && (
                 <div className="wizard-content">
                   <h3 className="wizard-heading">Discord Connected!</h3>
-                  <p className="wizard-success">Your Discord webhook is now active. Agent messages and notifications will be delivered to your configured channel.</p>
+                  <p className="wizard-success">
+                    Your Discord webhook is now active. Agent messages and
+                    notifications will be delivered to your configured channel.
+                  </p>
                 </div>
               )}
             </div>
             <div className="modal-footer">
               {dcWizard.step > 1 && dcWizard.step < 4 && (
-                <button type="button" className="btn btn-ghost" onClick={() => setDcWizard((w) => ({ ...w, step: w.step - 1 as 1 | 2 | 3 | 4, error: "" }))}>Back</button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() =>
+                    setDcWizard((w) => ({
+                      ...w,
+                      step: (w.step - 1) as 1 | 2 | 3 | 4,
+                      error: "",
+                    }))
+                  }
+                >
+                  Back
+                </button>
               )}
               {dcWizard.step === 1 && (
-                <button type="button" className="btn btn-primary" onClick={() => setDcWizard((w) => ({ ...w, step: 2 }))}>Next: Enter URL →</button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setDcWizard((w) => ({ ...w, step: 2 }))}
+                >
+                  Next: Enter URL →
+                </button>
               )}
               {dcWizard.step === 2 && (
-                <button type="button" className="btn btn-primary" disabled={!dcWizard.webhookUrl.trim()} onClick={() => setDcWizard((w) => ({ ...w, step: 3, error: "" }))}>Next: Test →</button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={!dcWizard.webhookUrl.trim()}
+                  onClick={() =>
+                    setDcWizard((w) => ({ ...w, step: 3, error: "" }))
+                  }
+                >
+                  Next: Test →
+                </button>
               )}
               {dcWizard.step === 3 && !dcWizard.testSent && (
-                <button type="button" className="btn btn-primary" disabled={dcWizard.loading} onClick={() => { void handleDiscordTest(); }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={dcWizard.loading}
+                  onClick={() => {
+                    void handleDiscordTest();
+                  }}
+                >
                   {dcWizard.loading ? "Sending…" : "Send Test Message"}
                 </button>
               )}
               {dcWizard.step === 3 && dcWizard.testSent && (
-                <button type="button" className="btn btn-primary" disabled={dcWizard.loading} onClick={() => { void handleDiscordConnect(); }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={dcWizard.loading}
+                  onClick={() => {
+                    void handleDiscordConnect();
+                  }}
+                >
                   {dcWizard.loading ? "Connecting…" : "Complete Setup"}
                 </button>
               )}
               {dcWizard.step === 4 && (
-                <button type="button" className="btn btn-primary" onClick={() => setDcWizard((w) => ({ ...w, open: false }))}>Done</button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setDcWizard((w) => ({ ...w, open: false }))}
+                >
+                  Done
+                </button>
               )}
             </div>
           </div>
@@ -842,11 +1232,30 @@ export function App() {
 
       {/* ── MCP Tool Invocation Modal ── */}
       {mcpInvoke.open && mcpInvoke.tool && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Invoke MCP Tool">
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Invoke MCP Tool"
+        >
           <div className="modal modal--wide">
             <div className="modal-header">
               <h2 className="modal-title">Invoke: {mcpInvoke.tool.name}</h2>
-              <button type="button" className="icon-btn" onClick={() => setMcpInvoke((s) => ({ ...s, open: false, result: "", error: "" }))} aria-label="Close">✕</button>
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() =>
+                  setMcpInvoke((s) => ({
+                    ...s,
+                    open: false,
+                    result: "",
+                    error: "",
+                  }))
+                }
+                aria-label="Close"
+              >
+                ✕
+              </button>
             </div>
             <div className="modal-body">
               <p className="settings-desc">{mcpInvoke.tool.description}</p>
@@ -855,18 +1264,51 @@ export function App() {
                 <>
                   <label className="field">
                     <span className="field-label">From Agent</span>
-                    <select className="input input-sm" value={mcpInvoke.params.fromAgent ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, fromAgent: e.target.value } }))}>
+                    <select
+                      className="input input-sm"
+                      value={mcpInvoke.params.fromAgent ?? ""}
+                      onChange={(e) =>
+                        setMcpInvoke((s) => ({
+                          ...s,
+                          params: { ...s.params, fromAgent: e.target.value },
+                        }))
+                      }
+                    >
                       <option value="">— select agent —</option>
-                      {(snapshot?.agents ?? []).map((a) => <option key={a.id} value={a.id}>{a.name} ({a.id})</option>)}
+                      {(snapshot?.agents ?? []).map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name} ({a.id})
+                        </option>
+                      ))}
                     </select>
                   </label>
                   <label className="field">
                     <span className="field-label">Channel / Chat ID</span>
-                    <input className="input input-sm" placeholder="e.g. -1001234567890 or #general" value={mcpInvoke.params.channel ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, channel: e.target.value } }))} />
+                    <input
+                      className="input input-sm"
+                      placeholder="e.g. -1001234567890 or #general"
+                      value={mcpInvoke.params.channel ?? ""}
+                      onChange={(e) =>
+                        setMcpInvoke((s) => ({
+                          ...s,
+                          params: { ...s.params, channel: e.target.value },
+                        }))
+                      }
+                    />
                   </label>
                   <label className="field">
                     <span className="field-label">Message</span>
-                    <textarea className="input input-sm textarea" rows={3} value={mcpInvoke.params.content ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, content: e.target.value } }))} />
+                    <textarea
+                      className="input input-sm textarea"
+                      rows={3}
+                      value={mcpInvoke.params.content ?? ""}
+                      onChange={(e) =>
+                        setMcpInvoke((s) => ({
+                          ...s,
+                          params: { ...s.params, content: e.target.value },
+                        }))
+                      }
+                    />
                   </label>
                 </>
               )}
@@ -874,46 +1316,137 @@ export function App() {
                 <>
                   <label className="field">
                     <span className="field-label">Repository</span>
-                    <input className="input input-sm" placeholder="owner/repo" value={mcpInvoke.params.repository ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, repository: e.target.value } }))} />
+                    <input
+                      className="input input-sm"
+                      placeholder="owner/repo"
+                      value={mcpInvoke.params.repository ?? ""}
+                      onChange={(e) =>
+                        setMcpInvoke((s) => ({
+                          ...s,
+                          params: { ...s.params, repository: e.target.value },
+                        }))
+                      }
+                    />
                   </label>
                   <label className="field">
                     <span className="field-label">PR Title</span>
-                    <input className="input input-sm" placeholder="feat: description" value={mcpInvoke.params.title ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, title: e.target.value } }))} />
+                    <input
+                      className="input input-sm"
+                      placeholder="feat: description"
+                      value={mcpInvoke.params.title ?? ""}
+                      onChange={(e) =>
+                        setMcpInvoke((s) => ({
+                          ...s,
+                          params: { ...s.params, title: e.target.value },
+                        }))
+                      }
+                    />
                   </label>
                   <label className="field">
                     <span className="field-label">Source Branch</span>
-                    <input className="input input-sm" placeholder="feature/my-branch" value={mcpInvoke.params.sourceBranch ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, sourceBranch: e.target.value } }))} />
+                    <input
+                      className="input input-sm"
+                      placeholder="feature/my-branch"
+                      value={mcpInvoke.params.sourceBranch ?? ""}
+                      onChange={(e) =>
+                        setMcpInvoke((s) => ({
+                          ...s,
+                          params: { ...s.params, sourceBranch: e.target.value },
+                        }))
+                      }
+                    />
                   </label>
                   <label className="field">
                     <span className="field-label">Target Branch</span>
-                    <input className="input input-sm" value={mcpInvoke.params.targetBranch ?? "main"} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, targetBranch: e.target.value } }))} />
+                    <input
+                      className="input input-sm"
+                      value={mcpInvoke.params.targetBranch ?? "main"}
+                      onChange={(e) =>
+                        setMcpInvoke((s) => ({
+                          ...s,
+                          params: { ...s.params, targetBranch: e.target.value },
+                        }))
+                      }
+                    />
                   </label>
                   <label className="field">
                     <span className="field-label">Created By</span>
-                    <select className="input input-sm" value={mcpInvoke.params.createdBy ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, createdBy: e.target.value } }))}>
+                    <select
+                      className="input input-sm"
+                      value={mcpInvoke.params.createdBy ?? ""}
+                      onChange={(e) =>
+                        setMcpInvoke((s) => ({
+                          ...s,
+                          params: { ...s.params, createdBy: e.target.value },
+                        }))
+                      }
+                    >
                       <option value="">— select agent —</option>
-                      {(snapshot?.agents ?? []).map((a) => <option key={a.id} value={a.id}>{a.name} ({a.id})</option>)}
+                      {(snapshot?.agents ?? []).map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name} ({a.id})
+                        </option>
+                      ))}
                     </select>
                   </label>
                 </>
               )}
-              {(mcpInvoke.tool.category === "project_management") && (
+              {mcpInvoke.tool.category === "project_management" && (
                 <>
                   <label className="field">
                     <span className="field-label">Project</span>
-                    <input className="input input-sm" placeholder="e.g. PROJ" value={mcpInvoke.params.project ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, project: e.target.value } }))} />
+                    <input
+                      className="input input-sm"
+                      placeholder="e.g. PROJ"
+                      value={mcpInvoke.params.project ?? ""}
+                      onChange={(e) =>
+                        setMcpInvoke((s) => ({
+                          ...s,
+                          params: { ...s.params, project: e.target.value },
+                        }))
+                      }
+                    />
                   </label>
                   <label className="field">
                     <span className="field-label">Title</span>
-                    <input className="input input-sm" placeholder="Issue title" value={mcpInvoke.params.title ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, title: e.target.value } }))} />
+                    <input
+                      className="input input-sm"
+                      placeholder="Issue title"
+                      value={mcpInvoke.params.title ?? ""}
+                      onChange={(e) =>
+                        setMcpInvoke((s) => ({
+                          ...s,
+                          params: { ...s.params, title: e.target.value },
+                        }))
+                      }
+                    />
                   </label>
                   <label className="field">
                     <span className="field-label">Description</span>
-                    <textarea className="input input-sm textarea" rows={2} value={mcpInvoke.params.description ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, description: e.target.value } }))} />
+                    <textarea
+                      className="input input-sm textarea"
+                      rows={2}
+                      value={mcpInvoke.params.description ?? ""}
+                      onChange={(e) =>
+                        setMcpInvoke((s) => ({
+                          ...s,
+                          params: { ...s.params, description: e.target.value },
+                        }))
+                      }
+                    />
                   </label>
                   <label className="field">
                     <span className="field-label">Priority</span>
-                    <select className="input input-sm" value={mcpInvoke.params.priority ?? "medium"} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, priority: e.target.value } }))}>
+                    <select
+                      className="input input-sm"
+                      value={mcpInvoke.params.priority ?? "medium"}
+                      onChange={(e) =>
+                        setMcpInvoke((s) => ({
+                          ...s,
+                          params: { ...s.params, priority: e.target.value },
+                        }))
+                      }
+                    >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
                       <option value="high">High</option>
@@ -922,19 +1455,41 @@ export function App() {
                   </label>
                   <label className="field">
                     <span className="field-label">Created By</span>
-                    <select className="input input-sm" value={mcpInvoke.params.createdBy ?? ""} onChange={(e) => setMcpInvoke((s) => ({ ...s, params: { ...s.params, createdBy: e.target.value } }))}>
+                    <select
+                      className="input input-sm"
+                      value={mcpInvoke.params.createdBy ?? ""}
+                      onChange={(e) =>
+                        setMcpInvoke((s) => ({
+                          ...s,
+                          params: { ...s.params, createdBy: e.target.value },
+                        }))
+                      }
+                    >
                       <option value="">— select agent —</option>
-                      {(snapshot?.agents ?? []).map((a) => <option key={a.id} value={a.id}>{a.name} ({a.id})</option>)}
+                      {(snapshot?.agents ?? []).map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name} ({a.id})
+                        </option>
+                      ))}
                     </select>
                   </label>
                 </>
               )}
-              {!["communication", "code", "project_management"].includes(mcpInvoke.tool.category) && (
+              {!["communication", "code", "project_management"].includes(
+                mcpInvoke.tool.category,
+              ) && (
                 <div className="wizard-content">
-                  <p>This tool uses default invocation. Add integration-specific parameters as needed by your workflow.</p>
+                  <p>
+                    This tool uses default invocation. Add integration-specific
+                    parameters as needed by your workflow.
+                  </p>
                 </div>
               )}
-              {mcpInvoke.error && <p className="field-error" role="alert">{mcpInvoke.error}</p>}
+              {mcpInvoke.error && (
+                <p className="field-error" role="alert">
+                  {mcpInvoke.error}
+                </p>
+              )}
               {mcpInvoke.result && (
                 <div className="mcp-result">
                   <p className="mcp-result__label">Result</p>
@@ -943,8 +1498,28 @@ export function App() {
               )}
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn btn-ghost" onClick={() => setMcpInvoke((s) => ({ ...s, open: false, result: "", error: "" }))}>Close</button>
-              <button type="button" className="btn btn-primary" disabled={mcpInvoke.loading} onClick={() => { void handleMCPInvoke(); }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() =>
+                  setMcpInvoke((s) => ({
+                    ...s,
+                    open: false,
+                    result: "",
+                    error: "",
+                  }))
+                }
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={mcpInvoke.loading}
+                onClick={() => {
+                  void handleMCPInvoke();
+                }}
+              >
                 {mcpInvoke.loading ? "Invoking…" : "Invoke Tool"}
               </button>
             </div>
@@ -956,7 +1531,12 @@ export function App() {
       <aside className="sidebar">
         <div className="sidebar-brand">
           <div className="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <polygon points="12,2 22,8 22,16 12,22 2,16 2,8" />
               <circle cx="12" cy="12" r="3" />
             </svg>
@@ -973,8 +1553,12 @@ export function App() {
             <button
               key={key}
               type="button"
-              className={["nav-item", activeNav === key && "active"].filter(Boolean).join(" ")}
-              onClick={() => { setActiveNav(key); }}
+              className={["nav-item", activeNav === key && "active"]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => {
+                setActiveNav(key);
+              }}
               aria-current={activeNav === key ? "page" : undefined}
             >
               <NavIcon name={key} />
@@ -990,13 +1574,17 @@ export function App() {
           <button
             type="button"
             className="btn btn-ghost btn-sm logout-btn"
-            onClick={() => { void handleLogout(); }}
+            onClick={() => {
+              void handleLogout();
+            }}
           >
             Sign out
           </button>
           {ceoMember && (
             <div className="ceo-card">
-              <span className="ceo-avatar" aria-hidden="true">CEO</span>
+              <span className="ceo-avatar" aria-hidden="true">
+                CEO
+              </span>
               <div className="ceo-info">
                 <span className="ceo-name">{ceoMember.name}</span>
                 <span className="ceo-role">Human CEO</span>
@@ -1004,9 +1592,16 @@ export function App() {
             </div>
           )}
           <div className="conn-status">
-            <span className={`conn-dot ${state === "ready" ? "conn-dot--live" : ""}`} aria-hidden="true" />
+            <span
+              className={`conn-dot ${state === "ready" ? "conn-dot--live" : ""}`}
+              aria-hidden="true"
+            />
             <span className="conn-label">
-              {state === "loading" ? "Syncing…" : state === "ready" ? "Live" : "Offline"}
+              {state === "loading"
+                ? "Syncing…"
+                : state === "ready"
+                  ? "Live"
+                  : "Offline"}
             </span>
           </div>
         </div>
@@ -1016,16 +1611,22 @@ export function App() {
       <header className="topbar">
         <div className="topbar-left">
           <h1 className="page-title">One Human Corp Dashboard</h1>
-          {state === "loading" && <span className="spinner" aria-label="Loading" />}
+          {state === "loading" && (
+            <span className="spinner" aria-label="Loading" />
+          )}
         </div>
         <div className="topbar-right">
           {snapshot && (
-            <span className="sync-stamp">Updated {formatTime(snapshot.updatedAt)}</span>
+            <span className="sync-stamp">
+              Updated {formatTime(snapshot.updatedAt)}
+            </span>
           )}
           <button
             type="button"
             className="btn btn-ghost btn-sm"
-            onClick={() => { void loadAll(); }}
+            onClick={() => {
+              void loadAll();
+            }}
             disabled={state === "loading"}
           >
             {state === "loading" ? "Syncing…" : "Refresh"}
@@ -1037,14 +1638,25 @@ export function App() {
       <main className="main-content">
         {notice && (
           <div className="alert alert-success" role="status">
-            <span className="alert-icon" aria-hidden="true">✓</span>
+            <span className="alert-icon" aria-hidden="true">
+              ✓
+            </span>
             <span>{notice}</span>
-            <button type="button" className="alert-close" onClick={() => setNotice("")} aria-label="Dismiss">✕</button>
+            <button
+              type="button"
+              className="alert-close"
+              onClick={() => setNotice("")}
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
           </div>
         )}
         {state === "error" && (
           <div className="alert alert-error" role="alert">
-            <span className="alert-icon" aria-hidden="true">⚠</span>
+            <span className="alert-icon" aria-hidden="true">
+              ⚠
+            </span>
             Failed to load data: {error}
           </div>
         )}
@@ -1056,8 +1668,12 @@ export function App() {
             <div className="kpi-row">
               <article className="kpi-card">
                 <p className="kpi-label">Organization</p>
-                <p className="kpi-value">{snapshot?.organization.name ?? "—"}</p>
-                <p className="kpi-sub">{snapshot ? domainLabel(snapshot.organization.domain) : "—"}</p>
+                <p className="kpi-value">
+                  {snapshot?.organization.name ?? "—"}
+                </p>
+                <p className="kpi-sub">
+                  {snapshot ? domainLabel(snapshot.organization.domain) : "—"}
+                </p>
               </article>
               <article className="kpi-card">
                 <p className="kpi-label">Agent Network</p>
@@ -1067,12 +1683,19 @@ export function App() {
               <article className="kpi-card">
                 <p className="kpi-label">Meeting Messages</p>
                 <p className="kpi-value">{totalMessages}</p>
-                <p className="kpi-sub">Across {meetings.length} virtual room{meetings.length !== 1 ? "s" : ""}</p>
+                <p className="kpi-sub">
+                  Across {meetings.length} virtual room
+                  {meetings.length !== 1 ? "s" : ""}
+                </p>
               </article>
               <article className="kpi-card kpi-card--accent">
                 <p className="kpi-label">Total Cost</p>
-                <p className="kpi-value">{formatCost(snapshot?.costs.totalCostUSD ?? 0)}</p>
-                <p className="kpi-sub">{formatTokens(snapshot?.costs.totalTokens ?? 0)} tokens used</p>
+                <p className="kpi-value">
+                  {formatCost(snapshot?.costs.totalCostUSD ?? 0)}
+                </p>
+                <p className="kpi-sub">
+                  {formatTokens(snapshot?.costs.totalTokens ?? 0)} tokens used
+                </p>
               </article>
             </div>
 
@@ -1081,7 +1704,9 @@ export function App() {
               <article className="panel">
                 <header className="panel-head">
                   <h2 className="panel-title">Org Chart</h2>
-                  <span className="chip">{snapshot?.organization.members.length ?? 0} members</span>
+                  <span className="chip">
+                    {snapshot?.organization.members.length ?? 0} members
+                  </span>
                 </header>
                 <div className="panel-body">
                   {snapshot ? (
@@ -1101,13 +1726,16 @@ export function App() {
                 </header>
                 <div className="panel-body">
                   <ul className="status-list">
-                    {(snapshot?.statuses ?? []).filter((s) => s.count > 0).map((s) => (
-                      <li key={s.status} className="status-row">
-                        <StatusBadge status={s.status} />
-                        <span className="status-count">{s.count}</span>
-                      </li>
-                    ))}
-                    {(snapshot?.statuses ?? []).filter((s) => s.count > 0).length === 0 && (
+                    {(snapshot?.statuses ?? [])
+                      .filter((s) => s.count > 0)
+                      .map((s) => (
+                        <li key={s.status} className="status-row">
+                          <StatusBadge status={s.status} />
+                          <span className="status-count">{s.count}</span>
+                        </li>
+                      ))}
+                    {(snapshot?.statuses ?? []).filter((s) => s.count > 0)
+                      .length === 0 && (
                       <li className="empty-state">No active agents.</li>
                     )}
                   </ul>
@@ -1119,7 +1747,9 @@ export function App() {
                         {topSpenders.slice(0, 3).map((a) => (
                           <li key={a.agentID} className="cost-row">
                             <span className="cost-agent">{a.agentID}</span>
-                            <span className="cost-val">{formatCost(a.costUSD)}</span>
+                            <span className="cost-val">
+                              {formatCost(a.costUSD)}
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -1146,7 +1776,9 @@ export function App() {
                         }}
                       >
                         {meetings.map((m) => (
-                          <option key={m.id} value={m.id}>{m.id}</option>
+                          <option key={m.id} value={m.id}>
+                            {m.id}
+                          </option>
                         ))}
                       </select>
                     </label>
@@ -1173,11 +1805,20 @@ export function App() {
                       {selectedMeeting.transcript.map((msg) => (
                         <li key={msg.id} className="transcript-item">
                           <div className="transcript-header">
-                            <span className="transcript-from">{msg.fromAgent}</span>
-                            <span className="transcript-arrow" aria-hidden="true">→</span>
+                            <span className="transcript-from">
+                              {msg.fromAgent}
+                            </span>
+                            <span
+                              className="transcript-arrow"
+                              aria-hidden="true"
+                            >
+                              →
+                            </span>
                             <span className="transcript-to">{msg.toAgent}</span>
                             <span className="event-chip">{msg.type}</span>
-                            <span className="transcript-time">{formatTime(msg.occurredAt)}</span>
+                            <span className="transcript-time">
+                              {formatTime(msg.occurredAt)}
+                            </span>
                           </div>
                           <p className="transcript-body">{msg.content}</p>
                         </li>
@@ -1198,10 +1839,14 @@ export function App() {
                       <select
                         className="input input-sm"
                         value={form.fromAgent}
-                        onChange={(e) => setForm((p) => ({ ...p, fromAgent: e.target.value }))}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, fromAgent: e.target.value }))
+                        }
                       >
                         {(snapshot?.agents ?? []).map((a) => (
-                          <option key={a.id} value={a.id}>{a.name} ({a.id})</option>
+                          <option key={a.id} value={a.id}>
+                            {a.name} ({a.id})
+                          </option>
                         ))}
                       </select>
                     </label>
@@ -1210,10 +1855,14 @@ export function App() {
                       <select
                         className="input input-sm"
                         value={form.toAgent}
-                        onChange={(e) => setForm((p) => ({ ...p, toAgent: e.target.value }))}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, toAgent: e.target.value }))
+                        }
                       >
                         {(snapshot?.agents ?? []).map((a) => (
-                          <option key={a.id} value={a.id}>{a.name} ({a.id})</option>
+                          <option key={a.id} value={a.id}>
+                            {a.name} ({a.id})
+                          </option>
                         ))}
                       </select>
                     </label>
@@ -1228,7 +1877,9 @@ export function App() {
                         }}
                       >
                         {meetings.map((m) => (
-                          <option key={m.id} value={m.id}>{m.id}</option>
+                          <option key={m.id} value={m.id}>
+                            {m.id}
+                          </option>
                         ))}
                       </select>
                     </label>
@@ -1237,7 +1888,12 @@ export function App() {
                       <select
                         className="input input-sm"
                         value={form.messageType}
-                        onChange={(e) => setForm((p) => ({ ...p, messageType: e.target.value }))}
+                        onChange={(e) =>
+                          setForm((p) => ({
+                            ...p,
+                            messageType: e.target.value,
+                          }))
+                        }
                       >
                         <option value="task">task</option>
                         <option value="status">status</option>
@@ -1260,11 +1916,15 @@ export function App() {
                         className="input input-sm textarea"
                         value={form.content}
                         rows={3}
-                        onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, content: e.target.value }))
+                        }
                       />
                     </label>
                     {error && !notice && (
-                      <p className="field-error" role="alert">{error}</p>
+                      <p className="field-error" role="alert">
+                        {error}
+                      </p>
                     )}
                     <button
                       type="submit"
@@ -1286,7 +1946,10 @@ export function App() {
             <div className="page-header" style={{ marginBottom: "1rem" }}>
               <div>
                 <h2 className="page-heading">Virtual War Room</h2>
-                <p className="page-sub">Real-time agent collaboration, context tracking, and hybrid handoffs</p>
+                <p className="page-sub">
+                  Real-time agent collaboration, context tracking, and hybrid
+                  handoffs
+                </p>
               </div>
               <div className="panel-actions">
                 {meetings.length > 0 && (
@@ -1299,7 +1962,9 @@ export function App() {
                     }}
                   >
                     {meetings.map((m) => (
-                      <option key={m.id} value={m.id}>{m.id}</option>
+                      <option key={m.id} value={m.id}>
+                        {m.id}
+                      </option>
                     ))}
                   </select>
                 )}
@@ -1327,8 +1992,12 @@ export function App() {
                       <h4 className="war-room-sidebar-title">Participants</h4>
                       <div className="war-room-participants">
                         {selectedMeeting.participants.map((pid) => {
-                          const isHuman = snapshot?.organization.members.some(m => m.id === pid && m.isHuman);
-                          const member = snapshot?.organization.members.find(m => m.id === pid);
+                          const isHuman = snapshot?.organization.members.some(
+                            (m) => m.id === pid && m.isHuman,
+                          );
+                          const member = snapshot?.organization.members.find(
+                            (m) => m.id === pid,
+                          );
                           const roleName = member?.role || pid;
                           const displayName = member?.name || pid;
                           return (
@@ -1337,7 +2006,14 @@ export function App() {
                               <div className="war-room-participant-info">
                                 <span className="war-room-participant-name">
                                   {displayName}
-                                  {isHuman && <span className="human-tag" style={{ marginLeft: "4px" }}>YOU</span>}
+                                  {isHuman && (
+                                    <span
+                                      className="human-tag"
+                                      style={{ marginLeft: "4px" }}
+                                    >
+                                      YOU
+                                    </span>
+                                  )}
                                 </span>
                               </div>
                             </div>
@@ -1351,11 +2027,24 @@ export function App() {
                     <div className="war-room-transcript-wrap">
                       <div className="context-summary-panel">
                         <div className="context-summary-title">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                          </svg>
                           Context Efficiency Active
                         </div>
                         <div className="context-summary-body">
-                          Agents in this room are fed a summarized rolling context window to prevent context bloat and minimize token burn.
+                          Agents in this room are fed a summarized rolling
+                          context window to prevent context bloat and minimize
+                          token burn.
                         </div>
                       </div>
 
@@ -1364,24 +2053,70 @@ export function App() {
                           <li className="empty-state">No messages yet.</li>
                         )}
                         {selectedMeeting.transcript.map((msg) => {
-                          const isHuman = snapshot?.organization.members.some(m => m.id === msg.fromAgent && m.isHuman) || msg.fromAgent === "CEO";
+                          const isHuman =
+                            snapshot?.organization.members.some(
+                              (m) => m.id === msg.fromAgent && m.isHuman,
+                            ) || msg.fromAgent === "CEO";
 
-                          if (msg.type === "ApprovalNeeded" && msg.toAgent === "CEO") {
+                          if (
+                            msg.type === "ApprovalNeeded" &&
+                            msg.toAgent === "CEO"
+                          ) {
                             return (
-                              <li key={msg.id} className="transcript-item transcript-item--agent">
+                              <li
+                                key={msg.id}
+                                className="transcript-item transcript-item--agent"
+                              >
                                 <div className="transcript-header">
-                                  <span className="transcript-from">{msg.fromAgent}</span>
-                                  <span className="transcript-arrow" aria-hidden="true">→</span>
-                                  <span className="transcript-to">{msg.toAgent}</span>
-                                  <span className="event-chip event-chip--critical" style={{ marginLeft: "4px" }}>{msg.type}</span>
-                                  <span className="transcript-time">{formatTime(msg.occurredAt)}</span>
+                                  <span className="transcript-from">
+                                    {msg.fromAgent}
+                                  </span>
+                                  <span
+                                    className="transcript-arrow"
+                                    aria-hidden="true"
+                                  >
+                                    →
+                                  </span>
+                                  <span className="transcript-to">
+                                    {msg.toAgent}
+                                  </span>
+                                  <span
+                                    className="event-chip event-chip--critical"
+                                    style={{ marginLeft: "4px" }}
+                                  >
+                                    {msg.type}
+                                  </span>
+                                  <span className="transcript-time">
+                                    {formatTime(msg.occurredAt)}
+                                  </span>
                                 </div>
                                 <div className="approval-card">
                                   <div className="approval-card__content">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="approval-icon"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <svg
+                                      width="20"
+                                      height="20"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      className="approval-icon"
+                                    >
+                                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                      <line x1="12" y1="9" x2="12" y2="13" />
+                                      <line
+                                        x1="12"
+                                        y1="17"
+                                        x2="12.01"
+                                        y2="17"
+                                      />
+                                    </svg>
                                     <div>
-                                      <h4 className="approval-card__title">CEO Approval Required</h4>
-                                      <p className="approval-card__desc">{msg.content}</p>
+                                      <h4 className="approval-card__title">
+                                        CEO Approval Required
+                                      </h4>
+                                      <p className="approval-card__desc">
+                                        {msg.content}
+                                      </p>
                                     </div>
                                   </div>
                                   <div className="approval-card__actions">
@@ -1392,11 +2127,12 @@ export function App() {
                                       onClick={() => {
                                         const payload = {
                                           ...form,
-                                          content: "Approved. Proceed with execution.",
+                                          content:
+                                            "Approved. Proceed with execution.",
                                           fromAgent: ceoMember?.id || "CEO",
                                           toAgent: msg.fromAgent,
                                           meetingId: selectedMeeting.id,
-                                          messageType: "SpecApproved"
+                                          messageType: "SpecApproved",
                                         };
                                         void submitMessage(payload);
                                       }}
@@ -1410,11 +2146,12 @@ export function App() {
                                       onClick={() => {
                                         const payload = {
                                           ...form,
-                                          content: "Rejected. Please review constraints and pivot.",
+                                          content:
+                                            "Rejected. Please review constraints and pivot.",
                                           fromAgent: ceoMember?.id || "CEO",
                                           toAgent: msg.fromAgent,
                                           meetingId: selectedMeeting.id,
-                                          messageType: "direction"
+                                          messageType: "direction",
                                         };
                                         void submitMessage(payload);
                                       }}
@@ -1428,17 +2165,36 @@ export function App() {
                           }
 
                           return (
-                            <li key={msg.id} className={`transcript-item ${isHuman ? "transcript-item--human" : "transcript-item--agent"}`}>
+                            <li
+                              key={msg.id}
+                              className={`transcript-item ${isHuman ? "transcript-item--human" : "transcript-item--agent"}`}
+                            >
                               <div className="transcript-header">
-                                <span className="transcript-from">{msg.fromAgent}</span>
+                                <span className="transcript-from">
+                                  {msg.fromAgent}
+                                </span>
                                 {msg.toAgent && (
                                   <>
-                                    <span className="transcript-arrow" aria-hidden="true">→</span>
-                                    <span className="transcript-to">{msg.toAgent}</span>
+                                    <span
+                                      className="transcript-arrow"
+                                      aria-hidden="true"
+                                    >
+                                      →
+                                    </span>
+                                    <span className="transcript-to">
+                                      {msg.toAgent}
+                                    </span>
                                   </>
                                 )}
-                                <span className="event-chip" style={{ marginLeft: "4px" }}>{msg.type}</span>
-                                <span className="transcript-time">{formatTime(msg.occurredAt)}</span>
+                                <span
+                                  className="event-chip"
+                                  style={{ marginLeft: "4px" }}
+                                >
+                                  {msg.type}
+                                </span>
+                                <span className="transcript-time">
+                                  {formatTime(msg.occurredAt)}
+                                </span>
                               </div>
                               <div className="transcript-bubble">
                                 <p className="transcript-body">{msg.content}</p>
@@ -1450,38 +2206,81 @@ export function App() {
                     </div>
 
                     <div className="war-room-input-area">
-                      <form onSubmit={handleSubmit} className="war-room-composer">
+                      <form
+                        onSubmit={handleSubmit}
+                        className="war-room-composer"
+                      >
                         {/* Hidden fields to maintain the required API payload while simplifying the UI for the CEO */}
-                        <input type="hidden" name="fromAgent" value={ceoMember?.id || "CEO"} />
-                        <input type="hidden" name="toAgent" value={selectedMeeting.participants.find(p => p !== (ceoMember?.id || "CEO")) || "all"} />
-                        <input type="hidden" name="meetingId" value={selectedMeeting.id} />
-                        <input type="hidden" name="messageType" value="direction" />
+                        <input
+                          type="hidden"
+                          name="fromAgent"
+                          value={ceoMember?.id || "CEO"}
+                        />
+                        <input
+                          type="hidden"
+                          name="toAgent"
+                          value={
+                            selectedMeeting.participants.find(
+                              (p) => p !== (ceoMember?.id || "CEO"),
+                            ) || "all"
+                          }
+                        />
+                        <input
+                          type="hidden"
+                          name="meetingId"
+                          value={selectedMeeting.id}
+                        />
+                        <input
+                          type="hidden"
+                          name="messageType"
+                          value="direction"
+                        />
 
                         <textarea
                           className="textarea"
                           placeholder="Inject direction or approve actions as CEO..."
                           value={form.content}
-                          onChange={(e) => setForm({
-                            ...form,
-                            content: e.target.value,
-                            fromAgent: ceoMember?.id || "CEO",
-                            toAgent: selectedMeeting.participants.find(p => p !== (ceoMember?.id || "CEO")) || "all",
-                            meetingId: selectedMeeting.id,
-                            messageType: "direction"
-                          })}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              content: e.target.value,
+                              fromAgent: ceoMember?.id || "CEO",
+                              toAgent:
+                                selectedMeeting.participants.find(
+                                  (p) => p !== (ceoMember?.id || "CEO"),
+                                ) || "all",
+                              meetingId: selectedMeeting.id,
+                              messageType: "direction",
+                            })
+                          }
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {
                               e.preventDefault();
-                              const event = new Event("submit", { bubbles: true, cancelable: true });
+                              const event = new Event("submit", {
+                                bubbles: true,
+                                cancelable: true,
+                              });
                               e.currentTarget.form?.dispatchEvent(event);
                             }
                           }}
                         />
-                        <button type="submit" className="btn btn-primary war-room-send-btn" disabled={sending || !form.content.trim()}>
+                        <button
+                          type="submit"
+                          className="btn btn-primary war-room-send-btn"
+                          disabled={sending || !form.content.trim()}
+                        >
                           {sending ? "..." : "Send"}
                         </button>
                       </form>
-                      {error && !notice && <p className="field-error" style={{ marginTop: "0.5rem" }} role="alert">{error}</p>}
+                      {error && !notice && (
+                        <p
+                          className="field-error"
+                          style={{ marginTop: "0.5rem" }}
+                          role="alert"
+                        >
+                          {error}
+                        </p>
+                      )}
                     </div>
                   </section>
                 </div>
@@ -1496,7 +2295,9 @@ export function App() {
             <div className="page-header">
               <div>
                 <h2 className="page-heading">Agent Network</h2>
-                <p className="page-sub">Manage your AI workforce — hire, monitor, and remove agents</p>
+                <p className="page-sub">
+                  Manage your AI workforce — hire, monitor, and remove agents
+                </p>
               </div>
               <button
                 type="button"
@@ -1516,14 +2317,20 @@ export function App() {
                     <StatusBadge status={agent.status} />
                   </div>
                   <p className="agent-card__name">{agent.name}</p>
-                  <p className="agent-card__role">{agent.role.replace(/_/g, " ")}</p>
+                  <p className="agent-card__role">
+                    {agent.role.replace(/_/g, " ")}
+                  </p>
                   <p className="agent-card__id">{agent.id}</p>
-                  {!snapshot?.organization.members.find((m) => m.id === agent.id && m.isHuman) && (
+                  {!snapshot?.organization.members.find(
+                    (m) => m.id === agent.id && m.isHuman,
+                  ) && (
                     <button
                       type="button"
                       className="btn btn-danger btn-sm btn-full"
                       disabled={agentActionLoading}
-                      onClick={() => { void handleFire(agent.id, agent.name); }}
+                      onClick={() => {
+                        void handleFire(agent.id, agent.name);
+                      }}
                     >
                       Remove
                     </button>
@@ -1531,7 +2338,9 @@ export function App() {
                 </article>
               ))}
               {(snapshot?.agents ?? []).length === 0 && (
-                <p className="empty-state">No agents registered. Hire your first agent to get started.</p>
+                <p className="empty-state">
+                  No agents registered. Hire your first agent to get started.
+                </p>
               )}
             </div>
 
@@ -1539,11 +2348,16 @@ export function App() {
             <article className="panel" style={{ marginTop: "1.25rem" }}>
               <header className="panel-head">
                 <h2 className="panel-title">Org Chart</h2>
-                <span className="chip">{snapshot?.organization.members.length ?? 0} members</span>
+                <span className="chip">
+                  {snapshot?.organization.members.length ?? 0} members
+                </span>
               </header>
               <div className="panel-body">
                 {snapshot ? (
-                  <OrgTree members={snapshot.organization.members} parentId={undefined} />
+                  <OrgTree
+                    members={snapshot.organization.members}
+                    parentId={undefined}
+                  />
                 ) : (
                   <p className="empty-state">Loading…</p>
                 )}
@@ -1558,31 +2372,43 @@ export function App() {
             <div className="page-header">
               <div>
                 <h2 className="page-heading">Cost Analytics</h2>
-                <p className="page-sub">Real-time token usage, model spend, and burn rate forecasting</p>
+                <p className="page-sub">
+                  Real-time token usage, model spend, and burn rate forecasting
+                </p>
               </div>
             </div>
 
             <div className="kpi-row">
               <article className="kpi-card kpi-card--accent">
                 <p className="kpi-label">Total Spend</p>
-                <p className="kpi-value">{formatCost(snapshot?.costs.totalCostUSD ?? 0)}</p>
+                <p className="kpi-value">
+                  {formatCost(snapshot?.costs.totalCostUSD ?? 0)}
+                </p>
                 <p className="kpi-sub">Lifetime compute cost</p>
               </article>
               <article className="kpi-card">
                 <p className="kpi-label">Total Tokens</p>
-                <p className="kpi-value">{formatTokens(snapshot?.costs.totalTokens ?? 0)}</p>
+                <p className="kpi-value">
+                  {formatTokens(snapshot?.costs.totalTokens ?? 0)}
+                </p>
                 <p className="kpi-sub">Prompt + completion</p>
               </article>
               <article className="kpi-card">
                 <p className="kpi-label">Projected Monthly</p>
                 <p className="kpi-value">
-                  {formatCost(snapshot?.costs.projectedMonthlyUSD ?? (snapshot?.costs.totalCostUSD ?? 0) * 30)}
+                  {formatCost(
+                    snapshot?.costs.projectedMonthlyUSD ??
+                      (snapshot?.costs.totalCostUSD ?? 0) * 30,
+                  )}
                 </p>
                 <p className="kpi-sub">Based on current burn rate</p>
               </article>
               <article className="kpi-card">
                 <p className="kpi-label">Active Agents</p>
-                <p className="kpi-value">{snapshot?.costs.agents.filter((a) => a.costUSD > 0).length ?? 0}</p>
+                <p className="kpi-value">
+                  {snapshot?.costs.agents.filter((a) => a.costUSD > 0).length ??
+                    0}
+                </p>
                 <p className="kpi-sub">Agents with token usage</p>
               </article>
             </div>
@@ -1593,23 +2419,35 @@ export function App() {
                   <h2 className="panel-title">Agent Spend Breakdown</h2>
                 </header>
                 <div className="panel-body">
-                  {topSpenders.length === 0 && <p className="empty-state">No cost data yet.</p>}
+                  {topSpenders.length === 0 && (
+                    <p className="empty-state">No cost data yet.</p>
+                  )}
                   <ul className="spend-list">
                     {topSpenders.map((a, i) => {
                       const total = snapshot?.costs.totalCostUSD ?? 1;
-                      const pct = total > 0 ? Math.round((a.costUSD / total) * 100) : 0;
+                      const pct =
+                        total > 0 ? Math.round((a.costUSD / total) * 100) : 0;
                       return (
                         <li key={a.agentID} className="spend-item">
                           <div className="spend-meta">
                             <span className="spend-rank">#{i + 1}</span>
                             <span className="spend-agent">{a.agentID}</span>
-                            {a.model && <span className="spend-model">{a.model}</span>}
-                            <span className="spend-cost">{formatCost(a.costUSD)}</span>
+                            {a.model && (
+                              <span className="spend-model">{a.model}</span>
+                            )}
+                            <span className="spend-cost">
+                              {formatCost(a.costUSD)}
+                            </span>
                           </div>
                           <div className="spend-bar-track">
-                            <div className="spend-bar-fill" style={{ width: `${pct}%` }} />
+                            <div
+                              className="spend-bar-fill"
+                              style={{ width: `${pct}%` }}
+                            />
                           </div>
-                          <div className="spend-tokens">{formatTokens(a.tokenUsed)} tokens</div>
+                          <div className="spend-tokens">
+                            {formatTokens(a.tokenUsed)} tokens
+                          </div>
                         </li>
                       );
                     })}
@@ -1627,20 +2465,32 @@ export function App() {
                       <svg viewBox="0 0 100 100" className="burn-svg">
                         <circle cx="50" cy="50" r="40" className="burn-track" />
                         <circle
-                          cx="50" cy="50" r="40"
+                          cx="50"
+                          cy="50"
+                          r="40"
                           className="burn-fill"
                           strokeDasharray={`${Math.min(
                             ((snapshot?.costs.totalCostUSD ?? 0) /
-                              Math.max((snapshot?.costs.projectedMonthlyUSD ?? (snapshot?.costs.totalCostUSD ?? 0) * 30), 0.00001)) * 251,
-                            251
+                              Math.max(
+                                snapshot?.costs.projectedMonthlyUSD ??
+                                  (snapshot?.costs.totalCostUSD ?? 0) * 30,
+                                0.00001,
+                              )) *
+                              251,
+                            251,
                           )} 251`}
                         />
                       </svg>
                       <div className="burn-center">
                         <span className="burn-pct">
                           {snapshot?.costs.projectedMonthlyUSD
-                            ? Math.round((snapshot.costs.totalCostUSD / snapshot.costs.projectedMonthlyUSD) * 100)
-                            : 0}%
+                            ? Math.round(
+                                (snapshot.costs.totalCostUSD /
+                                  snapshot.costs.projectedMonthlyUSD) *
+                                  100,
+                              )
+                            : 0}
+                          %
                         </span>
                         <span className="burn-label">of month</span>
                       </div>
@@ -1649,17 +2499,25 @@ export function App() {
                   <div className="burn-stats">
                     <div className="burn-stat">
                       <span className="burn-stat__label">Today's Spend</span>
-                      <span className="burn-stat__value">{formatCost(snapshot?.costs.totalCostUSD ?? 0)}</span>
+                      <span className="burn-stat__value">
+                        {formatCost(snapshot?.costs.totalCostUSD ?? 0)}
+                      </span>
                     </div>
                     <div className="burn-stat">
-                      <span className="burn-stat__label">30-Day Projection</span>
+                      <span className="burn-stat__label">
+                        30-Day Projection
+                      </span>
                       <span className="burn-stat__value">
-                        {formatCost(snapshot?.costs.projectedMonthlyUSD ?? (snapshot?.costs.totalCostUSD ?? 0) * 30)}
+                        {formatCost(
+                          snapshot?.costs.projectedMonthlyUSD ??
+                            (snapshot?.costs.totalCostUSD ?? 0) * 30,
+                        )}
                       </span>
                     </div>
                   </div>
                   <p className="burn-note">
-                    Projection based on current token velocity. Throttle non-critical agents to reduce burn rate.
+                    Projection based on current token velocity. Throttle
+                    non-critical agents to reduce burn rate.
                   </p>
                 </div>
               </article>
@@ -1673,7 +2531,9 @@ export function App() {
             <div className="page-header">
               <div>
                 <h2 className="page-heading">Role Playbooks</h2>
-                <p className="page-sub">Agent capabilities, base prompts, and context requirements</p>
+                <p className="page-sub">
+                  Agent capabilities, base prompts, and context requirements
+                </p>
               </div>
             </div>
             <div className="playbook-grid">
@@ -1681,14 +2541,18 @@ export function App() {
                 <article key={profile.role} className="playbook-card">
                   <div className="playbook-card__header">
                     <RoleAvatar role={profile.role} name={profile.role} />
-                    <h3 className="playbook-role">{profile.role.replace(/_/g, " ")}</h3>
+                    <h3 className="playbook-role">
+                      {profile.role.replace(/_/g, " ")}
+                    </h3>
                   </div>
                   <p className="playbook-prompt">{profile.basePrompt}</p>
                   <div className="playbook-section">
                     <p className="playbook-section__title">Capabilities</p>
                     <ul className="playbook-chips">
                       {profile.capabilities.map((cap) => (
-                        <li key={cap} className="playbook-chip">{cap}</li>
+                        <li key={cap} className="playbook-chip">
+                          {cap}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -1696,14 +2560,21 @@ export function App() {
                     <p className="playbook-section__title">Context Inputs</p>
                     <ul className="playbook-chips">
                       {profile.contextInputs.map((inp) => (
-                        <li key={inp} className="playbook-chip playbook-chip--muted">{inp}</li>
+                        <li
+                          key={inp}
+                          className="playbook-chip playbook-chip--muted"
+                        >
+                          {inp}
+                        </li>
                       ))}
                     </ul>
                   </div>
                 </article>
               ))}
               {(snapshot?.organization.roleProfiles ?? []).length === 0 && (
-                <p className="empty-state">No role profiles defined for this domain.</p>
+                <p className="empty-state">
+                  No role profiles defined for this domain.
+                </p>
               )}
             </div>
           </>
@@ -1716,8 +2587,9 @@ export function App() {
               <div>
                 <h2 className="page-heading">Integrations</h2>
                 <p className="page-sub">
-                  Connect your AI agents to external services — chat platforms, git hosting, and issue trackers.
-                  All integrations follow the Model Context Protocol (MCP) for zero vendor lock-in.
+                  Connect your AI agents to external services — chat platforms,
+                  git hosting, and issue trackers. All integrations follow the
+                  Model Context Protocol (MCP) for zero vendor lock-in.
                 </p>
               </div>
             </div>
@@ -1731,7 +2603,8 @@ export function App() {
                 </header>
                 <div className="panel-body">
                   <p className="settings-desc">
-                    Route agent notifications, meeting summaries, and HITL approval requests to your team's chat platform.
+                    Route agent notifications, meeting summaries, and HITL
+                    approval requests to your team's chat platform.
                   </p>
                   <ul className="tool-list">
                     {integrationsList
@@ -1739,45 +2612,90 @@ export function App() {
                       .map((integ) => (
                         <li key={integ.id} className="tool-item">
                           <div className="tool-item__header">
-                            <span className="tool-item__name">{integ.name}</span>
-                            <span className={`tool-badge tool-badge--${integ.status === "connected" ? "green" : "yellow"}`}>
+                            <span className="tool-item__name">
+                              {integ.name}
+                            </span>
+                            <span
+                              className={`tool-badge tool-badge--${integ.status === "connected" ? "green" : "yellow"}`}
+                            >
                               {integ.status}
                             </span>
                           </div>
                           <p className="tool-item__desc">{integ.description}</p>
                           {integ.status === "connected" && integ.chatspace && (
-                            <p className="tool-item__meta">Chatspace: <code>{integ.chatspace}</code></p>
+                            <p className="tool-item__meta">
+                              Chatspace: <code>{integ.chatspace}</code>
+                            </p>
                           )}
-                          {integ.status === "connected" && integ.hasCredentials && (
-                            <p className="tool-item__meta tool-item__meta--green">Credentials configured ✓</p>
-                          )}
-                          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                          {integ.status === "connected" &&
+                            integ.hasCredentials && (
+                              <p className="tool-item__meta tool-item__meta--green">
+                                Credentials configured ✓
+                              </p>
+                            )}
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "0.5rem",
+                              marginTop: "0.5rem",
+                            }}
+                          >
                             {integ.status !== "connected" ? (
                               <button
                                 type="button"
                                 className="btn btn-primary btn--sm"
                                 onClick={() => {
                                   if (integ.id === "telegram") {
-                                    setTgWizard({ open: true, step: 1, botToken: "", chatId: "", loading: false, error: "", testSent: false });
-                                  } else if (integ.id === "discord") {
-                                    setDcWizard({ open: true, step: 1, webhookUrl: "", loading: false, error: "", testSent: false });
-                                  } else {
-                                    void connectIntegration(integ.id).then((updated) => {
-                                      setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
+                                    setTgWizard({
+                                      open: true,
+                                      step: 1,
+                                      botToken: "",
+                                      chatId: "",
+                                      loading: false,
+                                      error: "",
+                                      testSent: false,
                                     });
+                                  } else if (integ.id === "discord") {
+                                    setDcWizard({
+                                      open: true,
+                                      step: 1,
+                                      webhookUrl: "",
+                                      loading: false,
+                                      error: "",
+                                      testSent: false,
+                                    });
+                                  } else {
+                                    void connectIntegration(integ.id).then(
+                                      (updated) => {
+                                        setIntegrationsList((prev) =>
+                                          prev.map((i) =>
+                                            i.id === updated.id ? updated : i,
+                                          ),
+                                        );
+                                      },
+                                    );
                                   }
                                 }}
                               >
-                                {integ.id === "telegram" || integ.id === "discord" ? "Setup →" : "Connect"}
+                                {integ.id === "telegram" ||
+                                integ.id === "discord"
+                                  ? "Setup →"
+                                  : "Connect"}
                               </button>
                             ) : (
                               <button
                                 type="button"
                                 className="btn btn--sm"
                                 onClick={() => {
-                                  void disconnectIntegration(integ.id).then((updated) => {
-                                    setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
-                                  });
+                                  void disconnectIntegration(integ.id).then(
+                                    (updated) => {
+                                      setIntegrationsList((prev) =>
+                                        prev.map((i) =>
+                                          i.id === updated.id ? updated : i,
+                                        ),
+                                      );
+                                    },
+                                  );
                                 }}
                               >
                                 Disconnect
@@ -1786,7 +2704,8 @@ export function App() {
                           </div>
                         </li>
                       ))}
-                    {integrationsList.filter((i) => i.category === "chat").length === 0 && (
+                    {integrationsList.filter((i) => i.category === "chat")
+                      .length === 0 && (
                       <p className="empty-state">Loading integrations…</p>
                     )}
                   </ul>
@@ -1801,7 +2720,8 @@ export function App() {
                 </header>
                 <div className="panel-body">
                   <p className="settings-desc">
-                    Allow SWE agents to open pull requests on GitHub, GitLab, or your self-hosted Gitea instance automatically.
+                    Allow SWE agents to open pull requests on GitHub, GitLab, or
+                    your self-hosted Gitea instance automatically.
                   </p>
                   <ul className="tool-list">
                     {integrationsList
@@ -1809,21 +2729,37 @@ export function App() {
                       .map((integ) => (
                         <li key={integ.id} className="tool-item">
                           <div className="tool-item__header">
-                            <span className="tool-item__name">{integ.name}</span>
-                            <span className={`tool-badge tool-badge--${integ.status === "connected" ? "green" : "yellow"}`}>
+                            <span className="tool-item__name">
+                              {integ.name}
+                            </span>
+                            <span
+                              className={`tool-badge tool-badge--${integ.status === "connected" ? "green" : "yellow"}`}
+                            >
                               {integ.status}
                             </span>
                           </div>
                           <p className="tool-item__desc">{integ.description}</p>
-                          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "0.5rem",
+                              marginTop: "0.5rem",
+                            }}
+                          >
                             {integ.status !== "connected" ? (
                               <button
                                 type="button"
                                 className="btn btn-primary btn--sm"
                                 onClick={() => {
-                                  void connectIntegration(integ.id).then((updated) => {
-                                    setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
-                                  });
+                                  void connectIntegration(integ.id).then(
+                                    (updated) => {
+                                      setIntegrationsList((prev) =>
+                                        prev.map((i) =>
+                                          i.id === updated.id ? updated : i,
+                                        ),
+                                      );
+                                    },
+                                  );
                                 }}
                               >
                                 Connect
@@ -1833,9 +2769,15 @@ export function App() {
                                 type="button"
                                 className="btn btn--sm"
                                 onClick={() => {
-                                  void disconnectIntegration(integ.id).then((updated) => {
-                                    setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
-                                  });
+                                  void disconnectIntegration(integ.id).then(
+                                    (updated) => {
+                                      setIntegrationsList((prev) =>
+                                        prev.map((i) =>
+                                          i.id === updated.id ? updated : i,
+                                        ),
+                                      );
+                                    },
+                                  );
                                 }}
                               >
                                 Disconnect
@@ -1844,7 +2786,8 @@ export function App() {
                           </div>
                         </li>
                       ))}
-                    {integrationsList.filter((i) => i.category === "git").length === 0 && (
+                    {integrationsList.filter((i) => i.category === "git")
+                      .length === 0 && (
                       <p className="empty-state">Loading integrations…</p>
                     )}
                   </ul>
@@ -1859,7 +2802,8 @@ export function App() {
                 </header>
                 <div className="panel-body">
                   <p className="settings-desc">
-                    Let PM agents create and manage tickets in Jira, Plane, or GitHub Issues — keeping the backlog in sync automatically.
+                    Let PM agents create and manage tickets in Jira, Plane, or
+                    GitHub Issues — keeping the backlog in sync automatically.
                   </p>
                   <ul className="tool-list">
                     {integrationsList
@@ -1867,21 +2811,37 @@ export function App() {
                       .map((integ) => (
                         <li key={integ.id} className="tool-item">
                           <div className="tool-item__header">
-                            <span className="tool-item__name">{integ.name}</span>
-                            <span className={`tool-badge tool-badge--${integ.status === "connected" ? "green" : "yellow"}`}>
+                            <span className="tool-item__name">
+                              {integ.name}
+                            </span>
+                            <span
+                              className={`tool-badge tool-badge--${integ.status === "connected" ? "green" : "yellow"}`}
+                            >
                               {integ.status}
                             </span>
                           </div>
                           <p className="tool-item__desc">{integ.description}</p>
-                          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "0.5rem",
+                              marginTop: "0.5rem",
+                            }}
+                          >
                             {integ.status !== "connected" ? (
                               <button
                                 type="button"
                                 className="btn btn-primary btn--sm"
                                 onClick={() => {
-                                  void connectIntegration(integ.id).then((updated) => {
-                                    setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
-                                  });
+                                  void connectIntegration(integ.id).then(
+                                    (updated) => {
+                                      setIntegrationsList((prev) =>
+                                        prev.map((i) =>
+                                          i.id === updated.id ? updated : i,
+                                        ),
+                                      );
+                                    },
+                                  );
                                 }}
                               >
                                 Connect
@@ -1891,9 +2851,15 @@ export function App() {
                                 type="button"
                                 className="btn btn--sm"
                                 onClick={() => {
-                                  void disconnectIntegration(integ.id).then((updated) => {
-                                    setIntegrationsList((prev) => prev.map((i) => i.id === updated.id ? updated : i));
-                                  });
+                                  void disconnectIntegration(integ.id).then(
+                                    (updated) => {
+                                      setIntegrationsList((prev) =>
+                                        prev.map((i) =>
+                                          i.id === updated.id ? updated : i,
+                                        ),
+                                      );
+                                    },
+                                  );
                                 }}
                               >
                                 Disconnect
@@ -1902,7 +2868,8 @@ export function App() {
                           </div>
                         </li>
                       ))}
-                    {integrationsList.filter((i) => i.category === "issues").length === 0 && (
+                    {integrationsList.filter((i) => i.category === "issues")
+                      .length === 0 && (
                       <p className="empty-state">Loading integrations…</p>
                     )}
                   </ul>
@@ -1918,7 +2885,10 @@ export function App() {
             <div className="page-header">
               <div>
                 <h2 className="page-heading">Settings</h2>
-                <p className="page-sub">Configure your organization domain, load scenarios, and manage integrations</p>
+                <p className="page-sub">
+                  Configure your organization domain, load scenarios, and manage
+                  integrations
+                </p>
               </div>
             </div>
 
@@ -1929,7 +2899,8 @@ export function App() {
                 </header>
                 <div className="panel-body">
                   <p className="settings-desc">
-                    Bootstrap your workspace with a pre-seeded organizational scenario. This replaces the current state.
+                    Bootstrap your workspace with a pre-seeded organizational
+                    scenario. This replaces the current state.
                   </p>
                   <label className="field">
                     <span className="field-label">Scenario</span>
@@ -1938,15 +2909,21 @@ export function App() {
                       value={selectedScenario}
                       onChange={(e) => setSelectedScenario(e.target.value)}
                     >
-                      <option value="launch-readiness">Software Co — Launch Readiness</option>
-                      <option value="digital-marketing">Digital Marketing Agency</option>
+                      <option value="launch-readiness">
+                        Software Co — Launch Readiness
+                      </option>
+                      <option value="digital-marketing">
+                        Digital Marketing Agency
+                      </option>
                       <option value="accounting">Accounting Firm</option>
                     </select>
                   </label>
                   <button
                     type="button"
                     className="btn btn-primary"
-                    onClick={() => { void handleSeedScenario(); }}
+                    onClick={() => {
+                      void handleSeedScenario();
+                    }}
                     disabled={state === "loading"}
                   >
                     Load Scenario
@@ -1960,7 +2937,8 @@ export function App() {
                 </header>
                 <div className="panel-body">
                   <p className="settings-desc">
-                    Configure API keys for third-party AI model providers used by your agents.
+                    Configure API keys for third-party AI model providers used
+                    by your agents.
                   </p>
                   <label className="field">
                     <span className="field-label">Minimax API Key</span>
@@ -1969,15 +2947,24 @@ export function App() {
                       type="password"
                       placeholder="sk-cp-..."
                       value={settings.minimaxApiKey ?? ""}
-                      onChange={(e) => setSettings({ ...settings, minimaxApiKey: e.target.value })}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          minimaxApiKey: e.target.value,
+                        })
+                      }
                       autoComplete="off"
                     />
-                    <span className="field-hint">Required for minimax-m2.7 models.</span>
+                    <span className="field-hint">
+                      Required for minimax-m2.7 models.
+                    </span>
                   </label>
                   <button
                     type="button"
                     className="btn btn-primary"
-                    onClick={() => { void handleSaveSettings(); }}
+                    onClick={() => {
+                      void handleSaveSettings();
+                    }}
                     disabled={savingSettings}
                   >
                     {savingSettings ? "Saving…" : "Save Settings"}
@@ -1990,7 +2977,9 @@ export function App() {
                   <h2 className="panel-title">Available Domains</h2>
                 </header>
                 <div className="panel-body">
-                  {domains.length === 0 && <p className="empty-state">Loading domain list…</p>}
+                  {domains.length === 0 && (
+                    <p className="empty-state">Loading domain list…</p>
+                  )}
                   <ul className="domain-list">
                     {domains.map((d) => (
                       <li key={d.id} className="domain-item">
@@ -2008,29 +2997,52 @@ export function App() {
               <article className="panel">
                 <header className="panel-head">
                   <h2 className="panel-title">MCP Tool Gateway</h2>
-                  <span className="chip chip--green">{mcpTools.length} tools</span>
+                  <span className="chip chip--green">
+                    {mcpTools.length} tools
+                  </span>
                 </header>
                 <div className="panel-body">
                   <p className="settings-desc">
-                    All tools are exposed via Model Context Protocol (MCP) ensuring zero vendor lock-in.
+                    All tools are exposed via Model Context Protocol (MCP)
+                    ensuring zero vendor lock-in.
                   </p>
-                  {mcpTools.length === 0 && <p className="empty-state">Loading tools…</p>}
+                  {mcpTools.length === 0 && (
+                    <p className="empty-state">Loading tools…</p>
+                  )}
                   <ul className="tool-list">
                     {mcpTools.map((tool) => (
                       <li key={tool.id} className="tool-item">
                         <div className="tool-item__header">
                           <span className="tool-item__name">{tool.name}</span>
-                          <span className={`tool-badge tool-badge--${tool.status === "available" ? "green" : "yellow"}`}>
+                          <span
+                            className={`tool-badge tool-badge--${tool.status === "available" ? "green" : "yellow"}`}
+                          >
                             {tool.status}
                           </span>
                         </div>
                         <p className="tool-item__desc">{tool.description}</p>
-                        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.5rem" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "0.5rem",
+                            alignItems: "center",
+                            marginTop: "0.5rem",
+                          }}
+                        >
                           <span className="tool-category">{tool.category}</span>
                           <button
                             type="button"
                             className="btn btn-primary btn--sm"
-                            onClick={() => setMcpInvoke({ open: true, tool, params: {}, loading: false, result: "", error: "" })}
+                            onClick={() =>
+                              setMcpInvoke({
+                                open: true,
+                                tool,
+                                params: {},
+                                loading: false,
+                                result: "",
+                                error: "",
+                              })
+                            }
                           >
                             Invoke
                           </button>
@@ -2050,9 +3062,15 @@ export function App() {
                     <dt>Name</dt>
                     <dd>{snapshot?.organization.name ?? "—"}</dd>
                     <dt>ID</dt>
-                    <dd><code>{snapshot?.organization.id ?? "—"}</code></dd>
+                    <dd>
+                      <code>{snapshot?.organization.id ?? "—"}</code>
+                    </dd>
                     <dt>Domain</dt>
-                    <dd>{snapshot ? domainLabel(snapshot.organization.domain) : "—"}</dd>
+                    <dd>
+                      {snapshot
+                        ? domainLabel(snapshot.organization.domain)
+                        : "—"}
+                    </dd>
                     <dt>Members</dt>
                     <dd>{snapshot?.organization.members.length ?? 0}</dd>
                     <dt>Role Profiles</dt>
@@ -2069,7 +3087,9 @@ export function App() {
             <div className="page-header">
               <div>
                 <h2 className="page-heading">User Management</h2>
-                <p className="page-sub">Create and manage human users with role-based access control</p>
+                <p className="page-sub">
+                  Create and manage human users with role-based access control
+                </p>
               </div>
             </div>
             <div className="content-grid two-col">
@@ -2079,26 +3099,42 @@ export function App() {
                   <span className="chip chip--green">{users.length}</span>
                 </header>
                 <div className="panel-body">
-                  {users.length === 0 && <p className="empty-state">No users yet.</p>}
+                  {users.length === 0 && (
+                    <p className="empty-state">No users yet.</p>
+                  )}
                   <ul className="user-list">
                     {users.map((u) => (
                       <li key={u.id} className="user-item">
                         <div className="user-item__header">
                           <span className="user-item__name">{u.username}</span>
-                          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                            {u.roles.map((r) => <span key={r} className="chip chip--sm">{r}</span>)}
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "0.5rem",
+                              alignItems: "center",
+                            }}
+                          >
+                            {u.roles.map((r) => (
+                              <span key={r} className="chip chip--sm">
+                                {r}
+                              </span>
+                            ))}
                             <button
                               type="button"
                               className="btn btn-ghost btn-sm"
                               disabled={userActionLoading}
                               onClick={() => {
                                 setUserActionLoading(true);
-                                void deleteUser(u.id).then(async () => {
-                                  const list = await fetchUsers();
-                                  setUsers(list);
-                                }).finally(() => setUserActionLoading(false));
+                                void deleteUser(u.id)
+                                  .then(async () => {
+                                    const list = await fetchUsers();
+                                    setUsers(list);
+                                  })
+                                  .finally(() => setUserActionLoading(false));
                               }}
-                            >Remove</button>
+                            >
+                              Remove
+                            </button>
                           </div>
                         </div>
                         <span className="user-item__email">{u.email}</span>
@@ -2116,11 +3152,21 @@ export function App() {
                     onSubmit={(e) => {
                       e.preventDefault();
                       setUserActionLoading(true);
-                      void createUser({ username: createUserForm.username, email: createUserForm.email, password: createUserForm.password, roles: [createUserForm.roles] })
+                      void createUser({
+                        username: createUserForm.username,
+                        email: createUserForm.email,
+                        password: createUserForm.password,
+                        roles: [createUserForm.roles],
+                      })
                         .then(async () => {
                           const list = await fetchUsers();
                           setUsers(list);
-                          setCreateUserForm({ username: "", email: "", password: "", roles: "operator" });
+                          setCreateUserForm({
+                            username: "",
+                            email: "",
+                            password: "",
+                            roles: "operator",
+                          });
                         })
                         .finally(() => setUserActionLoading(false));
                     }}
@@ -2130,7 +3176,12 @@ export function App() {
                       <input
                         className="input"
                         value={createUserForm.username}
-                        onChange={(e) => setCreateUserForm((f) => ({ ...f, username: e.target.value }))}
+                        onChange={(e) =>
+                          setCreateUserForm((f) => ({
+                            ...f,
+                            username: e.target.value,
+                          }))
+                        }
                         required
                         placeholder="e.g. alice"
                       />
@@ -2141,7 +3192,12 @@ export function App() {
                         type="email"
                         className="input"
                         value={createUserForm.email}
-                        onChange={(e) => setCreateUserForm((f) => ({ ...f, email: e.target.value }))}
+                        onChange={(e) =>
+                          setCreateUserForm((f) => ({
+                            ...f,
+                            email: e.target.value,
+                          }))
+                        }
                         required
                         placeholder="alice@example.com"
                       />
@@ -2152,7 +3208,12 @@ export function App() {
                         type="password"
                         className="input"
                         value={createUserForm.password}
-                        onChange={(e) => setCreateUserForm((f) => ({ ...f, password: e.target.value }))}
+                        onChange={(e) =>
+                          setCreateUserForm((f) => ({
+                            ...f,
+                            password: e.target.value,
+                          }))
+                        }
                         required
                         placeholder="••••••••"
                       />
@@ -2162,7 +3223,12 @@ export function App() {
                       <select
                         className="input"
                         value={createUserForm.roles}
-                        onChange={(e) => setCreateUserForm((f) => ({ ...f, roles: e.target.value }))}
+                        onChange={(e) =>
+                          setCreateUserForm((f) => ({
+                            ...f,
+                            roles: e.target.value,
+                          }))
+                        }
                       >
                         <option value="admin">admin</option>
                         <option value="operator">operator</option>
@@ -2170,7 +3236,11 @@ export function App() {
                       </select>
                     </label>
                     <div style={{ marginTop: "1rem" }}>
-                      <button type="submit" className="btn btn-primary" disabled={userActionLoading}>
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={userActionLoading}
+                      >
                         {userActionLoading ? "Creating…" : "Create User"}
                       </button>
                     </div>
@@ -2184,4 +3254,3 @@ export function App() {
     </div>
   );
 }
-

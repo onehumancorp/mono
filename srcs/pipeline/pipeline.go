@@ -19,13 +19,13 @@ const (
 	// StateImplementing indicates the feature is currently being coded by a software engineer agent.
 	StateImplementing PipelineState = "IMPLEMENTING"
 	// StateTesting implies the feature branch has been pushed and is undergoing automated CI/CD checks.
-	StateTesting      PipelineState = "TESTING"
+	StateTesting PipelineState = "TESTING"
 	// StateStagingReady signifies the build passed and the feature is awaiting manual review.
 	StateStagingReady PipelineState = "STAGING_READY"
 	// StateDeployed confirms the feature has been successfully promoted to the main production branch.
-	StateDeployed     PipelineState = "DEPLOYED"
+	StateDeployed PipelineState = "DEPLOYED"
 	// StateRollback indicates the test suite failed and the feature branch has been reverted or discarded.
-	StateRollback     PipelineState = "ROLLBACK"
+	StateRollback PipelineState = "ROLLBACK"
 )
 
 // Pipeline models the SDLC progression for a specific feature branch.

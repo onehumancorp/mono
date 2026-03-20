@@ -17,11 +17,11 @@ import (
 // Built-in role names.
 const (
 	// RoleAdmin indicates full read-write access and administrative privileges across the platform.
-	RoleAdmin    = "admin"
+	RoleAdmin = "admin"
 	// RoleOperator indicates standard day-to-day privileges to manage agents and create tasks.
 	RoleOperator = "operator"
 	// RoleViewer indicates read-only access to metrics and dashboards.
-	RoleViewer   = "viewer"
+	RoleViewer = "viewer"
 )
 
 // rolePermissions defines the default permission sets for built-in roles.
@@ -86,9 +86,9 @@ type Store struct {
 	roles   map[string]*Role
 	byName  map[string]*User
 	byEmail map[string]*User
-	byOIDC  map[string]*User             // OIDC subject → User
-	revoked map[string]time.Time         // JTI → expiry (for token revocation)
-	secret  []byte                       // HS256 signing secret
+	byOIDC  map[string]*User     // OIDC subject → User
+	revoked map[string]time.Time // JTI → expiry (for token revocation)
+	secret  []byte               // HS256 signing secret
 	oidcCfg OIDCConfig
 }
 

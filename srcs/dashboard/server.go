@@ -81,7 +81,7 @@ type ApprovalStatus string
 
 const (
 	// ApprovalStatusPending indicates an agent action is frozen, awaiting human sign-off.
-	ApprovalStatusPending  ApprovalStatus = "PENDING"
+	ApprovalStatusPending ApprovalStatus = "PENDING"
 	// ApprovalStatusApproved means the human operator has cleared the agent to proceed.
 	ApprovalStatusApproved ApprovalStatus = "APPROVED"
 	// ApprovalStatusRejected means the human operator has forbidden the requested action.

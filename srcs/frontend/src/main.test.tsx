@@ -20,7 +20,9 @@ describe("main", () => {
     await import("./main");
 
     expect(createRootMock).toHaveBeenCalledTimes(1);
-    expect(createRootMock).toHaveBeenCalledWith(document.getElementById("root"));
+    expect(createRootMock).toHaveBeenCalledWith(
+      document.getElementById("root"),
+    );
     expect(renderMock).toHaveBeenCalledTimes(1);
   });
 });

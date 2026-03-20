@@ -61,12 +61,17 @@ function normalizeCosts(response: Record<string, unknown>): CostSummary {
   const agents = Array.isArray(response.agents) ? response.agents : [];
 
   return {
-    organizationID: String(response.organizationID ?? response.organizationId ?? ""),
+    organizationID: String(
+      response.organizationID ?? response.organizationId ?? "",
+    ),
     totalTokens: Number(response.totalTokens ?? 0),
     totalCostUSD: Number(response.totalCostUSD ?? response.totalCostUsd ?? 0),
-    projectedMonthlyUSD: response.projectedMonthlyUSD !== undefined
-      ? Number(response.projectedMonthlyUSD ?? response.projectedMonthlyUsd ?? 0)
-      : undefined,
+    projectedMonthlyUSD:
+      response.projectedMonthlyUSD !== undefined
+        ? Number(
+            response.projectedMonthlyUSD ?? response.projectedMonthlyUsd ?? 0,
+          )
+        : undefined,
     agents: agents.map((agent) => {
       const value = agent as Record<string, unknown>;
       return {
@@ -87,8 +92,13 @@ function normalizeMeetings(meetings: MeetingRoom[]): MeetingRoom[] {
 }
 
 /** Normalise a raw dashboard JSON response into a typed DashboardSnapshot. */
-function normalizeDashboard(response: Record<string, unknown>): DashboardSnapshot {
-  const rawOrganization = (response.organization ?? {}) as Record<string, unknown>;
+function normalizeDashboard(
+  response: Record<string, unknown>,
+): DashboardSnapshot {
+  const rawOrganization = (response.organization ?? {}) as Record<
+    string,
+    unknown
+  >;
   const rawMeetings = Array.isArray(response.meetings)
     ? (response.meetings as MeetingRoom[])
     : [];
@@ -101,7 +111,10 @@ function normalizeDashboard(response: Record<string, unknown>): DashboardSnapsho
       id: String(rawOrganization.id ?? ""),
       name: String(rawOrganization.name ?? ""),
       domain: String(rawOrganization.domain ?? ""),
-      ceoId: rawOrganization.ceoId !== undefined ? String(rawOrganization.ceoId) : undefined,
+      ceoId:
+        rawOrganization.ceoId !== undefined
+          ? String(rawOrganization.ceoId)
+          : undefined,
       members: Array.isArray(rawOrganization.members)
         ? (rawOrganization.members as Organization["members"])
         : [],
@@ -117,7 +130,9 @@ function normalizeDashboard(response: Record<string, unknown>): DashboardSnapsho
         id: String(value.id ?? ""),
         name: String(value.name ?? ""),
         role: String(value.role ?? ""),
-        organizationId: String(value.organizationId ?? value.organizationID ?? ""),
+        organizationId: String(
+          value.organizationId ?? value.organizationID ?? "",
+        ),
         status: String(value.status ?? ""),
       };
     }),
@@ -154,7 +169,8 @@ export async function fetchCosts(): Promise<CostSummary> {
  * Side Effects: Executes an HTTP GET request to /api/dashboard.
  */
 export async function fetchDashboard(): Promise<DashboardSnapshot> {
-  const response = await authedGetJSON<Record<string, unknown>>("/api/dashboard");
+  const response =
+    await authedGetJSON<Record<string, unknown>>("/api/dashboard");
   return normalizeDashboard(response);
 }
 
@@ -186,7 +202,7 @@ export async function sendMessage(form: {
     const text = await response.text().catch(() => "");
     throw new Error(text || `Failed to send message: ${response.status}`);
   }
-  const raw = await response.json() as Record<string, unknown>;
+  const raw = (await response.json()) as Record<string, unknown>;
   return normalizeDashboard(raw);
 }
 
@@ -197,7 +213,10 @@ export async function sendMessage(form: {
  * @param role - The specific role profile the agent will assume.
  * @returns A Promise resolving to the updated DashboardSnapshot.
  */
-export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
+export function hireAgent(
+  name: string,
+  role: string,
+): Promise<DashboardSnapshot> {
   return postJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
 }
 
@@ -278,7 +297,11 @@ export function decideApproval(
   decision: "approve" | "reject",
   decidedBy?: string,
 ): Promise<ApprovalRequest[]> {
-  return postJSON<ApprovalRequest[]>("/api/approvals/decide", { approvalId, decision, decidedBy });
+  return postJSON<ApprovalRequest[]>("/api/approvals/decide", {
+    approvalId,
+    decision,
+    decidedBy,
+  });
 }
 
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
@@ -373,7 +396,9 @@ export function createSnapshot(label?: string): Promise<OrgSnapshot> {
  * @param snapshotId - The unique ID of the snapshot to restore.
  * @returns A Promise resolving to the restored DashboardSnapshot.
  */
-export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> {
+export function restoreSnapshot(
+  snapshotId: string,
+): Promise<DashboardSnapshot> {
   return postJSON<DashboardSnapshot>("/api/snapshots/restore", { snapshotId });
 }
 
@@ -401,12 +426,7 @@ export function fetchAnalytics(): Promise<AnalyticsSummary> {
 
 // ── External Integrations ─────────────────────────────────────────────────────
 
-import type {
-  ChatMessage,
-  Integration,
-  Issue,
-  PullRequest,
-} from "./types";
+import type { ChatMessage, Integration, Issue, PullRequest } from "./types";
 
 /**
  * Retrieves external service connections, optionally filtered by category.
@@ -452,8 +472,12 @@ export function connectIntegration(
  * @param integrationId - The identifier for the service to disconnect from.
  * @returns A Promise resolving to the disconnected Integration.
  */
-export function disconnectIntegration(integrationId: string): Promise<Integration> {
-  return postJSON<Integration>("/api/integrations/disconnect", { integrationId });
+export function disconnectIntegration(
+  integrationId: string,
+): Promise<Integration> {
+  return postJSON<Integration>("/api/integrations/disconnect", {
+    integrationId,
+  });
 }
 
 /**
@@ -482,7 +506,9 @@ export function testChatIntegration(
  * @param integrationId - Optional integration ID to filter the messages by.
  * @returns A Promise resolving to an array of ChatMessage objects.
  */
-export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]> {
+export function fetchChatMessages(
+  integrationId?: string,
+): Promise<ChatMessage[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return getJSON<ChatMessage[]>(`/api/integrations/chat/messages${q}`);
 }
@@ -509,7 +535,9 @@ export function sendChatMessage(body: {
  * @param integrationId - Optional integration ID to filter the pull requests by.
  * @returns A Promise resolving to an array of PullRequest objects.
  */
-export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]> {
+export function fetchPullRequests(
+  integrationId?: string,
+): Promise<PullRequest[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return getJSON<PullRequest[]>(`/api/integrations/git/prs${q}`);
 }
@@ -588,8 +616,14 @@ export function createIssue(body: {
  * @param status - The new status to transition to.
  * @returns A Promise resolving to the updated Issue.
  */
-export function updateIssueStatus(issueId: string, status: string): Promise<Issue> {
-  return postJSON<Issue>("/api/integrations/issues/status", { issueId, status });
+export function updateIssueStatus(
+  issueId: string,
+  status: string,
+): Promise<Issue> {
+  return postJSON<Issue>("/api/integrations/issues/status", {
+    issueId,
+    status,
+  });
 }
 
 /**
@@ -600,7 +634,10 @@ export function updateIssueStatus(issueId: string, status: string): Promise<Issu
  * @returns A Promise resolving to the assigned Issue.
  */
 export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
-  return postJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
+  return postJSON<Issue>("/api/integrations/issues/assign", {
+    issueId,
+    assignee,
+  });
 }
 
 /**
@@ -621,7 +658,11 @@ export function invokeMCPTool(
   action: string,
   params: Record<string, string>,
 ): Promise<Record<string, unknown>> {
-  return postJSON<Record<string, unknown>>("/api/mcp/tools/invoke", { toolId, action, params });
+  return postJSON<Record<string, unknown>>("/api/mcp/tools/invoke", {
+    toolId,
+    action,
+    params,
+  });
 }
 
 /**
@@ -734,7 +775,10 @@ async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
  *
  * Side Effects: Executes an HTTP POST request to /api/auth/login and stores the resulting token in local storage.
  */
-export async function login(username: string, password: string): Promise<LoginResponse> {
+export async function login(
+  username: string,
+  password: string,
+): Promise<LoginResponse> {
   const resp = await fetch("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -844,7 +888,9 @@ export function fetchRoles(): Promise<Role[]> {
  *
  * Side Effects: Executes an authenticated HTTP POST request to /api/roles.
  */
-export function createRole(body: { name: string; permissions?: string[] }): Promise<Role> {
+export function createRole(body: {
+  name: string;
+  permissions?: string[];
+}): Promise<Role> {
   return authedPostJSON<Role>("/api/roles", body);
 }
-

@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/onehumancorp/mono/srcs/telemetry"
 	pb "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration"
+	"github.com/onehumancorp/mono/srcs/telemetry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -24,39 +24,39 @@ type Status string
 
 const (
 	// StatusIdle means the agent is currently inactive and available for new tasks.
-	StatusIdle      Status = "IDLE"
+	StatusIdle Status = "IDLE"
 	// StatusActive indicates the agent is currently processing a solo task.
-	StatusActive    Status = "ACTIVE"
+	StatusActive Status = "ACTIVE"
 	// StatusInMeeting signifies the agent is currently participating in a collaborative room.
 	StatusInMeeting Status = "IN_MEETING"
 	// StatusBlocked implies the agent is awaiting external input or human approval.
-	StatusBlocked   Status = "BLOCKED"
+	StatusBlocked Status = "BLOCKED"
 )
 
 // Event type constants for the asynchronous pub/sub agent interaction protocol.
 const (
 	// EventTask represents a standard work assignment dispatched to an agent.
-	EventTask           = "task"
+	EventTask = "task"
 	// EventStatus broadcasts a change in an agent's operational phase.
-	EventStatus         = "status"
+	EventStatus = "status"
 	// EventHandoff indicates a task has been escalated from an agent to a human operator.
-	EventHandoff        = "handoff"
+	EventHandoff = "handoff"
 	// EventCodeReviewed signifies that an implementation has passed peer review.
-	EventCodeReviewed   = "CodeReviewed"
+	EventCodeReviewed = "CodeReviewed"
 	// EventTestsFailed denotes that a CI/CD pipeline run resulted in errors.
-	EventTestsFailed    = "TestsFailed"
+	EventTestsFailed = "TestsFailed"
 	// EventTestsPassed indicates that a CI/CD pipeline run completed successfully.
-	EventTestsPassed    = "TestsPassed"
+	EventTestsPassed = "TestsPassed"
 	// EventSpecApproved represents a formal sign-off on a product feature specification.
-	EventSpecApproved   = "SpecApproved"
+	EventSpecApproved = "SpecApproved"
 	// EventBlockerRaised alerts the system that an agent has encountered an unresolvable issue.
-	EventBlockerRaised  = "BlockerRaised"
+	EventBlockerRaised = "BlockerRaised"
 	// EventBlockerCleared indicates that a previously raised blocker has been resolved.
 	EventBlockerCleared = "BlockerCleared"
 	// EventPRCreated signals the opening of a new Pull Request on an external Git platform.
-	EventPRCreated      = "PRCreated"
+	EventPRCreated = "PRCreated"
 	// EventPRMerged confirms that a Pull Request has been successfully merged into the target branch.
-	EventPRMerged       = "PRMerged"
+	EventPRMerged = "PRMerged"
 	// EventDesignReviewed signifies that a UX/UI design concept has been validated.
 	EventDesignReviewed = "DesignReviewed"
 	// EventApprovalNeeded triggers a Human-in-the-Loop (HITL) gate for a sensitive action.
