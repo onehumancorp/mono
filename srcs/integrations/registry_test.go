@@ -47,9 +47,9 @@ func mockLookupIP(host string) ([]net.IP, error) {
 }
 
 func TestValidateURL(t *testing.T) {
-	oldLookupIP := lookupIP
-	lookupIP = mockLookupIP
-	defer func() { lookupIP = oldLookupIP }()
+	oldLookupIP := LookupIP
+	LookupIP = mockLookupIP
+	defer func() { LookupIP = oldLookupIP }()
 
 	tests := []struct {
 		name    string
@@ -81,7 +81,7 @@ func TestValidateURL(t *testing.T) {
 
 	// DNS error test
 	t.Run("DNS Resolution Failed", func(t *testing.T) {
-		lookupIP = func(host string) ([]net.IP, error) {
+		LookupIP = func(host string) ([]net.IP, error) {
 			return nil, net.UnknownNetworkError("unknown")
 		}
 		err := validateURL("http://unresolvable.local")
@@ -92,9 +92,9 @@ func TestValidateURL(t *testing.T) {
 }
 
 func TestConnectSSRF(t *testing.T) {
-	oldLookupIP := lookupIP
-	lookupIP = mockLookupIP
-	defer func() { lookupIP = oldLookupIP }()
+	oldLookupIP := LookupIP
+	LookupIP = mockLookupIP
+	defer func() { LookupIP = oldLookupIP }()
 
 	r := NewRegistry()
 
@@ -120,9 +120,9 @@ func TestConnectSSRF(t *testing.T) {
 }
 
 func TestTestConnectionSSRF(t *testing.T) {
-	oldLookupIP := lookupIP
-	lookupIP = mockLookupIP
-	defer func() { lookupIP = oldLookupIP }()
+	oldLookupIP := LookupIP
+	LookupIP = mockLookupIP
+	defer func() { LookupIP = oldLookupIP }()
 
 	r := NewRegistry()
 	_, _ = r.Connect("discord", "")
@@ -1119,9 +1119,9 @@ func TestNewChatIntegrationsStartDisconnected(t *testing.T) {
 }
 
 func TestConnectAndDisconnectTelegram(t *testing.T) {
-	oldLookupIP := lookupIP
-	lookupIP = mockLookupIP
-	defer func() { lookupIP = oldLookupIP }()
+	oldLookupIP := LookupIP
+	LookupIP = mockLookupIP
+	defer func() { LookupIP = oldLookupIP }()
 
 	r := NewRegistry()
 
