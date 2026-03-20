@@ -22,23 +22,23 @@ import (
 //
 // Constraints: Must be instantiated with a valid domain.Organization, orchestration.Hub, and billing.Tracker.
 type Server struct {
-	mu                   sync.RWMutex
-	org                  domain.Organization
-	hub                  *orchestration.Hub
-	tracker              *billing.Tracker
-	approvals            []ApprovalRequest
-	handoffs             []HandoffPackage
-	skills               []SkillPack
-	snapshots            []OrgSnapshot
-	integReg             *integrations.Registry
-	trustAgreements      []TrustAgreement
-	incidents            []Incident
-	computeProfiles      []ComputeProfile
-	budgetAlerts         []BudgetAlert
-	pipelines            []Pipeline
-	authStore            *auth.Store
-	authHandlers         *auth.Handlers
-	settings             Settings
+	mu                    sync.RWMutex
+	org                   domain.Organization
+	hub                   *orchestration.Hub
+	tracker               *billing.Tracker
+	approvals             []ApprovalRequest
+	handoffs              []HandoffPackage
+	skills                []SkillPack
+	snapshots             []OrgSnapshot
+	integReg              *integrations.Registry
+	trustAgreements       []TrustAgreement
+	incidents             []Incident
+	computeProfiles       []ComputeProfile
+	budgetAlerts          []BudgetAlert
+	pipelines             []Pipeline
+	authStore             *auth.Store
+	authHandlers          *auth.Handlers
+	settings              Settings
 	agentProviderRegistry *agents.Registry
 }
 
@@ -460,7 +460,9 @@ func (s *Server) handleCosts(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s *Server) handleDashboard(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, s.snapshot())
+	snap := s.snapshot()
+	defer orchestration.ReleaseAgents(snap.Agents)
+	writeJSON(w, snap)
 }
 
 func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
@@ -494,7 +496,9 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 
 	if strings.Contains(r.Header.Get("Accept"), "application/json") {
 		telemetry.RecordHumanInteraction(r.Context(), "message")
-		writeJSON(w, s.snapshotLocked())
+		snap := s.snapshotLocked()
+		defer orchestration.ReleaseAgents(snap.Agents)
+		writeJSON(w, snap)
 		return
 	}
 
@@ -1215,6 +1219,7 @@ func (s *Server) handleHandoffs(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleIdentities(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
 	agents := s.hub.Agents()
+	defer orchestration.ReleaseAgents(agents)
 	org := s.org
 	s.mu.RUnlock()
 
@@ -1307,6 +1312,7 @@ func (s *Server) handleSnapshotCreate(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	meetings := s.hub.Meetings()
 	agents := s.hub.Agents()
+	defer orchestration.ReleaseAgents(agents)
 	msgCount := 0
 	for _, m := range meetings {
 		msgCount += len(m.Transcript)
@@ -1329,9 +1335,7 @@ func (s *Server) handleSnapshotCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ⚡ BOLT: [Memory leak prevention by pruning old snapshots] - Randomized Selection from Top 5
-	s.snapshots = append(s.snapshots, snap)
-
-	if len(s.snapshots) > 5 {
+	if len(s.snapshots) >= 5 {
 		deleteIdx := -1
 		for i, existingSnap := range s.snapshots {
 			if !strings.Contains(strings.ToLower(existingSnap.Label), "keep") {
@@ -1342,8 +1346,11 @@ func (s *Server) handleSnapshotCreate(w http.ResponseWriter, r *http.Request) {
 		if deleteIdx == -1 {
 			deleteIdx = 0
 		}
-		s.snapshots = append(s.snapshots[:deleteIdx], s.snapshots[deleteIdx+1:]...)
+		copy(s.snapshots[deleteIdx:], s.snapshots[deleteIdx+1:])
+		s.snapshots[len(s.snapshots)-1] = OrgSnapshot{} // avoid memory leak
+		s.snapshots = s.snapshots[:len(s.snapshots)-1]
 	}
+	s.snapshots = append(s.snapshots, snap)
 
 	s.mu.Unlock()
 
@@ -1422,6 +1429,7 @@ func (s *Server) handleMarketplace(w http.ResponseWriter, _ *http.Request) {
 func (s *Server) handleAnalytics(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
 	agents := s.hub.Agents()
+	defer orchestration.ReleaseAgents(agents)
 	org := s.org
 	summary := s.tracker.Summary(org.ID)
 	pendingApprovals := 0

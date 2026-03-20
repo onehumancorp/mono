@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/onehumancorp/mono/srcs/telemetry"
 	pb "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration"
+	"github.com/onehumancorp/mono/srcs/telemetry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -283,12 +283,29 @@ func (h *Hub) Meetings() []MeetingRoom {
 	return meetings
 }
 
+var agentSlicePool = sync.Pool{
+	New: func() interface{} {
+		// Pre-allocate a reasonable capacity for agent slices
+		s := make([]Agent, 0, 64)
+		return &s
+	},
+}
+
+// ReleaseAgents returns a slice of agents back to the global capacity pool.
+func ReleaseAgents(agents []Agent) {
+	agents = agents[:0]
+	agentSlicePool.Put(&agents)
+}
+
 // Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID.
 //
 // Returns: A slice of all active Agent objects in the orchestration Hub.
+// Callers should preferably call ReleaseAgents() when finished to recycle capacity.
 func (h *Hub) Agents() []Agent {
+	sp := agentSlicePool.Get().(*[]Agent)
+	agents := (*sp)[:0] // reset length
+
 	h.mu.RLock()
-	agents := make([]Agent, 0, len(h.agents))
 	for _, agent := range h.agents {
 		agents = append(agents, agent)
 	}

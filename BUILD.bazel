@@ -25,3 +25,9 @@ sh_binary(
     ],
     tags = ["manual"],
 )
+
+# Phase 3: Benchmark Suite Alias
+alias(
+    name = "benchmarks",
+    actual = "//srcs/orchestration:orchestration_test",
+)

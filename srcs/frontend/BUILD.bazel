@@ -62,7 +62,7 @@ sh_test(
     srcs = ["tests/unit_test.sh"],
     data = [
         ":all_srcs",
-        "//srcs/cmd/ohc:ohc",
+        "//srcs/cmd/ohc",
     ],
     tags = [
         "no-remote-exec",
