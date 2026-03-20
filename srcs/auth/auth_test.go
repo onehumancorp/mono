@@ -162,10 +162,16 @@ token, _ := s.IssueToken(u)
 
 parts := strings.Split(token, ".")
 sig := []byte(parts[2])
-if sig[len(sig)-1] == 'A' {
-sig[len(sig)-1] = 'B'
-} else {
-sig[len(sig)-1] = 'A'
+	// Modify a character in the middle of the signature to ensure it's still
+	// valid base64url but the hash is completely wrong. Modifying the end might
+	// just break base64 padding causing a decode error before the HMAC check,
+	// or might not actually alter the parsed bytes depending on base64 encoding rules.
+	if len(sig) > 0 {
+		if sig[0] == 'A' {
+			sig[0] = 'B'
+		} else {
+			sig[0] = 'A'
+		}
 }
 badToken := parts[0] + "." + parts[1] + "." + string(sig)
 
