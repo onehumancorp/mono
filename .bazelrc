@@ -6,6 +6,10 @@ test --config=remote
 # Enable disk cache for fast incremental builds
 build --disk_cache=~/.cache/bazel-disk-cache
 
+# Implement remote execution caching
+build --remote_cache=grpcs://onehumancorp.buildbuddy.io
+build --remote_executor=grpcs://onehumancorp.buildbuddy.io
+
 # Enable Build without the Bytes for faster remote builds.
 # For tests under --config=remote we override this to download all outputs,
 # because many test wrappers execute local helper binaries/scripts generated
@@ -27,6 +31,9 @@ test --test_timeout=300,600,900,1800
 
 # Enable sandboxing for hermeticity
 build --spawn_strategy=sandboxed,local
+
+# Explicitly enable parallel execution
+build --jobs=auto
 
 build --incompatible_strict_action_env
 build --announce_rc

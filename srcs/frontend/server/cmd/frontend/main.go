@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -11,10 +11,16 @@ import (
 var (
 	newServerForMain = server.New
 	listenForMain    = http.ListenAndServe
-	fatalForMain     = log.Fatal
+	fatalForMain     = func(v ...any) {
+		slog.Error("fatal error", "error", v)
+		os.Exit(1)
+	}
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	frontendServer, err := newServerForMain()
 	if err != nil {
 		fatalForMain(err)
@@ -25,7 +31,7 @@ func main() {
 		addr = ":8081"
 	}
 
-	log.Printf("serving frontend on %s", addr)
+	slog.Info("serving frontend", "address", addr)
 	if err := listenForMain(addr, frontendServer.Handler()); err != nil {
 		fatalForMain(err)
 	}

@@ -1,9 +1,10 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"google.golang.org/grpc"
@@ -24,7 +25,10 @@ type listenFunc func(string, http.Handler) error
 var (
 	nowUTC        = time.Now
 	listenForMain = http.ListenAndServe
-	fatalForMain  = log.Fatal
+	fatalForMain  = func(v ...any) {
+		slog.Error("fatal error", "error", v)
+		os.Exit(1)
+	}
 	initTelemetry = telemetry.InitTelemetry
 )
 
@@ -58,7 +62,7 @@ func newDemoHandler(now time.Time) (http.Handler, *orchestration.Hub) {
 		go func() {
 			c := chatwoot.NewClientFromEnv()
 			if err := c.Setup(); err != nil {
-				log.Printf("chatwoot setup: %v", err)
+				slog.Error("chatwoot setup failed", "error", err)
 			}
 		}()
 	}
@@ -66,37 +70,40 @@ func newDemoHandler(now time.Time) (http.Handler, *orchestration.Hub) {
 	return dashboard.NewServer(org, hub, tracker, authStore), hub
 }
 
-func run(now time.Time, listen listenFunc, logger *log.Logger) error {
+func run(now time.Time, listen listenFunc, logger *slog.Logger) error {
 	handler, hub := newDemoHandler(now)
 
 	// Start gRPC server
 	go func() {
 		lis, err := net.Listen("tcp", ":9090")
 		if err != nil {
-			logger.Printf("failed to listen for gRPC: %v", err)
+			logger.Error("failed to listen for gRPC", "error", err)
 			return
 		}
 		s := grpc.NewServer()
 		orchestration.RegisterHubService(s, hub)
-		logger.Printf("serving gRPC on :9090")
+		logger.Info("serving gRPC on :9090")
 		if err := s.Serve(lis); err != nil {
-			logger.Printf("failed to serve gRPC: %v", err)
+			logger.Error("failed to serve gRPC", "error", err)
 		}
 	}()
 
-	logger.Printf("serving API on http://%s", defaultAddress)
+	logger.Info("serving API", "address", defaultAddress)
 	return listen(defaultAddress, handler)
 }
 
 func main() {
 	shutdown, err := initTelemetry()
 	if err != nil {
-		log.Printf("warning: failed to initialize telemetry: %v", err)
+		slog.Warn("failed to initialize telemetry", "error", err)
 	} else {
 		defer shutdown()
 	}
 
-	if err := run(nowUTC().UTC(), listenForMain, log.Default()); err != nil {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+	if err := run(nowUTC().UTC(), listenForMain, logger); err != nil {
 		fatalForMain(err)
 	}
 }

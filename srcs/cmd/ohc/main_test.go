@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -121,6 +121,7 @@ func TestRunUsesDefaultAddress(t *testing.T) {
 	var body string
 	var logs bytes.Buffer
 
+	logger := slog.New(slog.NewJSONHandler(&logs, nil))
 	err := run(
 		time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC),
 		func(listenAddr string, handler http.Handler) error {
@@ -131,7 +132,7 @@ func TestRunUsesDefaultAddress(t *testing.T) {
 			body = rec.Body.String()
 			return nil
 		},
-		log.New(&logs, "", 0),
+		logger,
 	)
 	if err != nil {
 		t.Fatalf("run returned error: %v", err)
@@ -149,9 +150,10 @@ func TestRunUsesDefaultAddress(t *testing.T) {
 
 func TestRunReturnsListenError(t *testing.T) {
 	wantErr := errors.New("listen failed")
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
 	err := run(time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC), func(string, http.Handler) error {
 		return wantErr
-	}, log.New(io.Discard, "", 0))
+	}, logger)
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("expected listen error %v, got %v", wantErr, err)
 	}
