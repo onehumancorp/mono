@@ -1463,7 +1463,7 @@ func TestHandleChatMessagesAllIntegrations(t *testing.T) {
 	// Send to slack and discord.
 	for _, integ := range []string{"slack", "discord"} {
 		body := `{"integrationId":"` + integ + `","channel":"#gen","fromAgent":"swe-1","content":"hello"}`
-		client.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body)) //nolint:errcheck
+		_, _ = client.Post(server.URL+"/api/integrations/chat/send", "application/json", strings.NewReader(body))
 	}
 
 	// List all (no filter).
@@ -1721,7 +1721,7 @@ func TestHandlePRsAllIntegrations(t *testing.T) {
 	// Create PRs for github and gitlab.
 	for _, integ := range []string{"github", "gitlab"} {
 		body := `{"integrationId":"` + integ + `","repository":"repo","title":"title","sourceBranch":"feat","targetBranch":"main"}`
-		client.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body)) //nolint:errcheck
+		_, _ = client.Post(server.URL+"/api/integrations/git/pr/create", "application/json", strings.NewReader(body))
 	}
 
 	// List all.
@@ -1987,7 +1987,7 @@ func TestHandleIssuesAllIntegrations(t *testing.T) {
 
 	for _, integ := range []string{"jira", "plane"} {
 		body := `{"integrationId":"` + integ + `","project":"PROJ","title":"issue"}`
-		client.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body)) //nolint:errcheck
+		_, _ = client.Post(server.URL+"/api/integrations/issues/create", "application/json", strings.NewReader(body))
 	}
 
 	resp, err := client.Get(server.URL + "/api/integrations/issues")
@@ -2729,11 +2729,11 @@ func TestHandleAnalyticsWithApprovalHandoffAndTranscript(t *testing.T) {
 	defer server.Close()
 
 	// Create a pending approval.
-	client.Post(server.URL+"/api/approvals/request", "application/json", //nolint:errcheck
+	_, _ = client.Post(server.URL+"/api/approvals/request", "application/json",
 		strings.NewReader(`{"agentId":"pm-1","action":"deploy","estimatedCostUsd":50}`))
 
 	// Create a pending handoff.
-	client.Post(server.URL+"/api/handoffs", "application/json", //nolint:errcheck
+	_, _ = client.Post(server.URL+"/api/handoffs", "application/json",
 		strings.NewReader(`{"fromAgentId":"swe-1","intent":"need help with deployment"}`))
 
 	// Publish a message to the meeting so transcript is non-empty.

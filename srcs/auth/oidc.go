@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -75,7 +76,11 @@ func fetchJWKS(issuerURL string) ([]jwk, error) {
 
 	// Fetch discovery document
 	discURL := strings.TrimRight(issuerURL, "/") + "/.well-known/openid-configuration"
-	resp, err := http.Get(discURL) //nolint:noctx
+	req1, err := http.NewRequestWithContext(context.Background(), http.MethodGet, discURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create OIDC discovery request: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req1)
 	if err != nil {
 		return nil, fmt.Errorf("fetch OIDC discovery: %w", err)
 	}
@@ -90,7 +95,11 @@ func fetchJWKS(issuerURL string) ([]jwk, error) {
 	}
 
 	// Fetch JWKS
-	kjResp, err := http.Get(disc.JWKSURI) //nolint:noctx
+	req2, err := http.NewRequestWithContext(context.Background(), http.MethodGet, disc.JWKSURI, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create JWKS request: %w", err)
+	}
+	kjResp, err := http.DefaultClient.Do(req2)
 	if err != nil {
 		return nil, fmt.Errorf("fetch JWKS: %w", err)
 	}
