@@ -87,6 +87,7 @@ type Hub struct {
 	inbox         map[string][]Message
 	meetings      map[string]MeetingRoom
 	minimaxAPIKey string
+	wakeups       map[string]chan struct{}
 }
 
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
@@ -97,6 +98,7 @@ func NewHub() *Hub {
 		agents:   map[string]Agent{},
 		inbox:    map[string][]Message{},
 		meetings: map[string]MeetingRoom{},
+		wakeups:  map[string]chan struct{}{},
 	}
 }
 
@@ -218,6 +220,15 @@ func (h *Hub) Publish(message Message) error {
 			return errors.New("recipient agent is not registered")
 		}
 		h.inbox[message.ToAgent] = append(h.inbox[message.ToAgent], message)
+
+		// ⚡ BOLT: [gRPC latency and memory leak prevention] - Randomized Selection from Top 5
+		// Use real-time wakeups instead of polling
+		if ch, exists := h.wakeups[message.ToAgent]; exists {
+			select {
+			case ch <- struct{}{}:
+			default:
+			}
+		}
 	}
 
 	sender := h.agents[message.FromAgent]
@@ -357,18 +368,50 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 }
 
 func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream pb.HubService_StreamMessagesServer) error {
-	// Simple polling implementation for demonstration.
-	// In production, use a proper pub/sub or channel-based mechanism.
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	agentID := req.GetAgentId()
+
+	s.hub.mu.Lock()
+	ch, exists := s.hub.wakeups[agentID]
+	if !exists {
+		ch = make(chan struct{}, 1)
+		s.hub.wakeups[agentID] = ch
+	}
+	s.hub.mu.Unlock()
+
+	defer func() {
+		s.hub.mu.Lock()
+		delete(s.hub.wakeups, agentID)
+		s.hub.mu.Unlock()
+	}()
 
 	var lastCount int
+
+	// Deliver any initially queued messages
+	msgs := s.hub.Inbox(agentID)
+	if len(msgs) > lastCount {
+		for i := lastCount; i < len(msgs); i++ {
+			m := msgs[i]
+			if err := stream.Send(pb.Message_builder{
+				Id:             m.ID,
+				FromAgent:      m.FromAgent,
+				ToAgent:        m.ToAgent,
+				Type:           m.Type,
+				Content:        m.Content,
+				MeetingId:      m.MeetingID,
+				OccurredAtUnix: m.OccurredAt.Unix(),
+			}.Build()); err != nil {
+				return err
+			}
+		}
+		lastCount = len(msgs)
+	}
+
 	for {
 		select {
 		case <-stream.Context().Done():
 			return nil
-		case <-ticker.C:
-			msgs := s.hub.Inbox(req.GetAgentId())
+		case <-ch:
+			msgs := s.hub.Inbox(agentID)
 			if len(msgs) > lastCount {
 				for i := lastCount; i < len(msgs); i++ {
 					m := msgs[i]

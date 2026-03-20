@@ -1,6 +1,7 @@
 package orchestration
 
 import (
+	"sync"
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -268,20 +269,8 @@ func TestMinimaxAPIKey(t *testing.T) {
 }
 
 // mockStreamMessagesServer implements pb.HubService_StreamMessagesServer
-type mockStreamMessagesServer struct {
-	grpc.ServerStream
-	ctx      context.Context
-	messages []*pb.Message
-}
 
-func (m *mockStreamMessagesServer) Context() context.Context {
-	return m.ctx
-}
 
-func (m *mockStreamMessagesServer) Send(msg *pb.Message) error {
-	m.messages = append(m.messages, msg)
-	return nil
-}
 
 func TestHubServiceServer_StreamMessages(t *testing.T) {
 	hub := NewHub()
@@ -579,4 +568,23 @@ func TestHubServiceServer_Publish(t *testing.T) {
 			}
 		})
 	}
+}
+
+// mockStreamMessagesServer implements pb.HubService_StreamMessagesServer
+type mockStreamMessagesServer struct {
+	grpc.ServerStream
+	ctx      context.Context
+	mu       sync.Mutex
+	messages []*pb.Message
+}
+
+func (m *mockStreamMessagesServer) Context() context.Context {
+	return m.ctx
+}
+
+func (m *mockStreamMessagesServer) Send(msg *pb.Message) error {
+	m.mu.Lock()
+	m.messages = append(m.messages, msg)
+	m.mu.Unlock()
+	return nil
 }
