@@ -1867,6 +1867,7 @@ describe("App – Telegram wizard", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
     await screen.findByText("Chat Services");
+    await screen.findByText("Telegram Bot");
     const setupBtns = screen.getAllByRole("button", { name: /setup/i });
     fireEvent.click(setupBtns[0]);
     await screen.findByText("Connect Telegram Bot");
@@ -2013,6 +2014,7 @@ describe("App – Discord wizard", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
     await screen.findByText("Chat Services");
+    await screen.findByText("Discord Webhook");
     const setupBtns = screen.getAllByRole("button", { name: /setup/i });
     fireEvent.click(setupBtns[0]);
     await screen.findByText("Connect Discord Webhook");
