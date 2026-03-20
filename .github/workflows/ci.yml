@@ -43,4 +43,6 @@ jobs:
             --test_timeout=300,600,900,1800 \
             --disk_cache="$BAZEL_DISK_CACHE" \
             --repository_cache="$BAZEL_REPOSITORY_CACHE" \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY
+            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
+            --jobs=100 \
+            --config=remote

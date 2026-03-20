@@ -122,7 +122,7 @@ func Middleware(next http.Handler) http.Handler {
 			latencyHistogram.Record(r.Context(), duration, attributes)
 		}
 		if Verbosity >= 2 {
-			log.Printf("[telemetry] INFO(2) recorded request: %s %s %.3fs", r.Method, r.URL.Path, duration)
+			log.Printf("{\"level\":\"info\",\"component\":\"telemetry\",\"method\":\"%s\",\"path\":\"%s\",\"duration_s\":%.3f}", r.Method, r.URL.Path, duration)
 		}
 	})
 }
@@ -155,6 +155,9 @@ func MetricsHandler() http.Handler {
 //
 // Side Effects: Updates the ohc_token_usage_total Prometheus metric.
 func RecordTokenUsage(ctx context.Context, agentID, role, model, tokenType string, count int64) {
+	if Verbosity >= 2 {
+		log.Printf("{\"level\":\"info\",\"component\":\"telemetry\",\"event\":\"token_usage\",\"agent_id\":\"%s\",\"role\":\"%s\",\"model\":\"%s\",\"type\":\"%s\",\"count\":%d}", agentID, role, model, tokenType, count)
+	}
 	if tokenUsageCounter == nil {
 		return
 	}
@@ -178,6 +181,9 @@ func RecordTokenUsage(ctx context.Context, agentID, role, model, tokenType strin
 //
 // Side Effects: Updates the ohc_agent_api_calls_total Prometheus metric.
 func RecordAgentApiCall(ctx context.Context, agentID, role, api string) {
+	if Verbosity >= 2 {
+		log.Printf("{\"level\":\"info\",\"component\":\"telemetry\",\"event\":\"agent_api_call\",\"agent_id\":\"%s\",\"role\":\"%s\",\"api\":\"%s\"}", agentID, role, api)
+	}
 	if agentApiCallsCounter == nil {
 		return
 	}
@@ -198,6 +204,9 @@ func RecordAgentApiCall(ctx context.Context, agentID, role, api string) {
 //
 // Side Effects: Updates the ohc_human_interactions_total Prometheus metric.
 func RecordHumanInteraction(ctx context.Context, interactionType string) {
+	if Verbosity >= 2 {
+		log.Printf("{\"level\":\"info\",\"component\":\"telemetry\",\"event\":\"human_interaction\",\"type\":\"%s\"}", interactionType)
+	}
 	if humanInteractionsCounter == nil {
 		return
 	}
@@ -216,6 +225,9 @@ func RecordHumanInteraction(ctx context.Context, interactionType string) {
 //
 // Side Effects: Updates the ohc_meeting_events_total Prometheus metric.
 func RecordMeetingEvent(ctx context.Context, eventType string) {
+	if Verbosity >= 2 {
+		log.Printf("{\"level\":\"info\",\"component\":\"telemetry\",\"event\":\"meeting_event\",\"type\":\"%s\"}", eventType)
+	}
 	if meetingEventsCounter == nil {
 		return
 	}
