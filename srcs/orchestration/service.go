@@ -182,14 +182,13 @@ func (h *Hub) Publish(message Message) error {
 	if _, ok := h.agents[message.FromAgent]; !ok {
 		return errors.New("sender agent is not registered")
 	}
-	if message.ToAgent != "" {
+	if message.ToAgent != "" && message.ToAgent != "all" {
 		if _, ok := h.agents[message.ToAgent]; !ok {
 			return errors.New("recipient agent is not registered")
 		}
 		h.inbox[message.ToAgent] = append(h.inbox[message.ToAgent], message)
 	}
 
-	sender := h.agents[message.FromAgent]
 	if message.MeetingID != "" {
 		meeting, ok := h.meetings[message.MeetingID]
 		if !ok {
@@ -197,6 +196,9 @@ func (h *Hub) Publish(message Message) error {
 		}
 		meeting.Transcript = append(meeting.Transcript, message)
 		h.meetings[message.MeetingID] = meeting
+	}
+	sender := h.agents[message.FromAgent]
+	if message.MeetingID != "" {
 		sender.Status = StatusInMeeting
 	} else {
 		sender.Status = StatusActive

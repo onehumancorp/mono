@@ -285,11 +285,23 @@ export function App() {
     setSending(true);
     setError("");
     setNotice("");
+
+    // In case the form state isn't perfectly synced (e.g. hidden inputs), grab from FormData
+    const formData = new FormData(event.currentTarget);
+    const payload = {
+      fromAgent: formData.get("fromAgent") as string || form.fromAgent,
+      toAgent: formData.get("toAgent") as string || form.toAgent,
+      meetingId: formData.get("meetingId") as string || form.meetingId,
+      messageType: formData.get("messageType") as string || form.messageType,
+      content: form.content
+    };
+
     try {
-      await sendMessage(form);
+      await sendMessage(payload);
       await loadAll();
-      setSelectedMeetingID(form.meetingId);
+      setSelectedMeetingID(payload.meetingId);
       setNotice("Message delivered to the meeting timeline.");
+      setForm(prev => ({ ...prev, content: "" }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to send message");
     } finally {

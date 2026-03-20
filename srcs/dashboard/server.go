@@ -729,8 +729,8 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 	hub.RegisterAgent(orchestration.Agent{ID: "pm-1", Name: "Product Manager", Role: "PRODUCT_MANAGER", OrganizationID: org.ID})
 	hub.RegisterAgent(orchestration.Agent{ID: "swe-1", Name: "Software Engineer", Role: "SOFTWARE_ENGINEER", OrganizationID: org.ID})
 	hub.RegisterAgent(orchestration.Agent{ID: "ux-1", Name: "Design Lead", Role: "DESIGNER", OrganizationID: org.ID})
-	hub.RegisterAgent(orchestration.Agent{ID: "CEO", Name: "Human CEO", Role: "CEO", OrganizationID: org.ID})
-	hub.OpenMeetingWithAgenda("launch-readiness", "Review launch blockers, sign-off on reliability checklist, assign post-launch owners.", []string{"pm-1", "swe-1", "ux-1", "CEO"})
+	hub.RegisterAgent(orchestration.Agent{ID: org.CEOID, Name: "Human CEO", Role: "CEO", OrganizationID: org.ID})
+	hub.OpenMeetingWithAgenda("launch-readiness", "Review launch blockers, sign-off on reliability checklist, assign post-launch owners.", []string{"pm-1", "swe-1", "ux-1", org.CEOID})
 
 	_ = hub.Publish(orchestration.Message{
 		ID:         "seed-1",
@@ -761,7 +761,7 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 	})
 	_ = hub.Publish(orchestration.Message{
 		ID:         "seed-4",
-		FromAgent:  "CEO",
+		FromAgent:  org.CEOID,
 		ToAgent:    "pm-1",
 		Type:       orchestration.EventApprovalNeeded,
 		Content:    "Looks good. Proceed with the final staging deployment, but keep a close eye on the latency metrics.",

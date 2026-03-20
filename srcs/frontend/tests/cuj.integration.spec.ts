@@ -38,13 +38,15 @@ test("CUJ 2: sending message updates UI and backend transcript", async ({ page, 
 
   await expect(page.getByText(message)).toBeVisible();
 
-  const meetingsResponse = await request.get("http://127.0.0.1:8080/api/meetings");
-  expect(meetingsResponse.ok()).toBeTruthy();
-  const meetings = (await meetingsResponse.json()) as Array<{ id: string; transcript?: Array<{ content: string }> }>;
-  const hasMessage = meetings.some((meeting) =>
-    (meeting.transcript ?? []).some((entry) => entry.content === message)
-  );
-  expect(hasMessage).toBeTruthy();
+  await expect(async () => {
+    const meetingsResponse = await request.get("http://127.0.0.1:8080/api/meetings");
+    expect(meetingsResponse.ok()).toBeTruthy();
+    const meetings = (await meetingsResponse.json()) as Array<{ id: string; transcript?: Array<{ content: string }> }>;
+    const hasMessage = meetings.some((meeting) =>
+      (meeting.transcript ?? []).some((entry) => entry.content === message)
+    );
+    expect(hasMessage).toBeTruthy();
+  }).toPass({ timeout: 5000 });
 
   await saveShot(page, "cuj-02-frontend-send-message");
 });
