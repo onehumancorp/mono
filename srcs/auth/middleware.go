@@ -105,3 +105,5 @@ func jsonError(w http.ResponseWriter, msg string, code int) {
 func jsonString(s string) string {
 	return `"` + strings.ReplaceAll(strings.ReplaceAll(s, `\`, `\\`), `"`, `\"`) + `"`
 }
+
+const ClaimsContextKeyForTest = claimsContextKey
