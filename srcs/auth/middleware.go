@@ -9,6 +9,7 @@ import (
 type contextKey string
 
 const claimsContextKey contextKey = "ohc_auth_claims"
+const ClaimsContextKeyForTest = claimsContextKey // Exported for testing only
 
 // publicPaths lists URL prefixes that do not require authentication.
 var publicPaths = []string{
