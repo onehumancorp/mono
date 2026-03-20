@@ -115,6 +115,36 @@ When the CEO defines an issue or sets a goal, the entire company is mobilized co
 
 ---
 
+
+### Phase 8: The Top 50 Feature Target (Q3 2027)
+*Goal: Evolve One Human Corp into the definitive platform for AI Agent orchestration by integrating the Top 50 capabilities mapped from leading AI frameworks (OpenClaw, CrewAI, AutoGen, Claude Code).*
+
+This strategic push will directly tackle the top 5 urgent capability gaps with a distinct "OHC Advantage", guaranteeing our position as the market leader:
+
+1. **Stateful Episodic Memory & Checkpointing**
+   - **Gap**: AI frameworks lack long-term, token-efficient state tracking across disjointed sessions, causing "Agent Amnesia".
+   - **OHC Advantage**: OHC leverages **LangGraph Checkpointing** backed by our native Kubernetes CSI Snapshotting. This ensures robust cross-session context persistence without ballooning the LLM context window.
+
+2. **Dynamic Tool Registration via MCP**
+   - **Gap**: Current frameworks tightly couple agents to hardcoded tool schemas.
+   - **OHC Advantage**: OHC utilizes our unified **MCP Gateway (Switchboard)**, allowing instant, secure, and dynamic tool synthesis across entire federated clusters.
+
+3. **Human-in-the-Loop (HITL) Handoff UI**
+   - **Gap**: Orchestrators struggle to seamlessly hand off critical tasks to human operators without losing context.
+   - **OHC Advantage**: OHC implements a native K8s-backed "Warm Handoff" UI, directly integrating visual ground truth (screenshots) and SPIFFE-gated confidence approvals.
+
+4. **B2B SPIFFE Federation for AI Collaboration**
+   - **Gap**: Inter-agent collaboration is heavily restricted to single-organization silos.
+   - **OHC Advantage**: OHC establishes **Cross-Org Collaboration (B2B Agent Exchange)** utilizing federated SPIFFE/SPIRE Trust Agreements, enabling secure, real-time negotiation rooms between isolated subsidiary clusters.
+
+5. **Token Burn-Rate Forecasting & Resource Quotas**
+   - **Gap**: Enterprise adoption is hindered by unpredictable LLM costs and runaway compute.
+   - **OHC Advantage**: OHC implements strict **VRAM Quota Management** and **Hardware-Aware Scheduling**, coupled with real-time billing metrics tracked precisely by the MCP Gateway intercept layer.
+
+For the full detailed breakdown of the 50 features, see our mapped research artifact: `docs/research/framework_ingestion_20260320.json`.
+
+---
+
 ## One Human Corp: Cloud-Native Hybrid Architecture as Code
 
 This architecture defines the "Hybrid Agentic OS"—a framework where organizational structures, roles, and tool integrations are managed as Infrastructure as Code (IaC). The system is designed to run on a Kubernetes (K8s) cluster, allowing a human CEO to manage an "Alphabet-style" conglomerate. It supports Human-Agent Hybrid Teams, where any role can be filled by a human or an AI agent, and every tool integration follows a standardized interface to ensure zero vendor lock-in.
