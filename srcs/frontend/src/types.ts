@@ -252,6 +252,30 @@ export type AnalyticsSummary = {
   tokenVelocity: number;
 };
 
+// ── Compute Optimization ──────────────────────────────────────────────────────
+
+/**
+ * Defines hardware requirements for a given agent role.
+ */
+export type ComputeProfile = {
+  roleId: string;
+  minVramGb: number;
+  preferredGpuType: string;
+  schedulingPriority: number;
+  createdAt: string;
+};
+
+/**
+ * Reflects the health of a remote Kubernetes cluster region.
+ */
+export type ClusterStatus = {
+  region: string;
+  status: string;
+  latencyMs: number;
+  availableNodes: number;
+  checkedAt: string;
+};
+
 // ── External Integrations ─────────────────────────────────────────────────────
 
 /** Groups integrations by their function. */

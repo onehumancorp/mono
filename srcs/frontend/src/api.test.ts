@@ -1,4 +1,4 @@
-import { fetchCosts, fetchDashboard, fetchDomains, fetchMCPTools, fetchMeetings, fetchOrganization, fireAgent, hireAgent, seedScenario, sendMessage } from "./api";
+import { fetchCosts, fetchDashboard, fetchDomains, fetchMCPTools, fetchMeetings, fetchOrganization, fireAgent, hireAgent, seedScenario, sendMessage, fetchComputeProfiles, fetchClusterStatus, deployAgent } from "./api";
 
 describe("api", () => {
   afterEach(() => {
@@ -703,5 +703,39 @@ describe("api – projectedMonthlyUSD zero fallback", () => {
     })));
     const result = await fetchCosts2();
     expect(result.projectedMonthlyUSD).toBe(0);
+  });
+});
+
+describe("api - compute profiles", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("fetchComputeProfiles resolves", async () => {
+    const mockRes = [{ roleId: "AUDIT_AGENT" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      json: async () => mockRes,
+    })));
+    await expect(fetchComputeProfiles()).resolves.toEqual(mockRes);
+  });
+
+  it("fetchClusterStatus resolves", async () => {
+    const mockRes = { status: "healthy" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      json: async () => mockRes,
+    })));
+    await expect(fetchClusterStatus("eu")).resolves.toEqual(mockRes);
+  });
+
+  it("deployAgent resolves", async () => {
+    const mockRes = { message: "Scheduled" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      json: async () => mockRes,
+    })));
+    await expect(deployAgent("Bot", "ROLE")).resolves.toEqual(mockRes);
   });
 });

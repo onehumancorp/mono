@@ -12,6 +12,9 @@ import {
   hireAgent,
   seedScenario,
   sendMessage,
+  fetchComputeProfiles,
+  fetchClusterStatus,
+  deployAgent,
 } from "./api";
 import type {
   AgentRuntime,
@@ -22,10 +25,12 @@ import type {
   MCPTool,
   MeetingRoom,
   OrganizationMember,
+  ComputeProfile,
+  ClusterStatus,
 } from "./types";
 
 type LoadState = "idle" | "loading" | "ready" | "error";
-type NavSection = "overview" | "meetings" | "handoffs" | "agents" | "cost" | "playbooks" | "integrations" | "settings";
+type NavSection = "overview" | "meetings" | "handoffs" | "agents" | "cost" | "playbooks" | "integrations" | "settings" | "agentProfiles";
 
 function formatCost(value: number): string {
   if (value === 0) return "$0.000000";
@@ -84,6 +89,7 @@ const ICONS: Record<string, string> = {
   playbooks: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/></svg>`,
   integrations: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 7H7v6h6V7z"/><path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"/></svg>`,
   settings: `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>`,
+  agentProfiles: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>`,
 };
 
 function NavIcon({ name }: { name: string }) {
@@ -224,6 +230,10 @@ export function App() {
   const [selectedScenario, setSelectedScenario] = useState("launch-readiness");
   const [handoffsList, setHandoffsList] = useState<HandoffPackage[]>([]);
 
+  const [computeProfiles, setComputeProfiles] = useState<ComputeProfile[]>([]);
+  const [clusterStatus, setClusterStatus] = useState<ClusterStatus | null>(null);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
+
   const [form, setForm] = useState({
     fromAgent: "pm-1",
     toAgent: "swe-1",
@@ -285,6 +295,15 @@ export function App() {
     }
     if (activeNav === "handoffs") {
       void fetchHandoffs().then(setHandoffsList).catch(() => { });
+    }
+    if (activeNav === "agentProfiles") {
+      void fetchComputeProfiles().then(data => {
+        setComputeProfiles(data);
+        if (data.length > 0 && !selectedProfileId) {
+          setSelectedProfileId(data[0].roleId);
+        }
+      }).catch(() => { });
+      void fetchClusterStatus("eu-central-1").then(setClusterStatus).catch(() => { });
     }
   }, [activeNav]);
 
@@ -354,11 +373,26 @@ export function App() {
     { key: "meetings", label: "Meetings" },
     { key: "handoffs", label: "Handoffs" },
     { key: "agents", label: "Agents" },
+    { key: "agentProfiles", label: "Agent Profiles" },
     { key: "cost", label: "Cost" },
     { key: "playbooks", label: "Playbooks" },
     { key: "integrations", label: "Integrations" },
     { key: "settings", label: "Settings" },
   ];
+
+  async function handleDeployProfile() {
+    if (!selectedProfileId) return;
+    setAgentActionLoading(true);
+    setError("");
+    try {
+      const res = await deployAgent("Audit Bot", selectedProfileId);
+      setNotice(res.message);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to deploy agent");
+    } finally {
+      setAgentActionLoading(false);
+    }
+  }
 
   const ceoMember = snapshot?.organization.members.find(
     (m) => m.id === snapshot.organization.ceoId || m.role === "CEO",
@@ -1042,6 +1076,81 @@ export function App() {
                   <p className="burn-note">
                     Projection based on current token velocity. Throttle non-critical agents to reduce burn rate.
                   </p>
+                </div>
+              </article>
+            </div>
+          </>
+        )}
+
+        {/* ────────────────── Agent Profiles ────────────────── */}
+        {activeNav === "agentProfiles" && (
+          <>
+            <div className="page-header">
+              <div>
+                <h2 className="page-heading">Agent Profiles</h2>
+                <p className="page-sub">Hardware-Aware Agent Scheduling</p>
+              </div>
+            </div>
+
+            <div className="content-grid two-col">
+              <article className="panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Deploy Agent</h2>
+                </header>
+                <div className="panel-body">
+                  <label className="field">
+                    <span className="field-label">Select Profile</span>
+                    <select
+                      className="input"
+                      value={selectedProfileId}
+                      onChange={(e) => setSelectedProfileId(e.target.value)}
+                    >
+                      {computeProfiles.map((p) => (
+                        <option key={p.roleId} value={p.roleId}>
+                          {p.roleId === "AUDIT_AGENT" ? "Audit Bot (70B model)" : p.roleId}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {computeProfiles.find(p => p.roleId === selectedProfileId)?.minVramGb ? (
+                    <div className="alert alert-info">
+                      <span className="gpu-badge">GPU Required</span>
+                      <div id="vram-estimate">
+                        Estimated VRAM: {computeProfiles.find(p => p.roleId === selectedProfileId)?.minVramGb}GB
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ marginTop: "1rem" }}
+                    onClick={() => { void handleDeployProfile(); }}
+                    disabled={agentActionLoading || !selectedProfileId}
+                  >
+                    {agentActionLoading ? "Deploying..." : "Deploy to Compute Cluster"}
+                  </button>
+                </div>
+              </article>
+
+              <article className="panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Hardware Health</h2>
+                </header>
+                <div className="panel-body">
+                  {clusterStatus ? (
+                    <div id="gpu-metrics" className="kpi-card" style={{ marginBottom: 0 }}>
+                      <p className="kpi-label">Region: {clusterStatus.region}</p>
+                      <p className="kpi-value">{clusterStatus.status}</p>
+                      <p className="kpi-sub">{clusterStatus.availableNodes} nodes available, {clusterStatus.latencyMs}ms latency</p>
+                      <div className="gpu-charts-placeholder">
+                        [ Real-time GPU Temp / VRAM Charts ]
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="empty-state">Loading hardware health...</p>
+                  )}
                 </div>
               </article>
             </div>

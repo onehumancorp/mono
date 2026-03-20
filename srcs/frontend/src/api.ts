@@ -12,6 +12,12 @@ import type {
   OrgSnapshot,
   Organization,
   SkillPack,
+  Issue,
+  ChatMessage,
+  PullRequest,
+  Integration,
+  ComputeProfile,
+  ClusterStatus,
 } from "./types";
 
 async function getJSON<T>(path: string): Promise<T> {
@@ -556,4 +562,18 @@ export function updateIssueStatus(issueId: string, status: string): Promise<Issu
  */
 export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
+}
+
+// ── Compute Optimization ──────────────────────────────────────────────────────
+
+export function fetchComputeProfiles(): Promise<ComputeProfile[]> {
+  return getJSON<ComputeProfile[]>("/api/compute/profiles");
+}
+
+export function fetchClusterStatus(region: string): Promise<ClusterStatus> {
+  return getJSON<ClusterStatus>(`/api/clusters/${region}/status`);
+}
+
+export function deployAgent(name: string, roleId: string): Promise<{ message: string }> {
+  return postJSON<{ message: string }>("/api/agents/deploy", { name, roleId });
 }

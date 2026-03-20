@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, act } from "@testing-library/react";
 import { App } from "./App";
 import { fetchCosts, fetchDashboard } from "./api";
 
@@ -946,7 +946,10 @@ describe("App – form field coverage", () => {
     // While loading, navigate to agents tab — snapshot is null, org chart shows Loading...
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     expect(screen.getByText("Loading…")).toBeInTheDocument();
-    resolve(undefined);
+    await act(async () => {
+      resolve(undefined);
+      await new Promise((r) => setTimeout(r, 10));
+    });
   });
 });
 
@@ -1322,7 +1325,10 @@ describe("App – settings branch coverage", () => {
     expect(screen.getByText("maintenance")).toBeInTheDocument();
 
     // Resolve dashboard to clean up
-    resolveDashboard!(mockJson(dashboardPayload));
+    await act(async () => {
+      resolveDashboard!(mockJson(dashboardPayload));
+      await new Promise((r) => setTimeout(r, 10));
+    });
   });
 
   it("shows non-available MCP tool with status badge", async () => {
@@ -1434,6 +1440,72 @@ describe("App – playbooks roleProfiles null branch", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /playbooks/i }));
     expect(screen.getByText(/No role profiles defined/)).toBeInTheDocument();
+  });
+});
+
+describe("App - agent profiles", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("handles agent profiles tab", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/compute/profiles") return mockJson([
+        { roleId: "AUDIT_AGENT", minVramGb: 40, preferredGpuType: "h100", schedulingPriority: 1 }
+      ]);
+      if (input === "/api/clusters/eu-central-1/status") return mockJson({
+        region: "eu-central-1", status: "healthy", latencyMs: 5, availableNodes: 10
+      });
+      if (input === "/api/agents/deploy") return mockJson({ message: "Scheduled to node: gpu-node-01" });
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+
+    const navButtons = screen.getAllByRole("button", { name: /Agent Profiles/i });
+    fireEvent.click(navButtons[0]);
+
+    await screen.findAllByText("Agent Profiles");
+    await screen.findByText("Hardware-Aware Agent Scheduling");
+
+    // Select profile
+    const select = await screen.findByRole("combobox");
+    expect(select).toBeInTheDocument();
+    fireEvent.change(select, { target: { value: "AUDIT_AGENT" } });
+
+    // VRAM estimate
+    expect(screen.getByText(/Estimated VRAM:/)).toBeInTheDocument();
+
+    // Hardware health widget
+    await screen.findByText("Region: eu-central-1");
+    expect(screen.getByText("healthy")).toBeInTheDocument();
+
+    // Deploy button
+    const deployBtn = screen.getByRole("button", { name: /Deploy to Compute Cluster/i });
+    fireEvent.click(deployBtn);
+
+    // Success message
+    await screen.findByText("Scheduled to node: gpu-node-01");
+    expect(screen.getByText("Scheduled to node: gpu-node-01")).toBeInTheDocument();
+  });
+
+  it("handles agent profiles fetch error", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/compute/profiles") return mockJson({}, 500);
+      if (input === "/api/agents/deploy") return mockJson({}, 500);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("Acme Software");
+    const navButtons = screen.getAllByRole("button", { name: /Agent Profiles/i });
+    fireEvent.click(navButtons[0]);
+
+    await screen.findByText("Loading hardware health...");
   });
 });
 
@@ -1579,7 +1651,10 @@ describe("App – cost and playbooks null-snapshot branches", () => {
     expect(zeros.length).toBeGreaterThan(0);
 
     // resolve to prevent act() leaks
-    resolveDashboard!(mockJson(dashboardPayload));
+    await act(async () => {
+      resolveDashboard!(mockJson(dashboardPayload));
+      await new Promise((r) => setTimeout(r, 10));
+    });
   });
 
   it("playbooks tab shows empty state with null-snapshot org roleProfiles", async () => {
@@ -1598,7 +1673,10 @@ describe("App – cost and playbooks null-snapshot branches", () => {
 
     expect(screen.getByText(/No role profiles defined/)).toBeInTheDocument();
 
-    resolveDashboard!(mockJson(dashboardPayload));
+    await act(async () => {
+      resolveDashboard!(mockJson(dashboardPayload));
+      await new Promise((r) => setTimeout(r, 10));
+    });
   });
 
   it("cost tab burn gauge shows 0% when projectedMonthlyUSD is falsy", async () => {
