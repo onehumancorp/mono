@@ -1243,7 +1243,24 @@ func (s *Server) handleSnapshotCreate(w http.ResponseWriter, r *http.Request) {
 		MessageCount: msgCount,
 		CreatedAt:    now,
 	}
+
+	// ⚡ BOLT: [Memory leak prevention by pruning old snapshots] - Randomized Selection from Top 5
 	s.snapshots = append(s.snapshots, snap)
+
+	if len(s.snapshots) > 5 {
+		deleteIdx := -1
+		for i, existingSnap := range s.snapshots {
+			if !strings.Contains(strings.ToLower(existingSnap.Label), "keep") {
+				deleteIdx = i
+				break
+			}
+		}
+		if deleteIdx == -1 {
+			deleteIdx = 0
+		}
+		s.snapshots = append(s.snapshots[:deleteIdx], s.snapshots[deleteIdx+1:]...)
+	}
+
 	s.mu.Unlock()
 
 	writeJSON(w, snap)

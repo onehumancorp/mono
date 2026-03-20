@@ -2562,6 +2562,64 @@ t.Errorf("expected source 'custom', got %q", pack.Source)
 
 // ── Additional coverage: handleSnapshotCreate ────────────────────────────────
 
+func TestHandleSnapshotCreatePrunesOldSnapshots(t *testing.T) {
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
+	defer server.Close()
+
+	labels := []string{
+		"Snap 1 keep",
+		"Snap 2",
+		"Snap 3 keep",
+		"Snap 4",
+		"Snap 5",
+		"Snap 6",
+	}
+
+	for _, label := range labels {
+		body := bytes.NewBufferString(`{"label":"` + label + `"}`)
+		req, _ := http.NewRequest(http.MethodPost, server.URL+"/api/snapshots/create", body)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("POST /api/snapshots/create error: %v", err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("expected 200, got %d", resp.StatusCode)
+		}
+	}
+
+	resp, err := client.Get(server.URL + "/api/snapshots")
+	if err != nil {
+		t.Fatalf("GET /api/snapshots error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var list []OrgSnapshot
+	if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+		t.Fatalf("decode snapshots: %v", err)
+	}
+
+	if len(list) != 5 {
+		t.Fatalf("expected 5 snapshots after pruning, got %d", len(list))
+	}
+
+	expectedLabels := []string{
+		"Snap 1 keep",
+		"Snap 3 keep",
+		"Snap 4",
+		"Snap 5",
+		"Snap 6",
+	}
+
+	for i, expected := range expectedLabels {
+		if list[i].Label != expected {
+			t.Errorf("expected snapshot at index %d to be %q, got %q", i, expected, list[i].Label)
+		}
+	}
+}
+
 func TestHandleSnapshotCreateMethodNotAllowed(t *testing.T) {
 app, _, _ := newTestServer(t)
 
