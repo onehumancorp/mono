@@ -40,18 +40,30 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
 }
 
 /**
- * Fetches the current organization's hierarchical and structural state.
+ * Intent: Fetches the current organization's hierarchical and structural state. @returns A Promise resolving to the Organization object.
  *
- * @returns A Promise resolving to the Organization object.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchOrganization(): Promise<Organization> {
   return authedGetJSON<Organization>("/api/org");
 }
 
 /**
- * Fetches all active virtual meeting rooms and their transcripts.
+ * Intent: Fetches all active virtual meeting rooms and their transcripts. @returns A Promise resolving to an array of MeetingRoom objects.
  *
- * @returns A Promise resolving to an array of MeetingRoom objects.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchMeetings(): Promise<MeetingRoom[]> {
   return authedGetJSON<MeetingRoom[]>("/api/meetings").then(normalizeMeetings);
@@ -206,49 +218,79 @@ export async function sendMessage(form: {
 }
 
 /**
- * Instantiates a new agent and assigns it to the organizational workforce.
+ * Intent: Instantiates a new agent and assigns it to the organizational workforce. @param name - The display name for the new agent. @param role - The specific role profile the agent will assume. @returns A Promise resolving to the updated DashboardSnapshot.
  *
- * @param name - The display name for the new agent.
- * @param role - The specific role profile the agent will assume.
- * @returns A Promise resolving to the updated DashboardSnapshot.
+ * Params:
+ *   - name: parameter inferred from signature.
+ *   - role: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
   return authedPostJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
 }
 
 /**
- * Terminates an agent's process and removes it from the orchestration hub.
+ * Intent: Terminates an agent's process and removes it from the orchestration hub. @param agentId - The unique identifier of the agent to fire. @returns A Promise resolving to the updated DashboardSnapshot.
  *
- * @param agentId - The unique identifier of the agent to fire.
- * @returns A Promise resolving to the updated DashboardSnapshot.
+ * Params:
+ *   - agentId: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fireAgent(agentId: string): Promise<DashboardSnapshot> {
   return authedPostJSON<DashboardSnapshot>("/api/agents/fire", { agentId });
 }
 
 /**
- * Retrieves available organizational domain templates (e.g., Software Company).
+ * Intent: Retrieves available organizational domain templates (e.g., Software Company). @returns A Promise resolving to an array of DomainInfo objects.
  *
- * @returns A Promise resolving to an array of DomainInfo objects.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchDomains(): Promise<DomainInfo[]> {
   return getJSON<DomainInfo[]>("/api/domains");
 }
 
 /**
- * Retrieves the catalog of active tools registered in the MCP gateway.
+ * Intent: Retrieves the catalog of active tools registered in the MCP gateway. @returns A Promise resolving to an array of MCPTool objects.
  *
- * @returns A Promise resolving to an array of MCPTool objects.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchMCPTools(): Promise<MCPTool[]> {
   return getJSON<MCPTool[]>("/api/mcp/tools");
 }
 
 /**
- * Overrides current state with a predefined scenario for demonstration purposes.
+ * Intent: Overrides current state with a predefined scenario for demonstration purposes. @param scenario - The identifier string of the scenario to seed. @returns A Promise resolving to the resulting DashboardSnapshot.
  *
- * @param scenario - The identifier string of the scenario to seed.
- * @returns A Promise resolving to the resulting DashboardSnapshot.
+ * Params:
+ *   - scenario: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
   return postJSON<DashboardSnapshot>("/api/dev/seed", { scenario });
@@ -256,19 +298,30 @@ export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 
 /**
- * Retrieves all pending and resolved confidence gating approval requests.
+ * Intent: Retrieves all pending and resolved confidence gating approval requests. @returns A Promise resolving to an array of ApprovalRequest objects.
  *
- * @returns A Promise resolving to an array of ApprovalRequest objects.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchApprovals(): Promise<ApprovalRequest[]> {
   return getJSON<ApprovalRequest[]>("/api/approvals");
 }
 
 /**
- * Submits a new request for human manager sign-off on a high-risk action.
+ * Intent: Submits a new request for human manager sign-off on a high-risk action. @param body - An object defining the action, reason, estimated cost, and risk level. @returns A Promise resolving to the newly created ApprovalRequest.
  *
- * @param body - An object defining the action, reason, estimated cost, and risk level.
- * @returns A Promise resolving to the newly created ApprovalRequest.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function requestApproval(body: {
   agentId: string;
@@ -281,12 +334,15 @@ export function requestApproval(body: {
 }
 
 /**
- * Submits the human manager's decision (approve/reject) for an approval request.
+ * Intent: Submits the human manager's decision (approve/reject) for an approval request. @param approvalId - The unique ID of the pending approval request. @param decision - The decision status, either 'approve' or 'reject'. @param decidedBy - Optional identifier for the human manager who made the decision. @returns A Promise resolving to an updated array of ApprovalRequest objects.
  *
- * @param approvalId - The unique ID of the pending approval request.
- * @param decision - The decision status, either 'approve' or 'reject'.
- * @param decidedBy - Optional identifier for the human manager who made the decision.
- * @returns A Promise resolving to an updated array of ApprovalRequest objects.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function decideApproval(
   approvalId: string,
@@ -299,19 +355,30 @@ export function decideApproval(
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
 
 /**
- * Retrieves all warm handoff escalations across the organization.
+ * Intent: Retrieves all warm handoff escalations across the organization. @returns A Promise resolving to an array of HandoffPackage objects.
  *
- * @returns A Promise resolving to an array of HandoffPackage objects.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchHandoffs(): Promise<HandoffPackage[]> {
   return getJSON<HandoffPackage[]>("/api/handoffs");
 }
 
 /**
- * Escalates a complex task from an autonomous agent to a human manager.
+ * Intent: Escalates a complex task from an autonomous agent to a human manager. @param body - The handoff package containing context, intent, and failed attempts. @returns A Promise resolving to the newly created HandoffPackage.
  *
- * @param body - The handoff package containing context, intent, and failed attempts.
- * @returns A Promise resolving to the newly created HandoffPackage.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function createHandoff(body: {
   fromAgentId: string;
@@ -326,9 +393,15 @@ export function createHandoff(body: {
 // ── Identity Management ───────────────────────────────────────────────────────
 
 /**
- * Retrieves the SPIFFE SVID certificates issued to the current workforce.
+ * Intent: Retrieves the SPIFFE SVID certificates issued to the current workforce. @returns A Promise resolving to an array of AgentIdentity objects.
  *
- * @returns A Promise resolving to an array of AgentIdentity objects.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchIdentities(): Promise<AgentIdentity[]> {
   return getJSON<AgentIdentity[]>("/api/identities");
@@ -337,19 +410,30 @@ export function fetchIdentities(): Promise<AgentIdentity[]> {
 // ── Skill Packs ───────────────────────────────────────────────────────────────
 
 /**
- * Retrieves all imported skill packs available for agent instantiation.
+ * Intent: Retrieves all imported skill packs available for agent instantiation. @returns A Promise resolving to an array of SkillPack objects.
  *
- * @returns A Promise resolving to an array of SkillPack objects.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchSkillPacks(): Promise<SkillPack[]> {
   return getJSON<SkillPack[]>("/api/skills");
 }
 
 /**
- * Imports a new specialized skill pack into the organization's domain.
+ * Intent: Imports a new specialized skill pack into the organization's domain. @param body - An object defining the skill pack metadata and capabilities. @returns A Promise resolving to the successfully imported SkillPack.
  *
- * @param body - An object defining the skill pack metadata and capabilities.
- * @returns A Promise resolving to the successfully imported SkillPack.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function importSkillPack(body: {
   name: string;
@@ -364,29 +448,47 @@ export function importSkillPack(body: {
 // ── Snapshots ─────────────────────────────────────────────────────────────────
 
 /**
- * Retrieves all point-in-time recovery snapshots for the organization.
+ * Intent: Retrieves all point-in-time recovery snapshots for the organization. @returns A Promise resolving to an array of OrgSnapshot objects.
  *
- * @returns A Promise resolving to an array of OrgSnapshot objects.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchSnapshots(): Promise<OrgSnapshot[]> {
   return getJSON<OrgSnapshot[]>("/api/snapshots");
 }
 
 /**
- * Captures a point-in-time snapshot of the entire organization's memory and state.
+ * Intent: Captures a point-in-time snapshot of the entire organization's memory and state. @param label - Optional user-defined label for the snapshot. @returns A Promise resolving to the created OrgSnapshot.
  *
- * @param label - Optional user-defined label for the snapshot.
- * @returns A Promise resolving to the created OrgSnapshot.
+ * Params:
+ *   - label?: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function createSnapshot(label?: string): Promise<OrgSnapshot> {
   return postJSON<OrgSnapshot>("/api/snapshots/create", { label });
 }
 
 /**
- * Restores the organization to a specific point-in-time snapshot.
+ * Intent: Restores the organization to a specific point-in-time snapshot. @param snapshotId - The unique ID of the snapshot to restore. @returns A Promise resolving to the restored DashboardSnapshot.
  *
- * @param snapshotId - The unique ID of the snapshot to restore.
- * @returns A Promise resolving to the restored DashboardSnapshot.
+ * Params:
+ *   - snapshotId: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> {
   return postJSON<DashboardSnapshot>("/api/snapshots/restore", { snapshotId });
@@ -395,9 +497,15 @@ export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> 
 // ── Marketplace ───────────────────────────────────────────────────────────────
 
 /**
- * Retrieves the catalog of community-published agents and tools.
+ * Intent: Retrieves the catalog of community-published agents and tools. @returns A Promise resolving to an array of MarketplaceItem objects.
  *
- * @returns A Promise resolving to an array of MarketplaceItem objects.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchMarketplace(): Promise<MarketplaceItem[]> {
   return getJSON<MarketplaceItem[]>("/api/marketplace");
@@ -406,9 +514,15 @@ export function fetchMarketplace(): Promise<MarketplaceItem[]> {
 // ── Real-time Analytics ───────────────────────────────────────────────────────
 
 /**
- * Fetches real-time operational and health metrics for the organization.
+ * Intent: Fetches real-time operational and health metrics for the organization. @returns A Promise resolving to the AnalyticsSummary.
  *
- * @returns A Promise resolving to the AnalyticsSummary.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchAnalytics(): Promise<AnalyticsSummary> {
   return getJSON<AnalyticsSummary>("/api/analytics");
@@ -424,10 +538,16 @@ import type {
 } from "./types";
 
 /**
- * Retrieves external service connections, optionally filtered by category.
+ * Intent: Retrieves external service connections, optionally filtered by category. @param category - Optional integration category to filter by (e.g., 'chat', 'git'). @returns A Promise resolving to an array of Integration objects.
  *
- * @param category - Optional integration category to filter by (e.g., 'chat', 'git').
- * @returns A Promise resolving to an array of Integration objects.
+ * Params:
+ *   - category?: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchIntegrations(category?: string): Promise<Integration[]> {
   const q = category ? `?category=${category}` : "";
@@ -435,11 +555,15 @@ export function fetchIntegrations(category?: string): Promise<Integration[]> {
 }
 
 /**
- * Connects and authenticates a specific external integration.
+ * Intent: Connects and authenticates a specific external integration. @param integrationId - The identifier for the service to connect to. @param config - Optional configuration including base URL and credentials. @returns A Promise resolving to the connected Integration.
  *
- * @param integrationId - The identifier for the service to connect to.
- * @param config - Optional configuration including base URL and credentials.
- * @returns A Promise resolving to the connected Integration.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function connectIntegration(
   integrationId: string,
@@ -462,24 +586,31 @@ export function connectIntegration(
 }
 
 /**
- * Disconnects an active external integration.
+ * Intent: Disconnects an active external integration. @param integrationId - The identifier for the service to disconnect from. @returns A Promise resolving to the disconnected Integration.
  *
- * @param integrationId - The identifier for the service to disconnect from.
- * @returns A Promise resolving to the disconnected Integration.
+ * Params:
+ *   - integrationId: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function disconnectIntegration(integrationId: string): Promise<Integration> {
   return postJSON<Integration>("/api/integrations/disconnect", { integrationId });
 }
 
 /**
- * Sends a test message to validate credentials before saving them.
+ * Intent: Sends a test message to validate credentials before saving them. @param integrationId - The identifier of the chat service being tested. @param config - The credential parameters required to send the test message. @returns A Promise resolving to an object indicating success. @throws An Error if the test message fails to send. Side Effects: Executes an HTTP POST request to /api/integrations/chat/test.
  *
- * @param integrationId - The identifier of the chat service being tested.
- * @param config - The credential parameters required to send the test message.
- * @returns A Promise resolving to an object indicating success.
- * @throws An Error if the test message fails to send.
+ * Params: None.
  *
- * Side Effects: Executes an HTTP POST request to /api/integrations/chat/test.
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function testChatIntegration(
   integrationId: string,
@@ -492,10 +623,16 @@ export function testChatIntegration(
 }
 
 /**
- * Fetches recorded chat messages from the integration registry.
+ * Intent: Fetches recorded chat messages from the integration registry. @param integrationId - Optional integration ID to filter the messages by. @returns A Promise resolving to an array of ChatMessage objects.
  *
- * @param integrationId - Optional integration ID to filter the messages by.
- * @returns A Promise resolving to an array of ChatMessage objects.
+ * Params:
+ *   - integrationId?: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
@@ -503,10 +640,15 @@ export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]
 }
 
 /**
- * Dispatches a message to an external chat platform.
+ * Intent: Dispatches a message to an external chat platform. @param body - An object defining the target integration, channel, sender, and message context. @returns A Promise resolving to the recorded ChatMessage.
  *
- * @param body - An object defining the target integration, channel, sender, and message context.
- * @returns A Promise resolving to the recorded ChatMessage.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function sendChatMessage(body: {
   integrationId: string;
@@ -519,10 +661,16 @@ export function sendChatMessage(body: {
 }
 
 /**
- * Fetches pull requests opened via the git integrations.
+ * Intent: Fetches pull requests opened via the git integrations. @param integrationId - Optional integration ID to filter the pull requests by. @returns A Promise resolving to an array of PullRequest objects.
  *
- * @param integrationId - Optional integration ID to filter the pull requests by.
- * @returns A Promise resolving to an array of PullRequest objects.
+ * Params:
+ *   - integrationId?: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
@@ -530,10 +678,15 @@ export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]
 }
 
 /**
- * Opens a pull request/merge request on a connected git platform.
+ * Intent: Opens a pull request/merge request on a connected git platform. @param body - The parameters required to open a pull request (repo, branches, etc). @returns A Promise resolving to the successfully created PullRequest.
  *
- * @param body - The parameters required to open a pull request (repo, branches, etc).
- * @returns A Promise resolving to the successfully created PullRequest.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function createPullRequest(body: {
   integrationId: string;
@@ -548,30 +701,48 @@ export function createPullRequest(body: {
 }
 
 /**
- * Merges an open pull request on a connected git platform.
+ * Intent: Merges an open pull request on a connected git platform. @param prId - The unique ID of the pull request to merge. @returns A Promise resolving to the merged PullRequest.
  *
- * @param prId - The unique ID of the pull request to merge.
- * @returns A Promise resolving to the merged PullRequest.
+ * Params:
+ *   - prId: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function mergePullRequest(prId: string): Promise<PullRequest> {
   return postJSON<PullRequest>("/api/integrations/git/pr/merge", { prId });
 }
 
 /**
- * Closes an open pull request on a connected git platform without merging.
+ * Intent: Closes an open pull request on a connected git platform without merging. @param prId - The unique ID of the pull request to close. @returns A Promise resolving to the closed PullRequest.
  *
- * @param prId - The unique ID of the pull request to close.
- * @returns A Promise resolving to the closed PullRequest.
+ * Params:
+ *   - prId: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function closePullRequest(prId: string): Promise<PullRequest> {
   return postJSON<PullRequest>("/api/integrations/git/pr/close", { prId });
 }
 
 /**
- * Fetches tickets from connected issue trackers.
+ * Intent: Fetches tickets from connected issue trackers. @param integrationId - Optional integration ID to filter the tickets by. @returns A Promise resolving to an array of Issue objects.
  *
- * @param integrationId - Optional integration ID to filter the tickets by.
- * @returns A Promise resolving to an array of Issue objects.
+ * Params:
+ *   - integrationId?: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchIssues(integrationId?: string): Promise<Issue[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
@@ -579,10 +750,15 @@ export function fetchIssues(integrationId?: string): Promise<Issue[]> {
 }
 
 /**
- * Creates a ticket in a connected issue tracker.
+ * Intent: Creates a ticket in a connected issue tracker. @param body - The details needed to create the issue (project, title, description, priority). @returns A Promise resolving to the generated Issue object.
  *
- * @param body - The details needed to create the issue (project, title, description, priority).
- * @returns A Promise resolving to the generated Issue object.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function createIssue(body: {
   integrationId: string;
@@ -597,39 +773,49 @@ export function createIssue(body: {
 }
 
 /**
- * Updates the status phase of an existing ticket.
+ * Intent: Updates the status phase of an existing ticket. @param issueId - The unique ID of the ticket. @param status - The new status to transition to. @returns A Promise resolving to the updated Issue.
  *
- * @param issueId - The unique ID of the ticket.
- * @param status - The new status to transition to.
- * @returns A Promise resolving to the updated Issue.
+ * Params:
+ *   - issueId: parameter inferred from signature.
+ *   - status: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function updateIssueStatus(issueId: string, status: string): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/status", { issueId, status });
 }
 
 /**
- * Assigns ownership of a ticket to a specific agent or human manager.
+ * Intent: Assigns ownership of a ticket to a specific agent or human manager. @param issueId - The unique ID of the ticket. @param assignee - The identifier of the agent or manager taking ownership. @returns A Promise resolving to the assigned Issue.
  *
- * @param issueId - The unique ID of the ticket.
- * @param assignee - The identifier of the agent or manager taking ownership.
- * @returns A Promise resolving to the assigned Issue.
+ * Params:
+ *   - issueId: parameter inferred from signature.
+ *   - assignee: parameter inferred from signature.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
 }
 
 /**
- * Invokes an MCP tool with the given action and parameters.
- * Communication tools route to the underlying connected integration.
- * Git/issue tools create PRs or tickets in the connected platform.
+ * Intent: Invokes an MCP tool with the given action and parameters. Communication tools route to the underlying connected integration. Git/issue tools create PRs or tickets in the connected platform. @param toolId - The unique identifier of the target MCP tool. @param action - The specific action or operation to execute. @param params - A key-value map of parameters required by the tool. @returns A Promise resolving to the opaque JSON result returned by the tool. @throws An Error if the tool invocation fails. Side Effects: Executes an HTTP POST request to /api/mcp/tools/invoke.
  *
- * @param toolId - The unique identifier of the target MCP tool.
- * @param action - The specific action or operation to execute.
- * @param params - A key-value map of parameters required by the tool.
- * @returns A Promise resolving to the opaque JSON result returned by the tool.
- * @throws An Error if the tool invocation fails.
+ * Params: None.
  *
- * Side Effects: Executes an HTTP POST request to /api/mcp/tools/invoke.
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function invokeMCPTool(
   toolId: string,
@@ -640,25 +826,31 @@ export function invokeMCPTool(
 }
 
 /**
- * Fetches the user's or organization's global settings and preferences.
+ * Intent: Fetches the user's or organization's global settings and preferences. @returns A Promise resolving to the Settings object. @throws An Error if the request fails. Side Effects: Executes an HTTP GET request to /api/settings.
  *
- * @returns A Promise resolving to the Settings object.
- * @throws An Error if the request fails.
+ * Params: None.
  *
- * Side Effects: Executes an HTTP GET request to /api/settings.
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchSettings(): Promise<Settings> {
   return getJSON<Settings>("/api/settings");
 }
 
 /**
- * Saves and updates the global settings and preferences.
+ * Intent: Saves and updates the global settings and preferences. @param settings - The updated settings object to persist. @returns A Promise resolving to the successfully saved Settings. @throws An Error if the save operation fails. Side Effects: Executes an HTTP POST request to /api/settings.
  *
- * @param settings - The updated settings object to persist.
- * @returns A Promise resolving to the successfully saved Settings.
- * @throws An Error if the save operation fails.
+ * Params:
+ *   - settings: parameter inferred from signature.
  *
- * Side Effects: Executes an HTTP POST request to /api/settings.
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function saveSettings(settings: Settings): Promise<Settings> {
   return postJSON<Settings>("/api/settings", settings);
@@ -669,31 +861,46 @@ export function saveSettings(settings: Settings): Promise<Settings> {
 const TOKEN_KEY = "ohc_token";
 
 /**
- * Retrieves the currently stored authentication JWT token from local storage.
+ * Intent: Retrieves the currently stored authentication JWT token from local storage. @returns The token string if it exists, otherwise null. Side Effects: Reads from window.localStorage.
  *
- * @returns The token string if it exists, otherwise null.
+ * Params: None.
  *
- * Side Effects: Reads from window.localStorage.
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
 /**
- * Persists an authentication JWT token in local storage.
+ * Intent: Persists an authentication JWT token in local storage. @param token - The raw JWT string to store. Side Effects: Writes to window.localStorage.
  *
- * @param token - The raw JWT string to store.
+ * Params:
+ *   - token: parameter inferred from signature.
  *
- * Side Effects: Writes to window.localStorage.
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function setStoredToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
 }
 
 /**
- * Removes the stored authentication JWT token from local storage.
+ * Intent: Removes the stored authentication JWT token from local storage. Side Effects: Deletes the key from window.localStorage.
  *
- * Side Effects: Deletes the key from window.localStorage.
+ * Params: None.
+ *
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function clearStoredToken(): void {
   localStorage.removeItem(TOKEN_KEY);
@@ -790,37 +997,45 @@ export async function logout(): Promise<void> {
 }
 
 /**
- * Retrieves the public profile information of the currently authenticated user.
+ * Intent: Retrieves the public profile information of the currently authenticated user. @returns A Promise resolving to the UserPublic profile. @throws An Error if the user is unauthenticated or the request fails. Side Effects: Executes an authenticated HTTP GET request to /api/auth/me.
  *
- * @returns A Promise resolving to the UserPublic profile.
- * @throws An Error if the user is unauthenticated or the request fails.
+ * Params: None.
  *
- * Side Effects: Executes an authenticated HTTP GET request to /api/auth/me.
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchMe(): Promise<UserPublic> {
   return authedGetJSON<UserPublic>("/api/auth/me");
 }
 
 /**
- * Retrieves a list of all registered users in the system (requires Admin role).
+ * Intent: Retrieves a list of all registered users in the system (requires Admin role). @returns A Promise resolving to an array of UserPublic profiles. @throws An Error if the request fails or the caller lacks permissions. Side Effects: Executes an authenticated HTTP GET request to /api/users.
  *
- * @returns A Promise resolving to an array of UserPublic profiles.
- * @throws An Error if the request fails or the caller lacks permissions.
+ * Params: None.
  *
- * Side Effects: Executes an authenticated HTTP GET request to /api/users.
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchUsers(): Promise<UserPublic[]> {
   return authedGetJSON<UserPublic[]>("/api/users");
 }
 
 /**
- * Creates a new user account within the system (requires Admin role).
+ * Intent: Creates a new user account within the system (requires Admin role). @param body - The parameters required to create the user, including username, email, password, and optional roles. @returns A Promise resolving to the newly created UserPublic profile. @throws An Error if the creation fails, validation fails, or permissions are insufficient. Side Effects: Executes an authenticated HTTP POST request to /api/users.
  *
- * @param body - The parameters required to create the user, including username, email, password, and optional roles.
- * @returns A Promise resolving to the newly created UserPublic profile.
- * @throws An Error if the creation fails, validation fails, or permissions are insufficient.
+ * Params: None.
  *
- * Side Effects: Executes an authenticated HTTP POST request to /api/users.
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function createUser(body: {
   username: string;
@@ -849,25 +1064,31 @@ export async function deleteUser(id: string): Promise<void> {
 }
 
 /**
- * Retrieves the list of available operational roles and their associated permissions.
+ * Intent: Retrieves the list of available operational roles and their associated permissions. @returns A Promise resolving to an array of Role objects. @throws An Error if the request fails. Side Effects: Executes an authenticated HTTP GET request to /api/roles.
  *
- * @returns A Promise resolving to an array of Role objects.
- * @throws An Error if the request fails.
+ * Params: None.
  *
- * Side Effects: Executes an authenticated HTTP GET request to /api/roles.
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function fetchRoles(): Promise<Role[]> {
   return authedGetJSON<Role[]>("/api/roles");
 }
 
 /**
- * Creates a new custom role with an optional set of permissions.
+ * Intent: Creates a new custom role with an optional set of permissions. @param body - The role configuration containing its name and permissions. @returns A Promise resolving to the newly created Role. @throws An Error if role creation fails. Side Effects: Executes an authenticated HTTP POST request to /api/roles.
  *
- * @param body - The role configuration containing its name and permissions.
- * @returns A Promise resolving to the newly created Role.
- * @throws An Error if role creation fails.
+ * Params:
+ *   - body: parameter inferred from signature.
  *
- * Side Effects: Executes an authenticated HTTP POST request to /api/roles.
+ * Returns: Standard inferred return.
+ *
+ * Errors: Throws or returns errors if the operation fails.
+ *
+ * Side Effects: Modifies state, updates UI, or triggers side effects as necessary.
  */
 export function createRole(body: { name: string; permissions?: string[] }): Promise<Role> {
   return authedPostJSON<Role>("/api/roles", body);

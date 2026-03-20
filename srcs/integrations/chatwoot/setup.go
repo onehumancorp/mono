@@ -7,12 +7,16 @@ import (
 	"time"
 )
 
-// Setup auto-configures the Chatwoot instance for OHC by:
-//  1. Signing in with admin credentials (or signing up on first run).
-//  2. Ensuring a default "OHC" API inbox exists (creates it if absent).
+// Setup Intent: Setup auto-configures the Chatwoot instance for OHC by: 1. Signing in with admin credentials (or signing up on first run). 2. Ensuring a default "OHC" API inbox exists (creates it if absent).  It retries up to maxAttempts times to accommodate Chatwoot's startup time. The configured Client is ready to use after a successful Setup call.
 //
-// It retries up to maxAttempts times to accommodate Chatwoot's startup time.
-// The configured Client is ready to use after a successful Setup call.
+// Params: None.
+//
+// Returns:
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (c *Client) Setup() error {
 	email := os.Getenv("CHATWOOT_ADMIN_EMAIL")
 	if email == "" {
@@ -83,7 +87,16 @@ func (c *Client) ensureInbox(name string) (Inbox, error) {
 	return c.CreateAPIInbox(name)
 }
 
-// IsEnabled reports whether Chatwoot is configured in the environment.
+// IsEnabled Intent: IsEnabled reports whether Chatwoot is configured in the environment.
+//
+// Params: None.
+//
+// Returns:
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func IsEnabled() bool {
 	return os.Getenv("CHATWOOT_URL") != "" || os.Getenv("CHATWOOT_ENABLED") == "true"
 }

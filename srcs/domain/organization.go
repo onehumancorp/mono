@@ -2,37 +2,195 @@ package domain
 
 import "time"
 
-// Role represents a designated job title or operational function within the AI workforce.
+// Role Intent: Role represents a designated job title or operational function within the AI workforce.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Role string
 
 const (
+	// RoleCEO Intent: Handles operations related to RoleCEO.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleCEO                 Role = "CEO"
+	// RoleProductManager Intent: Handles operations related to RoleProductManager.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleProductManager      Role = "PRODUCT_MANAGER"
+	// RoleSoftwareEngineer Intent: Handles operations related to RoleSoftwareEngineer.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleSoftwareEngineer    Role = "SOFTWARE_ENGINEER"
+	// RoleEngineeringDirector Intent: Handles operations related to RoleEngineeringDirector.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleEngineeringDirector Role = "ENGINEERING_DIRECTOR"
+	// RoleQATester Intent: Handles operations related to RoleQATester.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleQATester            Role = "QA_TESTER"
+	// RoleSecurityEngineer Intent: Handles operations related to RoleSecurityEngineer.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleSecurityEngineer    Role = "SECURITY_ENGINEER"
+	// RoleDesigner Intent: Handles operations related to RoleDesigner.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleDesigner            Role = "DESIGNER"
+	// RoleMarketingManager Intent: Handles operations related to RoleMarketingManager.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleMarketingManager    Role = "MARKETING_MANAGER"
 
 	// Digital Marketing Agency roles.
 	RoleGrowthAgent       Role = "GROWTH_AGENT"
+	// RoleContentStrategist Intent: Handles operations related to RoleContentStrategist.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleContentStrategist Role = "CONTENT_STRATEGIST"
+	// RoleSEOSpecialist Intent: Handles operations related to RoleSEOSpecialist.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleSEOSpecialist     Role = "SEO_SPECIALIST"
+	// RolePaidMediaManager Intent: Handles operations related to RolePaidMediaManager.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RolePaidMediaManager  Role = "PAID_MEDIA_MANAGER"
+	// RoleAnalyticsEngineer Intent: Handles operations related to RoleAnalyticsEngineer.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleAnalyticsEngineer Role = "ANALYTICS_ENGINEER"
 
 	// Accounting Firm roles.
 	RoleCFO            Role = "CFO"
+	// RoleBookkeeper Intent: Handles operations related to RoleBookkeeper.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleBookkeeper     Role = "BOOKKEEPER"
+	// RoleTaxSpecialist Intent: Handles operations related to RoleTaxSpecialist.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleTaxSpecialist  Role = "TAX_SPECIALIST"
+	// RoleAuditManager Intent: Handles operations related to RoleAuditManager.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleAuditManager   Role = "AUDIT_MANAGER"
+	// RolePayrollManager Intent: Handles operations related to RolePayrollManager.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RolePayrollManager Role = "PAYROLL_MANAGER"
 )
 
-// Member defines an individual contributor within the organisation.
+// Member Intent: Member defines an individual contributor within the organisation.  Constraints: An agent member must have isHuman set to false. The CEO must be a human.
 //
-// Constraints: An agent member must have isHuman set to false. The CEO must be a human.
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Member struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
@@ -41,7 +199,15 @@ type Member struct {
 	IsHuman   bool   `json:"isHuman"`
 }
 
-// RoleProfile stores the playbook, prompt, and capabilities that instruct an AI on how to perform a Role.
+// RoleProfile Intent: RoleProfile stores the playbook, prompt, and capabilities that instruct an AI on how to perform a Role.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type RoleProfile struct {
 	Role          Role     `json:"role"`
 	BasePrompt    string   `json:"basePrompt"`
@@ -49,7 +215,15 @@ type RoleProfile struct {
 	ContextInputs []string `json:"contextInputs"`
 }
 
-// Organization aggregates the hierarchy, workforce details, and role playbooks for a domain.
+// Organization Intent: Organization aggregates the hierarchy, workforce details, and role playbooks for a domain.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Organization struct {
 	ID           string        `json:"id"`
 	Name         string        `json:"name"`
@@ -60,15 +234,20 @@ type Organization struct {
 	RoleProfiles []RoleProfile `json:"roleProfiles"`
 }
 
-// NewSoftwareCompany constructs a pre-configured engineering organisation with standard tech roles.
+// NewSoftwareCompany Intent: NewSoftwareCompany constructs a pre-configured engineering organisation with standard tech roles.  Parameters: - id: string; Unique identifier for the organization. - name: string; The display name for the company. - ceoName: string; The human CEO's name. - now: time.Time; The organization's creation timestamp.  Returns: A fully populated software company Organization ready for the orchestration Hub.
 //
-// Parameters:
-//   - id: string; Unique identifier for the organization.
-//   - name: string; The display name for the company.
-//   - ceoName: string; The human CEO's name.
-//   - now: time.Time; The organization's creation timestamp.
+// Params:
+//   - id: parameter inferred from signature.
+//   - name: parameter inferred from signature.
+//   - ceoName: parameter inferred from signature.
+//   - now: parameter inferred from signature.
 //
-// Returns: A fully populated software company Organization ready for the orchestration Hub.
+// Returns:
+//   - Organization: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	directorID := id + "-director-eng"
@@ -96,12 +275,18 @@ func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 	}
 }
 
-// MemberByID retrieves a specific team member from the organisation by ID.
+// MemberByID Intent: MemberByID retrieves a specific team member from the organisation by ID.  Parameters: - id: string; The unique identifier of the member.  Returns: The Member and a boolean indicating if the member was found.
 //
-// Parameters:
-//   - id: string; The unique identifier of the member.
+// Params:
+//   - id: parameter inferred from signature.
 //
-// Returns: The Member and a boolean indicating if the member was found.
+// Returns:
+//   - Member: return value inferred from signature.
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (o Organization) MemberByID(id string) (Member, bool) {
 	for _, member := range o.Members {
 		if member.ID == id {
@@ -112,12 +297,17 @@ func (o Organization) MemberByID(id string) (Member, bool) {
 	return Member{}, false
 }
 
-// MembersByManager fetches all direct reports for a given manager ID.
+// MembersByManager Intent: MembersByManager fetches all direct reports for a given manager ID.  Parameters: - managerID: string; The unique identifier of the manager.  Returns: A slice of Member objects representing the direct reports.
 //
-// Parameters:
-//   - managerID: string; The unique identifier of the manager.
+// Params:
+//   - managerID: parameter inferred from signature.
 //
-// Returns: A slice of Member objects representing the direct reports.
+// Returns:
+//   - []Member: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (o Organization) MembersByManager(managerID string) []Member {
 	var members []Member
 	for _, member := range o.Members {
@@ -129,12 +319,18 @@ func (o Organization) MembersByManager(managerID string) []Member {
 	return members
 }
 
-// RoleProfile retrieves the execution playbook for a specific role within this organisation.
+// RoleProfile Intent: RoleProfile retrieves the execution playbook for a specific role within this organisation.  Parameters: - role: Role; The role archetype to lookup.  Returns: The RoleProfile and a boolean indicating if the playbook exists.
 //
-// Parameters:
-//   - role: Role; The role archetype to lookup.
+// Params:
+//   - role: parameter inferred from signature.
 //
-// Returns: The RoleProfile and a boolean indicating if the playbook exists.
+// Returns:
+//   - RoleProfile: return value inferred from signature.
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (o Organization) RoleProfile(role Role) (RoleProfile, bool) {
 	for _, profile := range o.RoleProfiles {
 		if profile.Role == role {
@@ -262,15 +458,20 @@ func defaultSoftwareCompanyRoleProfiles() []RoleProfile {
 	}
 }
 
-// NewDigitalMarketingAgency constructs a pre-configured marketing organisation with standard growth roles.
+// NewDigitalMarketingAgency Intent: NewDigitalMarketingAgency constructs a pre-configured marketing organisation with standard growth roles.  Parameters: - id: string; Unique identifier for the organization. - name: string; The display name for the agency. - ceoName: string; The human CEO's name. - now: time.Time; The organization's creation timestamp.  Returns: A fully populated marketing agency Organization.
 //
-// Parameters:
-//   - id: string; Unique identifier for the organization.
-//   - name: string; The display name for the agency.
-//   - ceoName: string; The human CEO's name.
-//   - now: time.Time; The organization's creation timestamp.
+// Params:
+//   - id: parameter inferred from signature.
+//   - name: parameter inferred from signature.
+//   - ceoName: parameter inferred from signature.
+//   - now: parameter inferred from signature.
 //
-// Returns: A fully populated marketing agency Organization.
+// Returns:
+//   - Organization: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func NewDigitalMarketingAgency(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	marketingDirectorID := id + "-director-mkt"
@@ -350,15 +551,20 @@ func defaultDigitalMarketingRoleProfiles() []RoleProfile {
 	}
 }
 
-// NewAccountingFirm constructs a pre-configured financial services organisation with audit and tax roles.
+// NewAccountingFirm Intent: NewAccountingFirm constructs a pre-configured financial services organisation with audit and tax roles.  Parameters: - id: string; Unique identifier for the organization. - name: string; The display name for the firm. - ceoName: string; The human CEO's name. - now: time.Time; The organization's creation timestamp.  Returns: A fully populated accounting firm Organization.
 //
-// Parameters:
-//   - id: string; Unique identifier for the organization.
-//   - name: string; The display name for the firm.
-//   - ceoName: string; The human CEO's name.
-//   - now: time.Time; The organization's creation timestamp.
+// Params:
+//   - id: parameter inferred from signature.
+//   - name: parameter inferred from signature.
+//   - ceoName: parameter inferred from signature.
+//   - now: parameter inferred from signature.
 //
-// Returns: A fully populated accounting firm Organization.
+// Returns:
+//   - Organization: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func NewAccountingFirm(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	cfoID := id + "-cfo"

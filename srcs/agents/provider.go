@@ -11,7 +11,15 @@ import (
 	"sync"
 )
 
-// ProviderType is the unique identifier for an external agent implementation.
+// ProviderType Intent: ProviderType is the unique identifier for an external agent implementation.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type ProviderType string
 
 const (
@@ -40,24 +48,44 @@ const (
 	ProviderTypeBuiltin ProviderType = "builtin"
 )
 
-// Credentials holds the authentication material for an external agent provider.
-// Providers may use an API key, an OAuth bearer token, or both alongside
-// any additional provider-specific configuration entries.
+// Credentials Intent: Credentials holds the authentication material for an external agent provider. Providers may use an API key, an OAuth bearer token, or both alongside any additional provider-specific configuration entries.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Credentials struct {
 	APIKey     string            `json:"apiKey,omitempty"`
 	OAuthToken string            `json:"oauthToken,omitempty"`
 	Extra      map[string]string `json:"extra,omitempty"`
 }
 
-// IsEmpty returns true when no authentication material has been set.
+// IsEmpty Intent: IsEmpty returns true when no authentication material has been set.
+//
+// Params: None.
+//
+// Returns:
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (c Credentials) IsEmpty() bool {
 	return c.APIKey == "" && c.OAuthToken == ""
 }
 
-// Provider is the interface every external agent implementation must satisfy.
+// Provider Intent: Provider is the interface every external agent implementation must satisfy.  Implementations are registered with a Registry and selected by name when an agent is hired through the dashboard API.
 //
-// Implementations are registered with a Registry and selected by name when
-// an agent is hired through the dashboard API.
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Provider interface {
 	// Type returns the unique identifier for this provider.
 	Type() ProviderType
@@ -105,16 +133,64 @@ func (b *baseProvider) load() Credentials {
 
 // ── Claude (Anthropic) ────────────────────────────────────────────────────────
 
-// ClaudeProvider implements Provider for Anthropic Claude Code.
+// ClaudeProvider Intent: ClaudeProvider implements Provider for Anthropic Claude Code.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type ClaudeProvider struct{ baseProvider }
-
+// Type Intent: Handles operations related to Type.
+//
+// Params: None.
+//
+// Returns:
+//   - ProviderType: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *ClaudeProvider) Type() ProviderType { return ProviderTypeClaude }
+// Description Intent: Handles operations related to Description.
+//
+// Params: None.
+//
+// Returns:
+//   - string: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *ClaudeProvider) Description() string {
 	return "Anthropic Claude Code — advanced coding and reasoning agent backed by Claude Sonnet/Opus"
 }
+// SupportedRoles Intent: Handles operations related to SupportedRoles.
+//
+// Params: None.
+//
+// Returns:
+//   - []string: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *ClaudeProvider) SupportedRoles() []string {
 	return []string{"SOFTWARE_ENGINEER", "SECURITY_ENGINEER", "QA_TESTER", "ENGINEERING_DIRECTOR"}
 }
+// Authenticate Intent: Handles operations related to Authenticate.
+//
+// Params:
+//   - creds: parameter inferred from signature.
+//
+// Returns:
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *ClaudeProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" {
 		return errors.New("claude provider requires an API key (ANTHROPIC_API_KEY)")
@@ -122,21 +198,89 @@ func (p *ClaudeProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+// GetCredentials Intent: Handles operations related to GetCredentials.
+//
+// Params: None.
+//
+// Returns:
+//   - Credentials: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *ClaudeProvider) GetCredentials() Credentials { return p.load() }
+// IsAuthenticated Intent: Handles operations related to IsAuthenticated.
+//
+// Params: None.
+//
+// Returns:
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *ClaudeProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
 
 // ── Gemini (Google) ───────────────────────────────────────────────────────────
 
-// GeminiProvider implements Provider for Google Gemini CLI.
+// GeminiProvider Intent: GeminiProvider implements Provider for Google Gemini CLI.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type GeminiProvider struct{ baseProvider }
-
+// Type Intent: Handles operations related to Type.
+//
+// Params: None.
+//
+// Returns:
+//   - ProviderType: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *GeminiProvider) Type() ProviderType { return ProviderTypeGemini }
+// Description Intent: Handles operations related to Description.
+//
+// Params: None.
+//
+// Returns:
+//   - string: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *GeminiProvider) Description() string {
 	return "Google Gemini CLI — multimodal assistant agent backed by Gemini Pro/Ultra"
 }
+// SupportedRoles Intent: Handles operations related to SupportedRoles.
+//
+// Params: None.
+//
+// Returns:
+//   - []string: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *GeminiProvider) SupportedRoles() []string {
 	return []string{"PRODUCT_MANAGER", "ANALYTICS_ENGINEER", "MARKETING_MANAGER", "CEO"}
 }
+// Authenticate Intent: Handles operations related to Authenticate.
+//
+// Params:
+//   - creds: parameter inferred from signature.
+//
+// Returns:
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *GeminiProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" && creds.OAuthToken == "" {
 		return errors.New("gemini provider requires an API key (GEMINI_API_KEY) or an OAuth token")
@@ -144,21 +288,89 @@ func (p *GeminiProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+// GetCredentials Intent: Handles operations related to GetCredentials.
+//
+// Params: None.
+//
+// Returns:
+//   - Credentials: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *GeminiProvider) GetCredentials() Credentials { return p.load() }
+// IsAuthenticated Intent: Handles operations related to IsAuthenticated.
+//
+// Params: None.
+//
+// Returns:
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *GeminiProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
 
 // ── OpenCode ──────────────────────────────────────────────────────────────────
 
-// OpenCodeProvider implements Provider for the open-source OpenCode SWE agent.
+// OpenCodeProvider Intent: OpenCodeProvider implements Provider for the open-source OpenCode SWE agent.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type OpenCodeProvider struct{ baseProvider }
-
+// Type Intent: Handles operations related to Type.
+//
+// Params: None.
+//
+// Returns:
+//   - ProviderType: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *OpenCodeProvider) Type() ProviderType { return ProviderTypeOpenCode }
+// Description Intent: Handles operations related to Description.
+//
+// Params: None.
+//
+// Returns:
+//   - string: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *OpenCodeProvider) Description() string {
 	return "OpenCode — open-source software-engineering agent with full terminal and file-system access"
 }
+// SupportedRoles Intent: Handles operations related to SupportedRoles.
+//
+// Params: None.
+//
+// Returns:
+//   - []string: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *OpenCodeProvider) SupportedRoles() []string {
 	return []string{"SOFTWARE_ENGINEER", "ENGINEERING_DIRECTOR", "QA_TESTER"}
 }
+// Authenticate Intent: Handles operations related to Authenticate.
+//
+// Params:
+//   - creds: parameter inferred from signature.
+//
+// Returns:
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *OpenCodeProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" {
 		return errors.New("opencode provider requires an API key")
@@ -166,21 +378,89 @@ func (p *OpenCodeProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+// GetCredentials Intent: Handles operations related to GetCredentials.
+//
+// Params: None.
+//
+// Returns:
+//   - Credentials: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *OpenCodeProvider) GetCredentials() Credentials { return p.load() }
+// IsAuthenticated Intent: Handles operations related to IsAuthenticated.
+//
+// Params: None.
+//
+// Returns:
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *OpenCodeProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
 
 // ── OpenClaw ──────────────────────────────────────────────────────────────────
 
-// OpenClawProvider implements Provider for the OpenClaw assistant agent.
+// OpenClawProvider Intent: OpenClawProvider implements Provider for the OpenClaw assistant agent.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type OpenClawProvider struct{ baseProvider }
-
+// Type Intent: Handles operations related to Type.
+//
+// Params: None.
+//
+// Returns:
+//   - ProviderType: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *OpenClawProvider) Type() ProviderType { return ProviderTypeOpenClaw }
+// Description Intent: Handles operations related to Description.
+//
+// Params: None.
+//
+// Returns:
+//   - string: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *OpenClawProvider) Description() string {
 	return "OpenClaw — general-purpose assistant agent optimised for content strategy and growth tasks"
 }
+// SupportedRoles Intent: Handles operations related to SupportedRoles.
+//
+// Params: None.
+//
+// Returns:
+//   - []string: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *OpenClawProvider) SupportedRoles() []string {
 	return []string{"GROWTH_AGENT", "CONTENT_STRATEGIST", "MARKETING_MANAGER", "PRODUCT_MANAGER"}
 }
+// Authenticate Intent: Handles operations related to Authenticate.
+//
+// Params:
+//   - creds: parameter inferred from signature.
+//
+// Returns:
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *OpenClawProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" {
 		return errors.New("openclaw provider requires an API key")
@@ -188,21 +468,89 @@ func (p *OpenClawProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+// GetCredentials Intent: Handles operations related to GetCredentials.
+//
+// Params: None.
+//
+// Returns:
+//   - Credentials: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *OpenClawProvider) GetCredentials() Credentials { return p.load() }
+// IsAuthenticated Intent: Handles operations related to IsAuthenticated.
+//
+// Params: None.
+//
+// Returns:
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *OpenClawProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
 
 // ── IronClaw ──────────────────────────────────────────────────────────────────
 
-// IronClawProvider implements Provider for the IronClaw agent.
+// IronClawProvider Intent: IronClawProvider implements Provider for the IronClaw agent.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type IronClawProvider struct{ baseProvider }
-
+// Type Intent: Handles operations related to Type.
+//
+// Params: None.
+//
+// Returns:
+//   - ProviderType: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *IronClawProvider) Type() ProviderType { return ProviderTypeIronClaw }
+// Description Intent: Handles operations related to Description.
+//
+// Params: None.
+//
+// Returns:
+//   - string: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *IronClawProvider) Description() string {
 	return "IronClaw — security and audit-focused agent with deep static-analysis capabilities"
 }
+// SupportedRoles Intent: Handles operations related to SupportedRoles.
+//
+// Params: None.
+//
+// Returns:
+//   - []string: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *IronClawProvider) SupportedRoles() []string {
 	return []string{"SECURITY_ENGINEER", "AUDIT_MANAGER", "QA_TESTER"}
 }
+// Authenticate Intent: Handles operations related to Authenticate.
+//
+// Params:
+//   - creds: parameter inferred from signature.
+//
+// Returns:
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *IronClawProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" {
 		return errors.New("ironclaw provider requires an API key")
@@ -210,19 +558,75 @@ func (p *IronClawProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+// GetCredentials Intent: Handles operations related to GetCredentials.
+//
+// Params: None.
+//
+// Returns:
+//   - Credentials: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *IronClawProvider) GetCredentials() Credentials { return p.load() }
+// IsAuthenticated Intent: Handles operations related to IsAuthenticated.
+//
+// Params: None.
+//
+// Returns:
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *IronClawProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
 
 // ── Builtin ───────────────────────────────────────────────────────────────────
 
-// BuiltinProvider implements Provider for the platform's own lightweight agent.
-// It requires no external credentials and is always considered authenticated.
+// BuiltinProvider Intent: BuiltinProvider implements Provider for the platform's own lightweight agent. It requires no external credentials and is always considered authenticated.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type BuiltinProvider struct{}
-
+// Type Intent: Handles operations related to Type.
+//
+// Params: None.
+//
+// Returns:
+//   - ProviderType: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *BuiltinProvider) Type() ProviderType { return ProviderTypeBuiltin }
+// Description Intent: Handles operations related to Description.
+//
+// Params: None.
+//
+// Returns:
+//   - string: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *BuiltinProvider) Description() string {
 	return "Built-in — platform-native agent; no external credentials required"
 }
+// SupportedRoles Intent: Handles operations related to SupportedRoles.
+//
+// Params: None.
+//
+// Returns:
+//   - []string: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *BuiltinProvider) SupportedRoles() []string {
 	return []string{
 		"CEO", "PRODUCT_MANAGER", "SOFTWARE_ENGINEER", "ENGINEERING_DIRECTOR",
@@ -232,6 +636,37 @@ func (p *BuiltinProvider) SupportedRoles() []string {
 		"AUDIT_MANAGER", "PAYROLL_MANAGER",
 	}
 }
+// Authenticate Intent: Handles operations related to Authenticate.
+//
+// Params:
+//   - _: parameter inferred from signature.
+//
+// Returns:
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *BuiltinProvider) Authenticate(_ Credentials) error { return nil }
+// GetCredentials Intent: Handles operations related to GetCredentials.
+//
+// Params: None.
+//
+// Returns:
+//   - Credentials: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *BuiltinProvider) GetCredentials() Credentials      { return Credentials{} }
+// IsAuthenticated Intent: Handles operations related to IsAuthenticated.
+//
+// Params: None.
+//
+// Returns:
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (p *BuiltinProvider) IsAuthenticated() bool            { return true }

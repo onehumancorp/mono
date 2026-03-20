@@ -16,8 +16,35 @@ import (
 
 // Built-in role names.
 const (
+	// RoleAdmin Intent: Handles operations related to RoleAdmin.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleAdmin    = "admin"
+	// RoleOperator Intent: Handles operations related to RoleOperator.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleOperator = "operator"
+	// RoleViewer Intent: Handles operations related to RoleViewer.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	RoleViewer   = "viewer"
 )
 
@@ -28,7 +55,15 @@ var rolePermissions = map[string][]string{
 	RoleViewer:   {"read"},
 }
 
-// User represents a human user account.
+// User Intent: User represents a human user account.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type User struct {
 	ID           string    `json:"id"`
 	Username     string    `json:"username"`
@@ -41,7 +76,15 @@ type User struct {
 	OIDCSubject  string    `json:"oidcSubject,omitempty"`
 }
 
-// UserPublic is a safe subset of User with no sensitive fields.
+// UserPublic Intent: UserPublic is a safe subset of User with no sensitive fields.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type UserPublic struct {
 	ID          string    `json:"id"`
 	Username    string    `json:"username"`
@@ -53,7 +96,16 @@ type UserPublic struct {
 	OIDCSubject string    `json:"oidcSubject,omitempty"`
 }
 
-// PublicView returns a UserPublic with no sensitive fields.
+// PublicView Intent: PublicView returns a UserPublic with no sensitive fields.
+//
+// Params: None.
+//
+// Returns:
+//   - UserPublic: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (u *User) PublicView() UserPublic {
 	return UserPublic{
 		ID:          u.ID,
@@ -67,7 +119,15 @@ func (u *User) PublicView() UserPublic {
 	}
 }
 
-// Role represents a named permission group.
+// Role Intent: Role represents a named permission group.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Role struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
@@ -75,8 +135,15 @@ type Role struct {
 	CreatedAt   time.Time `json:"createdAt"`
 }
 
-// Store is an in-memory user/role store that can be backed by Redis/DB in future.
-// All exported methods are goroutine-safe.
+// Store Intent: Store is an in-memory user/role store that can be backed by Redis/DB in future. All exported methods are goroutine-safe.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Store struct {
 	mu      sync.RWMutex
 	users   map[string]*User
@@ -89,9 +156,16 @@ type Store struct {
 	oidcCfg OIDCConfig
 }
 
-// NewStore creates a Store seeded with default roles and an admin user.
-// Admin credentials are read from ADMIN_USERNAME / ADMIN_PASSWORD /
-// ADMIN_EMAIL environment variables (defaults: admin / admin / admin@localhost).
+// NewStore Intent: NewStore creates a Store seeded with default roles and an admin user. Admin credentials are read from ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_EMAIL environment variables (defaults: admin / admin / admin@localhost).
+//
+// Params: None.
+//
+// Returns:
+//   - *Store: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func NewStore() *Store {
 	s := &Store{
 		users:   make(map[string]*User),
@@ -151,7 +225,21 @@ func NewStore() *Store {
 	return s
 }
 
-// CreateUser creates a new user with the given credentials and roles.
+// CreateUser Intent: CreateUser creates a new user with the given credentials and roles.
+//
+// Params:
+//   - username: parameter inferred from signature.
+//   - email: parameter inferred from signature.
+//   - password: parameter inferred from signature.
+//   - roles: parameter inferred from signature.
+//
+// Returns:
+//   - *User: return value inferred from signature.
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) CreateUser(username, email, password string, roles []string) (*User, error) {
 	if username == "" {
 		return nil, errors.New("username is required")
@@ -191,7 +279,19 @@ func (s *Store) CreateUser(username, email, password string, roles []string) (*U
 	return u, nil
 }
 
-// Authenticate validates username+password and returns the matching user.
+// Authenticate Intent: Authenticate validates username+password and returns the matching user.
+//
+// Params:
+//   - username: parameter inferred from signature.
+//   - password: parameter inferred from signature.
+//
+// Returns:
+//   - *User: return value inferred from signature.
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) Authenticate(username, password string) (*User, error) {
 	s.mu.RLock()
 	u, ok := s.byName[username]
@@ -208,7 +308,18 @@ func (s *Store) Authenticate(username, password string) (*User, error) {
 	return u, nil
 }
 
-// GetUser returns a user by ID.
+// GetUser Intent: GetUser returns a user by ID.
+//
+// Params:
+//   - id: parameter inferred from signature.
+//
+// Returns:
+//   - *User: return value inferred from signature.
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) GetUser(id string) (*User, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -216,7 +327,16 @@ func (s *Store) GetUser(id string) (*User, bool) {
 	return u, ok
 }
 
-// ListUsers returns all users.
+// ListUsers Intent: ListUsers returns all users.
+//
+// Params: None.
+//
+// Returns:
+//   - []*User: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) ListUsers() []*User {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -227,7 +347,21 @@ func (s *Store) ListUsers() []*User {
 	return out
 }
 
-// UpdateUser mutates mutable fields on the user identified by id.
+// UpdateUser Intent: UpdateUser mutates mutable fields on the user identified by id.
+//
+// Params:
+//   - id: parameter inferred from signature.
+//   - emailPtr: parameter inferred from signature.
+//   - roles: parameter inferred from signature.
+//   - activePtr: parameter inferred from signature.
+//
+// Returns:
+//   - *User: return value inferred from signature.
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) UpdateUser(id string, emailPtr *string, roles []string, activePtr *bool) (*User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -254,7 +388,17 @@ func (s *Store) UpdateUser(id string, emailPtr *string, roles []string, activePt
 	return u, nil
 }
 
-// DeleteUser removes a user by ID.
+// DeleteUser Intent: DeleteUser removes a user by ID.
+//
+// Params:
+//   - id: parameter inferred from signature.
+//
+// Returns:
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) DeleteUser(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -271,7 +415,16 @@ func (s *Store) DeleteUser(id string) error {
 	return nil
 }
 
-// ListRoles returns all roles.
+// ListRoles Intent: ListRoles returns all roles.
+//
+// Params: None.
+//
+// Returns:
+//   - []*Role: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) ListRoles() []*Role {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -282,7 +435,19 @@ func (s *Store) ListRoles() []*Role {
 	return out
 }
 
-// CreateRole adds a new named role with the given permissions.
+// CreateRole Intent: CreateRole adds a new named role with the given permissions.
+//
+// Params:
+//   - name: parameter inferred from signature.
+//   - permissions: parameter inferred from signature.
+//
+// Returns:
+//   - *Role: return value inferred from signature.
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) CreateRole(name string, permissions []string) (*Role, error) {
 	if name == "" {
 		return nil, errors.New("role name is required")
@@ -302,7 +467,17 @@ func (s *Store) CreateRole(name string, permissions []string) (*Role, error) {
 	return r, nil
 }
 
-// RevokeToken records a JTI as revoked until its associated expiry.
+// RevokeToken Intent: RevokeToken records a JTI as revoked until its associated expiry.
+//
+// Params:
+//   - jti: parameter inferred from signature.
+//   - exp: parameter inferred from signature.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) RevokeToken(jti string, exp time.Time) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -316,7 +491,17 @@ func (s *Store) RevokeToken(jti string, exp time.Time) {
 	}
 }
 
-// IsRevoked reports whether a JTI has been revoked.
+// IsRevoked Intent: IsRevoked reports whether a JTI has been revoked.
+//
+// Params:
+//   - jti: parameter inferred from signature.
+//
+// Returns:
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) IsRevoked(jti string) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -324,14 +509,43 @@ func (s *Store) IsRevoked(jti string) bool {
 	return ok
 }
 
-// Secret returns the HS256 signing secret.
+// Secret Intent: Secret returns the HS256 signing secret.
+//
+// Params: None.
+//
+// Returns:
+//   - []byte: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) Secret() []byte { return s.secret }
 
-// OIDCCfg returns the OIDC configuration.
+// OIDCCfg Intent: OIDCCfg returns the OIDC configuration.
+//
+// Params: None.
+//
+// Returns:
+//   - OIDCConfig: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) OIDCCfg() OIDCConfig { return s.oidcCfg }
 
-// GetOrCreateOIDCUser returns an existing user that matches the OIDC subject,
-// or creates a new viewer-role user from the OIDC claims.
+// GetOrCreateOIDCUser Intent: GetOrCreateOIDCUser returns an existing user that matches the OIDC subject, or creates a new viewer-role user from the OIDC claims.
+//
+// Params:
+//   - sub: parameter inferred from signature.
+//   - email: parameter inferred from signature.
+//   - preferredUsername: parameter inferred from signature.
+//
+// Returns:
+//   - *User: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) GetOrCreateOIDCUser(sub, email, preferredUsername string) *User {
 	s.mu.Lock()
 	defer s.mu.Unlock()

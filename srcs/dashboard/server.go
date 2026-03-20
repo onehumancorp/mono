@@ -18,9 +18,15 @@ import (
 	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
-// Server encapsulates the HTTP handlers and state for the One Human Corp dashboard.
+// Server Intent: Server encapsulates the HTTP handlers and state for the One Human Corp dashboard.  Constraints: Must be instantiated with a valid domain.Organization, orchestration.Hub, and billing.Tracker.
 //
-// Constraints: Must be instantiated with a valid domain.Organization, orchestration.Hub, and billing.Tracker.
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Server struct {
 	mu                   sync.RWMutex
 	org                  domain.Organization
@@ -41,7 +47,15 @@ type Server struct {
 	settings             Settings
 	agentProviderRegistry *agents.Registry
 }
-
+// Settings Intent: Handles operations related to Settings.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Settings struct {
 	MinimaxAPIKey string `json:"minimaxApiKey"`
 }
@@ -79,17 +93,59 @@ type fireRequest struct {
 
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 
-// ApprovalStatus represents the lifecycle state of a guardian-gate request.
+// ApprovalStatus Intent: ApprovalStatus represents the lifecycle state of a guardian-gate request.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type ApprovalStatus string
 
 const (
+	// ApprovalStatusPending Intent: Handles operations related to ApprovalStatusPending.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	ApprovalStatusPending  ApprovalStatus = "PENDING"
+	// ApprovalStatusApproved Intent: Handles operations related to ApprovalStatusApproved.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	ApprovalStatusApproved ApprovalStatus = "APPROVED"
+	// ApprovalStatusRejected Intent: Handles operations related to ApprovalStatusRejected.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	ApprovalStatusRejected ApprovalStatus = "REJECTED"
 )
 
-// ApprovalRequest is created by the Guardian Agent when a high-risk action
-// requires explicit human sign-off.
+// ApprovalRequest Intent: ApprovalRequest is created by the Guardian Agent when a high-risk action requires explicit human sign-off.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type ApprovalRequest struct {
 	ID               string         `json:"id"`
 	AgentID          string         `json:"agentId"`
@@ -119,8 +175,15 @@ type approvalDecideRequest struct {
 
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
 
-// HandoffPackage carries the structured context an agent sends to a human manager
-// when escalating a task it cannot complete autonomously.
+// HandoffPackage Intent: HandoffPackage carries the structured context an agent sends to a human manager when escalating a task it cannot complete autonomously.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type HandoffPackage struct {
 	ID             string    `json:"id"`
 	FromAgentID    string    `json:"fromAgentId"`
@@ -142,7 +205,15 @@ type handoffCreateRequest struct {
 
 // ── Agent Identity (SPIFFE/SPIRE abstraction) ─────────────────────────────────
 
-// AgentIdentity represents the SPIFFE SVID certificate issued to an agent workload.
+// AgentIdentity Intent: AgentIdentity represents the SPIFFE SVID certificate issued to an agent workload.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type AgentIdentity struct {
 	AgentID     string    `json:"agentId"`
 	SVID        string    `json:"svid"`
@@ -153,13 +224,29 @@ type AgentIdentity struct {
 
 // ── Extensible Skill Import Framework ────────────────────────────────────────
 
-// SkillPackRole pairs a role name with its override base prompt.
+// SkillPackRole Intent: SkillPackRole pairs a role name with its override base prompt.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type SkillPackRole struct {
 	Role       string `json:"role"`
 	BasePrompt string `json:"basePrompt"`
 }
 
-// SkillPack is an importable module that extends or overrides agent capabilities.
+// SkillPack Intent: SkillPack is an importable module that extends or overrides agent capabilities.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type SkillPack struct {
 	ID          string          `json:"id"`
 	Name        string          `json:"name"`
@@ -182,7 +269,15 @@ type skillImportRequest struct {
 
 // ── Org Snapshot & Recovery ───────────────────────────────────────────────────
 
-// OrgSnapshot is a point-in-time metadata record of an organization's state.
+// OrgSnapshot Intent: OrgSnapshot is a point-in-time metadata record of an organization's state.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type OrgSnapshot struct {
 	ID           string    `json:"id"`
 	Label        string    `json:"label"`
@@ -205,7 +300,15 @@ type snapshotRestoreRequest struct {
 
 // ── Marketplace ───────────────────────────────────────────────────────────────
 
-// MarketplaceItem describes a community-published asset.
+// MarketplaceItem Intent: MarketplaceItem describes a community-published asset.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type MarketplaceItem struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
@@ -219,7 +322,15 @@ type MarketplaceItem struct {
 
 // ── Real-time Analytics ───────────────────────────────────────────────────────
 
-// AnalyticsSummary surfaces operational health metrics.
+// AnalyticsSummary Intent: AnalyticsSummary surfaces operational health metrics.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type AnalyticsSummary struct {
 	HumanAgentRatio     float64 `json:"humanAgentRatio"`
 	TotalAgents         int     `json:"totalAgents"`
@@ -231,7 +342,15 @@ type AnalyticsSummary struct {
 	TokenVelocity       int64   `json:"tokenVelocity"`
 }
 
-// MCPTool represents a registered tool in the MCP gateway.
+// MCPTool Intent: MCPTool represents a registered tool in the MCP gateway.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type MCPTool struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -240,7 +359,15 @@ type MCPTool struct {
 	Status      string `json:"status"`
 }
 
-// DomainInfo describes a supported organizational domain template.
+// DomainInfo Intent: DomainInfo describes a supported organizational domain template.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type DomainInfo struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -283,14 +410,20 @@ var statusOrder = []orchestration.Status{
 	orchestration.StatusInMeeting,
 }
 
-// NewServer initializes a new Dashboard HTTP handler that routes all API and frontend requests.
+// NewServer Intent: NewServer initializes a new Dashboard HTTP handler that routes all API and frontend requests.  Parameters: - org: domain.Organization; The base organizational structure. - hub: *orchestration.Hub; The agent communication and meeting room registry. - tracker: *billing.Tracker; The cost and token tracking engine.  Returns: An http.Handler that serves the dashboard REST APIs and static React frontend.
 //
-// Parameters:
-//   - org: domain.Organization; The base organizational structure.
-//   - hub: *orchestration.Hub; The agent communication and meeting room registry.
-//   - tracker: *billing.Tracker; The cost and token tracking engine.
+// Params:
+//   - org: parameter inferred from signature.
+//   - hub: parameter inferred from signature.
+//   - tracker: parameter inferred from signature.
+//   - authStore: parameter inferred from signature.
 //
-// Returns: An http.Handler that serves the dashboard REST APIs and static React frontend.
+// Returns:
+//   - http.Handler: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker, authStore ...*auth.Store) http.Handler {
 	var store *auth.Store
 	if len(authStore) > 0 && authStore[0] != nil {
@@ -1903,17 +2036,59 @@ func (s *Server) handleIssueAssign(w http.ResponseWriter, r *http.Request) {
 
 // ── B2B Collaboration ─────────────────────────────────────────────────────────
 
-// TrustAgreementStatus represents the lifecycle of a B2B trust agreement.
+// TrustAgreementStatus Intent: TrustAgreementStatus represents the lifecycle of a B2B trust agreement.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type TrustAgreementStatus string
 
 const (
+	// TrustStatusPending Intent: Handles operations related to TrustStatusPending.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	TrustStatusPending TrustAgreementStatus = "PENDING"
+	// TrustStatusActive Intent: Handles operations related to TrustStatusActive.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	TrustStatusActive  TrustAgreementStatus = "ACTIVE"
+	// TrustStatusRevoked Intent: Handles operations related to TrustStatusRevoked.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	TrustStatusRevoked TrustAgreementStatus = "REVOKED"
 )
 
-// TrustAgreement is a federated trust relationship between two OHC organisations.
-// It enables cross-org agent collaboration using SPIFFE-federated JWTs.
+// TrustAgreement Intent: TrustAgreement is a federated trust relationship between two OHC organisations. It enables cross-org agent collaboration using SPIFFE-federated JWTs.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type TrustAgreement struct {
 	ID           string               `json:"id"`
 	PartnerOrg   string               `json:"partnerOrg"`
@@ -2003,25 +2178,103 @@ func (s *Server) handleB2BRevoke(w http.ResponseWriter, r *http.Request) {
 
 // ── Autonomous SRE / Incident Management ─────────────────────────────────────
 
-// IncidentSeverity classifies the urgency of an operational incident.
+// IncidentSeverity Intent: IncidentSeverity classifies the urgency of an operational incident.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type IncidentSeverity string
 
 const (
+	// SeverityP0 Intent: Handles operations related to SeverityP0.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	SeverityP0 IncidentSeverity = "P0"
+	// SeverityP1 Intent: Handles operations related to SeverityP1.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	SeverityP1 IncidentSeverity = "P1"
+	// SeverityP2 Intent: Handles operations related to SeverityP2.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	SeverityP2 IncidentSeverity = "P2"
 )
 
-// IncidentStatus reflects the investigation lifecycle state.
+// IncidentStatus Intent: IncidentStatus reflects the investigation lifecycle state.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type IncidentStatus string
 
 const (
+	// IncidentStatusInvestigating Intent: Handles operations related to IncidentStatusInvestigating.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IncidentStatusInvestigating IncidentStatus = "INVESTIGATING"
+	// IncidentStatusProposed Intent: Handles operations related to IncidentStatusProposed.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IncidentStatusProposed      IncidentStatus = "PROPOSED"
+	// IncidentStatusResolved Intent: Handles operations related to IncidentStatusResolved.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IncidentStatusResolved      IncidentStatus = "RESOLVED"
 )
 
-// Incident represents an operational event requiring SRE attention.
+// Incident Intent: Incident represents an operational event requiring SRE attention.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Incident struct {
 	ID               string           `json:"id"`
 	Severity         IncidentSeverity `json:"severity"`
@@ -2118,7 +2371,15 @@ func (s *Server) handleIncidentStatus(w http.ResponseWriter, r *http.Request) {
 
 // ── Compute Optimization / Hardware-Aware Scheduling ─────────────────────────
 
-// ComputeProfile defines the hardware requirements for a given agent role.
+// ComputeProfile Intent: ComputeProfile defines the hardware requirements for a given agent role.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type ComputeProfile struct {
 	RoleID             string    `json:"roleId"`
 	MinVRAMGB          int       `json:"minVramGb"`
@@ -2134,7 +2395,15 @@ type computeProfileRequest struct {
 	SchedulingPriority int    `json:"schedulingPriority"`
 }
 
-// ClusterStatus reflects the health of a remote Kubernetes cluster region.
+// ClusterStatus Intent: ClusterStatus reflects the health of a remote Kubernetes cluster region.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type ClusterStatus struct {
 	Region         string    `json:"region"`
 	Status         string    `json:"status"` // healthy, degraded, offline
@@ -2210,7 +2479,15 @@ func (s *Server) handleClusterStatus(w http.ResponseWriter, r *http.Request) {
 // defaultBudgetAlertNotifyPct is the default notification threshold (80 %).
 const defaultBudgetAlertNotifyPct = 0.8
 
-// BudgetAlert defines a spending threshold with notification behaviour.
+// BudgetAlert Intent: BudgetAlert defines a spending threshold with notification behaviour.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type BudgetAlert struct {
 	ID             string    `json:"id"`
 	OrganizationID string    `json:"organizationId"`
@@ -2276,19 +2553,89 @@ func (s *Server) handleBudgetAlerts(w http.ResponseWriter, r *http.Request) {
 
 // ── Automated SDLC / Pipelines ────────────────────────────────────────────────
 
-// PipelineStatus reflects the lifecycle of an autonomous CI/CD pipeline.
+// PipelineStatus Intent: PipelineStatus reflects the lifecycle of an autonomous CI/CD pipeline.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type PipelineStatus string
 
 const (
+	// PipelineStatusPending Intent: Handles operations related to PipelineStatusPending.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	PipelineStatusPending      PipelineStatus = "PENDING"
+	// PipelineStatusImplementing Intent: Handles operations related to PipelineStatusImplementing.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	PipelineStatusImplementing PipelineStatus = "IMPLEMENTING"
+	// PipelineStatusTesting Intent: Handles operations related to PipelineStatusTesting.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	PipelineStatusTesting      PipelineStatus = "TESTING"
+	// PipelineStatusStaging Intent: Handles operations related to PipelineStatusStaging.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	PipelineStatusStaging      PipelineStatus = "STAGING"
+	// PipelineStatusPromoted Intent: Handles operations related to PipelineStatusPromoted.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	PipelineStatusPromoted     PipelineStatus = "PROMOTED"
+	// PipelineStatusFailed Intent: Handles operations related to PipelineStatusFailed.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	PipelineStatusFailed       PipelineStatus = "FAILED"
 )
 
-// Pipeline represents an autonomous implementation pipeline from spec to production.
+// Pipeline Intent: Pipeline represents an autonomous implementation pipeline from spec to production.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Pipeline struct {
 	ID          string         `json:"id"`
 	Name        string         `json:"name"`

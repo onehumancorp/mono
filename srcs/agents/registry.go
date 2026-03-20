@@ -5,25 +5,44 @@ import (
 	"sync"
 )
 
-// Registry manages the set of available agent providers and their stored credentials.
+// Registry Intent: Registry manages the set of available agent providers and their stored credentials.  Providers are registered once (typically at startup via DefaultRegistry) and then authenticated on-demand through the dashboard API.  Multiple goroutines may call Registry methods concurrently.
 //
-// Providers are registered once (typically at startup via DefaultRegistry) and then
-// authenticated on-demand through the dashboard API.  Multiple goroutines may
-// call Registry methods concurrently.
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Registry struct {
 	mu        sync.RWMutex
 	providers map[ProviderType]Provider
 }
 
-// NewRegistry returns an empty Registry.  Use DefaultRegistry to get a
-// pre-populated instance with all built-in providers.
+// NewRegistry Intent: NewRegistry returns an empty Registry.  Use DefaultRegistry to get a pre-populated instance with all built-in providers.
+//
+// Params: None.
+//
+// Returns:
+//   - *Registry: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func NewRegistry() *Registry {
 	return &Registry{providers: make(map[ProviderType]Provider)}
 }
 
-// DefaultRegistry returns a Registry pre-populated with every built-in provider.
+// DefaultRegistry Intent: DefaultRegistry returns a Registry pre-populated with every built-in provider.  This is the standard factory used by the dashboard server at startup.
 //
-// This is the standard factory used by the dashboard server at startup.
+// Params: None.
+//
+// Returns:
+//   - *Registry: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func DefaultRegistry() *Registry {
 	r := NewRegistry()
 	r.Register(&ClaudeProvider{})
@@ -35,15 +54,34 @@ func DefaultRegistry() *Registry {
 	return r
 }
 
-// Register adds a Provider to the Registry, overwriting any previously
-// registered provider with the same type.
+// Register Intent: Register adds a Provider to the Registry, overwriting any previously registered provider with the same type.
+//
+// Params:
+//   - p: parameter inferred from signature.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) Register(p Provider) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.providers[p.Type()] = p
 }
 
-// Get returns the Provider for the given type, or false if not found.
+// Get Intent: Get returns the Provider for the given type, or false if not found.
+//
+// Params:
+//   - t: parameter inferred from signature.
+//
+// Returns:
+//   - Provider: return value inferred from signature.
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) Get(t ProviderType) (Provider, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -51,7 +89,16 @@ func (r *Registry) Get(t ProviderType) (Provider, bool) {
 	return p, ok
 }
 
-// All returns a snapshot of all registered providers, ordered by type string.
+// All Intent: All returns a snapshot of all registered providers, ordered by type string.
+//
+// Params: None.
+//
+// Returns:
+//   - []Provider: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) All() []Provider {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -81,10 +128,18 @@ func (r *Registry) All() []Provider {
 	return out
 }
 
-// Authenticate forwards credentials to the named provider.
+// Authenticate Intent: Authenticate forwards credentials to the named provider.  Returns an error if the provider type is unknown or if the provider rejects the supplied credentials.
 //
-// Returns an error if the provider type is unknown or if the provider
-// rejects the supplied credentials.
+// Params:
+//   - t: parameter inferred from signature.
+//   - creds: parameter inferred from signature.
+//
+// Returns:
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) Authenticate(t ProviderType, creds Credentials) error {
 	r.mu.RLock()
 	p, ok := r.providers[t]
@@ -95,7 +150,15 @@ func (r *Registry) Authenticate(t ProviderType, creds Credentials) error {
 	return p.Authenticate(creds)
 }
 
-// ProviderInfo is a serializable summary of a provider used by the dashboard API.
+// ProviderInfo Intent: ProviderInfo is a serializable summary of a provider used by the dashboard API.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type ProviderInfo struct {
 	Type            ProviderType `json:"type"`
 	Description     string       `json:"description"`
@@ -103,7 +166,16 @@ type ProviderInfo struct {
 	IsAuthenticated bool         `json:"isAuthenticated"`
 }
 
-// Infos returns a ProviderInfo summary for every registered provider.
+// Infos Intent: Infos returns a ProviderInfo summary for every registered provider.
+//
+// Params: None.
+//
+// Returns:
+//   - []ProviderInfo: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) Infos() []ProviderInfo {
 	providers := r.All()
 	out := make([]ProviderInfo, len(providers))

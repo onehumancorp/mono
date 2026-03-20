@@ -19,10 +19,15 @@ type jwtHeader struct {
 	Typ string `json:"typ"`
 }
 
-// Claims holds the payload fields for both locally-issued (HS256) and
-// OIDC (RS256) tokens. The standard set is kept small by design.
+// Claims Intent: Claims holds the payload fields for both locally-issued (HS256) and OIDC (RS256) tokens. The standard set is kept small by design.  Constraints: Serializes to JSON for token encoding. Subject must uniquely identify the user.
 //
-// Constraints: Serializes to JSON for token encoding. Subject must uniquely identify the user.
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Claims struct {
 	Subject  string   `json:"sub"`
 	Username string   `json:"username"`
@@ -33,14 +38,17 @@ type Claims struct {
 	TokenID  string   `json:"jti"`
 }
 
-// HasRole checks whether the token's claims include authorization for a specific role.
+// HasRole Intent: HasRole checks whether the token's claims include authorization for a specific role.  Parameters: - role: string; The target role identifier to check for.  Returns: A boolean indicating if the role is present (true if present or if the user is an admin).  Side Effects: None. Executes a read-only iteration over the claims.
 //
-// Parameters:
-//   - role: string; The target role identifier to check for.
+// Params:
+//   - role: parameter inferred from signature.
 //
-// Returns: A boolean indicating if the role is present (true if present or if the user is an admin).
+// Returns:
+//   - bool: return value inferred from signature.
 //
-// Side Effects: None. Executes a read-only iteration over the claims.
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (c *Claims) HasRole(role string) bool {
 	for _, r := range c.Roles {
 		if r == role || r == RoleAdmin {
@@ -50,16 +58,18 @@ func (c *Claims) HasRole(role string) bool {
 	return false
 }
 
-// IssueToken generates and cryptographically signs a new HS256 JWT for the specified user.
+// IssueToken Intent: IssueToken generates and cryptographically signs a new HS256 JWT for the specified user.  Parameters: - u: *User; The user entity to construct the token payload for.  Returns: The fully encoded and signed JWT string, or an error if signing fails.  Errors: Fails if JSON serialization or cryptographic signing encounters an error.  Side Effects: None. Uses the store's symmetric secret for signing.
 //
-// Parameters:
-//   - u: *User; The user entity to construct the token payload for.
+// Params:
+//   - u: parameter inferred from signature.
 //
-// Returns: The fully encoded and signed JWT string, or an error if signing fails.
+// Returns:
+//   - string: return value inferred from signature.
+//   - error: return value inferred from signature.
 //
-// Errors: Fails if JSON serialization or cryptographic signing encounters an error.
+// Errors: Returns an error if the operation fails.
 //
-// Side Effects: None. Uses the store's symmetric secret for signing.
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) IssueToken(u *User) (string, error) {
 	now := time.Now().UTC()
 	claims := Claims{
@@ -74,16 +84,18 @@ func (s *Store) IssueToken(u *User) (string, error) {
 	return signHS256(claims, s.secret)
 }
 
-// ValidateToken decodes and verifies the signature and expiration of a provided JWT string.
+// ValidateToken Intent: ValidateToken decodes and verifies the signature and expiration of a provided JWT string.  Parameters: - token: string; The raw JWT string to be verified.  Returns: The successfully parsed token Claims if validation passes.  Errors: Fails if the token is malformed, expired, has an invalid signature, or has been revoked.  Side Effects: May delegate to external OIDC configuration logic if the primary HS256 parsing fails and OIDC is enabled.
 //
-// Parameters:
-//   - token: string; The raw JWT string to be verified.
+// Params:
+//   - token: parameter inferred from signature.
 //
-// Returns: The successfully parsed token Claims if validation passes.
+// Returns:
+//   - *Claims: return value inferred from signature.
+//   - error: return value inferred from signature.
 //
-// Errors: Fails if the token is malformed, expired, has an invalid signature, or has been revoked.
+// Errors: Returns an error if the operation fails.
 //
-// Side Effects: May delegate to external OIDC configuration logic if the primary HS256 parsing fails and OIDC is enabled.
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Store) ValidateToken(token string) (*Claims, error) {
 	claims, err := parseHS256(token, s.secret)
 	if err != nil {

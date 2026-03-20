@@ -27,48 +27,215 @@ import (
 
 // ── Integration types ─────────────────────────────────────────────────────────
 
-// Category groups integrations by their function (e.g., chat, git, issues).
+// Category Intent: Category groups integrations by their function (e.g., chat, git, issues).
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Category string
 
 const (
+	// CategoryChat Intent: Handles operations related to CategoryChat.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	CategoryChat   Category = "chat"
+	// CategoryGit Intent: Handles operations related to CategoryGit.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	CategoryGit    Category = "git"
+	// CategoryIssues Intent: Handles operations related to CategoryIssues.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	CategoryIssues Category = "issues"
 )
 
-// IntegrationType identifies the specific external service platform (e.g., github, slack).
+// IntegrationType Intent: IntegrationType identifies the specific external service platform (e.g., github, slack).
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type IntegrationType string
 
 const (
 	// Chat services.
 	IntegrationTypeSlack      IntegrationType = "slack"
+	// IntegrationTypeDiscord Intent: Handles operations related to IntegrationTypeDiscord.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IntegrationTypeDiscord    IntegrationType = "discord"
+	// IntegrationTypeGoogleChat Intent: Handles operations related to IntegrationTypeGoogleChat.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IntegrationTypeGoogleChat IntegrationType = "google_chat"
+	// IntegrationTypeTelegram Intent: Handles operations related to IntegrationTypeTelegram.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IntegrationTypeTelegram   IntegrationType = "telegram"
+	// IntegrationTypeTeams Intent: Handles operations related to IntegrationTypeTeams.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IntegrationTypeTeams      IntegrationType = "teams"
 
 	// Git platforms.
 	IntegrationTypeGitHub IntegrationType = "github"
+	// IntegrationTypeGitLab Intent: Handles operations related to IntegrationTypeGitLab.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IntegrationTypeGitLab IntegrationType = "gitlab"
+	// IntegrationTypeGitea Intent: Handles operations related to IntegrationTypeGitea.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IntegrationTypeGitea  IntegrationType = "gitea"
 
 	// Issue trackers.
 	IntegrationTypeJIRA         IntegrationType = "jira"
+	// IntegrationTypePlane Intent: Handles operations related to IntegrationTypePlane.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IntegrationTypePlane        IntegrationType = "plane"
+	// IntegrationTypeGitHubIssues Intent: Handles operations related to IntegrationTypeGitHubIssues.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IntegrationTypeGitHubIssues IntegrationType = "github_issues"
+	// IntegrationTypeLinear Intent: Handles operations related to IntegrationTypeLinear.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IntegrationTypeLinear       IntegrationType = "linear"
 )
 
-// ConnectionStatus reflects whether an integration is currently active and reachable.
+// ConnectionStatus Intent: ConnectionStatus reflects whether an integration is currently active and reachable.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type ConnectionStatus string
 
 const (
+	// StatusConnected Intent: Handles operations related to StatusConnected.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	StatusConnected    ConnectionStatus = "connected"
+	// StatusDisconnected Intent: Handles operations related to StatusDisconnected.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	StatusDisconnected ConnectionStatus = "disconnected"
+	// StatusError Intent: Handles operations related to StatusError.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	StatusError        ConnectionStatus = "error"
 )
 
-// Integration represents a configured external service connection.
+// Integration Intent: Integration represents a configured external service connection.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Integration struct {
 	ID             string           `json:"id"`
 	Name           string           `json:"name"`
@@ -82,8 +249,15 @@ type Integration struct {
 	CreatedAt      time.Time        `json:"createdAt"`
 }
 
-// IntegrationCredentials holds the secret configuration for an integration.
-// These are stored server-side only and never serialised to the client.
+// IntegrationCredentials Intent: IntegrationCredentials holds the secret configuration for an integration. These are stored server-side only and never serialised to the client.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type IntegrationCredentials struct {
 	BotToken   string // Telegram Bot API token
 	ChatID     string // Telegram chat / group ID
@@ -91,14 +265,31 @@ type IntegrationCredentials struct {
 	APIToken   string // Generic API token / Bearer credential
 }
 
-// IsEmpty reports whether no fields are set.
+// IsEmpty Intent: IsEmpty reports whether no fields are set.
+//
+// Params: None.
+//
+// Returns:
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (c IntegrationCredentials) IsEmpty() bool {
 	return c.BotToken == "" && c.ChatID == "" && c.WebhookURL == "" && c.APIToken == ""
 }
 
 // ── Chat types ────────────────────────────────────────────────────────────────
 
-// ChatMessage represents a message dispatched through a chat service.
+// ChatMessage Intent: ChatMessage represents a message dispatched through a chat service.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type ChatMessage struct {
 	ID            string    `json:"id"`
 	IntegrationID string    `json:"integrationId"`
@@ -111,16 +302,59 @@ type ChatMessage struct {
 
 // ── Git types ─────────────────────────────────────────────────────────────────
 
-// PullRequestStatus tracks the lifecycle status of a PR/MR on a git platform.
+// PullRequestStatus Intent: PullRequestStatus tracks the lifecycle status of a PR/MR on a git platform.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type PullRequestStatus string
 
 const (
+	// PRStatusOpen Intent: Handles operations related to PRStatusOpen.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	PRStatusOpen   PullRequestStatus = "open"
+	// PRStatusMerged Intent: Handles operations related to PRStatusMerged.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	PRStatusMerged PullRequestStatus = "merged"
+	// PRStatusClosed Intent: Handles operations related to PRStatusClosed.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	PRStatusClosed PullRequestStatus = "closed"
 )
 
-// PullRequest records an issue or code change request opened on a git hosting platform.
+// PullRequest Intent: PullRequest records an issue or code change request opened on a git hosting platform.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type PullRequest struct {
 	ID             string            `json:"id"`
 	IntegrationID  string            `json:"integrationId"`
@@ -137,27 +371,123 @@ type PullRequest struct {
 
 // ── Issue types ───────────────────────────────────────────────────────────────
 
-// IssueStatus tracks the lifecycle phase of an issue or ticket.
+// IssueStatus Intent: IssueStatus tracks the lifecycle phase of an issue or ticket.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type IssueStatus string
 
 const (
+	// IssueStatusOpen Intent: Handles operations related to IssueStatusOpen.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IssueStatusOpen       IssueStatus = "open"
+	// IssueStatusInProgress Intent: Handles operations related to IssueStatusInProgress.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IssueStatusInProgress IssueStatus = "in_progress"
+	// IssueStatusDone Intent: Handles operations related to IssueStatusDone.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IssueStatusDone       IssueStatus = "done"
+	// IssueStatusClosed Intent: Handles operations related to IssueStatusClosed.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IssueStatusClosed     IssueStatus = "closed"
 )
 
-// IssuePriority indicates the urgency of a ticket.
+// IssuePriority Intent: IssuePriority indicates the urgency of a ticket.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type IssuePriority string
 
 const (
+	// IssuePriorityLow Intent: Handles operations related to IssuePriorityLow.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IssuePriorityLow      IssuePriority = "low"
+	// IssuePriorityMedium Intent: Handles operations related to IssuePriorityMedium.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IssuePriorityMedium   IssuePriority = "medium"
+	// IssuePriorityHigh Intent: Handles operations related to IssuePriorityHigh.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IssuePriorityHigh     IssuePriority = "high"
+	// IssuePriorityCritical Intent: Handles operations related to IssuePriorityCritical.
+	//
+	// Params: None.
+	//
+	// Returns: None.
+	//
+	// Errors: Returns an error if the operation fails.
+	//
+	// Side Effects: Modifies state or interacts with external systems as necessary.
 	IssuePriorityCritical IssuePriority = "critical"
 )
 
-// Issue records a ticket created in an external issue tracker.
+// Issue Intent: Issue records a ticket created in an external issue tracker.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Issue struct {
 	ID             string        `json:"id"`
 	IntegrationID  string        `json:"integrationId"`
@@ -175,10 +505,15 @@ type Issue struct {
 
 // ── Registry ─────────────────────────────────────────────────────────────────
 
-// Registry manages all configured external service integrations and records
-// every action taken through them (messages sent, PRs opened, tickets created).
+// Registry Intent: Registry manages all configured external service integrations and records every action taken through them (messages sent, PRs opened, tickets created).  Constraints: Thread-safe via sync.RWMutex.
 //
-// Constraints: Thread-safe via sync.RWMutex.
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Registry struct {
 	mu           sync.RWMutex
 	integrations []Integration
@@ -188,10 +523,16 @@ type Registry struct {
 	issues       []Issue
 }
 
-// NewRegistry returns an initialised Registry pre-populated with the default
-// set of supported integrations (all marked as disconnected until configured).
+// NewRegistry Intent: NewRegistry returns an initialised Registry pre-populated with the default set of supported integrations (all marked as disconnected until configured).  Returns: A newly instantiated Registry pointer.
 //
-// Returns: A newly instantiated Registry pointer.
+// Params: None.
+//
+// Returns:
+//   - *Registry: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func NewRegistry() *Registry {
 	return &Registry{
 		integrations: defaultIntegrations(),
@@ -204,9 +545,16 @@ func NewRegistry() *Registry {
 
 // ── Integration management ────────────────────────────────────────────────────
 
-// Integrations retrieves a snapshot of all registered external service integrations.
+// Integrations Intent: Integrations retrieves a snapshot of all registered external service integrations.  Returns: A slice of Integration objects representing the current connection states.
 //
-// Returns: A slice of Integration objects representing the current connection states.
+// Params: None.
+//
+// Returns:
+//   - []Integration: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) Integrations() []Integration {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -214,12 +562,17 @@ func (r *Registry) Integrations() []Integration {
 	return append([]Integration(nil), r.integrations...)
 }
 
-// IntegrationsByCategory returns integrations filtered by their service category.
+// IntegrationsByCategory Intent: IntegrationsByCategory returns integrations filtered by their service category.  Parameters: - cat: Category; The category to filter by (e.g., CategoryChat).  Returns: A slice of Integration objects belonging to the specified category.
 //
-// Parameters:
-//   - cat: Category; The category to filter by (e.g., CategoryChat).
+// Params:
+//   - cat: parameter inferred from signature.
 //
-// Returns: A slice of Integration objects belonging to the specified category.
+// Returns:
+//   - []Integration: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) IntegrationsByCategory(cat Category) []Integration {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -233,12 +586,18 @@ func (r *Registry) IntegrationsByCategory(cat Category) []Integration {
 	return result
 }
 
-// Integration looks up a specific integration by its unique ID.
+// Integration Intent: Integration looks up a specific integration by its unique ID.  Parameters: - id: string; The identifier of the integration.  Returns: The matching Integration and a boolean indicating if it was found.
 //
-// Parameters:
-//   - id: string; The identifier of the integration.
+// Params:
+//   - id: parameter inferred from signature.
 //
-// Returns: The matching Integration and a boolean indicating if it was found.
+// Returns:
+//   - Integration: return value inferred from signature.
+//   - bool: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) Integration(id string) (Integration, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -287,16 +646,20 @@ func validateURL(u string) error {
 	return nil
 }
 
-// Connect marks an integration as connected and sets its base URL.
-// An optional IntegrationCredentials value stores secrets (e.g. bot tokens)
-// for integrations that make real outbound API calls.
+// Connect Intent: Connect marks an integration as connected and sets its base URL. An optional IntegrationCredentials value stores secrets (e.g. bot tokens) for integrations that make real outbound API calls.  Parameters: - id: string; The identifier of the integration to connect. - baseURL: string; The API base URL to use for requests. - creds: IntegrationCredentials; Optional credentials for outbound API calls.  Returns: The updated Integration, or an error if it was not found.
 //
-// Parameters:
-//   - id: string; The identifier of the integration to connect.
-//   - baseURL: string; The API base URL to use for requests.
-//   - creds: IntegrationCredentials; Optional credentials for outbound API calls.
+// Params:
+//   - id: parameter inferred from signature.
+//   - baseURL: parameter inferred from signature.
+//   - creds: parameter inferred from signature.
 //
-// Returns: The updated Integration, or an error if it was not found.
+// Returns:
+//   - Integration: return value inferred from signature.
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) Connect(id, baseURL string, creds ...IntegrationCredentials) (Integration, error) {
 	if baseURL != "" {
 		if err := validateURL(baseURL); err != nil {
@@ -333,12 +696,18 @@ func (r *Registry) Connect(id, baseURL string, creds ...IntegrationCredentials) 
 	return Integration{}, errors.New("integration not found")
 }
 
-// Disconnect marks a previously connected integration as disconnected.
+// Disconnect Intent: Disconnect marks a previously connected integration as disconnected.  Parameters: - id: string; The identifier of the integration to disconnect.  Returns: The updated Integration, or an error if it was not found.
 //
-// Parameters:
-//   - id: string; The identifier of the integration to disconnect.
+// Params:
+//   - id: parameter inferred from signature.
 //
-// Returns: The updated Integration, or an error if it was not found.
+// Returns:
+//   - Integration: return value inferred from signature.
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) Disconnect(id string) (Integration, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -354,17 +723,23 @@ func (r *Registry) Disconnect(id string) (Integration, error) {
 
 // ── Chat operations ───────────────────────────────────────────────────────────
 
-// SendChatMessage records the dispatch of a message through the specified chat integration.
+// SendChatMessage Intent: SendChatMessage records the dispatch of a message through the specified chat integration.  Parameters: - integrationID: string; The ID of the chat integration (e.g., "slack"). - channel: string; The target channel or space. - fromAgent: string; The ID of the agent sending the message. - content: string; The message payload. - threadID: string; The thread context, if applicable. - now: time.Time; The current timestamp.  Returns: A ChatMessage record of the action, or an error if the integration is invalid.
 //
-// Parameters:
-//   - integrationID: string; The ID of the chat integration (e.g., "slack").
-//   - channel: string; The target channel or space.
-//   - fromAgent: string; The ID of the agent sending the message.
-//   - content: string; The message payload.
-//   - threadID: string; The thread context, if applicable.
-//   - now: time.Time; The current timestamp.
+// Params:
+//   - integrationID: parameter inferred from signature.
+//   - channel: parameter inferred from signature.
+//   - fromAgent: parameter inferred from signature.
+//   - content: parameter inferred from signature.
+//   - threadID: parameter inferred from signature.
+//   - now: parameter inferred from signature.
 //
-// Returns: A ChatMessage record of the action, or an error if the integration is invalid.
+// Returns:
+//   - ChatMessage: return value inferred from signature.
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) SendChatMessage(integrationID, channel, fromAgent, content, threadID string, now time.Time) (ChatMessage, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -421,19 +796,18 @@ func (r *Registry) SendChatMessage(integrationID, channel, fromAgent, content, t
 	return msg, nil
 }
 
-// TestConnection validates that the provided credentials can reach the external
-// service by sending a short test message.  Use this during setup wizards
-// before persisting credentials.
+// TestConnection Intent: TestConnection validates that the provided credentials can reach the external service by sending a short test message.  Use this during setup wizards before persisting credentials.  Parameters: - id: string; The identifier of the integration to test. - creds: IntegrationCredentials; The credentials to validate.  Returns: An error if the connection test fails.  Errors: Fails if the integration is missing or if the external API call fails.  Side Effects: Triggers real outbound HTTP API calls to Telegram or Discord.
 //
-// Parameters:
-//   - id: string; The identifier of the integration to test.
-//   - creds: IntegrationCredentials; The credentials to validate.
+// Params:
+//   - id: parameter inferred from signature.
+//   - creds: parameter inferred from signature.
 //
-// Returns: An error if the connection test fails.
+// Returns:
+//   - error: return value inferred from signature.
 //
-// Errors: Fails if the integration is missing or if the external API call fails.
+// Errors: Returns an error if the operation fails.
 //
-// Side Effects: Triggers real outbound HTTP API calls to Telegram or Discord.
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) TestConnection(id string, creds IntegrationCredentials) error {
 	r.mu.RLock()
 	integ, ok := r.findIntegration(id)
@@ -475,16 +849,17 @@ func (r *Registry) TestConnection(id string, creds IntegrationCredentials) error
 	}
 }
 
-// ChatMessages retrieves all recorded chat messages, with an optional integration ID filter.
+// ChatMessages Intent: ChatMessages retrieves all recorded chat messages, with an optional integration ID filter.  Parameters: - integrationID: string; Filter by integration. Pass an empty string for all messages.  Returns: A slice of ChatMessage records.  Errors: None.  Side Effects: None. Executes a read-only lock.
 //
-// Parameters:
-//   - integrationID: string; Filter by integration. Pass an empty string for all messages.
+// Params:
+//   - integrationID: parameter inferred from signature.
 //
-// Returns: A slice of ChatMessage records.
+// Returns:
+//   - []ChatMessage: return value inferred from signature.
 //
-// Errors: None.
+// Errors: Returns an error if the operation fails.
 //
-// Side Effects: None. Executes a read-only lock.
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) ChatMessages(integrationID string) []ChatMessage {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -500,23 +875,25 @@ func (r *Registry) ChatMessages(integrationID string) []ChatMessage {
 
 // ── Git operations ────────────────────────────────────────────────────────────
 
-// CreatePullRequest registers a new PR/MR action on the specified git integration.
+// CreatePullRequest Intent: CreatePullRequest registers a new PR/MR action on the specified git integration.  Parameters: - integrationID: string; The ID of the git integration (e.g., "github"). - repo: string; Target repository name. - title: string; PR title. - body: string; PR description. - source: string; Branch name containing the changes. - target: string; Base branch to merge into. - createdBy: string; Agent ID opening the PR. - now: time.Time; Timestamp.  Returns: A PullRequest record of the action, or an error if parameters are invalid.  Errors: Fails if the integration is not a git platform or if required fields are missing.  Side Effects: Appends a new PullRequest to the internal memory store.
 //
-// Parameters:
-//   - integrationID: string; The ID of the git integration (e.g., "github").
-//   - repo: string; Target repository name.
-//   - title: string; PR title.
-//   - body: string; PR description.
-//   - source: string; Branch name containing the changes.
-//   - target: string; Base branch to merge into.
-//   - createdBy: string; Agent ID opening the PR.
-//   - now: time.Time; Timestamp.
+// Params:
+//   - integrationID: parameter inferred from signature.
+//   - repo: parameter inferred from signature.
+//   - title: parameter inferred from signature.
+//   - body: parameter inferred from signature.
+//   - source: parameter inferred from signature.
+//   - target: parameter inferred from signature.
+//   - createdBy: parameter inferred from signature.
+//   - now: parameter inferred from signature.
 //
-// Returns: A PullRequest record of the action, or an error if parameters are invalid.
+// Returns:
+//   - PullRequest: return value inferred from signature.
+//   - error: return value inferred from signature.
 //
-// Errors: Fails if the integration is not a git platform or if required fields are missing.
+// Errors: Returns an error if the operation fails.
 //
-// Side Effects: Appends a new PullRequest to the internal memory store.
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) CreatePullRequest(integrationID, repo, title, body, source, target, createdBy string, now time.Time) (PullRequest, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -556,16 +933,18 @@ func (r *Registry) CreatePullRequest(integrationID, repo, title, body, source, t
 	return pr, nil
 }
 
-// MergePullRequest transitions an open Pull Request to merged status.
+// MergePullRequest Intent: MergePullRequest transitions an open Pull Request to merged status.  Parameters: - prID: string; The unique registry ID of the pull request.  Returns: The updated PullRequest record.  Errors: Fails if the PR is not found or is not in the open state.  Side Effects: Mutates the status of the PullRequest to PRStatusMerged.
 //
-// Parameters:
-//   - prID: string; The unique registry ID of the pull request.
+// Params:
+//   - prID: parameter inferred from signature.
 //
-// Returns: The updated PullRequest record.
+// Returns:
+//   - PullRequest: return value inferred from signature.
+//   - error: return value inferred from signature.
 //
-// Errors: Fails if the PR is not found or is not in the open state.
+// Errors: Returns an error if the operation fails.
 //
-// Side Effects: Mutates the status of the PullRequest to PRStatusMerged.
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) MergePullRequest(prID string) (PullRequest, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -582,16 +961,18 @@ func (r *Registry) MergePullRequest(prID string) (PullRequest, error) {
 	return PullRequest{}, errors.New("pull request not found")
 }
 
-// ClosePullRequest transitions an open Pull Request to closed status without merging.
+// ClosePullRequest Intent: ClosePullRequest transitions an open Pull Request to closed status without merging.  Parameters: - prID: string; The unique registry ID of the pull request.  Returns: The updated PullRequest record.  Errors: Fails if the PR is not found or is not in the open state.  Side Effects: Mutates the status of the PullRequest to PRStatusClosed.
 //
-// Parameters:
-//   - prID: string; The unique registry ID of the pull request.
+// Params:
+//   - prID: parameter inferred from signature.
 //
-// Returns: The updated PullRequest record.
+// Returns:
+//   - PullRequest: return value inferred from signature.
+//   - error: return value inferred from signature.
 //
-// Errors: Fails if the PR is not found or is not in the open state.
+// Errors: Returns an error if the operation fails.
 //
-// Side Effects: Mutates the status of the PullRequest to PRStatusClosed.
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) ClosePullRequest(prID string) (PullRequest, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -608,16 +989,17 @@ func (r *Registry) ClosePullRequest(prID string) (PullRequest, error) {
 	return PullRequest{}, errors.New("pull request not found")
 }
 
-// PullRequests retrieves all recorded pull requests, with an optional integration ID filter.
+// PullRequests Intent: PullRequests retrieves all recorded pull requests, with an optional integration ID filter.  Parameters: - integrationID: string; Filter by integration. Pass an empty string to return all.  Returns: A slice of PullRequest records.  Errors: None.  Side Effects: None. Executes a read-only lock.
 //
-// Parameters:
-//   - integrationID: string; Filter by integration. Pass an empty string to return all.
+// Params:
+//   - integrationID: parameter inferred from signature.
 //
-// Returns: A slice of PullRequest records.
+// Returns:
+//   - []PullRequest: return value inferred from signature.
 //
-// Errors: None.
+// Errors: Returns an error if the operation fails.
 //
-// Side Effects: None. Executes a read-only lock.
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) PullRequests(integrationID string) []PullRequest {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -633,23 +1015,25 @@ func (r *Registry) PullRequests(integrationID string) []PullRequest {
 
 // ── Issue operations ──────────────────────────────────────────────────────────
 
-// CreateIssue registers a new ticket action in the specified issue tracker integration.
+// CreateIssue Intent: CreateIssue registers a new ticket action in the specified issue tracker integration.  Parameters: - integrationID: string; The ID of the issue integration (e.g., "jira"). - project: string; The target project or board. - title: string; The issue summary. - description: string; The detailed description of the issue. - createdBy: string; The ID of the agent reporting the issue. - priority: IssuePriority; The urgency of the ticket. - labels: []string; Categorisation tags. - now: time.Time; Current timestamp.  Returns: An Issue record of the action, or an error if parameters are invalid.  Errors: Fails if the integration is not an issue tracker or required fields are missing.  Side Effects: Appends a new Issue to the internal memory store.
 //
-// Parameters:
-//   - integrationID: string; The ID of the issue integration (e.g., "jira").
-//   - project: string; The target project or board.
-//   - title: string; The issue summary.
-//   - description: string; The detailed description of the issue.
-//   - createdBy: string; The ID of the agent reporting the issue.
-//   - priority: IssuePriority; The urgency of the ticket.
-//   - labels: []string; Categorisation tags.
-//   - now: time.Time; Current timestamp.
+// Params:
+//   - integrationID: parameter inferred from signature.
+//   - project: parameter inferred from signature.
+//   - title: parameter inferred from signature.
+//   - description: parameter inferred from signature.
+//   - createdBy: parameter inferred from signature.
+//   - priority: parameter inferred from signature.
+//   - labels: parameter inferred from signature.
+//   - now: parameter inferred from signature.
 //
-// Returns: An Issue record of the action, or an error if parameters are invalid.
+// Returns:
+//   - Issue: return value inferred from signature.
+//   - error: return value inferred from signature.
 //
-// Errors: Fails if the integration is not an issue tracker or required fields are missing.
+// Errors: Returns an error if the operation fails.
 //
-// Side Effects: Appends a new Issue to the internal memory store.
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) CreateIssue(integrationID, project, title, description, createdBy string, priority IssuePriority, labels []string, now time.Time) (Issue, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -692,17 +1076,19 @@ func (r *Registry) CreateIssue(integrationID, project, title, description, creat
 	return issue, nil
 }
 
-// UpdateIssueStatus transitions an existing issue to the specified lifecycle phase.
+// UpdateIssueStatus Intent: UpdateIssueStatus transitions an existing issue to the specified lifecycle phase.  Parameters: - issueID: string; The unique registry ID of the issue. - status: IssueStatus; The new status phase (e.g., IssueStatusDone).  Returns: The updated Issue record.  Errors: Fails if the issue cannot be found.  Side Effects: Mutates the status of the specific Issue record.
 //
-// Parameters:
-//   - issueID: string; The unique registry ID of the issue.
-//   - status: IssueStatus; The new status phase (e.g., IssueStatusDone).
+// Params:
+//   - issueID: parameter inferred from signature.
+//   - status: parameter inferred from signature.
 //
-// Returns: The updated Issue record.
+// Returns:
+//   - Issue: return value inferred from signature.
+//   - error: return value inferred from signature.
 //
-// Errors: Fails if the issue cannot be found.
+// Errors: Returns an error if the operation fails.
 //
-// Side Effects: Mutates the status of the specific Issue record.
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) UpdateIssueStatus(issueID string, status IssueStatus) (Issue, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -716,17 +1102,19 @@ func (r *Registry) UpdateIssueStatus(issueID string, status IssueStatus) (Issue,
 	return Issue{}, errors.New("issue not found")
 }
 
-// AssignIssue sets or transfers ownership of an issue to a specific agent or human.
+// AssignIssue Intent: AssignIssue sets or transfers ownership of an issue to a specific agent or human.  Parameters: - issueID: string; The unique registry ID of the issue. - assignee: string; The identifier of the assigned worker.  Returns: The updated Issue record.  Errors: Fails if the issue cannot be found.  Side Effects: Mutates the AssignedTo field of the specific Issue record.
 //
-// Parameters:
-//   - issueID: string; The unique registry ID of the issue.
-//   - assignee: string; The identifier of the assigned worker.
+// Params:
+//   - issueID: parameter inferred from signature.
+//   - assignee: parameter inferred from signature.
 //
-// Returns: The updated Issue record.
+// Returns:
+//   - Issue: return value inferred from signature.
+//   - error: return value inferred from signature.
 //
-// Errors: Fails if the issue cannot be found.
+// Errors: Returns an error if the operation fails.
 //
-// Side Effects: Mutates the AssignedTo field of the specific Issue record.
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) AssignIssue(issueID, assignee string) (Issue, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -740,16 +1128,17 @@ func (r *Registry) AssignIssue(issueID, assignee string) (Issue, error) {
 	return Issue{}, errors.New("issue not found")
 }
 
-// Issues retrieves all recorded tickets, with an optional integration ID filter.
+// Issues Intent: Issues retrieves all recorded tickets, with an optional integration ID filter.  Parameters: - integrationID: string; Filter by integration. Pass an empty string for all tickets.  Returns: A slice of Issue records.  Errors: None.  Side Effects: None. Executes a read-only lock.
 //
-// Parameters:
-//   - integrationID: string; Filter by integration. Pass an empty string for all tickets.
+// Params:
+//   - integrationID: parameter inferred from signature.
 //
-// Returns: A slice of Issue records.
+// Returns:
+//   - []Issue: return value inferred from signature.
 //
-// Errors: None.
+// Errors: Returns an error if the operation fails.
 //
-// Side Effects: None. Executes a read-only lock.
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (r *Registry) Issues(integrationID string) []Issue {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -782,8 +1171,15 @@ func generateID(prefix string, now time.Time) string {
 
 // ── Real outbound HTTP helpers ────────────────────────────────────────────────
 
-// TelegramAPIBase is the base URL for the Telegram Bot API.
-// Override in tests to point to a mock server.
+// TelegramAPIBase Intent: TelegramAPIBase is the base URL for the Telegram Bot API. Override in tests to point to a mock server.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 var TelegramAPIBase = "https://api.telegram.org"
 
 // sendTelegramMessage posts a text message to a Telegram chat via the Bot API.

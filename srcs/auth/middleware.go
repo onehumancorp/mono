@@ -17,10 +17,17 @@ var publicPaths = []string{
 	"/api/auth/login",
 }
 
-// Middleware returns an HTTP middleware that enforces JWT authentication.
-// Requests to public paths pass through unauthenticated.
-// All other requests must carry a valid Bearer token in the Authorization header
-// or an "ohc_token" cookie.
+// Middleware Intent: Middleware returns an HTTP middleware that enforces JWT authentication. Requests to public paths pass through unauthenticated. All other requests must carry a valid Bearer token in the Authorization header or an "ohc_token" cookie.
+//
+// Params:
+//   - store: parameter inferred from signature.
+//
+// Returns:
+//   - func(http.Handler): return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func Middleware(store *Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -49,15 +56,34 @@ func Middleware(store *Store) func(http.Handler) http.Handler {
 	}
 }
 
-// ClaimsFromContext extracts auth claims set by Middleware.
-// Returns nil if no claims are present (public or in-process request).
+// ClaimsFromContext Intent: ClaimsFromContext extracts auth claims set by Middleware. Returns nil if no claims are present (public or in-process request).
+//
+// Params:
+//   - ctx: parameter inferred from signature.
+//
+// Returns:
+//   - *Claims: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func ClaimsFromContext(ctx context.Context) *Claims {
 	v, _ := ctx.Value(claimsContextKey).(*Claims)
 	return v
 }
 
-// RequireRole returns a middleware that further restricts access to users
-// that hold the given role (or "admin").
+// RequireRole Intent: RequireRole returns a middleware that further restricts access to users that hold the given role (or "admin").
+//
+// Params:
+//   - role: parameter inferred from signature.
+//   - next: parameter inferred from signature.
+//
+// Returns:
+//   - http.HandlerFunc: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func RequireRole(role string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		claims := ClaimsFromContext(r.Context())
@@ -105,5 +131,13 @@ func jsonError(w http.ResponseWriter, msg string, code int) {
 func jsonString(s string) string {
 	return `"` + strings.ReplaceAll(strings.ReplaceAll(s, `\`, `\\`), `"`, `\"`) + `"`
 }
-
+// ClaimsContextKeyForTest Intent: Handles operations related to ClaimsContextKeyForTest.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 const ClaimsContextKeyForTest = claimsContextKey

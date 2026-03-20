@@ -9,12 +9,30 @@ import (
 	"path/filepath"
 	"strings"
 )
-
+// Server Intent: Handles operations related to Server.
+//
+// Params: None.
+//
+// Returns: None.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 type Server struct {
 	staticDir string
 	proxy     *httputil.ReverseProxy
 }
-
+// New Intent: Handles operations related to New.
+//
+// Params: None.
+//
+// Returns:
+//   - *Server: return value inferred from signature.
+//   - error: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func New() (*Server, error) {
 	backendURL := os.Getenv("BACKEND_URL")
 	if backendURL == "" {
@@ -36,7 +54,16 @@ func New() (*Server, error) {
 		proxy:     httputil.NewSingleHostReverseProxy(target),
 	}, nil
 }
-
+// Handler Intent: Handles operations related to Handler.
+//
+// Params: None.
+//
+// Returns:
+//   - http.Handler: return value inferred from signature.
+//
+// Errors: Returns an error if the operation fails.
+//
+// Side Effects: Modifies state or interacts with external systems as necessary.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
