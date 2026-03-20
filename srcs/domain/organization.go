@@ -2,37 +2,151 @@ package domain
 
 import "time"
 
-// Role represents a designated job title or operational function within the AI workforce.
+// Summary: Role represents a designated job title or operational function within the AI workforce.
+// Intent: Role represents a designated job title or operational function within the AI workforce.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Role string
 
 const (
+	// Summary: Defines the RoleCEO type.
+	// Intent: Defines the RoleCEO type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleCEO                 Role = "CEO"
+	// Summary: Defines the RoleProductManager type.
+	// Intent: Defines the RoleProductManager type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleProductManager      Role = "PRODUCT_MANAGER"
+	// Summary: Defines the RoleSoftwareEngineer type.
+	// Intent: Defines the RoleSoftwareEngineer type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleSoftwareEngineer    Role = "SOFTWARE_ENGINEER"
+	// Summary: Defines the RoleEngineeringDirector type.
+	// Intent: Defines the RoleEngineeringDirector type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleEngineeringDirector Role = "ENGINEERING_DIRECTOR"
+	// Summary: Defines the RoleQATester type.
+	// Intent: Defines the RoleQATester type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleQATester            Role = "QA_TESTER"
+	// Summary: Defines the RoleSecurityEngineer type.
+	// Intent: Defines the RoleSecurityEngineer type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleSecurityEngineer    Role = "SECURITY_ENGINEER"
+	// Summary: Defines the RoleDesigner type.
+	// Intent: Defines the RoleDesigner type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleDesigner            Role = "DESIGNER"
+	// Summary: Defines the RoleMarketingManager type.
+	// Intent: Defines the RoleMarketingManager type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleMarketingManager    Role = "MARKETING_MANAGER"
 
-	// Digital Marketing Agency roles.
+	// Summary: Digital Marketing Agency roles.
+	// Intent: Digital Marketing Agency roles.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleGrowthAgent       Role = "GROWTH_AGENT"
+	// Summary: Defines the RoleContentStrategist type.
+	// Intent: Defines the RoleContentStrategist type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleContentStrategist Role = "CONTENT_STRATEGIST"
+	// Summary: Defines the RoleSEOSpecialist type.
+	// Intent: Defines the RoleSEOSpecialist type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleSEOSpecialist     Role = "SEO_SPECIALIST"
+	// Summary: Defines the RolePaidMediaManager type.
+	// Intent: Defines the RolePaidMediaManager type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RolePaidMediaManager  Role = "PAID_MEDIA_MANAGER"
+	// Summary: Defines the RoleAnalyticsEngineer type.
+	// Intent: Defines the RoleAnalyticsEngineer type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleAnalyticsEngineer Role = "ANALYTICS_ENGINEER"
 
-	// Accounting Firm roles.
+	// Summary: Accounting Firm roles.
+	// Intent: Accounting Firm roles.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleCFO            Role = "CFO"
+	// Summary: Defines the RoleBookkeeper type.
+	// Intent: Defines the RoleBookkeeper type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleBookkeeper     Role = "BOOKKEEPER"
+	// Summary: Defines the RoleTaxSpecialist type.
+	// Intent: Defines the RoleTaxSpecialist type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleTaxSpecialist  Role = "TAX_SPECIALIST"
+	// Summary: Defines the RoleAuditManager type.
+	// Intent: Defines the RoleAuditManager type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RoleAuditManager   Role = "AUDIT_MANAGER"
+	// Summary: Defines the RolePayrollManager type.
+	// Intent: Defines the RolePayrollManager type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	RolePayrollManager Role = "PAYROLL_MANAGER"
 )
 
-// Member defines an individual contributor within the organisation.
-//
-// Constraints: An agent member must have isHuman set to false. The CEO must be a human.
+// Summary: Member defines an individual contributor within the organisation.  Constraints: An agent member must have isHuman set to false. The CEO must be a human.
+// Intent: Member defines an individual contributor within the organisation.  Constraints: An agent member must have isHuman set to false. The CEO must be a human.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Member struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
@@ -41,7 +155,12 @@ type Member struct {
 	IsHuman   bool   `json:"isHuman"`
 }
 
-// RoleProfile stores the playbook, prompt, and capabilities that instruct an AI on how to perform a Role.
+// Summary: RoleProfile stores the playbook, prompt, and capabilities that instruct an AI on how to perform a Role.
+// Intent: RoleProfile stores the playbook, prompt, and capabilities that instruct an AI on how to perform a Role.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type RoleProfile struct {
 	Role          Role     `json:"role"`
 	BasePrompt    string   `json:"basePrompt"`
@@ -49,7 +168,12 @@ type RoleProfile struct {
 	ContextInputs []string `json:"contextInputs"`
 }
 
-// Organization aggregates the hierarchy, workforce details, and role playbooks for a domain.
+// Summary: Organization aggregates the hierarchy, workforce details, and role playbooks for a domain.
+// Intent: Organization aggregates the hierarchy, workforce details, and role playbooks for a domain.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Organization struct {
 	ID           string        `json:"id"`
 	Name         string        `json:"name"`

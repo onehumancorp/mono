@@ -19,34 +19,146 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Status indicates the current operational phase of an AI agent within the workforce.
+// Summary: Status indicates the current operational phase of an AI agent within the workforce.
+// Intent: Status indicates the current operational phase of an AI agent within the workforce.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Status string
 
 const (
+	// Summary: Defines the StatusIdle type.
+	// Intent: Defines the StatusIdle type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	StatusIdle      Status = "IDLE"
+	// Summary: Defines the StatusActive type.
+	// Intent: Defines the StatusActive type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	StatusActive    Status = "ACTIVE"
+	// Summary: Defines the StatusInMeeting type.
+	// Intent: Defines the StatusInMeeting type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	StatusInMeeting Status = "IN_MEETING"
+	// Summary: Defines the StatusBlocked type.
+	// Intent: Defines the StatusBlocked type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	StatusBlocked   Status = "BLOCKED"
 )
 
 // Event type constants for the asynchronous pub/sub agent interaction protocol.
 const (
+	// Summary: Defines the EventTask type.
+	// Intent: Defines the EventTask type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	EventTask           = "task"
+	// Summary: Defines the EventStatus type.
+	// Intent: Defines the EventStatus type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	EventStatus         = "status"
+	// Summary: Defines the EventHandoff type.
+	// Intent: Defines the EventHandoff type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	EventHandoff        = "handoff"
+	// Summary: Defines the EventCodeReviewed type.
+	// Intent: Defines the EventCodeReviewed type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	EventCodeReviewed   = "CodeReviewed"
+	// Summary: Defines the EventTestsFailed type.
+	// Intent: Defines the EventTestsFailed type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	EventTestsFailed    = "TestsFailed"
+	// Summary: Defines the EventTestsPassed type.
+	// Intent: Defines the EventTestsPassed type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	EventTestsPassed    = "TestsPassed"
+	// Summary: Defines the EventSpecApproved type.
+	// Intent: Defines the EventSpecApproved type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	EventSpecApproved   = "SpecApproved"
+	// Summary: Defines the EventBlockerRaised type.
+	// Intent: Defines the EventBlockerRaised type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	EventBlockerRaised  = "BlockerRaised"
+	// Summary: Defines the EventBlockerCleared type.
+	// Intent: Defines the EventBlockerCleared type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	EventBlockerCleared = "BlockerCleared"
+	// Summary: Defines the EventPRCreated type.
+	// Intent: Defines the EventPRCreated type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	EventPRCreated      = "PRCreated"
+	// Summary: Defines the EventPRMerged type.
+	// Intent: Defines the EventPRMerged type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	EventPRMerged       = "PRMerged"
+	// Summary: Defines the EventDesignReviewed type.
+	// Intent: Defines the EventDesignReviewed type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	EventDesignReviewed = "DesignReviewed"
+	// Summary: Defines the EventApprovalNeeded type.
+	// Intent: Defines the EventApprovalNeeded type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	EventApprovalNeeded = "ApprovalNeeded"
 )
 
-// Agent represents an active, instantiated worker within the AI organisation.
+// Summary: Agent represents an active, instantiated worker within the AI organisation.
+// Intent: Agent represents an active, instantiated worker within the AI organisation.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Agent struct {
 	ID             string `json:"id"`
 	Name           string `json:"name"`
@@ -59,7 +171,12 @@ type Agent struct {
 	ProviderType string `json:"providerType,omitempty"`
 }
 
-// Message encapsulates a discrete event, command, or context update passed between agents or rooms.
+// Summary: Message encapsulates a discrete event, command, or context update passed between agents or rooms.
+// Intent: Message encapsulates a discrete event, command, or context update passed between agents or rooms.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Message struct {
 	ID         string    `json:"id"`
 	FromAgent  string    `json:"fromAgent"`
@@ -70,7 +187,12 @@ type Message struct {
 	OccurredAt time.Time `json:"occurredAt"`
 }
 
-// MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
+// Summary: MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
+// Intent: MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type MeetingRoom struct {
 	ID           string    `json:"id"`
 	Agenda       string    `json:"agenda,omitempty"`
@@ -78,9 +200,12 @@ type MeetingRoom struct {
 	Transcript   []Message `json:"transcript"`
 }
 
-// Hub acts as the thread-safe central message broker and runtime state manager for the AI workforce.
-//
-// Constraints: Must be accessed via its exported methods to preserve data race safety.
+// Summary: Hub acts as the thread-safe central message broker and runtime state manager for the AI workforce.  Constraints: Must be accessed via its exported methods to preserve data race safety.
+// Intent: Hub acts as the thread-safe central message broker and runtime state manager for the AI workforce.  Constraints: Must be accessed via its exported methods to preserve data race safety.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Hub struct {
 	mu            sync.RWMutex
 	agents        map[string]Agent
@@ -102,10 +227,12 @@ func NewHub() *Hub {
 	}
 }
 
-// RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.
-//
-// Parameters:
-//   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
+// Summary: RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.  Parameters:   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
+// Intent: RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.  Parameters:   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
+// Params: agent
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (h *Hub) RegisterAgent(agent Agent) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -117,12 +244,24 @@ func (h *Hub) RegisterAgent(agent Agent) {
 	h.agents[agent.ID] = agent
 }
 
+// Summary: SetMinimaxAPIKey functionality.
+// Intent: SetMinimaxAPIKey functionality.
+// Params: key
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (h *Hub) SetMinimaxAPIKey(key string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.minimaxAPIKey = key
 }
 
+// Summary: MinimaxAPIKey functionality.
+// Intent: MinimaxAPIKey functionality.
+// Params: None
+// Returns: string
+// Errors: None
+// Side Effects: None
 func (h *Hub) MinimaxAPIKey() string {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -190,10 +329,12 @@ func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) Me
 	return meeting
 }
 
-// FireAgent removes an agent from the hub and clears their inbox.
-//
-// Parameters:
-//   - id: string; The unique identifier of the agent to terminate.
+// Summary: FireAgent removes an agent from the hub and clears their inbox.  Parameters:   - id: string; The unique identifier of the agent to terminate.
+// Intent: FireAgent removes an agent from the hub and clears their inbox.  Parameters:   - id: string; The unique identifier of the agent to terminate.
+// Params: id
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (h *Hub) FireAgent(id string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -363,20 +504,43 @@ func (h *Hub) Agents() []Agent {
 	return agents
 }
 
-// HubServiceServer implements the gRPC HubService defined in hub.proto.
+// Summary: HubServiceServer implements the gRPC HubService defined in hub.proto.
+// Intent: HubServiceServer implements the gRPC HubService defined in hub.proto.
+// Params: s, hub
+// Returns: None
+// Errors: None
+// Side Effects: None
 func RegisterHubService(s *grpc.Server, hub *Hub) {
 	pb.RegisterHubServiceServer(s, &HubServiceServer{hub: hub})
 }
 
+// Summary: Defines the HubServiceServer type.
+// Intent: Defines the HubServiceServer type.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type HubServiceServer struct {
 	pb.UnimplementedHubServiceServer
 	hub *Hub
 }
 
+// Summary: NewHubServiceServer functionality.
+// Intent: NewHubServiceServer functionality.
+// Params: hub
+// Returns: *HubServiceServer
+// Errors: None
+// Side Effects: None
 func NewHubServiceServer(hub *Hub) *HubServiceServer {
 	return &HubServiceServer{hub: hub}
 }
 
+// Summary: RegisterAgent functionality.
+// Intent: RegisterAgent functionality.
+// Params: ctx, req
+// Returns: (*pb.RegisterAgentResponse, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAgentRequest) (*pb.RegisterAgentResponse, error) {
 	agentReq := req.GetAgent()
 	agent := Agent{
@@ -391,6 +555,12 @@ func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAg
 	return pb.RegisterAgentResponse_builder{Success: true}.Build(), nil
 }
 
+// Summary: OpenMeeting functionality.
+// Intent: OpenMeeting functionality.
+// Params: ctx, req
+// Returns: (*pb.MeetingRoom, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingRequest) (*pb.MeetingRoom, error) {
 	meeting := s.hub.OpenMeetingWithAgenda(req.GetMeetingId(), req.GetAgenda(), req.GetParticipants())
 	return pb.MeetingRoom_builder{
@@ -400,6 +570,12 @@ func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingR
 	}.Build(), nil
 }
 
+// Summary: Publish functionality.
+// Intent: Publish functionality.
+// Params: ctx, req
+// Returns: (*pb.PublishMessageResponse, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRequest) (*pb.PublishMessageResponse, error) {
 	msgReq := req.GetMessage()
 	msg := Message{
@@ -417,6 +593,12 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 	return pb.PublishMessageResponse_builder{Success: true}.Build(), nil
 }
 
+// Summary: StreamMessages functionality.
+// Intent: StreamMessages functionality.
+// Params: req, stream
+// Returns: error
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream pb.HubService_StreamMessagesServer) error {
 	agentID := req.GetAgentId()
 
@@ -467,6 +649,12 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 	}
 }
 
+// Summary: Reason functionality.
+// Intent: Reason functionality.
+// Params: ctx, req
+// Returns: (*pb.ReasonResponse, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*pb.ReasonResponse, error) {
 	client := NewMinimaxClient(s.hub.MinimaxAPIKey())
 	content, err := client.Reason(ctx, req.GetPrompt())
@@ -480,11 +668,22 @@ func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*
 // ⚡ BOLT: [Configurable endpoint] - Randomized Selection from Top 5
 var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
 
-// MinimaxClient handles interaction with the Minimax Model 2.7.
+// Summary: MinimaxClient handles interaction with the Minimax Model 2.7.
+// Intent: MinimaxClient handles interaction with the Minimax Model 2.7.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type MinimaxClient struct {
 	APIKey string
 }
 
+// Summary: NewMinimaxClient functionality.
+// Intent: NewMinimaxClient functionality.
+// Params: apiKey
+// Returns: *MinimaxClient
+// Errors: None
+// Side Effects: None
 func NewMinimaxClient(apiKey string) *MinimaxClient {
 	return &MinimaxClient{APIKey: apiKey}
 }
@@ -495,6 +694,12 @@ var bufferPool = sync.Pool{
 	},
 }
 
+// Summary: Reason functionality.
+// Intent: Reason functionality.
+// Params: ctx, prompt
+// Returns: (string, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, error) {
 	if c.APIKey == "" {
 		return "", errors.New("minimax API key is not configured")

@@ -10,9 +10,12 @@ import (
 	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
-// Price represents the cost rates for a specific large language model.
-//
-// Constraints: Cost must be provided per one million tokens.
+// Summary: Price represents the cost rates for a specific large language model.  Constraints: Cost must be provided per one million tokens.
+// Intent: Price represents the cost rates for a specific large language model.  Constraints: Cost must be provided per one million tokens.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Price struct {
 	InputPerMillionUSD  float64
 	OutputPerMillionUSD float64
@@ -58,9 +61,12 @@ var DefaultCatalog = map[string]Price{
 	"minimax-m2.7-turbo": {InputPerMillionUSD: 0.50, OutputPerMillionUSD: 0.50},
 }
 
-// Usage models a single inference event's token consumption and associated cost.
-//
-// Constraints: Must include valid AgentID, OrganizationID, and Model identifiers.
+// Summary: Usage models a single inference event's token consumption and associated cost.  Constraints: Must include valid AgentID, OrganizationID, and Model identifiers.
+// Intent: Usage models a single inference event's token consumption and associated cost.  Constraints: Must include valid AgentID, OrganizationID, and Model identifiers.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Usage struct {
 	AgentID          string    `json:"agentId"`
 	AgentRole        string    `json:"agentRole"`
@@ -72,14 +78,24 @@ type Usage struct {
 	CostUSD          float64   `json:"costUsd"`
 }
 
-// AgentSummary provides aggregated cost and token usage for an individual agent.
+// Summary: AgentSummary provides aggregated cost and token usage for an individual agent.
+// Intent: AgentSummary provides aggregated cost and token usage for an individual agent.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type AgentSummary struct {
 	AgentID   string  `json:"agentId"`
 	CostUSD   float64 `json:"costUsd"`
 	TokenUsed int64   `json:"tokenUsed"`
 }
 
-// Summary aggregates total cost and token usage for a specific organisation.
+// Summary: Summary aggregates total cost and token usage for a specific organisation.
+// Intent: Summary aggregates total cost and token usage for a specific organisation.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Summary struct {
 	OrganizationID      string         `json:"organizationId"`
 	TotalCostUSD        float64        `json:"totalCostUsd"`
@@ -98,9 +114,12 @@ type trackerShard struct {
 	usages []Usage
 }
 
-// Tracker calculates and stores LLM token consumption safely across concurrent calls.
-//
-// Constraints: Uses an internal read-write mutex for thread-safe event ingestion.
+// Summary: Tracker calculates and stores LLM token consumption safely across concurrent calls.  Constraints: Uses an internal read-write mutex for thread-safe event ingestion.
+// Intent: Tracker calculates and stores LLM token consumption safely across concurrent calls.  Constraints: Uses an internal read-write mutex for thread-safe event ingestion.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Tracker struct {
 	catalog map[string]Price
 	shards  [numShards]*trackerShard
