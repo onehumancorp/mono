@@ -303,7 +303,10 @@ func TestUserManagement_NonAdminForbidden(t *testing.T) {
 
 	// Log in as viewer.
 	body, _ := json.Marshal(map[string]string{"username": "viewer1", "password": "viewpass99"})
-	loginResp, _ := http.Post(srv.URL+"/api/auth/login", "application/json", bytes.NewReader(body))
+	loginResp, err := http.Post(srv.URL+"/api/auth/login", "application/json", bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("login error: %v", err)
+	}
 	defer loginResp.Body.Close()
 	var loginResult map[string]any
 	_ = json.NewDecoder(loginResp.Body).Decode(&loginResult)

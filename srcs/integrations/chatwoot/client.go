@@ -152,16 +152,16 @@ func (c *Client) CreateContact(name, email string) (Contact, error) {
 
 // Conversation represents a Chatwoot conversation (a chat thread).
 type Conversation struct {
-	ID          int    `json:"id"`
-	InboxID     int    `json:"inbox_id"`
-	ContactID   int    `json:"contact_id,omitempty"`
-	AccountID   int    `json:"account_id"`
-	DisplayID   int    `json:"display_id"`
+	ID        int `json:"id"`
+	InboxID   int `json:"inbox_id"`
+	ContactID int `json:"contact_id,omitempty"`
+	AccountID int `json:"account_id"`
+	DisplayID int `json:"display_id"`
 }
 
 type createConversationRequest struct {
-	InboxID          int    `json:"inbox_id"`
-	ContactID        int    `json:"contact_id,omitempty"`
+	InboxID              int               `json:"inbox_id"`
+	ContactID            int               `json:"contact_id,omitempty"`
 	AdditionalAttributes map[string]string `json:"additional_attributes,omitempty"`
 }
 

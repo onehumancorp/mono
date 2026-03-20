@@ -19,7 +19,7 @@ func TestMainUsesDefaultFrontendAddr(t *testing.T) {
 		fatalForMain = originalFatal
 	})
 
-	t.Setenv("FRONTEND_ADDR", "")	
+	t.Setenv("FRONTEND_ADDR", "")
 	t.Setenv("FRONTEND_STATIC_DIR", t.TempDir())
 	t.Setenv("BACKEND_URL", "http://127.0.0.1:1")
 

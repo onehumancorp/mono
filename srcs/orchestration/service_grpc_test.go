@@ -118,8 +118,8 @@ func (m *MockStreamServer) Send(msg *pb.Message) error {
 func (m *MockStreamServer) SendHeader(metadata.MD) error { return nil }
 func (m *MockStreamServer) SetTrailer(metadata.MD)       {}
 func (m *MockStreamServer) SetHeader(metadata.MD) error  { return nil }
-func (m *MockStreamServer) SendMsg(m_ interface{}) error                  { return nil }
-func (m *MockStreamServer) RecvMsg(m_ interface{}) error                  { return nil }
+func (m *MockStreamServer) SendMsg(m_ interface{}) error { return nil }
+func (m *MockStreamServer) RecvMsg(m_ interface{}) error { return nil }
 
 func TestStreamMessagesViaGRPC(t *testing.T) {
 	hub := NewHub()
@@ -212,7 +212,6 @@ func TestRegisterHubServiceCoverage(t *testing.T) {
 	srv := grpc.NewServer()
 	RegisterHubService(srv, hub)
 }
-
 
 func TestPublishViaGRPCError(t *testing.T) {
 	hub := NewHub()
