@@ -95,7 +95,7 @@ func (r *Registry) Authenticate(t ProviderType, creds Credentials) error {
 	return p.Authenticate(creds)
 }
 
-// ProviderInfo is a serialisable summary of a provider used by the dashboard API.
+// ProviderInfo is a serializable summary of a provider used by the dashboard API.
 type ProviderInfo struct {
 	Type            ProviderType `json:"type"`
 	Description     string       `json:"description"`
