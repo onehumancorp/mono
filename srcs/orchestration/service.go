@@ -454,6 +454,27 @@ func (h *Hub) Inbox(agentID string) []Message {
 	return res
 }
 
+// InboxFrom retrieves all undelivered or direct messages routed exclusively to a single agent, starting from the given offset index.
+// This is heavily optimised for high-frequency streaming workloads.
+//
+// Parameters:
+//   - agentID: string; The unique identifier of the worker.
+//   - start: int; The starting index of messages to retrieve.
+//
+// Returns: A slice of new Message objects since start.
+func (h *Hub) InboxFrom(agentID string, start int) []Message {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	inbox := h.inbox[agentID]
+	if start >= len(inbox) {
+		return nil
+	}
+	res := make([]Message, len(inbox)-start)
+	copy(res, inbox[start:])
+	return res
+}
+
 // Meeting retrieves the current state and transcript of a specified virtual meeting room.
 //
 // Parameters:
@@ -611,10 +632,9 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 	var lastCount int
 
 	sendNewMessages := func() error {
-		msgs := s.hub.Inbox(agentID)
-		if len(msgs) > lastCount {
-			for i := lastCount; i < len(msgs); i++ {
-				m := msgs[i]
+		newMsgs := s.hub.InboxFrom(agentID, lastCount)
+		if len(newMsgs) > 0 {
+			for _, m := range newMsgs {
 				if err := stream.Send(pb.Message_builder{
 					Id:             m.ID,
 					FromAgent:      m.FromAgent,
@@ -627,7 +647,7 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 					return err
 				}
 			}
-			lastCount = len(msgs)
+			lastCount += len(newMsgs)
 		}
 		return nil
 	}
