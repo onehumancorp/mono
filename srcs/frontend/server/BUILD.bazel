@@ -10,5 +10,5 @@ go_library(
 go_test(
     name = "server_test",
     srcs = ["server_test.go"],
-    embed = [":server_lib"],
+    embed = [":server"],
 )

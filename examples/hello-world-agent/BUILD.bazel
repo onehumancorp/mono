@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "hello_world_agent_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/onehumancorp/mono/examples/hello-world-agent",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//srcs/agents",
+    ],
+)
+
+go_binary(
+    name = "hello_world_agent",
+    embed = [":hello_world_agent_lib"],
+    visibility = ["//visibility:public"],
+)
