@@ -10,6 +10,12 @@ import (
 // Providers are registered once (typically at startup via DefaultRegistry) and then
 // authenticated on-demand through the dashboard API.  Multiple goroutines may
 // call Registry methods concurrently.
+// Summary: Registry functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Registry struct {
 	mu        sync.RWMutex
 	providers map[ProviderType]Provider
@@ -17,6 +23,12 @@ type Registry struct {
 
 // NewRegistry returns an empty Registry.  Use DefaultRegistry to get a
 // pre-populated instance with all built-in providers.
+// Summary: NewRegistry functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func NewRegistry() *Registry {
 	return &Registry{providers: make(map[ProviderType]Provider)}
 }
@@ -24,6 +36,12 @@ func NewRegistry() *Registry {
 // DefaultRegistry returns a Registry pre-populated with every built-in provider.
 //
 // This is the standard factory used by the dashboard server at startup.
+// Summary: DefaultRegistry functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func DefaultRegistry() *Registry {
 	r := NewRegistry()
 	r.Register(&ClaudeProvider{})
@@ -37,6 +55,12 @@ func DefaultRegistry() *Registry {
 
 // Register adds a Provider to the Registry, overwriting any previously
 // registered provider with the same type.
+// Summary: Register functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (r *Registry) Register(p Provider) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -44,6 +68,12 @@ func (r *Registry) Register(p Provider) {
 }
 
 // Get returns the Provider for the given type, or false if not found.
+// Summary: Get functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (r *Registry) Get(t ProviderType) (Provider, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -52,6 +82,12 @@ func (r *Registry) Get(t ProviderType) (Provider, bool) {
 }
 
 // All returns a snapshot of all registered providers, ordered by type string.
+// Summary: All functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (r *Registry) All() []Provider {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -85,6 +121,12 @@ func (r *Registry) All() []Provider {
 //
 // Returns an error if the provider type is unknown or if the provider
 // rejects the supplied credentials.
+// Summary: Authenticate functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (r *Registry) Authenticate(t ProviderType, creds Credentials) error {
 	r.mu.RLock()
 	p, ok := r.providers[t]
@@ -96,6 +138,12 @@ func (r *Registry) Authenticate(t ProviderType, creds Credentials) error {
 }
 
 // ProviderInfo is a serializable summary of a provider used by the dashboard API.
+// Summary: ProviderInfo functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type ProviderInfo struct {
 	Type            ProviderType `json:"type"`
 	Description     string       `json:"description"`
@@ -104,6 +152,12 @@ type ProviderInfo struct {
 }
 
 // Infos returns a ProviderInfo summary for every registered provider.
+// Summary: Infos functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (r *Registry) Infos() []ProviderInfo {
 	providers := r.All()
 	out := make([]ProviderInfo, len(providers))

@@ -295,6 +295,12 @@ function HireAgentForm({
  * @returns The rendered React application element.
  *
  * Side Effects: Mounts state and event listeners to manage real-time updates and API interactions.
+
+ * Summary: Provides App functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
  */
 export function App() {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);

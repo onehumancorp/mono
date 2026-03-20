@@ -21,6 +21,12 @@ var publicPaths = []string{
 // Requests to public paths pass through unauthenticated.
 // All other requests must carry a valid Bearer token in the Authorization header
 // or an "ohc_token" cookie.
+// Summary: Middleware functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func Middleware(store *Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -51,6 +57,12 @@ func Middleware(store *Store) func(http.Handler) http.Handler {
 
 // ClaimsFromContext extracts auth claims set by Middleware.
 // Returns nil if no claims are present (public or in-process request).
+// Summary: ClaimsFromContext functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func ClaimsFromContext(ctx context.Context) *Claims {
 	v, _ := ctx.Value(claimsContextKey).(*Claims)
 	return v
@@ -58,6 +70,12 @@ func ClaimsFromContext(ctx context.Context) *Claims {
 
 // RequireRole returns a middleware that further restricts access to users
 // that hold the given role (or "admin").
+// Summary: RequireRole functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func RequireRole(role string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		claims := ClaimsFromContext(r.Context())
@@ -106,4 +124,11 @@ func jsonString(s string) string {
 	return `"` + strings.ReplaceAll(strings.ReplaceAll(s, `\`, `\\`), `"`, `\"`) + `"`
 }
 
+// ClaimsContextKeyForTest provides functionality for ClaimsContextKeyForTest.
+// Summary: ClaimsContextKeyForTest functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 const ClaimsContextKeyForTest = claimsContextKey

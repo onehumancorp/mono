@@ -29,6 +29,12 @@ var rolePermissions = map[string][]string{
 }
 
 // User represents a human user account.
+// Summary: User functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type User struct {
 	ID           string    `json:"id"`
 	Username     string    `json:"username"`
@@ -42,6 +48,12 @@ type User struct {
 }
 
 // UserPublic is a safe subset of User with no sensitive fields.
+// Summary: UserPublic functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type UserPublic struct {
 	ID          string    `json:"id"`
 	Username    string    `json:"username"`
@@ -54,6 +66,12 @@ type UserPublic struct {
 }
 
 // PublicView returns a UserPublic with no sensitive fields.
+// Summary: PublicView functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (u *User) PublicView() UserPublic {
 	return UserPublic{
 		ID:          u.ID,
@@ -68,6 +86,12 @@ func (u *User) PublicView() UserPublic {
 }
 
 // Role represents a named permission group.
+// Summary: Role functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Role struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
@@ -77,6 +101,12 @@ type Role struct {
 
 // Store is an in-memory user/role store that can be backed by Redis/DB in future.
 // All exported methods are goroutine-safe.
+// Summary: Store functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Store struct {
 	mu      sync.RWMutex
 	users   map[string]*User
@@ -92,6 +122,12 @@ type Store struct {
 // NewStore creates a Store seeded with default roles and an admin user.
 // Admin credentials are read from ADMIN_USERNAME / ADMIN_PASSWORD /
 // ADMIN_EMAIL environment variables (defaults: admin / admin / admin@localhost).
+// Summary: NewStore functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func NewStore() *Store {
 	s := &Store{
 		users:   make(map[string]*User),
@@ -152,6 +188,12 @@ func NewStore() *Store {
 }
 
 // CreateUser creates a new user with the given credentials and roles.
+// Summary: CreateUser functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Store) CreateUser(username, email, password string, roles []string) (*User, error) {
 	if username == "" {
 		return nil, errors.New("username is required")
@@ -192,6 +234,12 @@ func (s *Store) CreateUser(username, email, password string, roles []string) (*U
 }
 
 // Authenticate validates username+password and returns the matching user.
+// Summary: Authenticate functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Store) Authenticate(username, password string) (*User, error) {
 	s.mu.RLock()
 	u, ok := s.byName[username]
@@ -209,6 +257,12 @@ func (s *Store) Authenticate(username, password string) (*User, error) {
 }
 
 // GetUser returns a user by ID.
+// Summary: GetUser functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Store) GetUser(id string) (*User, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -217,6 +271,12 @@ func (s *Store) GetUser(id string) (*User, bool) {
 }
 
 // ListUsers returns all users.
+// Summary: ListUsers functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Store) ListUsers() []*User {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -228,6 +288,12 @@ func (s *Store) ListUsers() []*User {
 }
 
 // UpdateUser mutates mutable fields on the user identified by id.
+// Summary: UpdateUser functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Store) UpdateUser(id string, emailPtr *string, roles []string, activePtr *bool) (*User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -255,6 +321,12 @@ func (s *Store) UpdateUser(id string, emailPtr *string, roles []string, activePt
 }
 
 // DeleteUser removes a user by ID.
+// Summary: DeleteUser functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Store) DeleteUser(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -272,6 +344,12 @@ func (s *Store) DeleteUser(id string) error {
 }
 
 // ListRoles returns all roles.
+// Summary: ListRoles functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Store) ListRoles() []*Role {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -283,6 +361,12 @@ func (s *Store) ListRoles() []*Role {
 }
 
 // CreateRole adds a new named role with the given permissions.
+// Summary: CreateRole functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Store) CreateRole(name string, permissions []string) (*Role, error) {
 	if name == "" {
 		return nil, errors.New("role name is required")
@@ -303,6 +387,12 @@ func (s *Store) CreateRole(name string, permissions []string) (*Role, error) {
 }
 
 // RevokeToken records a JTI as revoked until its associated expiry.
+// Summary: RevokeToken functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Store) RevokeToken(jti string, exp time.Time) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -317,6 +407,12 @@ func (s *Store) RevokeToken(jti string, exp time.Time) {
 }
 
 // IsRevoked reports whether a JTI has been revoked.
+// Summary: IsRevoked functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Store) IsRevoked(jti string) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -325,13 +421,31 @@ func (s *Store) IsRevoked(jti string) bool {
 }
 
 // Secret returns the HS256 signing secret.
+// Summary: Secret functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Store) Secret() []byte { return s.secret }
 
 // OIDCCfg returns the OIDC configuration.
+// Summary: OIDCCfg functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Store) OIDCCfg() OIDCConfig { return s.oidcCfg }
 
 // GetOrCreateOIDCUser returns an existing user that matches the OIDC subject,
 // or creates a new viewer-role user from the OIDC claims.
+// Summary: GetOrCreateOIDCUser functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Store) GetOrCreateOIDCUser(sub, email, preferredUsername string) *User {
 	s.mu.Lock()
 	defer s.mu.Unlock()

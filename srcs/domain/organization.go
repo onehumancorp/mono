@@ -3,6 +3,12 @@ package domain
 import "time"
 
 // Role represents a designated job title or operational function within the AI workforce.
+// Summary: Role functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Role string
 
 const (
@@ -33,6 +39,12 @@ const (
 // Member defines an individual contributor within the organisation.
 //
 // Constraints: An agent member must have isHuman set to false. The CEO must be a human.
+// Summary: Member functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Member struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
@@ -42,6 +54,12 @@ type Member struct {
 }
 
 // RoleProfile stores the playbook, prompt, and capabilities that instruct an AI on how to perform a Role.
+// Summary: RoleProfile functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type RoleProfile struct {
 	Role          Role     `json:"role"`
 	BasePrompt    string   `json:"basePrompt"`
@@ -50,6 +68,12 @@ type RoleProfile struct {
 }
 
 // Organization aggregates the hierarchy, workforce details, and role playbooks for a domain.
+// Summary: Organization functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Organization struct {
 	ID           string        `json:"id"`
 	Name         string        `json:"name"`
@@ -69,6 +93,11 @@ type Organization struct {
 //   - now: time.Time; The organization's creation timestamp.
 //
 // Returns: A fully populated software company Organization ready for the orchestration Hub.
+// Summary: NewSoftwareCompany functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	directorID := id + "-director-eng"
@@ -102,6 +131,11 @@ func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 //   - id: string; The unique identifier of the member.
 //
 // Returns: The Member and a boolean indicating if the member was found.
+// Summary: MemberByID functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (o Organization) MemberByID(id string) (Member, bool) {
 	for _, member := range o.Members {
 		if member.ID == id {
@@ -118,6 +152,11 @@ func (o Organization) MemberByID(id string) (Member, bool) {
 //   - managerID: string; The unique identifier of the manager.
 //
 // Returns: A slice of Member objects representing the direct reports.
+// Summary: MembersByManager functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (o Organization) MembersByManager(managerID string) []Member {
 	var members []Member
 	for _, member := range o.Members {
@@ -135,6 +174,11 @@ func (o Organization) MembersByManager(managerID string) []Member {
 //   - role: Role; The role archetype to lookup.
 //
 // Returns: The RoleProfile and a boolean indicating if the playbook exists.
+// Summary: RoleProfile functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (o Organization) RoleProfile(role Role) (RoleProfile, bool) {
 	for _, profile := range o.RoleProfiles {
 		if profile.Role == role {
@@ -271,6 +315,11 @@ func defaultSoftwareCompanyRoleProfiles() []RoleProfile {
 //   - now: time.Time; The organization's creation timestamp.
 //
 // Returns: A fully populated marketing agency Organization.
+// Summary: NewDigitalMarketingAgency functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func NewDigitalMarketingAgency(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	marketingDirectorID := id + "-director-mkt"
@@ -359,6 +408,11 @@ func defaultDigitalMarketingRoleProfiles() []RoleProfile {
 //   - now: time.Time; The organization's creation timestamp.
 //
 // Returns: A fully populated accounting firm Organization.
+// Summary: NewAccountingFirm functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func NewAccountingFirm(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	cfoID := id + "-cfo"

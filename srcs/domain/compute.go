@@ -6,6 +6,12 @@ import (
 )
 
 // ComputeProfile defines the hardware requirements for an agent role.
+// Summary: ComputeProfile functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type ComputeProfile struct {
 	RoleID       string `json:"role_id"`
 	MinVRAM      int    `json:"min_vram_gb"`
@@ -14,16 +20,34 @@ type ComputeProfile struct {
 }
 
 // AffinityScoreResult holds the result of the affinity scoring engine.
+// Summary: AffinityScoreResult functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type AffinityScoreResult struct {
 	Score  int
 	Reason string
 }
 
 // AffinityEngine calculates hardware placement scores.
+// Summary: AffinityEngine functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type AffinityEngine struct{}
 
 // CalculateScore determines the placement score and hardware requirements based on the agent's profile and task details.
 // This implements UT-01 from the test plan.
+// Summary: CalculateScore functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (ae *AffinityEngine) CalculateScore(profile ComputeProfile, isVIP bool, localWeightsCached bool) AffinityScoreResult {
 	score := 0
 	var reasons []string
@@ -63,10 +87,22 @@ func (ae *AffinityEngine) CalculateScore(profile ComputeProfile, isVIP bool, loc
 }
 
 // QuotaManager enforces hardware budget limits.
+// Summary: QuotaManager functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type QuotaManager struct{}
 
 // CheckQuota validates if the requested VRAM fits within the available quota limit.
 // This implements UT-02 from the test plan.
+// Summary: CheckQuota functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (qm *QuotaManager) CheckQuota(profile ComputeProfile, availableVRAM int) error {
 	if profile.MinVRAM > availableVRAM {
 		return errors.New("quota exceeded: min_vram_gb exceeds available VRAM")

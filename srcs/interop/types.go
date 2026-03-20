@@ -3,6 +3,12 @@ package interop
 import "context"
 
 // State represents shared agent state.
+// Summary: State functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type State struct {
 	ID    string
 	Data  map[string]interface{}
@@ -10,6 +16,12 @@ type State struct {
 }
 
 // UniversalAdapter defines the interface for interacting with different agent frameworks.
+// Summary: UniversalAdapter functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type UniversalAdapter interface {
 	// SyncState synchronizes the agent's local state with the central shared state.
 	SyncState(ctx context.Context, state *State) error

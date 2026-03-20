@@ -8,11 +8,23 @@ import (
 )
 
 // Handlers bundles auth + user-management HTTP handlers around a Store.
+// Summary: Handlers functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Handlers struct {
 	store *Store
 }
 
 // NewHandlers creates an HTTP handler bundle backed by the given store.
+// Summary: NewHandlers functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func NewHandlers(store *Store) *Handlers {
 	return &Handlers{store: store}
 }
@@ -33,6 +45,12 @@ type loginResponse struct {
 // HandleLogin validates credentials and returns a signed JWT.
 //
 //	POST /api/auth/login  {"username":"…","password":"…"}
+// Summary: HandleLogin functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Handlers) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		jsonError(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -71,6 +89,12 @@ func (h *Handlers) HandleLogin(w http.ResponseWriter, r *http.Request) {
 // HandleLogout revokes the caller's token.
 //
 //	POST /api/auth/logout
+// Summary: HandleLogout functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Handlers) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		jsonError(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -86,6 +110,12 @@ func (h *Handlers) HandleLogout(w http.ResponseWriter, r *http.Request) {
 // HandleMe returns the currently authenticated user.
 //
 //	GET /api/auth/me
+// Summary: HandleMe functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Handlers) HandleMe(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		jsonError(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -130,6 +160,12 @@ type updateUserRequest struct {
 //
 //	GET  /api/users   → list all users (admin only)
 //	POST /api/users   → create user   (admin only)
+// Summary: HandleUsers functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Handlers) HandleUsers(w http.ResponseWriter, r *http.Request) {
 	claims := ClaimsFromContext(r.Context())
 	if claims == nil || !claims.HasRole(RoleAdmin) {
@@ -172,6 +208,12 @@ func (h *Handlers) HandleUsers(w http.ResponseWriter, r *http.Request) {
 //	GET    /api/users/{id}
 //	PUT    /api/users/{id}
 //	DELETE /api/users/{id}
+// Summary: HandleUser functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Handlers) HandleUser(w http.ResponseWriter, r *http.Request) {
 	claims := ClaimsFromContext(r.Context())
 	if claims == nil {
@@ -247,6 +289,12 @@ type createRoleRequest struct {
 //
 //	GET  /api/roles   → list roles (authenticated)
 //	POST /api/roles   → create role (admin only)
+// Summary: HandleRoles functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Handlers) HandleRoles(w http.ResponseWriter, r *http.Request) {
 	claims := ClaimsFromContext(r.Context())
 	if claims == nil {

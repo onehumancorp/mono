@@ -10,11 +10,25 @@ import (
 	"strings"
 )
 
+// Server provides functionality for Server.
+// Summary: Server functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Server struct {
 	staticDir string
 	proxy     *httputil.ReverseProxy
 }
 
+// New provides functionality for New.
+// Summary: New functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func New() (*Server, error) {
 	backendURL := os.Getenv("BACKEND_URL")
 	if backendURL == "" {
@@ -37,6 +51,13 @@ func New() (*Server, error) {
 	}, nil
 }
 
+// Handler provides functionality for Handler.
+// Summary: Handler functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {

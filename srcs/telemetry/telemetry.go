@@ -33,6 +33,9 @@ var (
 // Errors: Fails if the Prometheus exporter cannot be created or registered.
 //
 // Side Effects: Modifies global OpenTelemetry state and registers metrics with the default Prometheus registerer.
+// Summary: InitTelemetry functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
 func InitTelemetry() (func(), error) {
 	exporter, err := otelprom.New(otelprom.WithRegisterer(prometheus.DefaultRegisterer))
 	if err != nil {
@@ -105,6 +108,10 @@ func InitTelemetry() (func(), error) {
 // Returns: An http.Handler that wraps the provided handler with latency and request counting metrics.
 //
 // Side Effects: Records HTTP request duration and count. May log request details based on the Verbosity level.
+// Summary: Middleware functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -130,6 +137,12 @@ func Middleware(next http.Handler) http.Handler {
 // Verbosity controls the detail level of standard output logging for the telemetry module.
 //
 // Constraints: Defaults to 1. Set to 2 or higher for verbose request logging.
+// Summary: Verbosity functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 var Verbosity = 1 // Default level
 
 // MetricsHandler provides an HTTP handler that exposes the collected Prometheus metrics.
@@ -137,6 +150,10 @@ var Verbosity = 1 // Default level
 // Returns: An http.Handler that serves the /metrics endpoint.
 //
 // Side Effects: None. Read-only exposure of registered Prometheus metrics.
+// Summary: MetricsHandler functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
 func MetricsHandler() http.Handler {
 	return promhttp.Handler()
 }
@@ -154,6 +171,10 @@ func MetricsHandler() http.Handler {
 // Returns: Nothing.
 //
 // Side Effects: Updates the ohc_token_usage_total Prometheus metric.
+// Summary: RecordTokenUsage functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
 func RecordTokenUsage(ctx context.Context, agentID, role, model, tokenType string, count int64) {
 	if tokenUsageCounter == nil {
 		return
@@ -177,6 +198,10 @@ func RecordTokenUsage(ctx context.Context, agentID, role, model, tokenType strin
 // Returns: Nothing.
 //
 // Side Effects: Updates the ohc_agent_api_calls_total Prometheus metric.
+// Summary: RecordAgentApiCall functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
 func RecordAgentApiCall(ctx context.Context, agentID, role, api string) {
 	if agentApiCallsCounter == nil {
 		return
@@ -197,6 +222,10 @@ func RecordAgentApiCall(ctx context.Context, agentID, role, api string) {
 // Returns: Nothing.
 //
 // Side Effects: Updates the ohc_human_interactions_total Prometheus metric.
+// Summary: RecordHumanInteraction functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
 func RecordHumanInteraction(ctx context.Context, interactionType string) {
 	if humanInteractionsCounter == nil {
 		return
@@ -215,6 +244,10 @@ func RecordHumanInteraction(ctx context.Context, interactionType string) {
 // Returns: Nothing.
 //
 // Side Effects: Updates the ohc_meeting_events_total Prometheus metric.
+// Summary: RecordMeetingEvent functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
 func RecordMeetingEvent(ctx context.Context, eventType string) {
 	if meetingEventsCounter == nil {
 		return

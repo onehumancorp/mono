@@ -21,6 +21,13 @@ export type {
 
 /**
  * Defines the playbook, prompt, and capabilities for a specific role within the AI workforce.
+
+ * Summary: Provides RoleProfile functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type RoleProfile = {
   role: string;
@@ -31,6 +38,13 @@ export type RoleProfile = {
 
 /**
  * Represents an individual contributor (human or AI agent) within the organisation.
+
+ * Summary: Provides OrganizationMember functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type OrganizationMember = {
   id: string;
@@ -42,6 +56,13 @@ export type OrganizationMember = {
 
 /**
  * Aggregates the hierarchy, workforce details, and role playbooks for a domain.
+
+ * Summary: Provides Organization functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type Organization = {
   id: string;
@@ -54,6 +75,13 @@ export type Organization = {
 
 /**
  * Encapsulates a discrete event, command, or context update passed between agents or rooms.
+
+ * Summary: Provides MeetingMessage functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type MeetingMessage = {
   id: string;
@@ -67,6 +95,13 @@ export type MeetingMessage = {
 
 /**
  * Maintains a persistent, sequential transcript of inter-agent collaboration.
+
+ * Summary: Provides MeetingRoom functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type MeetingRoom = {
   id: string;
@@ -77,6 +112,13 @@ export type MeetingRoom = {
 
 /**
  * Provides aggregated cost and token usage for an individual agent.
+
+ * Summary: Provides AgentCost functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type AgentCost = {
   agentID: string;
@@ -87,6 +129,13 @@ export type AgentCost = {
 
 /**
  * Aggregates total cost and token usage for a specific organisation.
+
+ * Summary: Provides CostSummary functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type CostSummary = {
   organizationID: string;
@@ -98,6 +147,13 @@ export type CostSummary = {
 
 /**
  * Represents an aggregated count of agents in a specific operational phase.
+
+ * Summary: Provides StatusBucket functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type StatusBucket = {
   status: string;
@@ -106,6 +162,13 @@ export type StatusBucket = {
 
 /**
  * Represents the current runtime state of an active, instantiated worker within the AI organisation.
+
+ * Summary: Provides AgentRuntime functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type AgentRuntime = {
   id: string;
@@ -118,6 +181,13 @@ export type AgentRuntime = {
 /**
  * A point-in-time snapshot of the entire organisation's operational state,
  * including members, meetings, costs, and active agents.
+
+ * Summary: Provides DashboardSnapshot functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type DashboardSnapshot = {
   organization: Organization;
@@ -130,6 +200,13 @@ export type DashboardSnapshot = {
 
 /**
  * Describes a supported organisational domain template.
+
+ * Summary: Provides DomainInfo functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type DomainInfo = {
   id: string;
@@ -139,6 +216,13 @@ export type DomainInfo = {
 
 /**
  * Represents a registered tool in the MCP gateway.
+
+ * Summary: Provides MCPTool functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type MCPTool = {
   id: string;
@@ -152,11 +236,25 @@ export type MCPTool = {
 
 /**
  * Represents the lifecycle state of a guardian-gate request.
+
+ * Summary: Provides ApprovalStatus functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 /**
  * Created by the Guardian Agent when a high-risk action requires explicit human sign-off.
+
+ * Summary: Provides ApprovalRequest functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type ApprovalRequest = {
   id: string;
@@ -175,6 +273,13 @@ export type ApprovalRequest = {
 
 /**
  * Carries the structured context an agent sends to a human manager when escalating a task.
+
+ * Summary: Provides HandoffPackage functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type HandoffPackage = {
   id: string;
@@ -191,6 +296,13 @@ export type HandoffPackage = {
 
 /**
  * Represents the SPIFFE SVID certificate issued to an agent workload.
+
+ * Summary: Provides AgentIdentity functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type AgentIdentity = {
   agentId: string;
@@ -204,6 +316,13 @@ export type AgentIdentity = {
 
 /**
  * Pairs a role name with its override base prompt.
+
+ * Summary: Provides SkillPackRole functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type SkillPackRole = {
   role: string;
@@ -212,6 +331,13 @@ export type SkillPackRole = {
 
 /**
  * An importable module that extends or overrides agent capabilities.
+
+ * Summary: Provides SkillPack functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type SkillPack = {
   id: string;
@@ -228,6 +354,13 @@ export type SkillPack = {
 
 /**
  * A point-in-time metadata record of an organization's state.
+
+ * Summary: Provides OrgSnapshot functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type OrgSnapshot = {
   id: string;
@@ -245,6 +378,13 @@ export type OrgSnapshot = {
 
 /**
  * Describes a community-published asset.
+
+ * Summary: Provides MarketplaceItem functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type MarketplaceItem = {
   id: string;
@@ -261,6 +401,13 @@ export type MarketplaceItem = {
 
 /**
  * Surfaces operational health metrics.
+
+ * Summary: Provides AnalyticsSummary functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type AnalyticsSummary = {
   humanAgentRatio: number;
@@ -275,14 +422,35 @@ export type AnalyticsSummary = {
 
 // ── External Integrations ─────────────────────────────────────────────────────
 
-/** Groups integrations by their function. */
+/** Groups integrations by their function.
+ * Summary: Provides IntegrationCategory functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export type IntegrationCategory = "chat" | "git" | "issues";
 
-/** Reflects whether an integration is reachable. */
+/** Reflects whether an integration is reachable.
+ * Summary: Provides IntegrationStatus functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export type IntegrationStatus = "connected" | "disconnected" | "error";
 
 /**
  * A configured external service connection.
+
+ * Summary: Provides Integration functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type Integration = {
   id: string;
@@ -301,6 +469,13 @@ export type Integration = {
 
 /**
  * Represents a message dispatched through a chat service.
+
+ * Summary: Provides ChatMessage functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type ChatMessage = {
   id: string;
@@ -312,11 +487,25 @@ export type ChatMessage = {
   sentAt: string;
 };
 
-/** Tracks the lifecycle of a PR/MR. */
+/** Tracks the lifecycle of a PR/MR.
+ * Summary: Provides PullRequestStatus functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export type PullRequestStatus = "open" | "merged" | "closed";
 
 /**
  * Represents a PR/MR opened on a git hosting platform.
+
+ * Summary: Provides PullRequest functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type PullRequest = {
   id: string;
@@ -332,14 +521,35 @@ export type PullRequest = {
   createdAt: string;
 };
 
-/** Tracks the lifecycle of an issue/ticket. */
+/** Tracks the lifecycle of an issue/ticket.
+ * Summary: Provides IssueStatus functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export type IssueStatus = "open" | "in_progress" | "done" | "closed";
 
-/** Indicates ticket urgency. */
+/** Indicates ticket urgency.
+ * Summary: Provides IssuePriority functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export type IssuePriority = "low" | "medium" | "high" | "critical";
 
 /**
  * Represents a ticket created in an external issue tracker.
+
+ * Summary: Provides Issue functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
  */
 export type Issue = {
   id: string;
@@ -358,6 +568,14 @@ export type Issue = {
 
 // ── Auth / User Management ────────────────────────────────────────────────────
 
+/**
+ * Summary: Provides UserPublic functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export type UserPublic = {
   id: string;
   username: string;
@@ -367,18 +585,42 @@ export type UserPublic = {
   createdAt: string;
 };
 
+/**
+ * Summary: Provides Role functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export type Role = {
   id: string;
   name: string;
   permissions: string[];
 };
 
+/**
+ * Summary: Provides LoginResponse functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export type LoginResponse = {
   token: string;
   user: UserPublic;
   expiresAt: string;
 };
 
+/**
+ * Summary: Provides Settings functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export type Settings = {
   minimaxApiKey?: string;
 };

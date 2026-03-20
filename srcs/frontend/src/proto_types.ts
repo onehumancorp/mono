@@ -4,6 +4,14 @@
 
 // ── ohc.common ──
 
+/**
+ * Summary: Provides CommonRole functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export type CommonRole =
   | "CEO"
   | "DESIGNER"
@@ -16,6 +24,14 @@ export type CommonRole =
   | "SOFTWARE_ENGINEER"
 ;
 
+/**
+ * Summary: Provides CommonAgentStatus functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export type CommonAgentStatus =
   | "ACTIVE"
   | "BLOCKED"
@@ -26,6 +42,14 @@ export type CommonAgentStatus =
 
 // ── ohc.agent ──
 
+/**
+ * Summary: Provides AgentAgent functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface AgentAgent {
   id?: string;
   role?: CommonRole;
@@ -34,6 +58,14 @@ export interface AgentAgent {
   organizationId?: string;
 }
 
+/**
+ * Summary: Provides AgentAgentMessage functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface AgentAgentMessage {
   id?: string;
   fromAgentId?: string;
@@ -46,6 +78,14 @@ export interface AgentAgentMessage {
 
 // ── ohc.organization ──
 
+/**
+ * Summary: Provides OrganizationRoleProfile functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrganizationRoleProfile {
   role?: CommonRole;
   basePrompt?: string;
@@ -53,6 +93,14 @@ export interface OrganizationRoleProfile {
   contextInputs?: string[];
 }
 
+/**
+ * Summary: Provides OrganizationOrganization functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrganizationOrganization {
   id?: string;
   name?: string;
@@ -63,6 +111,14 @@ export interface OrganizationOrganization {
   roleProfiles?: OrganizationRoleProfile[];
 }
 
+/**
+ * Summary: Provides OrganizationTeamMember functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrganizationTeamMember {
   id?: string;
   organizationId?: string;
@@ -72,6 +128,14 @@ export interface OrganizationTeamMember {
   isHuman?: boolean;
 }
 
+/**
+ * Summary: Provides OrganizationOrganizationChart functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrganizationOrganizationChart {
   organization?: OrganizationOrganization;
   members?: OrganizationTeamMember[];
@@ -79,6 +143,14 @@ export interface OrganizationOrganizationChart {
 
 // ── ohc.billing ──
 
+/**
+ * Summary: Provides BillingTokenUsage functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface BillingTokenUsage {
   agentId?: string;
   organizationId?: string;
@@ -89,6 +161,14 @@ export interface BillingTokenUsage {
   occurredAtUnix?: number;
 }
 
+/**
+ * Summary: Provides BillingCostSummary functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface BillingCostSummary {
   organizationId?: string;
   totalCostUsd?: number;
@@ -97,12 +177,28 @@ export interface BillingCostSummary {
   agents?: BillingAgentCostSummary[];
 }
 
+/**
+ * Summary: Provides BillingAgentCostSummary functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface BillingAgentCostSummary {
   agentId?: string;
   costUsd?: number;
   tokenUsed?: number;
 }
 
+/**
+ * Summary: Provides BillingBudgetAlert functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface BillingBudgetAlert {
   id?: string;
   organizationId?: string;
@@ -113,6 +209,14 @@ export interface BillingBudgetAlert {
 
 // ── ohc.orchestration ──
 
+/**
+ * Summary: Provides OrchestrationAgent functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrchestrationAgent {
   id?: string;
   name?: string;
@@ -121,6 +225,14 @@ export interface OrchestrationAgent {
   status?: string;
 }
 
+/**
+ * Summary: Provides OrchestrationMessage functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrchestrationMessage {
   id?: string;
   fromAgent?: string;
@@ -131,6 +243,14 @@ export interface OrchestrationMessage {
   occurredAtUnix?: number;
 }
 
+/**
+ * Summary: Provides OrchestrationMeetingRoom functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrchestrationMeetingRoom {
   id?: string;
   agenda?: string;
@@ -138,53 +258,141 @@ export interface OrchestrationMeetingRoom {
   transcript?: OrchestrationMessage[];
 }
 
+/**
+ * Summary: Provides OrchestrationRegisterAgentRequest functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrchestrationRegisterAgentRequest {
   agent?: OrchestrationAgent;
 }
 
+/**
+ * Summary: Provides OrchestrationRegisterAgentResponse functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrchestrationRegisterAgentResponse {
   success?: boolean;
 }
 
+/**
+ * Summary: Provides OrchestrationOpenMeetingRequest functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrchestrationOpenMeetingRequest {
   meetingId?: string;
   agenda?: string;
   participants?: string[];
 }
 
+/**
+ * Summary: Provides OrchestrationPublishMessageRequest functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrchestrationPublishMessageRequest {
   message?: OrchestrationMessage;
 }
 
+/**
+ * Summary: Provides OrchestrationPublishMessageResponse functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrchestrationPublishMessageResponse {
   success?: boolean;
 }
 
+/**
+ * Summary: Provides OrchestrationStreamMessagesRequest functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrchestrationStreamMessagesRequest {
   agentId?: string;
 }
 
+/**
+ * Summary: Provides OrchestrationReasonRequest functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrchestrationReasonRequest {
   prompt?: string;
 }
 
+/**
+ * Summary: Provides OrchestrationReasonResponse functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface OrchestrationReasonResponse {
   content?: string;
 }
 
 // ── ohc.api.v1 ──
 
+/**
+ * Summary: Provides ApiMeetingRoom functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiMeetingRoom {
   id?: string;
   participants?: string[];
   transcript?: AgentAgentMessage[];
 }
 
+/**
+ * Summary: Provides ApiStatusCount functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiStatusCount {
   status?: string;
   count?: number;
 }
 
+/**
+ * Summary: Provides ApiDashboardSnapshot functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiDashboardSnapshot {
   organization?: OrganizationOrganization;
   agents?: AgentAgent[];
@@ -194,26 +402,74 @@ export interface ApiDashboardSnapshot {
   updatedAt?: string;
 }
 
+/**
+ * Summary: Provides ApiGetDashboardRequest functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiGetDashboardRequest {
   organizationId?: string;
 }
 
+/**
+ * Summary: Provides ApiPostMessageRequest functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiPostMessageRequest {
   message?: AgentAgentMessage;
 }
 
+/**
+ * Summary: Provides ApiPostMessageResponse functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiPostMessageResponse {
   snapshot?: ApiDashboardSnapshot;
 }
 
+/**
+ * Summary: Provides ApiSeedDashboardRequest functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiSeedDashboardRequest {
   scenario?: string;
 }
 
+/**
+ * Summary: Provides ApiSeedDashboardResponse functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiSeedDashboardResponse {
   snapshot?: ApiDashboardSnapshot;
 }
 
+/**
+ * Summary: Provides ApiTrustAgreement functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiTrustAgreement {
   id?: string;
   partnerOrg?: string;
@@ -223,12 +479,28 @@ export interface ApiTrustAgreement {
   createdAtUnix?: number;
 }
 
+/**
+ * Summary: Provides ApiB2BHandshakeRequest functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiB2BHandshakeRequest {
   partnerOrg?: string;
   partnerJwksUrl?: string;
   allowedRoles?: string[];
 }
 
+/**
+ * Summary: Provides ApiIncident functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiIncident {
   id?: string;
   severity?: string;
@@ -239,12 +511,28 @@ export interface ApiIncident {
   createdAtUnix?: number;
 }
 
+/**
+ * Summary: Provides ApiIncidentStatusRequest functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiIncidentStatusRequest {
   incidentId?: string;
   status?: string;
   resolutionPlanId?: string;
 }
 
+/**
+ * Summary: Provides ApiComputeProfile functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiComputeProfile {
   roleId?: string;
   minVramGb?: number;
@@ -252,6 +540,14 @@ export interface ApiComputeProfile {
   schedulingPriority?: number;
 }
 
+/**
+ * Summary: Provides ApiClusterStatus functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiClusterStatus {
   region?: string;
   status?: string;
@@ -259,6 +555,14 @@ export interface ApiClusterStatus {
   availableNodes?: number;
 }
 
+/**
+ * Summary: Provides ApiPipeline functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiPipeline {
   id?: string;
   name?: string;
@@ -270,6 +574,14 @@ export interface ApiPipeline {
   updatedAtUnix?: number;
 }
 
+/**
+ * Summary: Provides ApiPipelinePromoteRequest functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface ApiPipelinePromoteRequest {
   pipelineId?: string;
   approvedBy?: string;
@@ -277,12 +589,28 @@ export interface ApiPipelinePromoteRequest {
 
 // ── ohc.skills ──
 
+/**
+ * Summary: Provides SkillsPhase functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface SkillsPhase {
   name?: string;
   description?: string;
   protocolDetails?: string;
 }
 
+/**
+ * Summary: Provides SkillsRoleBlueprint functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface SkillsRoleBlueprint {
   id?: string;
   name?: string;
@@ -293,11 +621,27 @@ export interface SkillsRoleBlueprint {
   constraints?: string[];
 }
 
+/**
+ * Summary: Provides SkillsSystemPromptBlueprint functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface SkillsSystemPromptBlueprint {
   coreDirective?: string;
   requiredContextVariables?: string[];
 }
 
+/**
+ * Summary: Provides SkillsTeamBlueprint functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface SkillsTeamBlueprint {
   id?: string;
   teamName?: string;
@@ -305,6 +649,14 @@ export interface SkillsTeamBlueprint {
   roles?: SkillsRoleBlueprint[];
 }
 
+/**
+ * Summary: Provides SkillsSkillSet functionality.
+ * Intent: Supports the system's core functionality.
+ * Params: See implementation
+ * Returns: See implementation
+ * Errors: Standard operational errors where applicable.
+ * Side Effects: May interact with external systems or mutate internal state.
+ */
 export interface SkillsSkillSet {
   id?: string;
   name?: string;

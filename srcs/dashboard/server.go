@@ -20,6 +20,12 @@ import (
 // Server encapsulates the HTTP handlers and state for the One Human Corp dashboard.
 //
 // Constraints: Must be instantiated with a valid domain.Organization, orchestration.Hub, and billing.Tracker.
+// Summary: Server functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Server struct {
 	mu                    sync.RWMutex
 	org                   domain.Organization
@@ -41,6 +47,13 @@ type Server struct {
 	agentProviderRegistry *agents.Registry
 }
 
+// Settings provides functionality for Settings.
+// Summary: Settings functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Settings struct {
 	MinimaxAPIKey string `json:"minimaxApiKey"`
 }
@@ -79,6 +92,12 @@ type fireRequest struct {
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 
 // ApprovalStatus represents the lifecycle state of a guardian-gate request.
+// Summary: ApprovalStatus functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type ApprovalStatus string
 
 const (
@@ -89,6 +108,12 @@ const (
 
 // ApprovalRequest is created by the Guardian Agent when a high-risk action
 // requires explicit human sign-off.
+// Summary: ApprovalRequest functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type ApprovalRequest struct {
 	ID               string         `json:"id"`
 	AgentID          string         `json:"agentId"`
@@ -120,6 +145,12 @@ type approvalDecideRequest struct {
 
 // HandoffPackage carries the structured context an agent sends to a human manager
 // when escalating a task it cannot complete autonomously.
+// Summary: HandoffPackage functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type HandoffPackage struct {
 	ID             string    `json:"id"`
 	FromAgentID    string    `json:"fromAgentId"`
@@ -142,6 +173,12 @@ type handoffCreateRequest struct {
 // ── Agent Identity (SPIFFE/SPIRE abstraction) ─────────────────────────────────
 
 // AgentIdentity represents the SPIFFE SVID certificate issued to an agent workload.
+// Summary: AgentIdentity functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type AgentIdentity struct {
 	AgentID     string    `json:"agentId"`
 	SVID        string    `json:"svid"`
@@ -153,12 +190,24 @@ type AgentIdentity struct {
 // ── Extensible Skill Import Framework ────────────────────────────────────────
 
 // SkillPackRole pairs a role name with its override base prompt.
+// Summary: SkillPackRole functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type SkillPackRole struct {
 	Role       string `json:"role"`
 	BasePrompt string `json:"basePrompt"`
 }
 
 // SkillPack is an importable module that extends or overrides agent capabilities.
+// Summary: SkillPack functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type SkillPack struct {
 	ID          string          `json:"id"`
 	Name        string          `json:"name"`
@@ -182,6 +231,12 @@ type skillImportRequest struct {
 // ── Org Snapshot & Recovery ───────────────────────────────────────────────────
 
 // OrgSnapshot is a point-in-time metadata record of an organization's state.
+// Summary: OrgSnapshot functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type OrgSnapshot struct {
 	ID           string    `json:"id"`
 	Label        string    `json:"label"`
@@ -205,6 +260,12 @@ type snapshotRestoreRequest struct {
 // ── Marketplace ───────────────────────────────────────────────────────────────
 
 // MarketplaceItem describes a community-published asset.
+// Summary: MarketplaceItem functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type MarketplaceItem struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
@@ -219,6 +280,12 @@ type MarketplaceItem struct {
 // ── Real-time Analytics ───────────────────────────────────────────────────────
 
 // AnalyticsSummary surfaces operational health metrics.
+// Summary: AnalyticsSummary functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type AnalyticsSummary struct {
 	HumanAgentRatio     float64 `json:"humanAgentRatio"`
 	TotalAgents         int     `json:"totalAgents"`
@@ -231,6 +298,12 @@ type AnalyticsSummary struct {
 }
 
 // MCPTool represents a registered tool in the MCP gateway.
+// Summary: MCPTool functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type MCPTool struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -240,6 +313,12 @@ type MCPTool struct {
 }
 
 // DomainInfo describes a supported organizational domain template.
+// Summary: DomainInfo functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type DomainInfo struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -290,6 +369,11 @@ var statusOrder = []orchestration.Status{
 //   - tracker: *billing.Tracker; The cost and token tracking engine.
 //
 // Returns: An http.Handler that serves the dashboard REST APIs and static React frontend.
+// Summary: NewServer functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker, authStore ...*auth.Store) http.Handler {
 	var store *auth.Store
 	if len(authStore) > 0 && authStore[0] != nil {
@@ -1055,6 +1139,12 @@ type issueAssignRequest struct {
 // ── B2B Collaboration ─────────────────────────────────────────────────────────
 
 // TrustAgreementStatus represents the lifecycle of a B2B trust agreement.
+// Summary: TrustAgreementStatus functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type TrustAgreementStatus string
 
 const (
@@ -1065,6 +1155,12 @@ const (
 
 // TrustAgreement is a federated trust relationship between two OHC organisations.
 // It enables cross-org agent collaboration using SPIFFE-federated JWTs.
+// Summary: TrustAgreement functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type TrustAgreement struct {
 	ID           string               `json:"id"`
 	PartnerOrg   string               `json:"partnerOrg"`
@@ -1083,6 +1179,12 @@ type b2bHandshakeRequest struct {
 // ── Autonomous SRE / Incident Management ─────────────────────────────────────
 
 // IncidentSeverity classifies the urgency of an operational incident.
+// Summary: IncidentSeverity functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type IncidentSeverity string
 
 const (
@@ -1092,6 +1194,12 @@ const (
 )
 
 // IncidentStatus reflects the investigation lifecycle state.
+// Summary: IncidentStatus functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type IncidentStatus string
 
 const (
@@ -1101,6 +1209,12 @@ const (
 )
 
 // Incident represents an operational event requiring SRE attention.
+// Summary: Incident functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Incident struct {
 	ID               string           `json:"id"`
 	Severity         IncidentSeverity `json:"severity"`
@@ -1128,6 +1242,12 @@ type incidentStatusRequest struct {
 // ── Compute Optimization / Hardware-Aware Scheduling ─────────────────────────
 
 // ComputeProfile defines the hardware requirements for a given agent role.
+// Summary: ComputeProfile functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type ComputeProfile struct {
 	RoleID             string    `json:"roleId"`
 	MinVRAMGB          int       `json:"minVramGb"`
@@ -1144,6 +1264,12 @@ type computeProfileRequest struct {
 }
 
 // ClusterStatus reflects the health of a remote Kubernetes cluster region.
+// Summary: ClusterStatus functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type ClusterStatus struct {
 	Region         string    `json:"region"`
 	Status         string    `json:"status"` // healthy, degraded, offline
@@ -1158,6 +1284,12 @@ type ClusterStatus struct {
 const defaultBudgetAlertNotifyPct = 0.8
 
 // BudgetAlert defines a spending threshold with notification behaviour.
+// Summary: BudgetAlert functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type BudgetAlert struct {
 	ID             string    `json:"id"`
 	OrganizationID string    `json:"organizationId"`
@@ -1176,6 +1308,12 @@ type budgetAlertRequest struct {
 // ── Automated SDLC / Pipelines ────────────────────────────────────────────────
 
 // PipelineStatus reflects the lifecycle of an autonomous CI/CD pipeline.
+// Summary: PipelineStatus functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type PipelineStatus string
 
 const (
@@ -1188,6 +1326,12 @@ const (
 )
 
 // Pipeline represents an autonomous implementation pipeline from spec to production.
+// Summary: Pipeline functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Pipeline struct {
 	ID          string         `json:"id"`
 	Name        string         `json:"name"`

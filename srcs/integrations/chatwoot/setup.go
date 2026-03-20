@@ -13,6 +13,12 @@ import (
 //
 // It retries up to maxAttempts times to accommodate Chatwoot's startup time.
 // The configured Client is ready to use after a successful Setup call.
+// Summary: Setup functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (c *Client) Setup() error {
 	email := os.Getenv("CHATWOOT_ADMIN_EMAIL")
 	if email == "" {
@@ -88,6 +94,12 @@ func (c *Client) ensureInbox(name string) (Inbox, error) {
 }
 
 // IsEnabled reports whether Chatwoot is configured in the environment.
+// Summary: IsEnabled functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func IsEnabled() bool {
 	return os.Getenv("CHATWOOT_URL") != "" || os.Getenv("CHATWOOT_ENABLED") == "true"
 }

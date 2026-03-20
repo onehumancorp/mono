@@ -13,6 +13,12 @@ import (
 // PipelineState represents the current phase of the SDLC.
 //
 // Constraints: Must be one of the predefined State constants.
+// Summary: PipelineState functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type PipelineState string
 
 const (
@@ -26,6 +32,12 @@ const (
 // Pipeline models the SDLC progression for a specific feature branch.
 //
 // Constraints: Requires a unique ID and an associated branch name.
+// Summary: Pipeline functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Pipeline struct {
 	ID        string
 	Branch    string
@@ -37,6 +49,12 @@ type Pipeline struct {
 // SpecApprovedEvent models the parsed content of an EventSpecApproved message.
 //
 // Constraints: The Branch field must not be empty.
+// Summary: SpecApprovedEvent functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type SpecApprovedEvent struct {
 	Branch  string `json:"branch"`
 	Details string `json:"details"`
@@ -45,6 +63,12 @@ type SpecApprovedEvent struct {
 // CIJob represents a mock CI build/test job triggered by the Hub.
 //
 // Constraints: Contains a predefined test command associated with a specific branch.
+// Summary: CIJob functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type CIJob struct {
 	Command string
 	Branch  string
@@ -53,6 +77,12 @@ type CIJob struct {
 // Orchestrator manages automated SDLC pipelines and interacts with the Hub.
 //
 // Constraints: Uses an internal read-write mutex to ensure thread-safe map and slice operations.
+// Summary: Orchestrator functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Orchestrator struct {
 	mu        sync.RWMutex
 	hub       *orchestration.Hub
@@ -68,6 +98,10 @@ type Orchestrator struct {
 // Returns: A new instance of Orchestrator initialized with empty pipelines and CI jobs.
 //
 // Side Effects: None.
+// Summary: NewOrchestrator functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
 func NewOrchestrator(hub *orchestration.Hub) *Orchestrator {
 	return &Orchestrator{
 		hub:       hub,
@@ -86,6 +120,9 @@ func NewOrchestrator(hub *orchestration.Hub) *Orchestrator {
 // Errors: Returns an error if the content is malformed or if the branch name is missing.
 //
 // Side Effects: None.
+// Summary: ParseSpecApproved functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
 func ParseSpecApproved(content string) (SpecApprovedEvent, error) {
 	// Simple mock parsing. Expecting "branch=feat-123,details=..."
 	parts := strings.Split(content, ",")
@@ -122,6 +159,9 @@ func ParseSpecApproved(content string) (SpecApprovedEvent, error) {
 // Errors: Fails if the message content format is invalid.
 //
 // Side Effects: Modifies the orchestrator's internal pipeline map and publishes a task to the Hub.
+// Summary: HandleSpecApproved functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
 func (o *Orchestrator) HandleSpecApproved(msg orchestration.Message) error {
 	event, err := ParseSpecApproved(msg.Content)
 	if err != nil {
@@ -164,6 +204,9 @@ func (o *Orchestrator) HandleSpecApproved(msg orchestration.Message) error {
 // Errors: Fails if the pipeline is untracked.
 //
 // Side Effects: Updates the pipeline state to StateTesting and appends a new job to the internal ciJobs slice.
+// Summary: HandlePRCreated functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
 func (o *Orchestrator) HandlePRCreated(msg orchestration.Message) error {
 	branch := msg.Content // Assuming content contains just the branch name for simplicity
 
@@ -197,6 +240,9 @@ func (o *Orchestrator) HandlePRCreated(msg orchestration.Message) error {
 // Errors: Fails if the pipeline cannot be found or if the message type is not EventTestsPassed or EventTestsFailed.
 //
 // Side Effects: Mutates pipeline state, publishes an ApprovalNeeded event on success, or a TestsFailed event on failure.
+// Summary: HandleTestResults functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
 func (o *Orchestrator) HandleTestResults(msg orchestration.Message) error {
 	// message Type should be EventTestsPassed or EventTestsFailed
 	// Content contains branch name
@@ -275,6 +321,9 @@ func (o *Orchestrator) HandleTestResults(msg orchestration.Message) error {
 // Errors: Fails if the branch is not currently tracked.
 //
 // Side Effects: Sets the pipeline state to StateRollback and publishes a task message.
+// Summary: RejectStaging functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
 func (o *Orchestrator) RejectStaging(branch string, reason string) error {
 	o.mu.Lock()
 	pipeline, exists := o.pipelines[branch]
@@ -307,6 +356,9 @@ func (o *Orchestrator) RejectStaging(branch string, reason string) error {
 // Errors: Fails if the pipeline does not exist or if it has not yet passed testing and staging.
 //
 // Side Effects: Sets the pipeline state to StateDeployed and publishes an EventPRMerged message to the Hub.
+// Summary: ApproveForProduction functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
 func (o *Orchestrator) ApproveForProduction(branch string) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
@@ -348,6 +400,9 @@ func (o *Orchestrator) ApproveForProduction(branch string) error {
 // Errors: Fails if no pipeline exists for the given branch.
 //
 // Side Effects: None. Executes a read-only lock.
+// Summary: GetPipelineState functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
 func (o *Orchestrator) GetPipelineState(branch string) (PipelineState, error) {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
@@ -364,6 +419,10 @@ func (o *Orchestrator) GetPipelineState(branch string) (PipelineState, error) {
 // Returns: A cloned slice of CIJob structures.
 //
 // Side Effects: None. Executes a read-only lock and allocates a new slice.
+// Summary: GetCIJobs functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
 func (o *Orchestrator) GetCIJobs() []CIJob {
 	o.mu.RLock()
 	defer o.mu.RUnlock()

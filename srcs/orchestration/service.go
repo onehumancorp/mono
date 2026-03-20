@@ -20,6 +20,12 @@ import (
 )
 
 // Status indicates the current operational phase of an AI agent within the workforce.
+// Summary: Status functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Status string
 
 const (
@@ -47,6 +53,12 @@ const (
 )
 
 // Agent represents an active, instantiated worker within the AI organisation.
+// Summary: Agent functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Agent struct {
 	ID             string `json:"id"`
 	Name           string `json:"name"`
@@ -60,6 +72,12 @@ type Agent struct {
 }
 
 // Message encapsulates a discrete event, command, or context update passed between agents or rooms.
+// Summary: Message functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Message struct {
 	ID         string    `json:"id"`
 	FromAgent  string    `json:"fromAgent"`
@@ -71,6 +89,12 @@ type Message struct {
 }
 
 // MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
+// Summary: MeetingRoom functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type MeetingRoom struct {
 	ID           string    `json:"id"`
 	Agenda       string    `json:"agenda,omitempty"`
@@ -81,6 +105,12 @@ type MeetingRoom struct {
 // Hub acts as the thread-safe central message broker and runtime state manager for the AI workforce.
 //
 // Constraints: Must be accessed via its exported methods to preserve data race safety.
+// Summary: Hub functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Hub struct {
 	mu            sync.RWMutex
 	agents        map[string]Agent
@@ -93,6 +123,11 @@ type Hub struct {
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
 //
 // Returns: An instantiated *Hub ready to register agents and route events.
+// Summary: NewHub functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func NewHub() *Hub {
 	return &Hub{
 		agents:   map[string]Agent{},
@@ -106,6 +141,12 @@ func NewHub() *Hub {
 //
 // Parameters:
 //   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
+// Summary: RegisterAgent functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Hub) RegisterAgent(agent Agent) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -117,12 +158,26 @@ func (h *Hub) RegisterAgent(agent Agent) {
 	h.agents[agent.ID] = agent
 }
 
+// SetMinimaxAPIKey provides functionality for SetMinimaxAPIKey.
+// Summary: SetMinimaxAPIKey functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Hub) SetMinimaxAPIKey(key string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.minimaxAPIKey = key
 }
 
+// MinimaxAPIKey provides functionality for MinimaxAPIKey.
+// Summary: MinimaxAPIKey functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Hub) MinimaxAPIKey() string {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -135,6 +190,11 @@ func (h *Hub) MinimaxAPIKey() string {
 //   - id: string; The unique identifier of the agent.
 //
 // Returns: The matching Agent object and a boolean indicating if it exists in the registry.
+// Summary: Agent functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Hub) Agent(id string) (Agent, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -150,6 +210,11 @@ func (h *Hub) Agent(id string) (Agent, bool) {
 //   - participants: []string; A list of agent IDs to be enrolled in the discussion.
 //
 // Returns: The instantiated MeetingRoom.
+// Summary: OpenMeeting functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -174,6 +239,11 @@ func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 //   - participants: []string; A list of agent IDs to be enrolled in the discussion.
 //
 // Returns: The instantiated MeetingRoom.
+// Summary: OpenMeetingWithAgenda functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -194,6 +264,12 @@ func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) Me
 //
 // Parameters:
 //   - id: string; The unique identifier of the agent to terminate.
+// Summary: FireAgent functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Hub) FireAgent(id string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -208,6 +284,11 @@ func (h *Hub) FireAgent(id string) {
 //   - message: Message; The event payload containing routing headers and content.
 //
 // Returns: An error if the sender or recipient agents do not exist, or if the target meeting is unrecognised.
+// Summary: Publish functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Hub) Publish(message Message) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -270,6 +351,12 @@ func (h *Hub) Publish(message Message) error {
 }
 
 // Subscribe returns a channel that receives real-time messages for the given agent.
+// Summary: Subscribe functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -300,6 +387,11 @@ func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 //   - agentID: string; The unique identifier of the worker.
 //
 // Returns: A slice of direct Message objects.
+// Summary: Inbox functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Hub) Inbox(agentID string) []Message {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -319,6 +411,11 @@ func (h *Hub) Inbox(agentID string) []Message {
 //   - id: string; The unique identifier of the room.
 //
 // Returns: The matching MeetingRoom object and a boolean indicating if it exists.
+// Summary: Meeting functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -331,6 +428,11 @@ func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 // Meetings fetches a point-in-time snapshot of all active meeting rooms.
 //
 // Returns: A slice containing all MeetingRoom objects.
+// Summary: Meetings functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Hub) Meetings() []MeetingRoom {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -347,6 +449,11 @@ func (h *Hub) Meetings() []MeetingRoom {
 // Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID.
 //
 // Returns: A slice of all active Agent objects in the orchestration Hub.
+// Summary: Agents functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (h *Hub) Agents() []Agent {
 	h.mu.RLock()
 	agents := make([]Agent, 0, len(h.agents))
@@ -364,19 +471,46 @@ func (h *Hub) Agents() []Agent {
 }
 
 // HubServiceServer implements the gRPC HubService defined in hub.proto.
+// Summary: RegisterHubService functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func RegisterHubService(s *grpc.Server, hub *Hub) {
 	pb.RegisterHubServiceServer(s, &HubServiceServer{hub: hub})
 }
 
+// HubServiceServer provides functionality for HubServiceServer.
+// Summary: HubServiceServer functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type HubServiceServer struct {
 	pb.UnimplementedHubServiceServer
 	hub *Hub
 }
 
+// NewHubServiceServer provides functionality for NewHubServiceServer.
+// Summary: NewHubServiceServer functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func NewHubServiceServer(hub *Hub) *HubServiceServer {
 	return &HubServiceServer{hub: hub}
 }
 
+// RegisterAgent provides functionality for RegisterAgent.
+// Summary: RegisterAgent functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAgentRequest) (*pb.RegisterAgentResponse, error) {
 	agentReq := req.GetAgent()
 	agent := Agent{
@@ -391,6 +525,13 @@ func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAg
 	return pb.RegisterAgentResponse_builder{Success: true}.Build(), nil
 }
 
+// OpenMeeting provides functionality for OpenMeeting.
+// Summary: OpenMeeting functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingRequest) (*pb.MeetingRoom, error) {
 	meeting := s.hub.OpenMeetingWithAgenda(req.GetMeetingId(), req.GetAgenda(), req.GetParticipants())
 	return pb.MeetingRoom_builder{
@@ -400,6 +541,13 @@ func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingR
 	}.Build(), nil
 }
 
+// Publish provides functionality for Publish.
+// Summary: Publish functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRequest) (*pb.PublishMessageResponse, error) {
 	msgReq := req.GetMessage()
 	msg := Message{
@@ -417,6 +565,13 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 	return pb.PublishMessageResponse_builder{Success: true}.Build(), nil
 }
 
+// StreamMessages provides functionality for StreamMessages.
+// Summary: StreamMessages functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream pb.HubService_StreamMessagesServer) error {
 	agentID := req.GetAgentId()
 
@@ -467,6 +622,13 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 	}
 }
 
+// Reason provides functionality for Reason.
+// Summary: Reason functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*pb.ReasonResponse, error) {
 	client := NewMinimaxClient(s.hub.MinimaxAPIKey())
 	content, err := client.Reason(ctx, req.GetPrompt())
@@ -481,10 +643,23 @@ func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*
 var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
 
 // MinimaxClient handles interaction with the Minimax Model 2.7.
+// Summary: MinimaxClient functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type MinimaxClient struct {
 	APIKey string
 }
 
+// NewMinimaxClient provides functionality for NewMinimaxClient.
+// Summary: NewMinimaxClient functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func NewMinimaxClient(apiKey string) *MinimaxClient {
 	return &MinimaxClient{APIKey: apiKey}
 }
@@ -495,6 +670,13 @@ var bufferPool = sync.Pool{
 	},
 }
 
+// Reason provides functionality for Reason.
+// Summary: Reason functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, error) {
 	if c.APIKey == "" {
 		return "", errors.New("minimax API key is not configured")

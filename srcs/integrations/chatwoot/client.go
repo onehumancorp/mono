@@ -20,9 +20,21 @@ import (
 )
 
 // DefaultBaseURL is the in-cluster URL for the Chatwoot service.
+// Summary: DefaultBaseURL functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 const DefaultBaseURL = "http://chatwoot:3000"
 
 // Client interacts with the Chatwoot REST API v1.
+// Summary: Client functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Client struct {
 	BaseURL     string
 	AccessToken string // api_access_token for authenticated requests
@@ -32,6 +44,12 @@ type Client struct {
 
 // NewClientFromEnv creates a Client using environment variables.
 // CHATWOOT_URL overrides the base URL.
+// Summary: NewClientFromEnv functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func NewClientFromEnv() *Client {
 	base := os.Getenv("CHATWOOT_URL")
 	if base == "" {
@@ -44,6 +62,12 @@ func NewClientFromEnv() *Client {
 }
 
 // NewClient creates a Client with an explicit base URL (useful in tests).
+// Summary: NewClient functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func NewClient(baseURL string) *Client {
 	return &Client{
 		BaseURL:    baseURL,
@@ -69,6 +93,12 @@ type signInResponse struct {
 
 // SignIn authenticates with Chatwoot and stores the resulting access token and
 // account ID on the Client.
+// Summary: SignIn functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (c *Client) SignIn(email, password string) error {
 	var resp signInResponse
 	if err := c.post("/auth/sign_in", signInRequest{Email: email, Password: password}, &resp); err != nil {
@@ -85,6 +115,12 @@ func (c *Client) SignIn(email, password string) error {
 // ── Inboxes ───────────────────────────────────────────────────────────────────
 
 // Inbox represents a Chatwoot inbox (a communication channel).
+// Summary: Inbox functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Inbox struct {
 	ID        int    `json:"id"`
 	Name      string `json:"name"`
@@ -103,6 +139,12 @@ type createInboxRequest struct {
 }
 
 // ListInboxes returns all inboxes in the account.
+// Summary: ListInboxes functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (c *Client) ListInboxes() ([]Inbox, error) {
 	var resp inboxListResponse
 	if err := c.get(c.accountPath("/inboxes"), &resp); err != nil {
@@ -112,6 +154,12 @@ func (c *Client) ListInboxes() ([]Inbox, error) {
 }
 
 // CreateAPIInbox creates a new API-type inbox with the given name.
+// Summary: CreateAPIInbox functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (c *Client) CreateAPIInbox(name string) (Inbox, error) {
 	body := createInboxRequest{
 		Name:        name,
@@ -128,6 +176,12 @@ func (c *Client) CreateAPIInbox(name string) (Inbox, error) {
 // ── Contacts ──────────────────────────────────────────────────────────────────
 
 // Contact represents a Chatwoot contact (a participant in conversations).
+// Summary: Contact functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Contact struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`
@@ -140,6 +194,12 @@ type createContactRequest struct {
 }
 
 // CreateContact creates a new contact.
+// Summary: CreateContact functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (c *Client) CreateContact(name, email string) (Contact, error) {
 	var contact Contact
 	if err := c.post(c.accountPath("/contacts"), createContactRequest{Name: name, Email: email}, &contact); err != nil {
@@ -151,6 +211,12 @@ func (c *Client) CreateContact(name, email string) (Contact, error) {
 // ── Conversations ─────────────────────────────────────────────────────────────
 
 // Conversation represents a Chatwoot conversation (a chat thread).
+// Summary: Conversation functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Conversation struct {
 	ID        int `json:"id"`
 	InboxID   int `json:"inbox_id"`
@@ -166,6 +232,12 @@ type createConversationRequest struct {
 }
 
 // CreateConversation opens a new conversation in the given inbox.
+// Summary: CreateConversation functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (c *Client) CreateConversation(inboxID, contactID int) (Conversation, error) {
 	body := createConversationRequest{
 		InboxID:   inboxID,
@@ -181,6 +253,12 @@ func (c *Client) CreateConversation(inboxID, contactID int) (Conversation, error
 // ── Messages ──────────────────────────────────────────────────────────────────
 
 // Message represents a single message in a conversation.
+// Summary: Message functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Message struct {
 	ID             int    `json:"id"`
 	Content        string `json:"content"`
@@ -200,6 +278,12 @@ type messageListResponse struct {
 }
 
 // SendMessage posts a message into a conversation.
+// Summary: SendMessage functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (c *Client) SendMessage(conversationID int, content, messageType string) (Message, error) {
 	if messageType == "" {
 		messageType = "outgoing"
@@ -214,6 +298,12 @@ func (c *Client) SendMessage(conversationID int, content, messageType string) (M
 }
 
 // ListMessages returns all messages in a conversation.
+// Summary: ListMessages functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 func (c *Client) ListMessages(conversationID int) ([]Message, error) {
 	var resp messageListResponse
 	path := fmt.Sprintf("%s/conversations/%d/messages", c.accountBase(), conversationID)

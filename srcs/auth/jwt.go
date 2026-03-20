@@ -23,6 +23,12 @@ type jwtHeader struct {
 // OIDC (RS256) tokens. The standard set is kept small by design.
 //
 // Constraints: Serializes to JSON for token encoding. Subject must uniquely identify the user.
+// Summary: Claims functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Returns: See implementation
+// Errors: Standard operational errors where applicable.
+// Side Effects: May interact with external systems or mutate internal state.
 type Claims struct {
 	Subject  string   `json:"sub"`
 	Username string   `json:"username"`
@@ -41,6 +47,10 @@ type Claims struct {
 // Returns: A boolean indicating if the role is present (true if present or if the user is an admin).
 //
 // Side Effects: None. Executes a read-only iteration over the claims.
+// Summary: HasRole functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
+// Errors: Standard operational errors where applicable.
 func (c *Claims) HasRole(role string) bool {
 	for _, r := range c.Roles {
 		if r == role || r == RoleAdmin {
@@ -60,6 +70,9 @@ func (c *Claims) HasRole(role string) bool {
 // Errors: Fails if JSON serialization or cryptographic signing encounters an error.
 //
 // Side Effects: None. Uses the store's symmetric secret for signing.
+// Summary: IssueToken functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
 func (s *Store) IssueToken(u *User) (string, error) {
 	now := time.Now().UTC()
 	claims := Claims{
@@ -84,6 +97,9 @@ func (s *Store) IssueToken(u *User) (string, error) {
 // Errors: Fails if the token is malformed, expired, has an invalid signature, or has been revoked.
 //
 // Side Effects: May delegate to external OIDC configuration logic if the primary HS256 parsing fails and OIDC is enabled.
+// Summary: ValidateToken functionality.
+// Intent: Supports the system's core functionality.
+// Params: See implementation
 func (s *Store) ValidateToken(token string) (*Claims, error) {
 	claims, err := parseHS256(token, s.secret)
 	if err != nil {
