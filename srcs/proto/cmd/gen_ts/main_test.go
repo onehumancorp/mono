@@ -58,7 +58,7 @@ func TestPkgToPrefix(t *testing.T) {
 
 func TestQualifiedToTS(t *testing.T) {
 	allTypes := map[string]string{
-		"Role": "CommonRole",
+		"Role":            "CommonRole",
 		"ohc.common.Role": "CommonRole",
 	}
 
