@@ -2,13 +2,11 @@ edition = "2024";
 
 package ohc.api.v1;
 
-import "google/protobuf/go_features.proto";
-import "agent.proto";
-import "billing.proto";
-import "organization.proto";
+import "srcs/proto/agent.proto";
+import "srcs/proto/billing.proto";
+import "srcs/proto/organization.proto";
 
 option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/api/v1;apiv1";
-option features.(pb.go).api = OPAQUE;
 
 message MeetingRoom {
   string id = 1;

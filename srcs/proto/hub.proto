@@ -2,7 +2,6 @@ edition = "2024";
 
 package ohc.orchestration;
 
-import "google/protobuf/go_features.proto";
 
 option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration;orchestrationpb";
 // OPAQUE API is default for edition 2024

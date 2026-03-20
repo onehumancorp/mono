@@ -2,10 +2,8 @@ edition = "2024";
 
 package ohc.billing;
 
-import "google/protobuf/go_features.proto";
 
 option go_package = "github.com/onehumancorp/mono/srcs/proto/ohc/billing;billingpb";
-option features.(pb.go).api = OPAQUE;
 
 message TokenUsage {
   string agent_id = 1;
