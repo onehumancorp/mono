@@ -14,6 +14,7 @@ package integrations
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1036,7 +1037,12 @@ func sendTelegramMessage(botToken, chatID, text string) error {
 	if err != nil {
 		return err
 	}
-	resp, err := http.Post(apiURL, "application/json", bytes.NewReader(payload)) //nolint:noctx
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, apiURL, bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("telegram API: %w", err)
 	}
@@ -1064,7 +1070,12 @@ func sendDiscordWebhook(webhookURL, username, content string) error {
 	if err != nil {
 		return err
 	}
-	resp, err := http.Post(webhookURL, "application/json", bytes.NewReader(payload)) //nolint:noctx
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, webhookURL, bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("discord API: %w", err)
 	}
