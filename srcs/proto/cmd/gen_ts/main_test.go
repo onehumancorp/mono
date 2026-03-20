@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"path/filepath"
@@ -42,12 +43,80 @@ func TestPkgToPrefix(t *testing.T) {
 		{"ohc.billing", "Billing"},
 		{"ohc.orchestration", "Orchestration"},
 		{"ohc.api.v1", "Api"},
+		{"ohc.api.v2alpha", "Api"},
 		{"ohc.agent", "Agent"},
 		{"ohc.skills", "Skills"},
+		{"ohc", "Proto"},
+		{"", "Proto"},
 	}
 	for _, c := range cases {
 		if got := pkgToPrefix(c.pkg); got != c.want {
 			t.Errorf("pkgToPrefix(%q) = %q, want %q", c.pkg, got, c.want)
+		}
+	}
+}
+
+func TestQualifiedToTS(t *testing.T) {
+	allTypes := map[string]string{
+		"Role": "CommonRole",
+		"ohc.common.Role": "CommonRole",
+	}
+
+	cases := []struct{ in, want string }{
+		{"Role", "CommonRole"},
+		{".Role", "CommonRole"},
+		{"ohc.common.Role", "CommonRole"},
+		{".ohc.common.Role", "CommonRole"},
+		{"Unknown", "Unknown"},
+		{"ohc.api.Unknown", "Unknown"},
+	}
+	for _, c := range cases {
+		got := qualifiedToTS(c.in, allTypes)
+		if got != c.want {
+			t.Errorf("qualifiedToTS(%q) = %q, want %q", c.in, got, c.want)
+		}
+	}
+}
+
+func TestProtoTypeToTS(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"string", "string"},
+		{"bool", "boolean"},
+		{"int32", "number"},
+		{"int64", "number"},
+		{"uint32", "number"},
+		{"uint64", "number"},
+		{"sint32", "number"},
+		{"sint64", "number"},
+		{"fixed32", "number"},
+		{"fixed64", "number"},
+		{"sfixed32", "number"},
+		{"sfixed64", "number"},
+		{"float", "number"},
+		{"double", "number"},
+		{"bytes", "string"},
+		{"MyMessage", ""},
+		{".ohc.common.Role", ""},
+	}
+	for _, c := range cases {
+		got := protoTypeToTS(c.in)
+		if got != c.want {
+			t.Errorf("protoTypeToTS(%q) = %q, want %q", c.in, got, c.want)
+		}
+	}
+}
+
+func TestStripComment(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"message Foo {", "message Foo {"},
+		{"message Foo { // hello", "message Foo {"},
+		{"message Foo { /* hello */", "message Foo {"},
+		{"  string name = 1;  ", "string name = 1;"},
+	}
+	for _, c := range cases {
+		got := stripComment(c.in)
+		if got != c.want {
+			t.Errorf("stripComment(%q) = %q, want %q", c.in, got, c.want)
 		}
 	}
 }
@@ -234,4 +303,109 @@ message Message {
 	if transcriptField == nil || !transcriptField.repeated {
 		t.Error("expected transcript to be repeated")
 	}
+}
+
+func TestExecute_MissingArgs(t *testing.T) {
+	// Let's stub out the exit behavior for the test
+	originalOsExit := osExit
+	t.Cleanup(func() { osExit = originalOsExit })
+	exitCalled := false
+	osExit = func(code int) {
+		exitCalled = true
+	}
+
+	execute([]string{})
+	if !exitCalled {
+		t.Fatal("expected osExit to be called")
+	}
+}
+
+func TestMainFunc(t *testing.T) {
+	originalOsArgs := os.Args
+	t.Cleanup(func() { os.Args = originalOsArgs })
+
+	proto := `
+		package ohc.main;
+		message MainMsg {
+			string item = 1;
+		}
+	`
+	f := writeTempProto(t, proto)
+
+	os.Args = []string{"gen_ts", f}
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	main()
+
+	w.Close()
+	os.Stdout = oldStdout
+
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+	output := buf.String()
+
+	if !strings.Contains(output, "export interface MainMainMsg") {
+		t.Errorf("expected generated output to contain MainMainMsg, got:\n%s", output)
+	}
+}
+
+func TestExecute_ValidArgs(t *testing.T) {
+	proto := `
+		package ohc.main;
+		message MainMsg {
+			string item = 1;
+		}
+	`
+	f := writeTempProto(t, proto)
+
+	// capture stdout
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	execute([]string{f})
+
+	w.Close()
+	os.Stdout = oldStdout
+
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+	output := buf.String()
+
+	if !strings.Contains(output, "export interface MainMainMsg") {
+		t.Errorf("expected generated output to contain MainMainMsg, got:\n%s", output)
+	}
+}
+
+func TestParseProto_FileNotFound(t *testing.T) {
+	// Should log a warning and return empty protoFile
+	oldStderr := os.Stderr
+	r, w, _ := os.Pipe()
+	os.Stderr = w
+
+	pf := parseProto("non-existent-file.proto")
+
+	w.Close()
+	os.Stderr = oldStderr
+	io.Copy(io.Discard, r)
+
+	if pf.pkg != "" {
+		t.Errorf("expected empty protoFile, got package %q", pf.pkg)
+	}
+}
+
+func TestExecute_FileNotFound(t *testing.T) {
+	// Test that we try to resolve a missing file and log a warning correctly without crashing.
+	oldStderr := os.Stderr
+	r, w, _ := os.Pipe()
+	os.Stderr = w
+
+	execute([]string{"non-existent-file.proto"})
+
+	w.Close()
+	os.Stderr = oldStderr
+	io.Copy(io.Discard, r)
 }

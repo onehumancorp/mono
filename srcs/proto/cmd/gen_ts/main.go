@@ -76,16 +76,22 @@ func pkgToPrefix(pkg string) string {
 		if p == "" || p == "ohc" {
 			continue
 		}
-		// skip version identifiers like "v1", "v2"
+		// skip version identifiers like "v1", "v2", "v2alpha"
 		if len(p) >= 2 && (p[0] == 'v' || p[0] == 'V') {
 			isVer := true
+			hasDigit := false
 			for _, c := range p[1:] {
-				if c < '0' || c > '9' {
-					isVer = false
-					break
+				if c >= '0' && c <= '9' {
+					hasDigit = true
+					continue
 				}
+				if c >= 'a' && c <= 'z' {
+					continue
+				}
+				isVer = false
+				break
 			}
-			if isVer {
+			if isVer && hasDigit {
 				continue
 			}
 		}
@@ -144,6 +150,8 @@ func stripComment(line string) string {
 	}
 	return strings.TrimSpace(line)
 }
+
+var osExit = os.Exit
 
 var (
 	rePkg     = regexp.MustCompile(`^package\s+([\w.]+)\s*;`)
@@ -333,20 +341,22 @@ func generate(files []protoFile) {
 	}
 }
 
-func main() {
-	if len(os.Args) < 2 {
+func execute(args []string) {
+	if len(args) < 1 {
 		fmt.Fprintln(os.Stderr, "usage: gen_ts <proto_file>...")
-		os.Exit(1)
+		osExit(1)
 	}
 
 	var files []protoFile
-	for _, arg := range os.Args[1:] {
+	for _, arg := range args {
 		// Resolve symlinks / runfiles paths.
 		resolved := arg
 		if _, err := os.Stat(resolved); err != nil {
 			// Try relative to cwd.
-			cwd, _ := os.Getwd()
-			resolved = filepath.Join(cwd, arg)
+			cwd, err2 := os.Getwd()
+			if err2 == nil {
+				resolved = filepath.Join(cwd, arg)
+			}
 		}
 		pf := parseProto(resolved)
 		if pf.pkg != "" {
@@ -355,4 +365,8 @@ func main() {
 	}
 
 	generate(files)
+}
+
+func main() {
+	execute(os.Args[1:])
 }

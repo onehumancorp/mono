@@ -228,6 +228,152 @@ func TestClient_ConversationAndMessages(t *testing.T) {
 	}
 }
 
+func TestClient_ListInboxes_Error(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	c := chatwoot.NewClient(srv.URL)
+	c.AccountID = 42
+	if _, err := c.ListInboxes(); err == nil {
+		t.Fatal("expected error listing inboxes, got nil")
+	}
+}
+
+func TestClient_CreateAPIInbox_Error(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	c := chatwoot.NewClient(srv.URL)
+	c.AccountID = 42
+	if _, err := c.CreateAPIInbox("test"); err == nil {
+		t.Fatal("expected error creating inbox, got nil")
+	}
+}
+
+func TestClient_CreateContact_Error(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	c := chatwoot.NewClient(srv.URL)
+	c.AccountID = 42
+	if _, err := c.CreateContact("test", "test@test.com"); err == nil {
+		t.Fatal("expected error creating contact, got nil")
+	}
+}
+
+func TestClient_CreateConversation_Error(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	c := chatwoot.NewClient(srv.URL)
+	c.AccountID = 42
+	if _, err := c.CreateConversation(1, 1); err == nil {
+		t.Fatal("expected error creating conversation, got nil")
+	}
+}
+
+func TestClient_SendMessage_Error(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	c := chatwoot.NewClient(srv.URL)
+	c.AccountID = 42
+	if _, err := c.SendMessage(1, "test", ""); err == nil {
+		t.Fatal("expected error sending message, got nil")
+	}
+}
+
+func TestClient_ListMessages_Error(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	c := chatwoot.NewClient(srv.URL)
+	c.AccountID = 42
+	if _, err := c.ListMessages(1); err == nil {
+		t.Fatal("expected error listing messages, got nil")
+	}
+}
+
+// Test removed since PostPublic was removed and post cannot be called externally
+
+func TestClient_Get_BadURL(t *testing.T) {
+	c := chatwoot.NewClient("http://invalid\nurl")
+	if _, err := c.ListInboxes(); err == nil {
+		t.Fatal("expected error on get with bad url, got nil")
+	}
+}
+
+func TestClient_Post_BadURL(t *testing.T) {
+	c := chatwoot.NewClient("http://invalid\nurl")
+	if err := c.SignIn("test", "test"); err == nil {
+		t.Fatal("expected error on post with bad url, got nil")
+	}
+}
+
+func TestClient_Do_DecodeError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		// Send malformed JSON
+		w.Write([]byte(`{"data": { "access_token": `))
+	}))
+	defer srv.Close()
+
+	c := chatwoot.NewClient(srv.URL)
+	if err := c.SignIn("test", "test"); err == nil {
+		t.Fatal("expected error decoding response, got nil")
+	}
+}
+
+func TestSetup_FailsAuth(t *testing.T) {
+	t.Setenv("GO_TEST", "true")
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	defer srv.Close()
+
+	c := chatwoot.NewClient(srv.URL)
+	if err := c.Setup(); err == nil {
+		t.Fatal("expected auth failure, got nil")
+	}
+}
+
+func TestSetup_CreatesInbox_Error(t *testing.T) {
+	t.Setenv("GO_TEST", "true")
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/auth/sign_in", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, map[string]any{
+			"data": map[string]any{
+				"access_token": "test-access-token",
+				"account_id":   42,
+			},
+		})
+	})
+	mux.HandleFunc("/api/v1/accounts/42/inboxes", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	})
+
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	c := chatwoot.NewClient(srv.URL)
+	if err := c.Setup(); err == nil {
+		t.Fatal("expected error ensuring inbox, got nil")
+	}
+}
+
 func TestSetup_CreatesInbox(t *testing.T) {
 	srv := mockChatwootServer(t)
 	defer srv.Close()
@@ -246,5 +392,93 @@ func TestSetup_CreatesInbox(t *testing.T) {
 	c2 := chatwoot.NewClient(srv.URL)
 	if err := c2.Setup(); err != nil {
 		t.Fatalf("Setup (second call): %v", err)
+	}
+}
+
+func TestNewClientFromEnv(t *testing.T) {
+	t.Setenv("CHATWOOT_URL", "http://my-chatwoot:3000")
+	c := chatwoot.NewClientFromEnv()
+	if c.BaseURL != "http://my-chatwoot:3000" {
+		t.Errorf("expected custom URL, got %s", c.BaseURL)
+	}
+
+	t.Setenv("CHATWOOT_URL", "")
+	c2 := chatwoot.NewClientFromEnv()
+	if c2.BaseURL != chatwoot.DefaultBaseURL {
+		t.Errorf("expected default URL, got %s", c2.BaseURL)
+	}
+}
+
+func TestSignIn_EmptyToken(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, map[string]any{"data": map[string]any{"access_token": "", "account_id": 42}})
+	}))
+	defer srv.Close()
+
+	c := chatwoot.NewClient(srv.URL)
+	err := c.SignIn("admin@ohc.local", "changeme")
+	if err == nil || err.Error() != "chatwoot sign-in: empty access token in response" {
+		t.Errorf("expected empty token error, got %v", err)
+	}
+}
+
+func TestSetup_SignUpFlow(t *testing.T) {
+	mux := http.NewServeMux()
+	signUpCalled := false
+
+	mux.HandleFunc("/auth/sign_in", func(w http.ResponseWriter, r *http.Request) {
+		if !signUpCalled {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		writeJSON(w, map[string]any{
+			"data": map[string]any{
+				"access_token": "test-access-token",
+				"account_id":   42,
+			},
+		})
+	})
+
+	mux.HandleFunc("/auth/sign_up", func(w http.ResponseWriter, r *http.Request) {
+		signUpCalled = true
+		writeJSON(w, map[string]any{"status": "success"})
+	})
+
+	mux.HandleFunc("/api/v1/accounts/42/inboxes", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			writeJSON(w, map[string]any{"payload": []map[string]any{}})
+		} else {
+			writeJSON(w, map[string]any{"id": 1, "name": "OHC"})
+		}
+	})
+
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	c := chatwoot.NewClient(srv.URL)
+	if err := c.Setup(); err != nil {
+		t.Fatalf("Setup with sign-up flow failed: %v", err)
+	}
+	if !signUpCalled {
+		t.Fatal("expected sign_up to be called")
+	}
+}
+
+func TestIsEnabled(t *testing.T) {
+	t.Setenv("CHATWOOT_URL", "")
+	t.Setenv("CHATWOOT_ENABLED", "")
+	if chatwoot.IsEnabled() {
+		t.Error("expected IsEnabled to be false when env is empty")
+	}
+
+	t.Setenv("CHATWOOT_URL", "http://something")
+	if !chatwoot.IsEnabled() {
+		t.Error("expected IsEnabled to be true when CHATWOOT_URL is set")
+	}
+
+	t.Setenv("CHATWOOT_URL", "")
+	t.Setenv("CHATWOOT_ENABLED", "true")
+	if !chatwoot.IsEnabled() {
+		t.Error("expected IsEnabled to be true when CHATWOOT_ENABLED is true")
 	}
 }

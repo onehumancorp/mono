@@ -25,6 +25,7 @@ var (
 	nowUTC        = time.Now
 	listenForMain = http.ListenAndServe
 	fatalForMain  = log.Fatal
+	initTelemetry = telemetry.InitTelemetry
 )
 
 func newDemoSystem(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker) {
@@ -88,7 +89,7 @@ func run(now time.Time, listen listenFunc, logger *log.Logger) error {
 }
 
 func main() {
-	shutdown, err := telemetry.InitTelemetry()
+	shutdown, err := initTelemetry()
 	if err != nil {
 		log.Printf("warning: failed to initialize telemetry: %v", err)
 	} else {
