@@ -2,7 +2,24 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "dashboard",
-    srcs = ["server.go"],
+    srcs = [
+        "handlers_agent.go",
+        "handlers_analytics.go",
+        "handlers_approvals.go",
+        "handlers_b2b.go",
+        "handlers_budget.go",
+        "handlers_compute.go",
+        "handlers_handoffs.go",
+        "handlers_identities.go",
+        "handlers_incidents.go",
+        "handlers_integrations.go",
+        "handlers_marketplace.go",
+        "handlers_mcp.go",
+        "handlers_pipelines.go",
+        "handlers_skills.go",
+        "handlers_snapshots.go",
+        "server.go",
+    ],
     importpath = "github.com/onehumancorp/mono/srcs/dashboard",
     visibility = ["//visibility:public"],
     deps = [

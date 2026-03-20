@@ -5,7 +5,7 @@ go_library(
     srcs = ["main.go"],
     importpath = "github.com/onehumancorp/mono/srcs/frontend/server/cmd/frontend",
     visibility = ["//visibility:private"],
-    deps = ["//srcs/frontend/server:server_lib"],
+    deps = ["//srcs/frontend/server"],
 )
 
 go_binary(
@@ -18,5 +18,5 @@ go_test(
     name = "frontend_test",
     srcs = ["main_test.go"],
     embed = [":frontend_lib"],
-    deps = ["//srcs/frontend/server:server_lib"],
+    deps = ["//srcs/frontend/server"],
 )

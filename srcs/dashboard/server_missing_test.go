@@ -333,7 +333,6 @@ func TestHandlePipelineStatus_Errors(t *testing.T) {
 	}
 }
 
-
 func TestHandleHealthzReadyz(t *testing.T) {
 	_, server, _ := newTestServer(t)
 	defer server.Close()

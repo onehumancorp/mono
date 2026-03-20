@@ -23,7 +23,11 @@ go_test(
     ],
     embed = [":orchestration"],
     deps = [
+        "//srcs/proto:hub_go_proto",
         "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//metadata",
+        "@org_golang_google_grpc//status",
     ],
 )
+# gazelle:resolve go github.com/onehumancorp/mono/srcs/proto/ohc/orchestration //srcs/proto:hub_go_proto
