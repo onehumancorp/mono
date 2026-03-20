@@ -547,3 +547,33 @@ export function updateIssueStatus(issueId: string, status: string): Promise<Issu
 export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
 }
+
+/**
+ * Probes an MCP Server URL to discover tools.
+ */
+export async function probeMCPServer(url: string): Promise<any[]> {
+  const resp = await fetch("/api/mcp/probe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }),
+  });
+  if (!resp.ok) {
+    const errorText = await resp.text();
+    throw new Error(errorText || "Failed to probe MCP server");
+  }
+  return resp.json();
+}
+
+/**
+ * Enables specific tools for a given role.
+ */
+export async function enableRoleTool(role: string, toolId: string): Promise<void> {
+  const resp = await fetch(`/api/roles/${role}/tools`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tools: [toolId] }),
+  });
+  if (!resp.ok) {
+    throw new Error("Failed to enable tool for role");
+  }
+}

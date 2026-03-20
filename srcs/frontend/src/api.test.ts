@@ -347,6 +347,8 @@ describe("api – new endpoints", () => {
 
 import {
   assignIssue,
+  probeMCPServer,
+  enableRoleTool,
   closePullRequest,
   connectIntegration,
   createIssue,
@@ -703,5 +705,47 @@ describe("api – projectedMonthlyUSD zero fallback", () => {
     })));
     const result = await fetchCosts2();
     expect(result.projectedMonthlyUSD).toBe(0);
+  });
+});
+
+describe("api - MCP Probe and Enable tools", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("probeMCPServer success", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ([{ name: "test", description: "desc" }]),
+    })));
+    const result = await probeMCPServer("http://test");
+    expect(result[0].name).toBe("test");
+  });
+
+  it("probeMCPServer error", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: false,
+      status: 400,
+      text: async () => ("bad request"),
+    })));
+    await expect(probeMCPServer("http://test")).rejects.toThrow("bad request");
+  });
+
+  it("enableRoleTool success", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      status: 200,
+    })));
+    await expect(enableRoleTool("support", "tool")).resolves.toBeUndefined();
+  });
+
+  it("enableRoleTool error", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: false,
+      status: 400,
+    })));
+    await expect(enableRoleTool("support", "tool")).rejects.toThrow("Failed to enable tool for role");
   });
 });
