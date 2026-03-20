@@ -3190,3 +3190,249 @@ func TestHandlePipelines(t *testing.T) {
 		t.Errorf("expected 1 pipeline, got %d", len(pipelines))
 	}
 }
+
+// ── Agent provider tests ────────────────────────────────────────────────────
+
+func TestHandleAgentProviders_ReturnsAllProviders(t *testing.T) {
+	_, server, token := newTestServer(t)
+	defer server.Close()
+	client := authedClient(token)
+
+	resp, err := client.Get(server.URL + "/api/agents/providers")
+	if err != nil {
+		t.Fatalf("GET /api/agents/providers error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+	var infos []map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&infos); err != nil {
+		t.Fatalf("decode providers response: %v", err)
+	}
+	if len(infos) < 6 {
+		t.Fatalf("expected at least 6 providers, got %d", len(infos))
+	}
+	// Builtin provider should always be authenticated.
+	found := false
+	for _, info := range infos {
+		if info["type"] == "builtin" {
+			found = true
+			if auth, ok := info["isAuthenticated"].(bool); !ok || !auth {
+				t.Error("builtin provider should always be authenticated")
+			}
+		}
+	}
+	if !found {
+		t.Error("expected builtin provider in list")
+	}
+}
+
+func TestHandleAgentProviders_MethodNotAllowed(t *testing.T) {
+	_, server, token := newTestServer(t)
+	defer server.Close()
+	client := authedClient(token)
+
+	resp, err := client.Post(server.URL+"/api/agents/providers", "application/json", nil)
+	if err != nil {
+		t.Fatalf("POST /api/agents/providers error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", resp.StatusCode)
+	}
+}
+
+func TestHandleAgentProviderAuth_SuccessfulAuthentication(t *testing.T) {
+	_, server, token := newTestServer(t)
+	defer server.Close()
+	client := authedClient(token)
+
+	body := strings.NewReader(`{"providerType":"claude","apiKey":"sk-test-key"}`)
+	resp, err := client.Post(server.URL+"/api/agents/providers/auth", "application/json", body)
+	if err != nil {
+		t.Fatalf("POST /api/agents/providers/auth error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, respBody)
+	}
+	var infos []map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&infos); err != nil {
+		t.Fatalf("decode auth response: %v", err)
+	}
+	// After auth, claude provider should report as authenticated.
+	for _, info := range infos {
+		if info["type"] == "claude" {
+			if auth, ok := info["isAuthenticated"].(bool); !ok || !auth {
+				t.Error("claude provider should be authenticated after setting API key")
+			}
+		}
+	}
+}
+
+func TestHandleAgentProviderAuth_MethodNotAllowed(t *testing.T) {
+	_, server, token := newTestServer(t)
+	defer server.Close()
+	client := authedClient(token)
+
+	resp, err := client.Get(server.URL + "/api/agents/providers/auth")
+	if err != nil {
+		t.Fatalf("GET /api/agents/providers/auth error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", resp.StatusCode)
+	}
+}
+
+func TestHandleAgentProviderAuth_InvalidJSON(t *testing.T) {
+	_, server, token := newTestServer(t)
+	defer server.Close()
+	client := authedClient(token)
+
+	resp, err := client.Post(server.URL+"/api/agents/providers/auth", "application/json", strings.NewReader("bad json"))
+	if err != nil {
+		t.Fatalf("POST error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestHandleAgentProviderAuth_MissingProviderType(t *testing.T) {
+	_, server, token := newTestServer(t)
+	defer server.Close()
+	client := authedClient(token)
+
+	resp, err := client.Post(server.URL+"/api/agents/providers/auth", "application/json", strings.NewReader(`{"apiKey":"key"}`))
+	if err != nil {
+		t.Fatalf("POST error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestHandleAgentProviderAuth_UnknownProvider(t *testing.T) {
+	_, server, token := newTestServer(t)
+	defer server.Close()
+	client := authedClient(token)
+
+	body := strings.NewReader(`{"providerType":"nonexistent","apiKey":"key"}`)
+	resp, err := client.Post(server.URL+"/api/agents/providers/auth", "application/json", body)
+	if err != nil {
+		t.Fatalf("POST error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestHandleAgentProviderAuth_EmptyCredentials(t *testing.T) {
+	_, server, token := newTestServer(t)
+	defer server.Close()
+	client := authedClient(token)
+
+	// Claude requires an API key — submitting empty creds should fail.
+	body := strings.NewReader(`{"providerType":"claude"}`)
+	resp, err := client.Post(server.URL+"/api/agents/providers/auth", "application/json", body)
+	if err != nil {
+		t.Fatalf("POST error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected 400 for missing API key, got %d", resp.StatusCode)
+	}
+}
+
+func TestHandleHireAgent_WithProviderType(t *testing.T) {
+	_, server, token := newTestServer(t)
+	defer server.Close()
+	client := authedClient(token)
+
+	body := strings.NewReader(`{"name":"Claude SWE","role":"SOFTWARE_ENGINEER","providerType":"claude"}`)
+	resp, err := client.Post(server.URL+"/api/agents/hire", "application/json", body)
+	if err != nil {
+		t.Fatalf("POST /api/agents/hire error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, respBody)
+	}
+	var snapshot map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&snapshot); err != nil {
+		t.Fatalf("decode snapshot: %v", err)
+	}
+	agentsRaw, ok := snapshot["agents"].([]any)
+	if !ok {
+		t.Fatalf("expected agents in snapshot, got: %T", snapshot["agents"])
+	}
+	found := false
+	for _, a := range agentsRaw {
+		ag, _ := a.(map[string]any)
+		if ag["name"] == "Claude SWE" {
+			found = true
+			if ag["providerType"] != "claude" {
+				t.Errorf("expected providerType=claude, got %v", ag["providerType"])
+			}
+		}
+	}
+	if !found {
+		t.Error("expected newly hired agent in snapshot agents")
+	}
+}
+
+func TestHandleHireAgent_DefaultsToBuiltinProvider(t *testing.T) {
+	_, server, token := newTestServer(t)
+	defer server.Close()
+	client := authedClient(token)
+
+	body := strings.NewReader(`{"name":"Default Agent","role":"QA_TESTER"}`)
+	resp, err := client.Post(server.URL+"/api/agents/hire", "application/json", body)
+	if err != nil {
+		t.Fatalf("POST /api/agents/hire error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, respBody)
+	}
+	var snapshot map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&snapshot); err != nil {
+		t.Fatalf("decode snapshot: %v", err)
+	}
+	agentsRaw, _ := snapshot["agents"].([]any)
+	for _, a := range agentsRaw {
+		ag, _ := a.(map[string]any)
+		if ag["name"] == "Default Agent" {
+			pt := ag["providerType"]
+			if pt != "builtin" {
+				t.Errorf("expected default providerType=builtin, got %v", pt)
+			}
+			return
+		}
+	}
+	t.Error("expected newly hired agent in snapshot")
+}
+
+func TestHandleHireAgent_UnknownProviderRejected(t *testing.T) {
+	_, server, token := newTestServer(t)
+	defer server.Close()
+	client := authedClient(token)
+
+	body := strings.NewReader(`{"name":"Bad Agent","role":"QA_TESTER","providerType":"nonexistent"}`)
+	resp, err := client.Post(server.URL+"/api/agents/hire", "application/json", body)
+	if err != nil {
+		t.Fatalf("POST /api/agents/hire error: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected 400 for unknown provider, got %d", resp.StatusCode)
+	}
+}

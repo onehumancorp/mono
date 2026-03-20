@@ -18,6 +18,7 @@ type Agent struct {
 	role           string
 	organizationId string
 	agentStatus    string
+	providerType   string
 }
 
 func (a *Agent) GetId() string             { return a.id }
@@ -25,6 +26,7 @@ func (a *Agent) GetName() string           { return a.name }
 func (a *Agent) GetRole() string           { return a.role }
 func (a *Agent) GetOrganizationId() string { return a.organizationId }
 func (a *Agent) GetStatus() string         { return a.agentStatus }
+func (a *Agent) GetProviderType() string   { return a.providerType }
 
 type Agent_builder struct {
 	Id             string
@@ -32,10 +34,11 @@ type Agent_builder struct {
 	Role           string
 	OrganizationId string
 	Status         string
+	ProviderType   string
 }
 
 func (b Agent_builder) Build() *Agent {
-	return &Agent{id: b.Id, name: b.Name, role: b.Role, organizationId: b.OrganizationId, agentStatus: b.Status}
+	return &Agent{id: b.Id, name: b.Name, role: b.Role, organizationId: b.OrganizationId, agentStatus: b.Status, providerType: b.ProviderType}
 }
 
 // ─── Message ─────────────────────────────────────────────────────────────────

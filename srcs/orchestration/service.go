@@ -53,6 +53,10 @@ type Agent struct {
 	Role           string `json:"role"`
 	OrganizationID string `json:"organizationId"`
 	Status         Status `json:"status"`
+	// ProviderType identifies the external agent implementation backing this worker
+	// (e.g. "claude", "gemini", "opencode").  An empty string or "builtin" means
+	// the platform's own lightweight agent is used.
+	ProviderType string `json:"providerType,omitempty"`
 }
 
 // Message encapsulates a discrete event, command, or context update passed between agents or rooms.
@@ -320,6 +324,7 @@ func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAg
 		Role:           agentReq.GetRole(),
 		OrganizationID: agentReq.GetOrganizationId(),
 		Status:         Status(agentReq.GetStatus()),
+		ProviderType:   agentReq.GetProviderType(),
 	}
 	s.hub.RegisterAgent(agent)
 	return pb.RegisterAgentResponse_builder{Success: true}.Build(), nil
