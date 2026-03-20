@@ -260,6 +260,10 @@ func validateURL(u string) error {
 		return errors.New("invalid URL format")
 	}
 
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		return errors.New("invalid URL scheme")
+	}
+
 	host := parsedURL.Hostname()
 	if host == "" {
 		return errors.New("URL must contain a host")

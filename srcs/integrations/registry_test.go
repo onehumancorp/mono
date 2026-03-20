@@ -1,6 +1,8 @@
 package integrations
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
@@ -170,6 +172,9 @@ func TestValidateURL(t *testing.T) {
 		{"UT-08: Link-Local AWS IMDS", "http://169.254.169.254/latest/meta-data/", true},
 		{"UT-09: Unspecified IP", "http://0.0.0.0", true},
 		{"UT-10: Invalid URL Format", "htp://[::1]:80", true},
+		{"UT-11: Invalid Scheme", "file:///etc/passwd", true},
+		{"UT-12: Missing Host", "https:///path/to/resource", true},
+		{"UT-13: Unresolvable Host", "http://this-domain-will-not-resolve.test", true},
 	}
 
 	for _, tt := range tests {
@@ -696,6 +701,51 @@ func TestIssuesFilterByIntegration(t *testing.T) {
 	}
 }
 
+func TestSendChatMessageWithCreds(t *testing.T) {
+	// Start a local HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Write([]byte(`{"ok": true}`))
+	}))
+	defer server.Close()
+
+	oldBase := TelegramAPIBase
+	TelegramAPIBase = server.URL
+	defer func() { TelegramAPIBase = oldBase }()
+
+	r := NewRegistry()
+	_, _ = r.Connect("telegram", "", IntegrationCredentials{
+		BotToken: "tok",
+		ChatID: "chat",
+	})
+	_, err := r.SendChatMessage("telegram", "", "agent", "hello", "", testNow)
+	if err == nil {
+		t.Fatalf("expected error for missing channel")
+	}
+
+	_, err = r.SendChatMessage("telegram", "chat", "agent", "hello", "", testNow)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSendChatMessageDiscordWithCreds(t *testing.T) {
+	// Start a local HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	r := NewRegistry()
+	_, _ = r.Connect("discord", "", IntegrationCredentials{
+		WebhookURL: server.URL,
+	})
+
+	_, err := r.SendChatMessage("discord", "chan", "agent", "hello", "", testNow)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 // ── Concurrency smoke test ────────────────────────────────────────────────────
 
 func TestConcurrentOperations(t *testing.T) {
@@ -728,6 +778,143 @@ func TestConcurrentOperations(t *testing.T) {
 	}
 	if len(r.Issues("")) != 5 {
 		t.Errorf("expected 5 issues after concurrent creates")
+	}
+}
+
+// ── Mock Http Handlers ────────────────────────────────────────────────────────
+
+func TestSendTelegramMessage(t *testing.T) {
+	// Start a local HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.URL.String() != "/bot%3Ctoken%3E/sendMessage" {
+			t.Errorf("expected URL /bot%%3Ctoken%%3E/sendMessage, got %q", req.URL.String())
+		}
+		rw.Write([]byte(`{"ok": true}`))
+	}))
+	defer server.Close()
+
+	oldBase := TelegramAPIBase
+	TelegramAPIBase = server.URL
+	defer func() { TelegramAPIBase = oldBase }()
+
+	err := sendTelegramMessage("<token>", "12345", "test message")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSendDiscordWebhookError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	err := sendDiscordWebhook(server.URL, "bot", "test message")
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+}
+
+func TestSendTelegramMessageError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Write([]byte(`{"ok": false, "description": "some error"}`))
+	}))
+	defer server.Close()
+
+	oldBase := TelegramAPIBase
+	TelegramAPIBase = server.URL
+	defer func() { TelegramAPIBase = oldBase }()
+
+	err := sendTelegramMessage("<token>", "12345", "test message")
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+}
+
+func TestSendDiscordWebhook(t *testing.T) {
+	// Start a local HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	err := sendDiscordWebhook(server.URL, "bot", "test message")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestTestConnectionTelegram(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Write([]byte(`{"ok": true}`))
+	}))
+	defer server.Close()
+
+	oldBase := TelegramAPIBase
+	TelegramAPIBase = server.URL
+	defer func() { TelegramAPIBase = oldBase }()
+
+	r := NewRegistry()
+	_, _ = r.Connect("telegram", "")
+
+	err := r.TestConnection("telegram", IntegrationCredentials{
+		BotToken: "tok",
+		ChatID: "chat",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	err = r.TestConnection("telegram", IntegrationCredentials{
+		BotToken: "",
+		ChatID: "chat",
+	})
+	if err == nil {
+		t.Fatalf("expected error for missing bot token")
+	}
+
+	err = r.TestConnection("telegram", IntegrationCredentials{
+		BotToken: "tok",
+		ChatID: "",
+	})
+	if err == nil {
+		t.Fatalf("expected error for missing chat id")
+	}
+}
+
+func TestTestConnectionDiscord(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	r := NewRegistry()
+	_, _ = r.Connect("discord", "")
+
+	// Disable URL validation temporarily or stub it for this test.
+	// Since validateURL is internal, we could either intercept net.LookupIP
+	// or create a valid URL in the test environment if needed, but the simplest
+	// approach for this specific package is to pass an external URL that we mock or skip.
+	// We will skip testing the success case with `server.URL` because it is a loopback URL
+	// and gets rejected by SSRF prevention.
+	// We will just test the failure path and TestConnection for default integration type instead.
+
+	err := r.TestConnection("jira", IntegrationCredentials{})
+	if err != nil {
+		t.Fatalf("expected nil for default integration without test endpoint, got: %v", err)
+	}
+
+	err = r.TestConnection("discord", IntegrationCredentials{})
+	if err == nil {
+		t.Fatalf("expected error for missing webhook url")
+	}
+}
+
+func TestTestConnectionNotFound(t *testing.T) {
+	r := NewRegistry()
+	err := r.TestConnection("not_found", IntegrationCredentials{})
+	if err == nil {
+		t.Fatalf("expected error for non-existent integration")
 	}
 }
 
