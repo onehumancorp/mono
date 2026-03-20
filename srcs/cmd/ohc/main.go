@@ -76,7 +76,10 @@ func run(now time.Time, listen listenFunc, logger *log.Logger) error {
 			logger.Printf("failed to listen for gRPC: %v", err)
 			return
 		}
-		s := grpc.NewServer()
+		s := grpc.NewServer(
+			grpc.UnaryInterceptor(orchestration.SPIFFEAuthInterceptor()),
+			grpc.StreamInterceptor(orchestration.SPIFFEStreamInterceptor()),
+		)
 		orchestration.RegisterHubService(s, hub)
 		logger.Printf("serving gRPC on :9090")
 		if err := s.Serve(lis); err != nil {
