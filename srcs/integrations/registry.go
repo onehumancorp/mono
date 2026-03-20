@@ -487,6 +487,16 @@ func (r *Registry) Integration(id string) (Integration, bool) {
 // LookupIPFunc is a variable to allow mocking net.LookupIP in tests across packages.
 var LookupIPFunc = net.LookupIP
 
+// AllowLocalIPsForTesting can be set to true in tests to bypass SSRF IP checks
+var AllowLocalIPsForTesting = false
+
+func isBlockedIP(ip net.IP) bool {
+	if AllowLocalIPsForTesting {
+		return false
+	}
+	return ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast()
+}
+
 // validateURL checks if a given URL string is safe from SSRF attacks.
 // It explicitly blocks loopback, private, unspecified, and link-local IP addresses.
 // It fails closed on DNS resolution errors.
@@ -512,13 +522,63 @@ func validateURL(u string) error {
 	}
 
 	for _, ip := range ips {
-		if ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+		if isBlockedIP(ip) {
 			return errors.New("URL resolves to a blocked IP address")
 		}
 	}
 
 	return nil
 }
+
+// initSafeHTTPClient returns an http.Client with a custom DialContext that prevents
+// DNS rebinding (TOCTOU) attacks by pinning the connection to the validated IP.
+func initSafeHTTPClient() *http.Client {
+	dialer := &net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
+
+	transport := &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			host, port, err := net.SplitHostPort(addr)
+			if err != nil {
+				return nil, err
+			}
+
+			ips, err := LookupIPFunc(host)
+			if err != nil {
+				return nil, fmt.Errorf("DNS resolution failed: %w", err)
+			}
+			if len(ips) == 0 {
+				return nil, errors.New("no IP addresses found for host")
+			}
+
+			// Validate all resolved IPs
+			for _, ip := range ips {
+				if isBlockedIP(ip) {
+					return nil, errors.New("URL resolves to a blocked IP address")
+				}
+			}
+
+			// Connect directly to the first validated IP
+			safeAddr := net.JoinHostPort(ips[0].String(), port)
+			return dialer.DialContext(ctx, network, safeAddr)
+		},
+	}
+
+	return &http.Client{
+		Transport: transport,
+		Timeout:   15 * time.Second,
+	}
+}
+
+var safeClient = initSafeHTTPClient()
 
 // Connect marks an integration as connected and sets its base URL.
 // An optional IntegrationCredentials value stores secrets (e.g. bot tokens)
@@ -1042,7 +1102,8 @@ func sendTelegramMessage(botToken, chatID, text string) error {
 		return fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
+
+	resp, err := safeClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("telegram API: %w", err)
 	}
@@ -1063,6 +1124,10 @@ func sendTelegramMessage(botToken, chatID, text string) error {
 
 // sendDiscordWebhook posts a message to a Discord channel via an inbound webhook.
 func sendDiscordWebhook(webhookURL, username, content string) error {
+	if err := validateURL(webhookURL); err != nil {
+		return err
+	}
+
 	payload, err := json.Marshal(map[string]string{
 		"username": username,
 		"content":  content,
@@ -1075,7 +1140,8 @@ func sendDiscordWebhook(webhookURL, username, content string) error {
 		return fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
+
+	resp, err := safeClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("discord API: %w", err)
 	}
