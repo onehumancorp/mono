@@ -433,6 +433,32 @@ func TestHandleSendMessageRejectsInvalidRequest(t *testing.T) {
 	}
 }
 
+func TestHandleSendMessageAllowsCEO(t *testing.T) {
+	app, server := newTestServer(t)
+	defer server.Close()
+
+	form := url.Values{
+		"fromAgent":   {"CEO"},
+		"toAgent":     {"swe-1"},
+		"meetingId":   {"kickoff"},
+		"messageType": {"direction"},
+		"content":     {"Ship it"},
+	}
+	resp, err := http.PostForm(server.URL+"/api/messages", form)
+	if err != nil {
+		t.Fatalf("POST /api/messages returned error: %v", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected redirected response to resolve to 200, got %d", resp.StatusCode)
+	}
+
+	inbox := app.hub.Inbox("swe-1")
+	if len(inbox) != 1 || inbox[0].Content != "Ship it" {
+		t.Fatalf("expected CEO message in inbox, got %v", inbox)
+	}
+}
+
 func TestHandleSendMessageRejectsParseError(t *testing.T) {
 	app, _ := newTestServer(t)
 

@@ -281,11 +281,24 @@ export function App() {
     setSending(true);
     setError("");
     setNotice("");
+
+    let payload = form;
+    if (activeNav === "meetings" && selectedMeeting) {
+      payload = {
+        ...form,
+        fromAgent: ceoMember?.id || "CEO",
+        toAgent: "all",
+        meetingId: selectedMeeting.id,
+        messageType: "direction",
+      };
+    }
+
     try {
-      await sendMessage(form);
+      await sendMessage(payload);
       await loadAll();
-      setSelectedMeetingID(form.meetingId);
+      setSelectedMeetingID(payload.meetingId);
       setNotice("Message delivered to the meeting timeline.");
+      setForm((p) => ({ ...p, content: "" }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to send message");
     } finally {
@@ -734,8 +747,9 @@ export function App() {
                         )}
                         {selectedMeeting.transcript.map((msg) => {
                           const isHuman = snapshot?.organization.members.some(m => m.id === msg.fromAgent && m.isHuman) || msg.fromAgent === "CEO";
+                          const isDirection = msg.type === "direction";
                           return (
-                            <li key={msg.id} className={`transcript-item ${isHuman ? "transcript-item--human" : "transcript-item--agent"}`}>
+                            <li key={msg.id} className={`transcript-item ${isHuman ? "transcript-item--human" : "transcript-item--agent"} ${isDirection ? "transcript-item--direction" : ""}`}>
                               <div className="transcript-header">
                                 <span className="transcript-from">{msg.fromAgent}</span>
                                 {msg.toAgent && (
@@ -760,21 +774,17 @@ export function App() {
                       <form onSubmit={handleSubmit} className="war-room-composer">
                         {/* Hidden fields to maintain the required API payload while simplifying the UI for the CEO */}
                         <input type="hidden" name="fromAgent" value={ceoMember?.id || "CEO"} />
-                        <input type="hidden" name="toAgent" value={selectedMeeting.participants.find(p => p !== (ceoMember?.id || "CEO")) || "all"} />
+                        <input type="hidden" name="toAgent" value="all" />
                         <input type="hidden" name="meetingId" value={selectedMeeting.id} />
                         <input type="hidden" name="messageType" value="direction" />
 
                         <textarea
-                          className="textarea"
+                          className="textarea textarea--direction"
                           placeholder="Inject direction or approve actions as CEO..."
                           value={form.content}
                           onChange={(e) => setForm({
                             ...form,
                             content: e.target.value,
-                            fromAgent: ceoMember?.id || "CEO",
-                            toAgent: selectedMeeting.participants.find(p => p !== (ceoMember?.id || "CEO")) || "all",
-                            meetingId: selectedMeeting.id,
-                            messageType: "direction"
                           })}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {

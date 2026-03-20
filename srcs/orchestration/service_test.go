@@ -221,11 +221,34 @@ func TestEventTypeConstantsAreDefined(t *testing.T) {
 		EventTask, EventStatus, EventHandoff,
 		EventCodeReviewed, EventTestsFailed, EventTestsPassed,
 		EventSpecApproved, EventBlockerRaised, EventBlockerCleared,
-		EventPRCreated, EventPRMerged, EventDesignReviewed, EventApprovalNeeded,
+		EventPRCreated, EventPRMerged, EventDesignReviewed, EventApprovalNeeded, EventDirection,
 	}
 	for _, ev := range types {
 		if ev == "" {
 			t.Fatalf("expected all event type constants to be non-empty")
 		}
+	}
+}
+
+func TestPublishToAllInMeeting(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "a", Name: "A", Role: "PM", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "b", Name: "B", Role: "SWE", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "c", Name: "C", Role: "QA", OrganizationID: "org-1"})
+	hub.OpenMeeting("m1", []string{"a", "b", "c"})
+
+	err := hub.Publish(Message{FromAgent: "a", ToAgent: "all", MeetingID: "m1", Content: "hello"})
+	if err != nil {
+		t.Fatalf("publish returned error: %v", err)
+	}
+
+	if len(hub.Inbox("a")) != 0 {
+		t.Fatalf("sender should not receive their own broadcast")
+	}
+	if len(hub.Inbox("b")) != 1 || hub.Inbox("b")[0].Content != "hello" {
+		t.Fatalf("expected b to receive broadcast")
+	}
+	if len(hub.Inbox("c")) != 1 || hub.Inbox("c")[0].Content != "hello" {
+		t.Fatalf("expected c to receive broadcast")
 	}
 }

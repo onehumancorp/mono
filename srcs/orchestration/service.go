@@ -31,6 +31,7 @@ const (
 	EventPRMerged       = "PRMerged"
 	EventDesignReviewed = "DesignReviewed"
 	EventApprovalNeeded = "ApprovalNeeded"
+	EventDirection      = "direction"
 )
 
 type Agent struct {
@@ -136,17 +137,27 @@ func (h *Hub) Publish(message Message) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	if _, ok := h.agents[message.FromAgent]; !ok {
+	if _, ok := h.agents[message.FromAgent]; !ok && message.FromAgent != "CEO" && message.Type != EventDirection {
 		return errors.New("sender agent is not registered")
 	}
-	if message.ToAgent != "" {
+	if message.ToAgent != "" && message.ToAgent != "all" {
 		if _, ok := h.agents[message.ToAgent]; !ok {
 			return errors.New("recipient agent is not registered")
 		}
 		h.inbox[message.ToAgent] = append(h.inbox[message.ToAgent], message)
+	} else if message.ToAgent == "all" && message.MeetingID != "" {
+		// Deliver to all participants in the meeting room, except sender
+		if meeting, ok := h.meetings[message.MeetingID]; ok {
+			for _, participant := range meeting.Participants {
+				if participant != message.FromAgent {
+					if _, ok := h.agents[participant]; ok {
+						h.inbox[participant] = append(h.inbox[participant], message)
+					}
+				}
+			}
+		}
 	}
 
-	sender := h.agents[message.FromAgent]
 	if message.MeetingID != "" {
 		meeting, ok := h.meetings[message.MeetingID]
 		if !ok {
@@ -154,11 +165,17 @@ func (h *Hub) Publish(message Message) error {
 		}
 		meeting.Transcript = append(meeting.Transcript, message)
 		h.meetings[message.MeetingID] = meeting
-		sender.Status = StatusInMeeting
+
+		if sender, ok := h.agents[message.FromAgent]; ok {
+			sender.Status = StatusInMeeting
+			h.agents[message.FromAgent] = sender
+		}
 	} else {
-		sender.Status = StatusActive
+		if sender, ok := h.agents[message.FromAgent]; ok {
+			sender.Status = StatusActive
+			h.agents[message.FromAgent] = sender
+		}
 	}
-	h.agents[message.FromAgent] = sender
 
 	return nil
 }
