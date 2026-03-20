@@ -1,0 +1,15 @@
+
+> @onehumancorp/mono-frontend@0.1.0 dev
+> vite
+
+
+  VITE v6.4.1  ready in 214 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+6:28:42 AM [vite] (client) hmr update /src/App.tsx
+7:53:15 AM [vite] (client) hmr update /src/App.tsx
+7:59:35 AM [vite] (client) hmr update /src/App.tsx
+8:08:33 AM [vite] (client) hmr update /src/App.tsx
+8:09:11 AM [vite] (client) hmr update /src/App.tsx
+8:09:51 AM [vite] (client) hmr update /src/App.tsx

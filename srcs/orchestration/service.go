@@ -51,6 +51,7 @@ type Agent struct {
 	ID             string `json:"id"`
 	Name           string `json:"name"`
 	Role           string `json:"role"`
+	Model          string `json:"model,omitempty"`
 	OrganizationID string `json:"organizationId"`
 	Status         Status `json:"status"`
 }

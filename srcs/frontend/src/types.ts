@@ -111,6 +111,7 @@ export type AgentRuntime = {
   id: string;
   name: string;
   role: string;
+  model?: string;
   organizationId: string;
   status: string;
 };

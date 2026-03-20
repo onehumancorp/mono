@@ -533,6 +533,7 @@ func (s *Server) handleHireAgent(w http.ResponseWriter, r *http.Request) {
 		ID:             id,
 		Name:           req.Name,
 		Role:           req.Role,
+		Model:          req.Model,
 		OrganizationID: s.org.ID,
 		Status:         orchestration.StatusIdle,
 	}
@@ -630,9 +631,24 @@ func seededScenario(name string, now time.Time) (domain.Organization, *orchestra
 		return seededDigitalMarketing(now)
 	case "accounting":
 		return seededAccounting(now)
+	case "hr-dashboard-demo":
+		return seededHRDashboard(now)
 	default:
 		return domain.Organization{}, nil, nil, errors.New("unsupported seed scenario")
 	}
+}
+
+func seededHRDashboard(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
+	org := domain.NewSoftwareCompany("hr-demo", "Global HR Demo", "HR Director", now.UTC())
+	hub := orchestration.NewHub()
+	tracker := billing.NewTracker(billing.DefaultCatalog)
+
+	// Initial empty agent list, just one human user (HR Director)
+	hub.RegisterAgent(orchestration.Agent{ID: "CEO", Name: "HR Director", Role: "CEO", OrganizationID: org.ID})
+
+	hub.OpenMeetingWithAgenda("hr-planning", "Hiring and onboarding strategy", []string{"CEO"})
+
+	return org, hub, tracker, nil
 }
 
 func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {

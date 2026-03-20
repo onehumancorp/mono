@@ -179,10 +179,11 @@ export async function sendMessage(form: {
  *
  * @param name - The display name for the new agent.
  * @param role - The specific role profile the agent will assume.
+ * @param model - (Optional) The specific AI model to use.
  * @returns A Promise resolving to the updated DashboardSnapshot.
  */
-export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
-  return postJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
+export function hireAgent(name: string, role: string, model?: string): Promise<DashboardSnapshot> {
+  return postJSON<DashboardSnapshot>("/api/agents/hire", { name, role, model });
 }
 
 /**

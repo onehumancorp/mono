@@ -155,58 +155,124 @@ function OrgTree({
   );
 }
 
-/* ── Hire Agent Modal ── */
+/* ── Hire Agent Wizard Modal ── */
 function HireAgentForm({
   onHire,
   onClose,
 }: {
-  onHire: (name: string, role: string) => void;
+  onHire: (name: string, role: string, model?: string) => void;
   onClose: () => void;
 }) {
+  const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [role, setRole] = useState("SOFTWARE_ENGINEER");
+  const [model, setModel] = useState("");
   const commonRoles = [
     "SOFTWARE_ENGINEER", "PRODUCT_MANAGER", "QA_TESTER", "SECURITY_ENGINEER",
     "DESIGNER", "MARKETING_MANAGER", "GROWTH_AGENT", "CONTENT_STRATEGIST",
     "SEO_SPECIALIST", "BOOKKEEPER", "TAX_SPECIALIST",
   ];
+
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Hire Agent">
-      <div className="modal">
+      <div className="modal modal--wide">
         <div className="modal-header">
           <h2 className="modal-title">Hire New Agent</h2>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Close">✕</button>
         </div>
         <div className="modal-body">
-          <label className="field">
-            <span className="field-label">Agent Name</span>
-            <input
-              className="input"
-              value={name}
-              placeholder="e.g. Senior Engineer 3"
-              onChange={(e) => setName(e.target.value)}
-              autoFocus
-            />
-          </label>
-          <label className="field">
-            <span className="field-label">Role</span>
-            <select className="input" value={role} onChange={(e) => setRole(e.target.value)}>
-              {commonRoles.map((r) => (
-                <option key={r} value={r}>{r.replace(/_/g, " ")}</option>
-              ))}
-            </select>
-          </label>
+          <div className="wizard-steps">
+            {["Select Role", "Configure", "Review & Deploy"].map((label, i) => (
+              <div key={label} className={`wizard-step ${step > i + 1 ? "wizard-step--done" : step === i + 1 ? "wizard-step--active" : ""}`}>
+                <span className="wizard-step__num">{step > i + 1 ? "✓" : i + 1}</span>
+                <span className="wizard-step__label">{label}</span>
+              </div>
+            ))}
+          </div>
+
+          {step === 1 && (
+            <div className="wizard-content">
+              <h3 className="wizard-heading">Step 1 — Select Agent Role</h3>
+              <p className="wizard-note">Choose a specialized role for your new AI workforce member.</p>
+              <div className="role-select-grid">
+                {commonRoles.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    className={`role-select-card ${role === r ? "role-select-card--active" : ""}`}
+                    onClick={() => {
+                      setRole(r);
+                      setStep(2);
+                    }}
+                  >
+                    <RoleAvatar role={r} name={r} />
+                    <div style={{ marginTop: "0.5rem", fontWeight: 600 }}>{r.replace(/_/g, " ")}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="wizard-content">
+              <h3 className="wizard-heading">Step 2 — Configure Agent</h3>
+              <label className="field">
+                <span className="field-label">Agent Name</span>
+                <input
+                  className="input"
+                  value={name}
+                  placeholder="e.g. Senior Engineer 3"
+                  onChange={(e) => setName(e.target.value)}
+                  autoFocus
+                />
+              </label>
+              <label className="field" style={{ marginTop: "1rem" }}>
+                <span className="field-label">AI Model (Optional)</span>
+                <input
+                  className="input"
+                  value={model}
+                  placeholder="e.g. gpt-4o, claude-3.5-sonnet"
+                  onChange={(e) => setModel(e.target.value)}
+                />
+                <span className="field-hint">Leave blank to use the default model for this role.</span>
+              </label>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="wizard-content">
+              <h3 className="wizard-heading">Step 3 — Review & Deploy</h3>
+              <dl className="settings-dl">
+                <dt>Role</dt>
+                <dd>{role.replace(/_/g, " ")}</dd>
+                <dt>Name</dt>
+                <dd>{name}</dd>
+                <dt>Model</dt>
+                <dd>{model || "Default"}</dd>
+              </dl>
+              <p className="wizard-success">Agent is ready for deployment. They will be added to the orchestration hub and initialized immediately.</p>
+            </div>
+          )}
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={!name.trim()}
-            onClick={() => { onHire(name.trim(), role); }}
-          >
-            Hire Agent
-          </button>
+          {step > 1 && (
+            <button type="button" className="btn btn-ghost" onClick={() => setStep(step - 1)}>Back</button>
+          )}
+          {step === 1 && (
+            <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          )}
+          {step === 2 && (
+            <button type="button" className="btn btn-primary" disabled={!name.trim()} onClick={() => setStep(3)}>Next: Review →</button>
+          )}
+          {step === 3 && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => onHire(name.trim(), role, model.trim())}
+            >
+              Deploy Agent
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -363,14 +429,14 @@ export function App() {
     }
   }
 
-  async function handleHire(name: string, role: string) {
+  async function handleHire(name: string, role: string, model?: string) {
     setShowHireModal(false);
     setAgentActionLoading(true);
     setError("");
     try {
-      const data = await hireAgent(name, role);
+      const data = await hireAgent(name, role, model);
       setSnapshot(data);
-      setNotice(`Agent "${name}" hired successfully.`);
+      setNotice(`Agent "${name}" deployed successfully.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to hire agent");
     } finally {
@@ -959,10 +1025,10 @@ export function App() {
             <button type="button" className="alert-close" onClick={() => setNotice("")} aria-label="Dismiss">✕</button>
           </div>
         )}
-        {state === "error" && (
+        {error && (
           <div className="alert alert-error" role="alert">
             <span className="alert-icon" aria-hidden="true">⚠</span>
-            Failed to load data: {error}
+            {state === "error" ? `Failed to load data: ${error}` : error}
           </div>
         )}
 
@@ -1180,9 +1246,6 @@ export function App() {
                         onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))}
                       />
                     </label>
-                    {error && !notice && (
-                      <p className="field-error" role="alert">{error}</p>
-                    )}
                     <button
                       type="submit"
                       className="btn btn-primary btn-full"
@@ -1336,7 +1399,6 @@ export function App() {
                           {sending ? "..." : "Send"}
                         </button>
                       </form>
-                      {error && !notice && <p className="field-error" style={{ marginTop: "0.5rem" }} role="alert">{error}</p>}
                     </div>
                   </section>
                 </div>
@@ -1361,6 +1423,10 @@ export function App() {
               >
                 + Hire Agent
               </button>
+            </div>
+
+            <div className="headcount-metric" style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '1rem' }}>
+              Total Headcount: {snapshot?.agents.length ?? 0}
             </div>
 
             <div className="agent-grid">
@@ -1796,6 +1862,7 @@ export function App() {
                       <option value="launch-readiness">Software Co — Launch Readiness</option>
                       <option value="digital-marketing">Digital Marketing Agency</option>
                       <option value="accounting">Accounting Firm</option>
+                      <option value="hr-dashboard-demo">HR Dashboard Demo</option>
                     </select>
                   </label>
                   <button

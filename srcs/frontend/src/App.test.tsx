@@ -436,10 +436,16 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
-    const hireBtn = screen.getByRole("button", { name: "Hire Agent" });
-    expect(hireBtn).toBeDisabled();
+
+    // Step 1
+    const buttons = screen.getAllByRole("button");
+    const softwareEngineerBtn = buttons.find(b => b.textContent?.includes("SOFTWARE ENGINEER"));
+    fireEvent.click(softwareEngineerBtn!);
+
+    const nextBtn = screen.getByRole("button", { name: "Next: Review →" });
+    expect(nextBtn).toBeDisabled();
     fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "New Agent" } });
-    expect(hireBtn).not.toBeDisabled();
+    expect(nextBtn).not.toBeDisabled();
   });
 
   it("successfully hires an agent and shows notice", async () => {
@@ -448,9 +454,19 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
+
+    // Step 1
+    const buttons = screen.getAllByRole("button");
+    const softwareEngineerBtn = buttons.find(b => b.textContent?.includes("SOFTWARE ENGINEER"));
+    fireEvent.click(softwareEngineerBtn!);
+
+    // Step 2
     fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "New Agent" } });
-    fireEvent.click(screen.getByRole("button", { name: "Hire Agent" }));
-    await screen.findByText(/Agent "New Agent" hired successfully/);
+    fireEvent.click(screen.getByRole("button", { name: "Next: Review →" }));
+
+    // Step 3
+    fireEvent.click(screen.getByRole("button", { name: "Deploy Agent" }));
+    await screen.findByText(/Agent "New Agent" deployed successfully/i);
   });
 
   it("shows error when hire agent fails (visible in overview form)", async () => {
@@ -463,13 +479,25 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
+
+    // Step 1
+    const buttons = screen.getAllByRole("button");
+    const softwareEngineerBtn = buttons.find(b => b.textContent?.includes("SOFTWARE ENGINEER"));
+    fireEvent.click(softwareEngineerBtn!);
+
+    // Step 2
     fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "Fail Agent" } });
-    fireEvent.click(screen.getByRole("button", { name: "Hire Agent" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next: Review →" }));
+
+    // Step 3
+    fireEvent.click(screen.getByRole("button", { name: "Deploy Agent" }));
+
     // error is stored in state; navigate to overview where the form renders it
     await waitFor(() => {
       fireEvent.click(screen.getByRole("button", { name: /overview/i }));
     });
-    await screen.findByRole("alert");
+    const alerts = await screen.findAllByRole("alert");
+    expect(alerts.length).toBeGreaterThan(0);
   });
 
   it("changes role select in hire modal", async () => {
@@ -478,11 +506,19 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
-    const roleSelect = screen.getByDisplayValue("SOFTWARE ENGINEER");
-    fireEvent.change(roleSelect, { target: { value: "PRODUCT_MANAGER" } });
+
+    // Step 1
+    const buttons = screen.getAllByRole("button");
+    const pmBtn = buttons.find(b => b.textContent?.includes("PRODUCT MANAGER"));
+    fireEvent.click(pmBtn!);
+
+    // Step 2
     fireEvent.change(screen.getByPlaceholderText(/Senior Engineer/i), { target: { value: "PM Agent" } });
-    fireEvent.click(screen.getByRole("button", { name: "Hire Agent" }));
-    await screen.findByText(/Agent "PM Agent" hired successfully/);
+    fireEvent.click(screen.getByRole("button", { name: "Next: Review →" }));
+
+    // Step 3
+    fireEvent.click(screen.getByRole("button", { name: "Deploy Agent" }));
+    await screen.findByText(/Agent "PM Agent" deployed successfully/);
   });
 
   it("fires an agent and shows success notice", async () => {
