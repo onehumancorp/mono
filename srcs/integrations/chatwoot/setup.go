@@ -23,8 +23,12 @@ func (c *Client) Setup() error {
 		password = "changeme"
 	}
 
-	const maxAttempts = 20
-	const retryDelay = 5 * time.Second
+	maxAttempts := 20
+	retryDelay := 5 * time.Second
+	if os.Getenv("CHATWOOT_TEST_FAST_FAIL") == "true" {
+		maxAttempts = 1
+		retryDelay = time.Millisecond
+	}
 
 	var lastErr error
 	for i := range maxAttempts {
