@@ -23,8 +23,12 @@ func (c *Client) Setup() error {
 		password = "changeme"
 	}
 
-	const maxAttempts = 20
-	const retryDelay = 5 * time.Second
+	maxAttempts := 20
+	retryDelay := 5 * time.Second
+	if os.Getenv("CI") != "" || os.Getenv("GO_TEST") == "true" {
+		maxAttempts = 1
+		retryDelay = 0
+	}
 
 	var lastErr error
 	for i := range maxAttempts {

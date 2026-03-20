@@ -156,3 +156,56 @@ func TestRunReturnsListenError(t *testing.T) {
 		t.Fatalf("expected listen error %v, got %v", wantErr, err)
 	}
 }
+
+func TestNewDemoHandler_ChatwootEnabled(t *testing.T) {
+	t.Setenv("CHATWOOT_ENABLED", "true")
+
+	// Start a mock server for Chatwoot setup
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized) // fail setup quickly
+	}))
+	defer srv.Close()
+	t.Setenv("CHATWOOT_URL", srv.URL)
+
+	handler, hub := newDemoHandler(time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC))
+	if handler == nil {
+		t.Fatal("expected non-nil handler")
+	}
+	if hub == nil {
+		t.Fatal("expected non-nil hub")
+	}
+
+	// Give the goroutine a small amount of time to execute.
+	// We don't need CHATWOOT_TEST_FAST_FAIL, the goroutine will just fail and log.
+	time.Sleep(100 * time.Millisecond)
+}
+
+func TestMain_TelemetryInitFailure(t *testing.T) {
+	originalInitTelemetry := initTelemetry
+	originalNow := nowUTC
+	originalListen := listenForMain
+	originalFatal := fatalForMain
+	t.Cleanup(func() {
+		initTelemetry = originalInitTelemetry
+		nowUTC = originalNow
+		listenForMain = originalListen
+		fatalForMain = originalFatal
+	})
+
+	initTelemetry = func() (func(), error) {
+		return nil, errors.New("mock telemetry failure")
+	}
+
+	nowUTC = func() time.Time {
+		return time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC)
+	}
+	listenForMain = func(addr string, handler http.Handler) error {
+		return nil
+	}
+	fatalForMain = func(...any) {
+		t.Fatalf("fatal should not be called")
+	}
+
+	// This should run without fatal, but print a warning about telemetry failure
+	main()
+}
