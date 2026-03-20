@@ -53,13 +53,13 @@ type Message struct {
 	occurredAtUnix int64
 }
 
-func (m *Message) GetId() string             { return m.id }
-func (m *Message) GetFromAgent() string      { return m.fromAgent }
-func (m *Message) GetToAgent() string        { return m.toAgent }
-func (m *Message) GetType() string           { return m.msgType }
-func (m *Message) GetContent() string        { return m.content }
-func (m *Message) GetMeetingId() string      { return m.meetingId }
-func (m *Message) GetOccurredAtUnix() int64  { return m.occurredAtUnix }
+func (m *Message) GetId() string            { return m.id }
+func (m *Message) GetFromAgent() string     { return m.fromAgent }
+func (m *Message) GetToAgent() string       { return m.toAgent }
+func (m *Message) GetType() string          { return m.msgType }
+func (m *Message) GetContent() string       { return m.content }
+func (m *Message) GetMeetingId() string     { return m.meetingId }
+func (m *Message) GetOccurredAtUnix() int64 { return m.occurredAtUnix }
 
 type Message_builder struct {
 	Id             string
@@ -88,10 +88,10 @@ type MeetingRoom struct {
 	transcript   []*Message
 }
 
-func (r *MeetingRoom) GetId() string              { return r.id }
-func (r *MeetingRoom) GetAgenda() string          { return r.agenda }
-func (r *MeetingRoom) GetParticipants() []string  { return r.participants }
-func (r *MeetingRoom) GetTranscript() []*Message  { return r.transcript }
+func (r *MeetingRoom) GetId() string             { return r.id }
+func (r *MeetingRoom) GetAgenda() string         { return r.agenda }
+func (r *MeetingRoom) GetParticipants() []string { return r.participants }
+func (r *MeetingRoom) GetTranscript() []*Message { return r.transcript }
 
 type MeetingRoom_builder struct {
 	Id           string
@@ -136,8 +136,8 @@ type OpenMeetingRequest struct {
 	participants []string
 }
 
-func (r *OpenMeetingRequest) GetMeetingId() string     { return r.meetingId }
-func (r *OpenMeetingRequest) GetAgenda() string        { return r.agenda }
+func (r *OpenMeetingRequest) GetMeetingId() string      { return r.meetingId }
+func (r *OpenMeetingRequest) GetAgenda() string         { return r.agenda }
 func (r *OpenMeetingRequest) GetParticipants() []string { return r.participants }
 
 type OpenMeetingRequest_builder struct {

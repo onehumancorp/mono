@@ -782,7 +782,7 @@ func TestSendChatMessageWithCreds(t *testing.T) {
 	r := NewRegistry()
 	_, _ = r.Connect("telegram", "", IntegrationCredentials{
 		BotToken: "tok",
-		ChatID: "chat",
+		ChatID:   "chat",
 	})
 	_, err := r.SendChatMessage("telegram", "", "agent", "hello", "", testNow)
 	if err == nil {
@@ -944,7 +944,7 @@ func TestTestConnectionTelegram(t *testing.T) {
 
 	err := r.TestConnection("telegram", IntegrationCredentials{
 		BotToken: "tok",
-		ChatID: "chat",
+		ChatID:   "chat",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -952,7 +952,7 @@ func TestTestConnectionTelegram(t *testing.T) {
 
 	err = r.TestConnection("telegram", IntegrationCredentials{
 		BotToken: "",
-		ChatID: "chat",
+		ChatID:   "chat",
 	})
 	if err == nil {
 		t.Fatalf("expected error for missing bot token")
@@ -960,7 +960,7 @@ func TestTestConnectionTelegram(t *testing.T) {
 
 	err = r.TestConnection("telegram", IntegrationCredentials{
 		BotToken: "tok",
-		ChatID: "",
+		ChatID:   "",
 	})
 	if err == nil {
 		t.Fatalf("expected error for missing chat id")

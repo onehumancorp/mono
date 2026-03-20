@@ -264,7 +264,6 @@ func TestHandleTestResults_UnknownType(t *testing.T) {
 	}
 }
 
-
 func TestApproveForProduction(t *testing.T) {
 	_, orc := setupHubAndOrchestrator(t)
 

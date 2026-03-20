@@ -20,10 +20,10 @@ var (
 	requestCounter   metric.Int64Counter
 	latencyHistogram metric.Float64Histogram
 
-	tokenUsageCounter       metric.Int64Counter
-	agentApiCallsCounter    metric.Int64Counter
+	tokenUsageCounter        metric.Int64Counter
+	agentApiCallsCounter     metric.Int64Counter
 	humanInteractionsCounter metric.Int64Counter
-	meetingEventsCounter    metric.Int64Counter
+	meetingEventsCounter     metric.Int64Counter
 )
 
 // InitTelemetry configures and starts the OpenTelemetry metrics provider with a Prometheus exporter.
@@ -43,7 +43,7 @@ func InitTelemetry() (func(), error) {
 	otel.SetMeterProvider(provider)
 
 	meter = provider.Meter("github.com/onehumancorp/mono/ohc")
-	
+
 	requestCounter, err = meter.Int64Counter(
 		"http_requests_total",
 		metric.WithDescription("Total number of HTTP requests"),

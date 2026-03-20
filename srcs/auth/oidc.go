@@ -207,11 +207,11 @@ func ValidateOIDCToken(tokenStr string, cfg OIDCConfig) (*Claims, error) {
 		RealmAccess       struct {
 			Roles []string `json:"roles"`
 		} `json:"realm_access"`
-		Iss string   `json:"iss"`
+		Iss string      `json:"iss"`
 		Aud interface{} `json:"aud"`
-		Iat int64    `json:"iat"`
-		Exp int64    `json:"exp"`
-		Jti string   `json:"jti"`
+		Iat int64       `json:"iat"`
+		Exp int64       `json:"exp"`
+		Jti string      `json:"jti"`
 	}
 	if err := json.Unmarshal(payBytes, &raw); err != nil {
 		return nil, fmt.Errorf("parse OIDC claims: %w", err)

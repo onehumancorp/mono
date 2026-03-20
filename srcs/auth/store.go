@@ -83,9 +83,9 @@ type Store struct {
 	roles   map[string]*Role
 	byName  map[string]*User
 	byEmail map[string]*User
-	byOIDC  map[string]*User             // OIDC subject → User
-	revoked map[string]time.Time         // JTI → expiry (for token revocation)
-	secret  []byte                       // HS256 signing secret
+	byOIDC  map[string]*User     // OIDC subject → User
+	revoked map[string]time.Time // JTI → expiry (for token revocation)
+	secret  []byte               // HS256 signing secret
 	oidcCfg OIDCConfig
 }
 
