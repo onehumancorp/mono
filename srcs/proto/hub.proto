@@ -13,6 +13,7 @@ message Agent {
   string role = 3;
   string organization_id = 4;
   string status = 5;
+  string provider_type = 6;
 }
 
 message Message {
