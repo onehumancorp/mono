@@ -17,10 +17,11 @@ var publicPaths = []string{
 	"/api/auth/login",
 }
 
-// Middleware returns an HTTP middleware that enforces JWT authentication.
-// Requests to public paths pass through unauthenticated.
-// All other requests must carry a valid Bearer token in the Authorization header
-// or an "ohc_token" cookie.
+// Summary: Middleware returns an HTTP middleware that enforces JWT authentication. Requests to public paths pass through unauthenticated. All other requests must carry a valid Bearer token in the Authorization header or an "ohc_token" cookie.
+// Params: store
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func Middleware(store *Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -49,15 +50,21 @@ func Middleware(store *Store) func(http.Handler) http.Handler {
 	}
 }
 
-// ClaimsFromContext extracts auth claims set by Middleware.
-// Returns nil if no claims are present (public or in-process request).
+// Summary: ClaimsFromContext extracts auth claims set by Middleware. Returns nil if no claims are present (public or in-process request).
+// Params: ctx
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func ClaimsFromContext(ctx context.Context) *Claims {
 	v, _ := ctx.Value(claimsContextKey).(*Claims)
 	return v
 }
 
-// RequireRole returns a middleware that further restricts access to users
-// that hold the given role (or "admin").
+// Summary: RequireRole returns a middleware that further restricts access to users that hold the given role (or "admin").
+// Params: role, next
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func RequireRole(role string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		claims := ClaimsFromContext(r.Context())
@@ -106,4 +113,9 @@ func jsonString(s string) string {
 	return `"` + strings.ReplaceAll(strings.ReplaceAll(s, `\`, `\\`), `"`, `\"`) + `"`
 }
 
+// Summary: ClaimsContextKeyForTest is undocumented.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 const ClaimsContextKeyForTest = claimsContextKey

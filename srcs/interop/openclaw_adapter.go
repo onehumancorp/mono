@@ -5,18 +5,31 @@ import (
 	"fmt"
 )
 
-// OpenClawAdapter implements UniversalAdapter for OpenClaw.
+// Summary: OpenClawAdapter implements UniversalAdapter for OpenClaw.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type OpenClawAdapter struct {
 	Identity string
 }
 
-// NewOpenClawAdapter creates a new OpenClawAdapter.
+// Summary: NewOpenClawAdapter creates a new OpenClawAdapter.
+// Params: identity
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func NewOpenClawAdapter(identity string) *OpenClawAdapter {
 	return &OpenClawAdapter{
 		Identity: identity,
 	}
 }
 
+// Summary: SyncState is undocumented.
+// Params: ctx, state
+// Returns: None
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (a *OpenClawAdapter) SyncState(ctx context.Context, state *State) error {
 	// Mock K8s/LangGraph state sync
 	if state == nil {
@@ -31,6 +44,11 @@ func (a *OpenClawAdapter) SyncState(ctx context.Context, state *State) error {
 	return nil
 }
 
+// Summary: ExecuteCommand is undocumented.
+// Params: ctx, cmd
+// Returns: Returns the computed value
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (a *OpenClawAdapter) ExecuteCommand(ctx context.Context, cmd string) (string, error) {
 	if cmd == "" {
 		return "", fmt.Errorf("empty command")

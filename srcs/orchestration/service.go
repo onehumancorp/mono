@@ -19,9 +19,18 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Status indicates the current operational phase of an AI agent within the workforce.
+// Summary: Status indicates the current operational phase of an AI agent within the workforce.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Status string
 
+// Summary: StatusIdle is undocumented.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 const (
 	StatusIdle      Status = "IDLE"
 	StatusActive    Status = "ACTIVE"
@@ -29,7 +38,11 @@ const (
 	StatusBlocked   Status = "BLOCKED"
 )
 
-// Event type constants for the asynchronous pub/sub agent interaction protocol.
+// Summary: Event type constants for the asynchronous pub/sub agent interaction protocol.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 const (
 	EventTask           = "task"
 	EventStatus         = "status"
@@ -46,7 +59,11 @@ const (
 	EventApprovalNeeded = "ApprovalNeeded"
 )
 
-// Agent represents an active, instantiated worker within the AI organisation.
+// Summary: Agent represents an active, instantiated worker within the AI organisation.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Agent struct {
 	ID             string `json:"id"`
 	Name           string `json:"name"`
@@ -59,7 +76,11 @@ type Agent struct {
 	ProviderType string `json:"providerType,omitempty"`
 }
 
-// Message encapsulates a discrete event, command, or context update passed between agents or rooms.
+// Summary: Message encapsulates a discrete event, command, or context update passed between agents or rooms.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Message struct {
 	ID         string    `json:"id"`
 	FromAgent  string    `json:"fromAgent"`
@@ -70,7 +91,11 @@ type Message struct {
 	OccurredAt time.Time `json:"occurredAt"`
 }
 
-// MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
+// Summary: MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type MeetingRoom struct {
 	ID           string    `json:"id"`
 	Agenda       string    `json:"agenda,omitempty"`
@@ -78,9 +103,11 @@ type MeetingRoom struct {
 	Transcript   []Message `json:"transcript"`
 }
 
-// Hub acts as the thread-safe central message broker and runtime state manager for the AI workforce.
-//
-// Constraints: Must be accessed via its exported methods to preserve data race safety.
+// Summary: Hub acts as the thread-safe central message broker and runtime state manager for the AI workforce. Constraints: Must be accessed via its exported methods to preserve data race safety.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Hub struct {
 	mu            sync.RWMutex
 	agents        map[string]Agent
@@ -90,9 +117,11 @@ type Hub struct {
 	subs          map[string][]chan struct{}
 }
 
-// NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
-//
+// Summary: NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
+// Params: None
 // Returns: An instantiated *Hub ready to register agents and route events.
+// Errors: None
+// Side Effects: None
 func NewHub() *Hub {
 	return &Hub{
 		agents:   map[string]Agent{},
@@ -102,10 +131,11 @@ func NewHub() *Hub {
 	}
 }
 
-// RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.
-//
-// Parameters:
-//   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
+// Summary: RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status. Parameters: - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
+// Params: agent
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (h *Hub) RegisterAgent(agent Agent) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -117,24 +147,33 @@ func (h *Hub) RegisterAgent(agent Agent) {
 	h.agents[agent.ID] = agent
 }
 
+// Summary: SetMinimaxAPIKey is undocumented.
+// Params: key
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (h *Hub) SetMinimaxAPIKey(key string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.minimaxAPIKey = key
 }
 
+// Summary: MinimaxAPIKey is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (h *Hub) MinimaxAPIKey() string {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.minimaxAPIKey
 }
 
-// Agent retrieves the runtime state of a specific worker by ID.
-//
-// Parameters:
-//   - id: string; The unique identifier of the agent.
-//
+// Summary: Agent retrieves the runtime state of a specific worker by ID. Parameters: - id: string; The unique identifier of the agent.
+// Params: id
 // Returns: The matching Agent object and a boolean indicating if it exists in the registry.
+// Errors: None
+// Side Effects: None
 func (h *Hub) Agent(id string) (Agent, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -143,13 +182,11 @@ func (h *Hub) Agent(id string) (Agent, bool) {
 	return agent, ok
 }
 
-// OpenMeeting instantiates a new collaborative context window and marks all participants as InMeeting.
-//
-// Parameters:
-//   - id: string; Unique identifier for the room.
-//   - participants: []string; A list of agent IDs to be enrolled in the discussion.
-//
+// Summary: OpenMeeting instantiates a new collaborative context window and marks all participants as InMeeting. Parameters: - id: string; Unique identifier for the room. - participants: []string; A list of agent IDs to be enrolled in the discussion.
+// Params: id, participants
 // Returns: The instantiated MeetingRoom.
+// Errors: None
+// Side Effects: None
 func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -166,14 +203,11 @@ func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 	return meeting
 }
 
-// OpenMeetingWithAgenda creates a meeting room with an explicit agenda descriptor.
-//
-// Parameters:
-//   - id: string; Unique identifier for the room.
-//   - agenda: string; The primary objective guiding the agents' conversation.
-//   - participants: []string; A list of agent IDs to be enrolled in the discussion.
-//
+// Summary: OpenMeetingWithAgenda creates a meeting room with an explicit agenda descriptor. Parameters: - id: string; Unique identifier for the room. - agenda: string; The primary objective guiding the agents' conversation. - participants: []string; A list of agent IDs to be enrolled in the discussion.
+// Params: id, agenda, participants
 // Returns: The instantiated MeetingRoom.
+// Errors: None
+// Side Effects: None
 func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -190,10 +224,11 @@ func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) Me
 	return meeting
 }
 
-// FireAgent removes an agent from the hub and clears their inbox.
-//
-// Parameters:
-//   - id: string; The unique identifier of the agent to terminate.
+// Summary: FireAgent removes an agent from the hub and clears their inbox. Parameters: - id: string; The unique identifier of the agent to terminate.
+// Params: id
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (h *Hub) FireAgent(id string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -202,12 +237,11 @@ func (h *Hub) FireAgent(id string) {
 	delete(h.inbox, id)
 }
 
-// Publish validates and routes a message to a direct recipient, a meeting room, or both.
-//
-// Parameters:
-//   - message: Message; The event payload containing routing headers and content.
-//
+// Summary: Publish validates and routes a message to a direct recipient, a meeting room, or both. Parameters: - message: Message; The event payload containing routing headers and content.
+// Params: message
 // Returns: An error if the sender or recipient agents do not exist, or if the target meeting is unrecognised.
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (h *Hub) Publish(message Message) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -269,7 +303,11 @@ func (h *Hub) Publish(message Message) error {
 	return nil
 }
 
-// Subscribe returns a channel that receives real-time messages for the given agent.
+// Summary: Subscribe returns a channel that receives real-time messages for the given agent.
+// Params: agentID
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -294,12 +332,11 @@ func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 	return ch, unsubscribe
 }
 
-// Inbox retrieves all undelivered or direct messages routed exclusively to a single agent.
-//
-// Parameters:
-//   - agentID: string; The unique identifier of the worker.
-//
+// Summary: Inbox retrieves all undelivered or direct messages routed exclusively to a single agent. Parameters: - agentID: string; The unique identifier of the worker.
+// Params: agentID
 // Returns: A slice of direct Message objects.
+// Errors: None
+// Side Effects: None
 func (h *Hub) Inbox(agentID string) []Message {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -313,12 +350,11 @@ func (h *Hub) Inbox(agentID string) []Message {
 	return res
 }
 
-// Meeting retrieves the current state and transcript of a specified virtual meeting room.
-//
-// Parameters:
-//   - id: string; The unique identifier of the room.
-//
+// Summary: Meeting retrieves the current state and transcript of a specified virtual meeting room. Parameters: - id: string; The unique identifier of the room.
+// Params: id
 // Returns: The matching MeetingRoom object and a boolean indicating if it exists.
+// Errors: None
+// Side Effects: None
 func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -328,9 +364,11 @@ func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 	return meeting, ok
 }
 
-// Meetings fetches a point-in-time snapshot of all active meeting rooms.
-//
+// Summary: Meetings fetches a point-in-time snapshot of all active meeting rooms.
+// Params: None
 // Returns: A slice containing all MeetingRoom objects.
+// Errors: None
+// Side Effects: None
 func (h *Hub) Meetings() []MeetingRoom {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -344,9 +382,11 @@ func (h *Hub) Meetings() []MeetingRoom {
 	return meetings
 }
 
-// Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID.
-//
+// Summary: Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID.
+// Params: None
 // Returns: A slice of all active Agent objects in the orchestration Hub.
+// Errors: None
+// Side Effects: None
 func (h *Hub) Agents() []Agent {
 	h.mu.RLock()
 	agents := make([]Agent, 0, len(h.agents))
@@ -363,20 +403,39 @@ func (h *Hub) Agents() []Agent {
 	return agents
 }
 
-// HubServiceServer implements the gRPC HubService defined in hub.proto.
+// Summary: HubServiceServer implements the gRPC HubService defined in hub.proto.
+// Params: s, hub
+// Returns: None
+// Errors: None
+// Side Effects: None
 func RegisterHubService(s *grpc.Server, hub *Hub) {
 	pb.RegisterHubServiceServer(s, &HubServiceServer{hub: hub})
 }
 
+// Summary: HubServiceServer is undocumented.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type HubServiceServer struct {
 	pb.UnimplementedHubServiceServer
 	hub *Hub
 }
 
+// Summary: NewHubServiceServer is undocumented.
+// Params: hub
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func NewHubServiceServer(hub *Hub) *HubServiceServer {
 	return &HubServiceServer{hub: hub}
 }
 
+// Summary: RegisterAgent is undocumented.
+// Params: ctx, req
+// Returns: Returns the computed value
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAgentRequest) (*pb.RegisterAgentResponse, error) {
 	agentReq := req.GetAgent()
 	agent := Agent{
@@ -391,6 +450,11 @@ func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAg
 	return pb.RegisterAgentResponse_builder{Success: true}.Build(), nil
 }
 
+// Summary: OpenMeeting is undocumented.
+// Params: ctx, req
+// Returns: Returns the computed value
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingRequest) (*pb.MeetingRoom, error) {
 	meeting := s.hub.OpenMeetingWithAgenda(req.GetMeetingId(), req.GetAgenda(), req.GetParticipants())
 	return pb.MeetingRoom_builder{
@@ -400,6 +464,11 @@ func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingR
 	}.Build(), nil
 }
 
+// Summary: Publish is undocumented.
+// Params: ctx, req
+// Returns: Returns the computed value
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRequest) (*pb.PublishMessageResponse, error) {
 	msgReq := req.GetMessage()
 	msg := Message{
@@ -417,6 +486,11 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 	return pb.PublishMessageResponse_builder{Success: true}.Build(), nil
 }
 
+// Summary: StreamMessages is undocumented.
+// Params: req, stream
+// Returns: None
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream pb.HubService_StreamMessagesServer) error {
 	agentID := req.GetAgentId()
 
@@ -467,6 +541,11 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 	}
 }
 
+// Summary: Reason is undocumented.
+// Params: ctx, req
+// Returns: Returns the computed value
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*pb.ReasonResponse, error) {
 	client := NewMinimaxClient(s.hub.MinimaxAPIKey())
 	content, err := client.Reason(ctx, req.GetPrompt())
@@ -480,11 +559,20 @@ func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*
 // ⚡ BOLT: [Configurable endpoint] - Randomized Selection from Top 5
 var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
 
-// MinimaxClient handles interaction with the Minimax Model 2.7.
+// Summary: MinimaxClient handles interaction with the Minimax Model 2.7.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type MinimaxClient struct {
 	APIKey string
 }
 
+// Summary: NewMinimaxClient is undocumented.
+// Params: apiKey
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func NewMinimaxClient(apiKey string) *MinimaxClient {
 	return &MinimaxClient{APIKey: apiKey}
 }
@@ -495,6 +583,11 @@ var bufferPool = sync.Pool{
 	},
 }
 
+// Summary: Reason is undocumented.
+// Params: ctx, prompt
+// Returns: Returns the computed value
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, error) {
 	if c.APIKey == "" {
 		return "", errors.New("minimax API key is not configured")

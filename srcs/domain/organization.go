@@ -2,9 +2,18 @@ package domain
 
 import "time"
 
-// Role represents a designated job title or operational function within the AI workforce.
+// Summary: Role represents a designated job title or operational function within the AI workforce.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Role string
 
+// Summary: RoleCEO is undocumented.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 const (
 	RoleCEO                 Role = "CEO"
 	RoleProductManager      Role = "PRODUCT_MANAGER"
@@ -30,9 +39,11 @@ const (
 	RolePayrollManager Role = "PAYROLL_MANAGER"
 )
 
-// Member defines an individual contributor within the organisation.
-//
-// Constraints: An agent member must have isHuman set to false. The CEO must be a human.
+// Summary: Member defines an individual contributor within the organisation. Constraints: An agent member must have isHuman set to false. The CEO must be a human.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Member struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
@@ -41,7 +52,11 @@ type Member struct {
 	IsHuman   bool   `json:"isHuman"`
 }
 
-// RoleProfile stores the playbook, prompt, and capabilities that instruct an AI on how to perform a Role.
+// Summary: RoleProfile stores the playbook, prompt, and capabilities that instruct an AI on how to perform a Role.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type RoleProfile struct {
 	Role          Role     `json:"role"`
 	BasePrompt    string   `json:"basePrompt"`
@@ -49,7 +64,11 @@ type RoleProfile struct {
 	ContextInputs []string `json:"contextInputs"`
 }
 
-// Organization aggregates the hierarchy, workforce details, and role playbooks for a domain.
+// Summary: Organization aggregates the hierarchy, workforce details, and role playbooks for a domain.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Organization struct {
 	ID           string        `json:"id"`
 	Name         string        `json:"name"`
@@ -60,15 +79,11 @@ type Organization struct {
 	RoleProfiles []RoleProfile `json:"roleProfiles"`
 }
 
-// NewSoftwareCompany constructs a pre-configured engineering organisation with standard tech roles.
-//
-// Parameters:
-//   - id: string; Unique identifier for the organization.
-//   - name: string; The display name for the company.
-//   - ceoName: string; The human CEO's name.
-//   - now: time.Time; The organization's creation timestamp.
-//
+// Summary: NewSoftwareCompany constructs a pre-configured engineering organisation with standard tech roles. Parameters: - id: string; Unique identifier for the organization. - name: string; The display name for the company. - ceoName: string; The human CEO's name. - now: time.Time; The organization's creation timestamp.
+// Params: id, name, ceoName, now
 // Returns: A fully populated software company Organization ready for the orchestration Hub.
+// Errors: None
+// Side Effects: None
 func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	directorID := id + "-director-eng"
@@ -96,12 +111,11 @@ func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 	}
 }
 
-// MemberByID retrieves a specific team member from the organisation by ID.
-//
-// Parameters:
-//   - id: string; The unique identifier of the member.
-//
+// Summary: MemberByID retrieves a specific team member from the organisation by ID. Parameters: - id: string; The unique identifier of the member.
+// Params: id
 // Returns: The Member and a boolean indicating if the member was found.
+// Errors: None
+// Side Effects: None
 func (o Organization) MemberByID(id string) (Member, bool) {
 	for _, member := range o.Members {
 		if member.ID == id {
@@ -112,12 +126,11 @@ func (o Organization) MemberByID(id string) (Member, bool) {
 	return Member{}, false
 }
 
-// MembersByManager fetches all direct reports for a given manager ID.
-//
-// Parameters:
-//   - managerID: string; The unique identifier of the manager.
-//
+// Summary: MembersByManager fetches all direct reports for a given manager ID. Parameters: - managerID: string; The unique identifier of the manager.
+// Params: managerID
 // Returns: A slice of Member objects representing the direct reports.
+// Errors: None
+// Side Effects: None
 func (o Organization) MembersByManager(managerID string) []Member {
 	var members []Member
 	for _, member := range o.Members {
@@ -129,12 +142,11 @@ func (o Organization) MembersByManager(managerID string) []Member {
 	return members
 }
 
-// RoleProfile retrieves the execution playbook for a specific role within this organisation.
-//
-// Parameters:
-//   - role: Role; The role archetype to lookup.
-//
+// Summary: RoleProfile retrieves the execution playbook for a specific role within this organisation. Parameters: - role: Role; The role archetype to lookup.
+// Params: role
 // Returns: The RoleProfile and a boolean indicating if the playbook exists.
+// Errors: None
+// Side Effects: None
 func (o Organization) RoleProfile(role Role) (RoleProfile, bool) {
 	for _, profile := range o.RoleProfiles {
 		if profile.Role == role {
@@ -262,15 +274,11 @@ func defaultSoftwareCompanyRoleProfiles() []RoleProfile {
 	}
 }
 
-// NewDigitalMarketingAgency constructs a pre-configured marketing organisation with standard growth roles.
-//
-// Parameters:
-//   - id: string; Unique identifier for the organization.
-//   - name: string; The display name for the agency.
-//   - ceoName: string; The human CEO's name.
-//   - now: time.Time; The organization's creation timestamp.
-//
+// Summary: NewDigitalMarketingAgency constructs a pre-configured marketing organisation with standard growth roles. Parameters: - id: string; Unique identifier for the organization. - name: string; The display name for the agency. - ceoName: string; The human CEO's name. - now: time.Time; The organization's creation timestamp.
+// Params: id, name, ceoName, now
 // Returns: A fully populated marketing agency Organization.
+// Errors: None
+// Side Effects: None
 func NewDigitalMarketingAgency(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	marketingDirectorID := id + "-director-mkt"
@@ -350,15 +358,11 @@ func defaultDigitalMarketingRoleProfiles() []RoleProfile {
 	}
 }
 
-// NewAccountingFirm constructs a pre-configured financial services organisation with audit and tax roles.
-//
-// Parameters:
-//   - id: string; Unique identifier for the organization.
-//   - name: string; The display name for the firm.
-//   - ceoName: string; The human CEO's name.
-//   - now: time.Time; The organization's creation timestamp.
-//
+// Summary: NewAccountingFirm constructs a pre-configured financial services organisation with audit and tax roles. Parameters: - id: string; Unique identifier for the organization. - name: string; The display name for the firm. - ceoName: string; The human CEO's name. - now: time.Time; The organization's creation timestamp.
+// Params: id, name, ceoName, now
 // Returns: A fully populated accounting firm Organization.
+// Errors: None
+// Side Effects: None
 func NewAccountingFirm(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	cfoID := id + "-cfo"

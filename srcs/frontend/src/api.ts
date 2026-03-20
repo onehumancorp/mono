@@ -40,18 +40,22 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
 }
 
 /**
- * Fetches the current organization's hierarchical and structural state.
- *
- * @returns A Promise resolving to the Organization object.
+ * Summary: Fetches the current organization's hierarchical and structural state.
+ * Params: None
+ * Returns: A Promise resolving to the Organization object.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchOrganization(): Promise<Organization> {
   return authedGetJSON<Organization>("/api/org");
 }
 
 /**
- * Fetches all active virtual meeting rooms and their transcripts.
- *
- * @returns A Promise resolving to an array of MeetingRoom objects.
+ * Summary: Fetches all active virtual meeting rooms and their transcripts.
+ * Params: None
+ * Returns: A Promise resolving to an array of MeetingRoom objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchMeetings(): Promise<MeetingRoom[]> {
   return authedGetJSON<MeetingRoom[]>("/api/meetings").then(normalizeMeetings);
@@ -133,11 +137,10 @@ function normalizeDashboard(response: Record<string, unknown>): DashboardSnapsho
 }
 
 /**
- * Fetches the accumulated API token costs and usage metrics for the organization.
- *
- * @returns A Promise resolving to the CostSummary object containing breakdown by agent and model.
- * @throws An Error if the request fails or returns a non-2xx status code.
- *
+ * Summary: Fetches the accumulated API token costs and usage metrics for the organization.
+ * Params: None
+ * Returns: A Promise resolving to the CostSummary object containing breakdown by agent and model.
+ * Errors: An Error if the request fails or returns a non-2xx status code.
  * Side Effects: Executes an HTTP GET request to /api/costs.
  */
 export async function fetchCosts(): Promise<CostSummary> {
@@ -146,11 +149,10 @@ export async function fetchCosts(): Promise<CostSummary> {
 }
 
 /**
- * Fetches a complete, normalized snapshot of the organization's current orchestration state.
- *
- * @returns A Promise resolving to a DashboardSnapshot containing organization details, active meetings, and real-time costs.
- * @throws An Error if the request fails or returns a non-2xx status code.
- *
+ * Summary: Fetches a complete, normalized snapshot of the organization's current orchestration state.
+ * Params: None
+ * Returns: A Promise resolving to a DashboardSnapshot containing organization details, active meetings, and real-time costs.
+ * Errors: An Error if the request fails or returns a non-2xx status code.
  * Side Effects: Executes an HTTP GET request to /api/dashboard.
  */
 export async function fetchDashboard(): Promise<DashboardSnapshot> {
@@ -159,10 +161,11 @@ export async function fetchDashboard(): Promise<DashboardSnapshot> {
 }
 
 /**
- * Dispatches a message or task from one agent to another within a specific meeting.
- *
- * @param form - An object containing the sender, recipient, meeting ID, type, and content of the message.
- * @returns A Promise resolving when the message is successfully published.
+ * Summary: Dispatches a message or task from one agent to another within a specific meeting.
+ * Params: form - An object containing the sender, recipient, meeting ID, type, and content of the message.
+ * Returns: A Promise resolving when the message is successfully published.
+ * Errors: None
+ * Side Effects: None
  */
 export async function sendMessage(form: {
   fromAgent: string;
@@ -206,49 +209,55 @@ export async function sendMessage(form: {
 }
 
 /**
- * Instantiates a new agent and assigns it to the organizational workforce.
- *
- * @param name - The display name for the new agent.
- * @param role - The specific role profile the agent will assume.
- * @returns A Promise resolving to the updated DashboardSnapshot.
+ * Summary: Instantiates a new agent and assigns it to the organizational workforce.
+ * Params: name - The display name for the new agent., role - The specific role profile the agent will assume.
+ * Returns: A Promise resolving to the updated DashboardSnapshot.
+ * Errors: None
+ * Side Effects: None
  */
 export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
   return authedPostJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
 }
 
 /**
- * Terminates an agent's process and removes it from the orchestration hub.
- *
- * @param agentId - The unique identifier of the agent to fire.
- * @returns A Promise resolving to the updated DashboardSnapshot.
+ * Summary: Terminates an agent's process and removes it from the orchestration hub.
+ * Params: agentId - The unique identifier of the agent to fire.
+ * Returns: A Promise resolving to the updated DashboardSnapshot.
+ * Errors: None
+ * Side Effects: None
  */
 export function fireAgent(agentId: string): Promise<DashboardSnapshot> {
   return authedPostJSON<DashboardSnapshot>("/api/agents/fire", { agentId });
 }
 
 /**
- * Retrieves available organizational domain templates (e.g., Software Company).
- *
- * @returns A Promise resolving to an array of DomainInfo objects.
+ * Summary: Retrieves available organizational domain templates (e.g., Software Company).
+ * Params: None
+ * Returns: A Promise resolving to an array of DomainInfo objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchDomains(): Promise<DomainInfo[]> {
   return getJSON<DomainInfo[]>("/api/domains");
 }
 
 /**
- * Retrieves the catalog of active tools registered in the MCP gateway.
- *
- * @returns A Promise resolving to an array of MCPTool objects.
+ * Summary: Retrieves the catalog of active tools registered in the MCP gateway.
+ * Params: None
+ * Returns: A Promise resolving to an array of MCPTool objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchMCPTools(): Promise<MCPTool[]> {
   return getJSON<MCPTool[]>("/api/mcp/tools");
 }
 
 /**
- * Overrides current state with a predefined scenario for demonstration purposes.
- *
- * @param scenario - The identifier string of the scenario to seed.
- * @returns A Promise resolving to the resulting DashboardSnapshot.
+ * Summary: Overrides current state with a predefined scenario for demonstration purposes.
+ * Params: scenario - The identifier string of the scenario to seed.
+ * Returns: A Promise resolving to the resulting DashboardSnapshot.
+ * Errors: None
+ * Side Effects: None
  */
 export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
   return postJSON<DashboardSnapshot>("/api/dev/seed", { scenario });
@@ -256,19 +265,22 @@ export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 
 /**
- * Retrieves all pending and resolved confidence gating approval requests.
- *
- * @returns A Promise resolving to an array of ApprovalRequest objects.
+ * Summary: Retrieves all pending and resolved confidence gating approval requests.
+ * Params: None
+ * Returns: A Promise resolving to an array of ApprovalRequest objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchApprovals(): Promise<ApprovalRequest[]> {
   return getJSON<ApprovalRequest[]>("/api/approvals");
 }
 
 /**
- * Submits a new request for human manager sign-off on a high-risk action.
- *
- * @param body - An object defining the action, reason, estimated cost, and risk level.
- * @returns A Promise resolving to the newly created ApprovalRequest.
+ * Summary: Submits a new request for human manager sign-off on a high-risk action.
+ * Params: body - An object defining the action, reason, estimated cost, and risk level.
+ * Returns: A Promise resolving to the newly created ApprovalRequest.
+ * Errors: None
+ * Side Effects: None
  */
 export function requestApproval(body: {
   agentId: string;
@@ -281,12 +293,11 @@ export function requestApproval(body: {
 }
 
 /**
- * Submits the human manager's decision (approve/reject) for an approval request.
- *
- * @param approvalId - The unique ID of the pending approval request.
- * @param decision - The decision status, either 'approve' or 'reject'.
- * @param decidedBy - Optional identifier for the human manager who made the decision.
- * @returns A Promise resolving to an updated array of ApprovalRequest objects.
+ * Summary: Submits the human manager's decision (approve/reject) for an approval request.
+ * Params: approvalId - The unique ID of the pending approval request., decision - The decision status, either 'approve' or 'reject'., decidedBy - Optional identifier for the human manager who made the decision.
+ * Returns: A Promise resolving to an updated array of ApprovalRequest objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function decideApproval(
   approvalId: string,
@@ -299,19 +310,22 @@ export function decideApproval(
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
 
 /**
- * Retrieves all warm handoff escalations across the organization.
- *
- * @returns A Promise resolving to an array of HandoffPackage objects.
+ * Summary: Retrieves all warm handoff escalations across the organization.
+ * Params: None
+ * Returns: A Promise resolving to an array of HandoffPackage objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchHandoffs(): Promise<HandoffPackage[]> {
   return getJSON<HandoffPackage[]>("/api/handoffs");
 }
 
 /**
- * Escalates a complex task from an autonomous agent to a human manager.
- *
- * @param body - The handoff package containing context, intent, and failed attempts.
- * @returns A Promise resolving to the newly created HandoffPackage.
+ * Summary: Escalates a complex task from an autonomous agent to a human manager.
+ * Params: body - The handoff package containing context, intent, and failed attempts.
+ * Returns: A Promise resolving to the newly created HandoffPackage.
+ * Errors: None
+ * Side Effects: None
  */
 export function createHandoff(body: {
   fromAgentId: string;
@@ -326,9 +340,11 @@ export function createHandoff(body: {
 // ── Identity Management ───────────────────────────────────────────────────────
 
 /**
- * Retrieves the SPIFFE SVID certificates issued to the current workforce.
- *
- * @returns A Promise resolving to an array of AgentIdentity objects.
+ * Summary: Retrieves the SPIFFE SVID certificates issued to the current workforce.
+ * Params: None
+ * Returns: A Promise resolving to an array of AgentIdentity objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchIdentities(): Promise<AgentIdentity[]> {
   return getJSON<AgentIdentity[]>("/api/identities");
@@ -337,19 +353,22 @@ export function fetchIdentities(): Promise<AgentIdentity[]> {
 // ── Skill Packs ───────────────────────────────────────────────────────────────
 
 /**
- * Retrieves all imported skill packs available for agent instantiation.
- *
- * @returns A Promise resolving to an array of SkillPack objects.
+ * Summary: Retrieves all imported skill packs available for agent instantiation.
+ * Params: None
+ * Returns: A Promise resolving to an array of SkillPack objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchSkillPacks(): Promise<SkillPack[]> {
   return getJSON<SkillPack[]>("/api/skills");
 }
 
 /**
- * Imports a new specialized skill pack into the organization's domain.
- *
- * @param body - An object defining the skill pack metadata and capabilities.
- * @returns A Promise resolving to the successfully imported SkillPack.
+ * Summary: Imports a new specialized skill pack into the organization's domain.
+ * Params: body - An object defining the skill pack metadata and capabilities.
+ * Returns: A Promise resolving to the successfully imported SkillPack.
+ * Errors: None
+ * Side Effects: None
  */
 export function importSkillPack(body: {
   name: string;
@@ -364,29 +383,33 @@ export function importSkillPack(body: {
 // ── Snapshots ─────────────────────────────────────────────────────────────────
 
 /**
- * Retrieves all point-in-time recovery snapshots for the organization.
- *
- * @returns A Promise resolving to an array of OrgSnapshot objects.
+ * Summary: Retrieves all point-in-time recovery snapshots for the organization.
+ * Params: None
+ * Returns: A Promise resolving to an array of OrgSnapshot objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchSnapshots(): Promise<OrgSnapshot[]> {
   return getJSON<OrgSnapshot[]>("/api/snapshots");
 }
 
 /**
- * Captures a point-in-time snapshot of the entire organization's memory and state.
- *
- * @param label - Optional user-defined label for the snapshot.
- * @returns A Promise resolving to the created OrgSnapshot.
+ * Summary: Captures a point-in-time snapshot of the entire organization's memory and state.
+ * Params: label - Optional user-defined label for the snapshot.
+ * Returns: A Promise resolving to the created OrgSnapshot.
+ * Errors: None
+ * Side Effects: None
  */
 export function createSnapshot(label?: string): Promise<OrgSnapshot> {
   return postJSON<OrgSnapshot>("/api/snapshots/create", { label });
 }
 
 /**
- * Restores the organization to a specific point-in-time snapshot.
- *
- * @param snapshotId - The unique ID of the snapshot to restore.
- * @returns A Promise resolving to the restored DashboardSnapshot.
+ * Summary: Restores the organization to a specific point-in-time snapshot.
+ * Params: snapshotId - The unique ID of the snapshot to restore.
+ * Returns: A Promise resolving to the restored DashboardSnapshot.
+ * Errors: None
+ * Side Effects: None
  */
 export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> {
   return postJSON<DashboardSnapshot>("/api/snapshots/restore", { snapshotId });
@@ -395,9 +418,11 @@ export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> 
 // ── Marketplace ───────────────────────────────────────────────────────────────
 
 /**
- * Retrieves the catalog of community-published agents and tools.
- *
- * @returns A Promise resolving to an array of MarketplaceItem objects.
+ * Summary: Retrieves the catalog of community-published agents and tools.
+ * Params: None
+ * Returns: A Promise resolving to an array of MarketplaceItem objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchMarketplace(): Promise<MarketplaceItem[]> {
   return getJSON<MarketplaceItem[]>("/api/marketplace");
@@ -406,9 +431,11 @@ export function fetchMarketplace(): Promise<MarketplaceItem[]> {
 // ── Real-time Analytics ───────────────────────────────────────────────────────
 
 /**
- * Fetches real-time operational and health metrics for the organization.
- *
- * @returns A Promise resolving to the AnalyticsSummary.
+ * Summary: Fetches real-time operational and health metrics for the organization.
+ * Params: None
+ * Returns: A Promise resolving to the AnalyticsSummary.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchAnalytics(): Promise<AnalyticsSummary> {
   return getJSON<AnalyticsSummary>("/api/analytics");
@@ -424,10 +451,11 @@ import type {
 } from "./types";
 
 /**
- * Retrieves external service connections, optionally filtered by category.
- *
- * @param category - Optional integration category to filter by (e.g., 'chat', 'git').
- * @returns A Promise resolving to an array of Integration objects.
+ * Summary: Retrieves external service connections, optionally filtered by category.
+ * Params: category - Optional integration category to filter by (e.g., 'chat', 'git').
+ * Returns: A Promise resolving to an array of Integration objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchIntegrations(category?: string): Promise<Integration[]> {
   const q = category ? `?category=${category}` : "";
@@ -435,11 +463,11 @@ export function fetchIntegrations(category?: string): Promise<Integration[]> {
 }
 
 /**
- * Connects and authenticates a specific external integration.
- *
- * @param integrationId - The identifier for the service to connect to.
- * @param config - Optional configuration including base URL and credentials.
- * @returns A Promise resolving to the connected Integration.
+ * Summary: Connects and authenticates a specific external integration.
+ * Params: integrationId - The identifier for the service to connect to., config - Optional configuration including base URL and credentials.
+ * Returns: A Promise resolving to the connected Integration.
+ * Errors: None
+ * Side Effects: None
  */
 export function connectIntegration(
   integrationId: string,
@@ -462,23 +490,21 @@ export function connectIntegration(
 }
 
 /**
- * Disconnects an active external integration.
- *
- * @param integrationId - The identifier for the service to disconnect from.
- * @returns A Promise resolving to the disconnected Integration.
+ * Summary: Disconnects an active external integration.
+ * Params: integrationId - The identifier for the service to disconnect from.
+ * Returns: A Promise resolving to the disconnected Integration.
+ * Errors: None
+ * Side Effects: None
  */
 export function disconnectIntegration(integrationId: string): Promise<Integration> {
   return postJSON<Integration>("/api/integrations/disconnect", { integrationId });
 }
 
 /**
- * Sends a test message to validate credentials before saving them.
- *
- * @param integrationId - The identifier of the chat service being tested.
- * @param config - The credential parameters required to send the test message.
- * @returns A Promise resolving to an object indicating success.
- * @throws An Error if the test message fails to send.
- *
+ * Summary: Sends a test message to validate credentials before saving them.
+ * Params: integrationId - The identifier of the chat service being tested., config - The credential parameters required to send the test message.
+ * Returns: A Promise resolving to an object indicating success.
+ * Errors: An Error if the test message fails to send.
  * Side Effects: Executes an HTTP POST request to /api/integrations/chat/test.
  */
 export function testChatIntegration(
@@ -492,10 +518,11 @@ export function testChatIntegration(
 }
 
 /**
- * Fetches recorded chat messages from the integration registry.
- *
- * @param integrationId - Optional integration ID to filter the messages by.
- * @returns A Promise resolving to an array of ChatMessage objects.
+ * Summary: Fetches recorded chat messages from the integration registry.
+ * Params: integrationId - Optional integration ID to filter the messages by.
+ * Returns: A Promise resolving to an array of ChatMessage objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
@@ -503,10 +530,11 @@ export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]
 }
 
 /**
- * Dispatches a message to an external chat platform.
- *
- * @param body - An object defining the target integration, channel, sender, and message context.
- * @returns A Promise resolving to the recorded ChatMessage.
+ * Summary: Dispatches a message to an external chat platform.
+ * Params: body - An object defining the target integration, channel, sender, and message context.
+ * Returns: A Promise resolving to the recorded ChatMessage.
+ * Errors: None
+ * Side Effects: None
  */
 export function sendChatMessage(body: {
   integrationId: string;
@@ -519,10 +547,11 @@ export function sendChatMessage(body: {
 }
 
 /**
- * Fetches pull requests opened via the git integrations.
- *
- * @param integrationId - Optional integration ID to filter the pull requests by.
- * @returns A Promise resolving to an array of PullRequest objects.
+ * Summary: Fetches pull requests opened via the git integrations.
+ * Params: integrationId - Optional integration ID to filter the pull requests by.
+ * Returns: A Promise resolving to an array of PullRequest objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
@@ -530,10 +559,11 @@ export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]
 }
 
 /**
- * Opens a pull request/merge request on a connected git platform.
- *
- * @param body - The parameters required to open a pull request (repo, branches, etc).
- * @returns A Promise resolving to the successfully created PullRequest.
+ * Summary: Opens a pull request/merge request on a connected git platform.
+ * Params: body - The parameters required to open a pull request (repo, branches, etc).
+ * Returns: A Promise resolving to the successfully created PullRequest.
+ * Errors: None
+ * Side Effects: None
  */
 export function createPullRequest(body: {
   integrationId: string;
@@ -548,30 +578,33 @@ export function createPullRequest(body: {
 }
 
 /**
- * Merges an open pull request on a connected git platform.
- *
- * @param prId - The unique ID of the pull request to merge.
- * @returns A Promise resolving to the merged PullRequest.
+ * Summary: Merges an open pull request on a connected git platform.
+ * Params: prId - The unique ID of the pull request to merge.
+ * Returns: A Promise resolving to the merged PullRequest.
+ * Errors: None
+ * Side Effects: None
  */
 export function mergePullRequest(prId: string): Promise<PullRequest> {
   return postJSON<PullRequest>("/api/integrations/git/pr/merge", { prId });
 }
 
 /**
- * Closes an open pull request on a connected git platform without merging.
- *
- * @param prId - The unique ID of the pull request to close.
- * @returns A Promise resolving to the closed PullRequest.
+ * Summary: Closes an open pull request on a connected git platform without merging.
+ * Params: prId - The unique ID of the pull request to close.
+ * Returns: A Promise resolving to the closed PullRequest.
+ * Errors: None
+ * Side Effects: None
  */
 export function closePullRequest(prId: string): Promise<PullRequest> {
   return postJSON<PullRequest>("/api/integrations/git/pr/close", { prId });
 }
 
 /**
- * Fetches tickets from connected issue trackers.
- *
- * @param integrationId - Optional integration ID to filter the tickets by.
- * @returns A Promise resolving to an array of Issue objects.
+ * Summary: Fetches tickets from connected issue trackers.
+ * Params: integrationId - Optional integration ID to filter the tickets by.
+ * Returns: A Promise resolving to an array of Issue objects.
+ * Errors: None
+ * Side Effects: None
  */
 export function fetchIssues(integrationId?: string): Promise<Issue[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
@@ -579,10 +612,11 @@ export function fetchIssues(integrationId?: string): Promise<Issue[]> {
 }
 
 /**
- * Creates a ticket in a connected issue tracker.
- *
- * @param body - The details needed to create the issue (project, title, description, priority).
- * @returns A Promise resolving to the generated Issue object.
+ * Summary: Creates a ticket in a connected issue tracker.
+ * Params: body - The details needed to create the issue (project, title, description, priority).
+ * Returns: A Promise resolving to the generated Issue object.
+ * Errors: None
+ * Side Effects: None
  */
 export function createIssue(body: {
   integrationId: string;
@@ -597,38 +631,32 @@ export function createIssue(body: {
 }
 
 /**
- * Updates the status phase of an existing ticket.
- *
- * @param issueId - The unique ID of the ticket.
- * @param status - The new status to transition to.
- * @returns A Promise resolving to the updated Issue.
+ * Summary: Updates the status phase of an existing ticket.
+ * Params: issueId - The unique ID of the ticket., status - The new status to transition to.
+ * Returns: A Promise resolving to the updated Issue.
+ * Errors: None
+ * Side Effects: None
  */
 export function updateIssueStatus(issueId: string, status: string): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/status", { issueId, status });
 }
 
 /**
- * Assigns ownership of a ticket to a specific agent or human manager.
- *
- * @param issueId - The unique ID of the ticket.
- * @param assignee - The identifier of the agent or manager taking ownership.
- * @returns A Promise resolving to the assigned Issue.
+ * Summary: Assigns ownership of a ticket to a specific agent or human manager.
+ * Params: issueId - The unique ID of the ticket., assignee - The identifier of the agent or manager taking ownership.
+ * Returns: A Promise resolving to the assigned Issue.
+ * Errors: None
+ * Side Effects: None
  */
 export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
 }
 
 /**
- * Invokes an MCP tool with the given action and parameters.
- * Communication tools route to the underlying connected integration.
- * Git/issue tools create PRs or tickets in the connected platform.
- *
- * @param toolId - The unique identifier of the target MCP tool.
- * @param action - The specific action or operation to execute.
- * @param params - A key-value map of parameters required by the tool.
- * @returns A Promise resolving to the opaque JSON result returned by the tool.
- * @throws An Error if the tool invocation fails.
- *
+ * Summary: Invokes an MCP tool with the given action and parameters. Communication tools route to the underlying connected integration. Git/issue tools create PRs or tickets in the connected platform.
+ * Params: toolId - The unique identifier of the target MCP tool., action - The specific action or operation to execute., params - A key-value map of parameters required by the tool.
+ * Returns: A Promise resolving to the opaque JSON result returned by the tool.
+ * Errors: An Error if the tool invocation fails.
  * Side Effects: Executes an HTTP POST request to /api/mcp/tools/invoke.
  */
 export function invokeMCPTool(
@@ -640,11 +668,10 @@ export function invokeMCPTool(
 }
 
 /**
- * Fetches the user's or organization's global settings and preferences.
- *
- * @returns A Promise resolving to the Settings object.
- * @throws An Error if the request fails.
- *
+ * Summary: Fetches the user's or organization's global settings and preferences.
+ * Params: None
+ * Returns: A Promise resolving to the Settings object.
+ * Errors: An Error if the request fails.
  * Side Effects: Executes an HTTP GET request to /api/settings.
  */
 export function fetchSettings(): Promise<Settings> {
@@ -652,12 +679,10 @@ export function fetchSettings(): Promise<Settings> {
 }
 
 /**
- * Saves and updates the global settings and preferences.
- *
- * @param settings - The updated settings object to persist.
- * @returns A Promise resolving to the successfully saved Settings.
- * @throws An Error if the save operation fails.
- *
+ * Summary: Saves and updates the global settings and preferences.
+ * Params: settings - The updated settings object to persist.
+ * Returns: A Promise resolving to the successfully saved Settings.
+ * Errors: An Error if the save operation fails.
  * Side Effects: Executes an HTTP POST request to /api/settings.
  */
 export function saveSettings(settings: Settings): Promise<Settings> {
@@ -669,10 +694,10 @@ export function saveSettings(settings: Settings): Promise<Settings> {
 const TOKEN_KEY = "ohc_token";
 
 /**
- * Retrieves the currently stored authentication JWT token from local storage.
- *
- * @returns The token string if it exists, otherwise null.
- *
+ * Summary: Retrieves the currently stored authentication JWT token from local storage.
+ * Params: None
+ * Returns: The token string if it exists, otherwise null.
+ * Errors: None
  * Side Effects: Reads from window.localStorage.
  */
 export function getStoredToken(): string | null {
@@ -680,10 +705,10 @@ export function getStoredToken(): string | null {
 }
 
 /**
- * Persists an authentication JWT token in local storage.
- *
- * @param token - The raw JWT string to store.
- *
+ * Summary: Persists an authentication JWT token in local storage.
+ * Params: token - The raw JWT string to store.
+ * Returns: None
+ * Errors: None
  * Side Effects: Writes to window.localStorage.
  */
 export function setStoredToken(token: string): void {
@@ -691,8 +716,10 @@ export function setStoredToken(token: string): void {
 }
 
 /**
- * Removes the stored authentication JWT token from local storage.
- *
+ * Summary: Removes the stored authentication JWT token from local storage.
+ * Params: None
+ * Returns: None
+ * Errors: None
  * Side Effects: Deletes the key from window.localStorage.
  */
 export function clearStoredToken(): void {
@@ -750,13 +777,10 @@ async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
 }
 
 /**
- * Authenticates a user and retrieves a JWT token.
- *
- * @param username - The user's account identifier.
- * @param password - The user's secret password.
- * @returns A Promise resolving to the LoginResponse containing the issued token.
- * @throws An Error if authentication fails or credentials are invalid.
- *
+ * Summary: Authenticates a user and retrieves a JWT token.
+ * Params: username - The user's account identifier., password - The user's secret password.
+ * Returns: A Promise resolving to the LoginResponse containing the issued token.
+ * Errors: An Error if authentication fails or credentials are invalid.
  * Side Effects: Executes an HTTP POST request to /api/auth/login and stores the resulting token in local storage.
  */
 export async function login(username: string, password: string): Promise<LoginResponse> {
@@ -775,10 +799,10 @@ export async function login(username: string, password: string): Promise<LoginRe
 }
 
 /**
- * Invalidates the current session and clears the stored authentication token.
- *
- * @returns A Promise resolving when the logout completes.
- *
+ * Summary: Invalidates the current session and clears the stored authentication token.
+ * Params: None
+ * Returns: A Promise resolving when the logout completes.
+ * Errors: None
  * Side Effects: Executes an authenticated HTTP POST request to /api/auth/logout and clears local storage.
  */
 export async function logout(): Promise<void> {
@@ -790,11 +814,10 @@ export async function logout(): Promise<void> {
 }
 
 /**
- * Retrieves the public profile information of the currently authenticated user.
- *
- * @returns A Promise resolving to the UserPublic profile.
- * @throws An Error if the user is unauthenticated or the request fails.
- *
+ * Summary: Retrieves the public profile information of the currently authenticated user.
+ * Params: None
+ * Returns: A Promise resolving to the UserPublic profile.
+ * Errors: An Error if the user is unauthenticated or the request fails.
  * Side Effects: Executes an authenticated HTTP GET request to /api/auth/me.
  */
 export function fetchMe(): Promise<UserPublic> {
@@ -802,11 +825,10 @@ export function fetchMe(): Promise<UserPublic> {
 }
 
 /**
- * Retrieves a list of all registered users in the system (requires Admin role).
- *
- * @returns A Promise resolving to an array of UserPublic profiles.
- * @throws An Error if the request fails or the caller lacks permissions.
- *
+ * Summary: Retrieves a list of all registered users in the system (requires Admin role).
+ * Params: None
+ * Returns: A Promise resolving to an array of UserPublic profiles.
+ * Errors: An Error if the request fails or the caller lacks permissions.
  * Side Effects: Executes an authenticated HTTP GET request to /api/users.
  */
 export function fetchUsers(): Promise<UserPublic[]> {
@@ -814,12 +836,10 @@ export function fetchUsers(): Promise<UserPublic[]> {
 }
 
 /**
- * Creates a new user account within the system (requires Admin role).
- *
- * @param body - The parameters required to create the user, including username, email, password, and optional roles.
- * @returns A Promise resolving to the newly created UserPublic profile.
- * @throws An Error if the creation fails, validation fails, or permissions are insufficient.
- *
+ * Summary: Creates a new user account within the system (requires Admin role).
+ * Params: body - The parameters required to create the user, including username, email, password, and optional roles.
+ * Returns: A Promise resolving to the newly created UserPublic profile.
+ * Errors: An Error if the creation fails, validation fails, or permissions are insufficient.
  * Side Effects: Executes an authenticated HTTP POST request to /api/users.
  */
 export function createUser(body: {
@@ -832,12 +852,10 @@ export function createUser(body: {
 }
 
 /**
- * Deletes an existing user account from the system (requires Admin role).
- *
- * @param id - The unique identifier of the user to delete.
- * @returns A Promise resolving when the deletion is successful.
- * @throws An Error if the deletion fails or the user cannot be found.
- *
+ * Summary: Deletes an existing user account from the system (requires Admin role).
+ * Params: id - The unique identifier of the user to delete.
+ * Returns: A Promise resolving when the deletion is successful.
+ * Errors: An Error if the deletion fails or the user cannot be found.
  * Side Effects: Executes an authenticated HTTP DELETE request to /api/users/:id.
  */
 export async function deleteUser(id: string): Promise<void> {
@@ -849,11 +867,10 @@ export async function deleteUser(id: string): Promise<void> {
 }
 
 /**
- * Retrieves the list of available operational roles and their associated permissions.
- *
- * @returns A Promise resolving to an array of Role objects.
- * @throws An Error if the request fails.
- *
+ * Summary: Retrieves the list of available operational roles and their associated permissions.
+ * Params: None
+ * Returns: A Promise resolving to an array of Role objects.
+ * Errors: An Error if the request fails.
  * Side Effects: Executes an authenticated HTTP GET request to /api/roles.
  */
 export function fetchRoles(): Promise<Role[]> {
@@ -861,12 +878,10 @@ export function fetchRoles(): Promise<Role[]> {
 }
 
 /**
- * Creates a new custom role with an optional set of permissions.
- *
- * @param body - The role configuration containing its name and permissions.
- * @returns A Promise resolving to the newly created Role.
- * @throws An Error if role creation fails.
- *
+ * Summary: Creates a new custom role with an optional set of permissions.
+ * Params: body - The role configuration containing its name and permissions.
+ * Returns: A Promise resolving to the newly created Role.
+ * Errors: An Error if role creation fails.
  * Side Effects: Executes an authenticated HTTP POST request to /api/roles.
  */
 export function createRole(body: { name: string; permissions?: string[] }): Promise<Role> {

@@ -14,7 +14,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Built-in role names.
+// Summary: Built-in role names.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 const (
 	RoleAdmin    = "admin"
 	RoleOperator = "operator"
@@ -28,7 +32,11 @@ var rolePermissions = map[string][]string{
 	RoleViewer:   {"read"},
 }
 
-// User represents a human user account.
+// Summary: User represents a human user account.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type User struct {
 	ID           string    `json:"id"`
 	Username     string    `json:"username"`
@@ -41,7 +49,11 @@ type User struct {
 	OIDCSubject  string    `json:"oidcSubject,omitempty"`
 }
 
-// UserPublic is a safe subset of User with no sensitive fields.
+// Summary: UserPublic is a safe subset of User with no sensitive fields.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type UserPublic struct {
 	ID          string    `json:"id"`
 	Username    string    `json:"username"`
@@ -53,7 +65,11 @@ type UserPublic struct {
 	OIDCSubject string    `json:"oidcSubject,omitempty"`
 }
 
-// PublicView returns a UserPublic with no sensitive fields.
+// Summary: PublicView returns a UserPublic with no sensitive fields.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (u *User) PublicView() UserPublic {
 	return UserPublic{
 		ID:          u.ID,
@@ -67,7 +83,11 @@ func (u *User) PublicView() UserPublic {
 	}
 }
 
-// Role represents a named permission group.
+// Summary: Role represents a named permission group.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Role struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
@@ -75,8 +95,11 @@ type Role struct {
 	CreatedAt   time.Time `json:"createdAt"`
 }
 
-// Store is an in-memory user/role store that can be backed by Redis/DB in future.
-// All exported methods are goroutine-safe.
+// Summary: Store is an in-memory user/role store that can be backed by Redis/DB in future. All exported methods are goroutine-safe.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Store struct {
 	mu      sync.RWMutex
 	users   map[string]*User
@@ -89,9 +112,11 @@ type Store struct {
 	oidcCfg OIDCConfig
 }
 
-// NewStore creates a Store seeded with default roles and an admin user.
-// Admin credentials are read from ADMIN_USERNAME / ADMIN_PASSWORD /
-// ADMIN_EMAIL environment variables (defaults: admin / admin / admin@localhost).
+// Summary: NewStore creates a Store seeded with default roles and an admin user. Admin credentials are read from ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_EMAIL environment variables (defaults: admin / admin / admin@localhost).
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func NewStore() *Store {
 	s := &Store{
 		users:   make(map[string]*User),
@@ -151,7 +176,11 @@ func NewStore() *Store {
 	return s
 }
 
-// CreateUser creates a new user with the given credentials and roles.
+// Summary: CreateUser creates a new user with the given credentials and roles.
+// Params: username, email, password, roles
+// Returns: Returns the computed value
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (s *Store) CreateUser(username, email, password string, roles []string) (*User, error) {
 	if username == "" {
 		return nil, errors.New("username is required")
@@ -191,7 +220,11 @@ func (s *Store) CreateUser(username, email, password string, roles []string) (*U
 	return u, nil
 }
 
-// Authenticate validates username+password and returns the matching user.
+// Summary: Authenticate validates username+password and returns the matching user.
+// Params: username, password
+// Returns: Returns the computed value
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (s *Store) Authenticate(username, password string) (*User, error) {
 	s.mu.RLock()
 	u, ok := s.byName[username]
@@ -208,7 +241,11 @@ func (s *Store) Authenticate(username, password string) (*User, error) {
 	return u, nil
 }
 
-// GetUser returns a user by ID.
+// Summary: GetUser returns a user by ID.
+// Params: id
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (s *Store) GetUser(id string) (*User, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -216,7 +253,11 @@ func (s *Store) GetUser(id string) (*User, bool) {
 	return u, ok
 }
 
-// ListUsers returns all users.
+// Summary: ListUsers returns all users.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (s *Store) ListUsers() []*User {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -227,7 +268,11 @@ func (s *Store) ListUsers() []*User {
 	return out
 }
 
-// UpdateUser mutates mutable fields on the user identified by id.
+// Summary: UpdateUser mutates mutable fields on the user identified by id.
+// Params: id, emailPtr, roles, activePtr
+// Returns: Returns the computed value
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (s *Store) UpdateUser(id string, emailPtr *string, roles []string, activePtr *bool) (*User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -254,7 +299,11 @@ func (s *Store) UpdateUser(id string, emailPtr *string, roles []string, activePt
 	return u, nil
 }
 
-// DeleteUser removes a user by ID.
+// Summary: DeleteUser removes a user by ID.
+// Params: id
+// Returns: None
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (s *Store) DeleteUser(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -271,7 +320,11 @@ func (s *Store) DeleteUser(id string) error {
 	return nil
 }
 
-// ListRoles returns all roles.
+// Summary: ListRoles returns all roles.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (s *Store) ListRoles() []*Role {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -282,7 +335,11 @@ func (s *Store) ListRoles() []*Role {
 	return out
 }
 
-// CreateRole adds a new named role with the given permissions.
+// Summary: CreateRole adds a new named role with the given permissions.
+// Params: name, permissions
+// Returns: Returns the computed value
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (s *Store) CreateRole(name string, permissions []string) (*Role, error) {
 	if name == "" {
 		return nil, errors.New("role name is required")
@@ -302,7 +359,11 @@ func (s *Store) CreateRole(name string, permissions []string) (*Role, error) {
 	return r, nil
 }
 
-// RevokeToken records a JTI as revoked until its associated expiry.
+// Summary: RevokeToken records a JTI as revoked until its associated expiry.
+// Params: jti, exp
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Store) RevokeToken(jti string, exp time.Time) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -316,7 +377,11 @@ func (s *Store) RevokeToken(jti string, exp time.Time) {
 	}
 }
 
-// IsRevoked reports whether a JTI has been revoked.
+// Summary: IsRevoked reports whether a JTI has been revoked.
+// Params: jti
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (s *Store) IsRevoked(jti string) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -324,14 +389,25 @@ func (s *Store) IsRevoked(jti string) bool {
 	return ok
 }
 
-// Secret returns the HS256 signing secret.
+// Summary: Secret returns the HS256 signing secret.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (s *Store) Secret() []byte { return s.secret }
 
-// OIDCCfg returns the OIDC configuration.
+// Summary: OIDCCfg returns the OIDC configuration.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (s *Store) OIDCCfg() OIDCConfig { return s.oidcCfg }
 
-// GetOrCreateOIDCUser returns an existing user that matches the OIDC subject,
-// or creates a new viewer-role user from the OIDC claims.
+// Summary: GetOrCreateOIDCUser returns an existing user that matches the OIDC subject, or creates a new viewer-role user from the OIDC claims.
+// Params: sub, email, preferredUsername
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (s *Store) GetOrCreateOIDCUser(sub, email, preferredUsername string) *User {
 	s.mu.Lock()
 	defer s.mu.Unlock()

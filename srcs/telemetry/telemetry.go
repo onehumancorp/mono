@@ -26,12 +26,10 @@ var (
 	meetingEventsCounter     metric.Int64Counter
 )
 
-// InitTelemetry configures and starts the OpenTelemetry metrics provider with a Prometheus exporter.
-//
+// Summary: InitTelemetry configures and starts the OpenTelemetry metrics provider with a Prometheus exporter.
+// Params: None
 // Returns: A shutdown function to clean up resources, and an error if initialization fails.
-//
 // Errors: Fails if the Prometheus exporter cannot be created or registered.
-//
 // Side Effects: Modifies global OpenTelemetry state and registers metrics with the default Prometheus registerer.
 func InitTelemetry() (func(), error) {
 	exporter, err := otelprom.New(otelprom.WithRegisterer(prometheus.DefaultRegisterer))
@@ -97,13 +95,10 @@ func InitTelemetry() (func(), error) {
 	}, nil
 }
 
-// Middleware injects telemetry instrumentation into an HTTP handler chain.
-//
-// Parameters:
-//   - next: http.Handler; The next HTTP handler in the request pipeline.
-//
+// Summary: Middleware injects telemetry instrumentation into an HTTP handler chain. Parameters: - next: http.Handler; The next HTTP handler in the request pipeline.
+// Params: next
 // Returns: An http.Handler that wraps the provided handler with latency and request counting metrics.
-//
+// Errors: None
 // Side Effects: Records HTTP request duration and count. May log request details based on the Verbosity level.
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -127,32 +122,26 @@ func Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// Verbosity controls the detail level of standard output logging for the telemetry module.
-//
-// Constraints: Defaults to 1. Set to 2 or higher for verbose request logging.
+// Summary: Verbosity controls the detail level of standard output logging for the telemetry module. Constraints: Defaults to 1. Set to 2 or higher for verbose request logging.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 var Verbosity = 1 // Default level
 
-// MetricsHandler provides an HTTP handler that exposes the collected Prometheus metrics.
-//
+// Summary: MetricsHandler provides an HTTP handler that exposes the collected Prometheus metrics.
+// Params: None
 // Returns: An http.Handler that serves the /metrics endpoint.
-//
+// Errors: None
 // Side Effects: None. Read-only exposure of registered Prometheus metrics.
 func MetricsHandler() http.Handler {
 	return promhttp.Handler()
 }
 
-// RecordTokenUsage increments the global counter for LLM tokens consumed by the workforce.
-//
-// Parameters:
-//   - ctx: context.Context; The context of the active trace or request.
-//   - agentID: string; The identifier of the agent consuming the tokens.
-//   - role: string; The role of the agent.
-//   - model: string; The specific AI model being inferred (e.g., gpt-4o).
-//   - tokenType: string; The type of tokens (e.g., prompt or completion).
-//   - count: int64; The number of tokens consumed.
-//
+// Summary: RecordTokenUsage increments the global counter for LLM tokens consumed by the workforce. Parameters: - ctx: context.Context; The context of the active trace or request. - agentID: string; The identifier of the agent consuming the tokens. - role: string; The role of the agent. - model: string; The specific AI model being inferred (e.g., gpt-4o). - tokenType: string; The type of tokens (e.g., prompt or completion). - count: int64; The number of tokens consumed.
+// Params: ctx, agentID, role, model, tokenType, count
 // Returns: Nothing.
-//
+// Errors: None
 // Side Effects: Updates the ohc_token_usage_total Prometheus metric.
 func RecordTokenUsage(ctx context.Context, agentID, role, model, tokenType string, count int64) {
 	if tokenUsageCounter == nil {
@@ -166,16 +155,10 @@ func RecordTokenUsage(ctx context.Context, agentID, role, model, tokenType strin
 	))
 }
 
-// RecordAgentApiCall increments the global counter for external tool or API invocations made by agents.
-//
-// Parameters:
-//   - ctx: context.Context; The context of the active trace or request.
-//   - agentID: string; The identifier of the agent making the call.
-//   - role: string; The role of the agent.
-//   - api: string; The name or route of the invoked API/tool.
-//
+// Summary: RecordAgentApiCall increments the global counter for external tool or API invocations made by agents. Parameters: - ctx: context.Context; The context of the active trace or request. - agentID: string; The identifier of the agent making the call. - role: string; The role of the agent. - api: string; The name or route of the invoked API/tool.
+// Params: ctx, agentID, role, api
 // Returns: Nothing.
-//
+// Errors: None
 // Side Effects: Updates the ohc_agent_api_calls_total Prometheus metric.
 func RecordAgentApiCall(ctx context.Context, agentID, role, api string) {
 	if agentApiCallsCounter == nil {
@@ -188,14 +171,10 @@ func RecordAgentApiCall(ctx context.Context, agentID, role, api string) {
 	))
 }
 
-// RecordHumanInteraction increments the global counter for events involving direct human oversight.
-//
-// Parameters:
-//   - ctx: context.Context; The context of the active trace or request.
-//   - interactionType: string; The category of interaction (e.g., approval, handoff).
-//
+// Summary: RecordHumanInteraction increments the global counter for events involving direct human oversight. Parameters: - ctx: context.Context; The context of the active trace or request. - interactionType: string; The category of interaction (e.g., approval, handoff).
+// Params: ctx, interactionType
 // Returns: Nothing.
-//
+// Errors: None
 // Side Effects: Updates the ohc_human_interactions_total Prometheus metric.
 func RecordHumanInteraction(ctx context.Context, interactionType string) {
 	if humanInteractionsCounter == nil {
@@ -206,14 +185,10 @@ func RecordHumanInteraction(ctx context.Context, interactionType string) {
 	))
 }
 
-// RecordMeetingEvent increments the global counter for collaborative meeting room actions.
-//
-// Parameters:
-//   - ctx: context.Context; The context of the active trace or request.
-//   - eventType: string; The nature of the meeting event (e.g., start, message, end).
-//
+// Summary: RecordMeetingEvent increments the global counter for collaborative meeting room actions. Parameters: - ctx: context.Context; The context of the active trace or request. - eventType: string; The nature of the meeting event (e.g., start, message, end).
+// Params: ctx, eventType
 // Returns: Nothing.
-//
+// Errors: None
 // Side Effects: Updates the ohc_meeting_events_total Prometheus metric.
 func RecordMeetingEvent(ctx context.Context, eventType string) {
 	if meetingEventsCounter == nil {

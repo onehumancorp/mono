@@ -5,18 +5,31 @@ import (
 	"fmt"
 )
 
-// AutoGenAdapter implements UniversalAdapter for AutoGen.
+// Summary: AutoGenAdapter implements UniversalAdapter for AutoGen.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type AutoGenAdapter struct {
 	Identity string
 }
 
-// NewAutoGenAdapter creates a new AutoGenAdapter.
+// Summary: NewAutoGenAdapter creates a new AutoGenAdapter.
+// Params: identity
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func NewAutoGenAdapter(identity string) *AutoGenAdapter {
 	return &AutoGenAdapter{
 		Identity: identity,
 	}
 }
 
+// Summary: SyncState is undocumented.
+// Params: ctx, state
+// Returns: None
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (a *AutoGenAdapter) SyncState(ctx context.Context, state *State) error {
 	// Mock K8s/LangGraph state sync for AutoGen
 	if state == nil {
@@ -30,6 +43,11 @@ func (a *AutoGenAdapter) SyncState(ctx context.Context, state *State) error {
 	return nil
 }
 
+// Summary: ExecuteCommand is undocumented.
+// Params: ctx, cmd
+// Returns: Returns the computed value
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (a *AutoGenAdapter) ExecuteCommand(ctx context.Context, cmd string) (string, error) {
 	if cmd == "" {
 		return "", fmt.Errorf("empty command")

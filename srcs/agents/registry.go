@@ -5,25 +5,30 @@ import (
 	"sync"
 )
 
-// Registry manages the set of available agent providers and their stored credentials.
-//
-// Providers are registered once (typically at startup via DefaultRegistry) and then
-// authenticated on-demand through the dashboard API.  Multiple goroutines may
-// call Registry methods concurrently.
+// Summary: Registry manages the set of available agent providers and their stored credentials. Providers are registered once (typically at startup via DefaultRegistry) and then authenticated on-demand through the dashboard API. Multiple goroutines may call Registry methods concurrently.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Registry struct {
 	mu        sync.RWMutex
 	providers map[ProviderType]Provider
 }
 
-// NewRegistry returns an empty Registry.  Use DefaultRegistry to get a
-// pre-populated instance with all built-in providers.
+// Summary: NewRegistry returns an empty Registry. Use DefaultRegistry to get a pre-populated instance with all built-in providers.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func NewRegistry() *Registry {
 	return &Registry{providers: make(map[ProviderType]Provider)}
 }
 
-// DefaultRegistry returns a Registry pre-populated with every built-in provider.
-//
-// This is the standard factory used by the dashboard server at startup.
+// Summary: DefaultRegistry returns a Registry pre-populated with every built-in provider. This is the standard factory used by the dashboard server at startup.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func DefaultRegistry() *Registry {
 	r := NewRegistry()
 	r.Register(&ClaudeProvider{})
@@ -35,15 +40,22 @@ func DefaultRegistry() *Registry {
 	return r
 }
 
-// Register adds a Provider to the Registry, overwriting any previously
-// registered provider with the same type.
+// Summary: Register adds a Provider to the Registry, overwriting any previously registered provider with the same type.
+// Params: p
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (r *Registry) Register(p Provider) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.providers[p.Type()] = p
 }
 
-// Get returns the Provider for the given type, or false if not found.
+// Summary: Get returns the Provider for the given type, or false if not found.
+// Params: t
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (r *Registry) Get(t ProviderType) (Provider, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -51,7 +63,11 @@ func (r *Registry) Get(t ProviderType) (Provider, bool) {
 	return p, ok
 }
 
-// All returns a snapshot of all registered providers, ordered by type string.
+// Summary: All returns a snapshot of all registered providers, ordered by type string.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (r *Registry) All() []Provider {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -81,10 +97,11 @@ func (r *Registry) All() []Provider {
 	return out
 }
 
-// Authenticate forwards credentials to the named provider.
-//
-// Returns an error if the provider type is unknown or if the provider
-// rejects the supplied credentials.
+// Summary: Authenticate forwards credentials to the named provider. Returns an error if the provider type is unknown or if the provider rejects the supplied credentials.
+// Params: t, creds
+// Returns: None
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (r *Registry) Authenticate(t ProviderType, creds Credentials) error {
 	r.mu.RLock()
 	p, ok := r.providers[t]
@@ -95,7 +112,11 @@ func (r *Registry) Authenticate(t ProviderType, creds Credentials) error {
 	return p.Authenticate(creds)
 }
 
-// ProviderInfo is a serializable summary of a provider used by the dashboard API.
+// Summary: ProviderInfo is a serializable summary of a provider used by the dashboard API.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type ProviderInfo struct {
 	Type            ProviderType `json:"type"`
 	Description     string       `json:"description"`
@@ -103,7 +124,11 @@ type ProviderInfo struct {
 	IsAuthenticated bool         `json:"isAuthenticated"`
 }
 
-// Infos returns a ProviderInfo summary for every registered provider.
+// Summary: Infos returns a ProviderInfo summary for every registered provider.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (r *Registry) Infos() []ProviderInfo {
 	providers := r.All()
 	out := make([]ProviderInfo, len(providers))

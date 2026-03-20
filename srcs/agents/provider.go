@@ -11,9 +11,18 @@ import (
 	"sync"
 )
 
-// ProviderType is the unique identifier for an external agent implementation.
+// Summary: ProviderType is the unique identifier for an external agent implementation.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type ProviderType string
 
+// Summary: ProviderTypeClaude is undocumented.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 const (
 	// ProviderTypeClaude targets Anthropic Claude Code (claude.ai/code).
 	// Best suited for software-engineering and security-review roles.
@@ -40,24 +49,31 @@ const (
 	ProviderTypeBuiltin ProviderType = "builtin"
 )
 
-// Credentials holds the authentication material for an external agent provider.
-// Providers may use an API key, an OAuth bearer token, or both alongside
-// any additional provider-specific configuration entries.
+// Summary: Credentials holds the authentication material for an external agent provider. Providers may use an API key, an OAuth bearer token, or both alongside any additional provider-specific configuration entries.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Credentials struct {
 	APIKey     string            `json:"apiKey,omitempty"`
 	OAuthToken string            `json:"oauthToken,omitempty"`
 	Extra      map[string]string `json:"extra,omitempty"`
 }
 
-// IsEmpty returns true when no authentication material has been set.
+// Summary: IsEmpty returns true when no authentication material has been set.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (c Credentials) IsEmpty() bool {
 	return c.APIKey == "" && c.OAuthToken == ""
 }
 
-// Provider is the interface every external agent implementation must satisfy.
-//
-// Implementations are registered with a Registry and selected by name when
-// an agent is hired through the dashboard API.
+// Summary: Provider is the interface every external agent implementation must satisfy. Implementations are registered with a Registry and selected by name when an agent is hired through the dashboard API.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Provider interface {
 	// Type returns the unique identifier for this provider.
 	Type() ProviderType
@@ -105,16 +121,43 @@ func (b *baseProvider) load() Credentials {
 
 // ── Claude (Anthropic) ────────────────────────────────────────────────────────
 
-// ClaudeProvider implements Provider for Anthropic Claude Code.
+// Summary: ClaudeProvider implements Provider for Anthropic Claude Code.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type ClaudeProvider struct{ baseProvider }
 
+// Summary: Type is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *ClaudeProvider) Type() ProviderType { return ProviderTypeClaude }
+
+// Summary: Description is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *ClaudeProvider) Description() string {
 	return "Anthropic Claude Code — advanced coding and reasoning agent backed by Claude Sonnet/Opus"
 }
+
+// Summary: SupportedRoles is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *ClaudeProvider) SupportedRoles() []string {
 	return []string{"SOFTWARE_ENGINEER", "SECURITY_ENGINEER", "QA_TESTER", "ENGINEERING_DIRECTOR"}
 }
+
+// Summary: Authenticate is undocumented.
+// Params: creds
+// Returns: None
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (p *ClaudeProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" {
 		return errors.New("claude provider requires an API key (ANTHROPIC_API_KEY)")
@@ -122,21 +165,60 @@ func (p *ClaudeProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+
+// Summary: GetCredentials is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *ClaudeProvider) GetCredentials() Credentials { return p.load() }
-func (p *ClaudeProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
+
+// Summary: IsAuthenticated is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
+func (p *ClaudeProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── Gemini (Google) ───────────────────────────────────────────────────────────
 
-// GeminiProvider implements Provider for Google Gemini CLI.
+// Summary: GeminiProvider implements Provider for Google Gemini CLI.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type GeminiProvider struct{ baseProvider }
 
+// Summary: Type is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *GeminiProvider) Type() ProviderType { return ProviderTypeGemini }
+
+// Summary: Description is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *GeminiProvider) Description() string {
 	return "Google Gemini CLI — multimodal assistant agent backed by Gemini Pro/Ultra"
 }
+
+// Summary: SupportedRoles is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *GeminiProvider) SupportedRoles() []string {
 	return []string{"PRODUCT_MANAGER", "ANALYTICS_ENGINEER", "MARKETING_MANAGER", "CEO"}
 }
+
+// Summary: Authenticate is undocumented.
+// Params: creds
+// Returns: None
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (p *GeminiProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" && creds.OAuthToken == "" {
 		return errors.New("gemini provider requires an API key (GEMINI_API_KEY) or an OAuth token")
@@ -144,21 +226,60 @@ func (p *GeminiProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+
+// Summary: GetCredentials is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *GeminiProvider) GetCredentials() Credentials { return p.load() }
-func (p *GeminiProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
+
+// Summary: IsAuthenticated is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
+func (p *GeminiProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── OpenCode ──────────────────────────────────────────────────────────────────
 
-// OpenCodeProvider implements Provider for the open-source OpenCode SWE agent.
+// Summary: OpenCodeProvider implements Provider for the open-source OpenCode SWE agent.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type OpenCodeProvider struct{ baseProvider }
 
+// Summary: Type is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *OpenCodeProvider) Type() ProviderType { return ProviderTypeOpenCode }
+
+// Summary: Description is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *OpenCodeProvider) Description() string {
 	return "OpenCode — open-source software-engineering agent with full terminal and file-system access"
 }
+
+// Summary: SupportedRoles is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *OpenCodeProvider) SupportedRoles() []string {
 	return []string{"SOFTWARE_ENGINEER", "ENGINEERING_DIRECTOR", "QA_TESTER"}
 }
+
+// Summary: Authenticate is undocumented.
+// Params: creds
+// Returns: None
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (p *OpenCodeProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" {
 		return errors.New("opencode provider requires an API key")
@@ -166,21 +287,60 @@ func (p *OpenCodeProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+
+// Summary: GetCredentials is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *OpenCodeProvider) GetCredentials() Credentials { return p.load() }
-func (p *OpenCodeProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
+
+// Summary: IsAuthenticated is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
+func (p *OpenCodeProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── OpenClaw ──────────────────────────────────────────────────────────────────
 
-// OpenClawProvider implements Provider for the OpenClaw assistant agent.
+// Summary: OpenClawProvider implements Provider for the OpenClaw assistant agent.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type OpenClawProvider struct{ baseProvider }
 
+// Summary: Type is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *OpenClawProvider) Type() ProviderType { return ProviderTypeOpenClaw }
+
+// Summary: Description is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *OpenClawProvider) Description() string {
 	return "OpenClaw — general-purpose assistant agent optimised for content strategy and growth tasks"
 }
+
+// Summary: SupportedRoles is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *OpenClawProvider) SupportedRoles() []string {
 	return []string{"GROWTH_AGENT", "CONTENT_STRATEGIST", "MARKETING_MANAGER", "PRODUCT_MANAGER"}
 }
+
+// Summary: Authenticate is undocumented.
+// Params: creds
+// Returns: None
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (p *OpenClawProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" {
 		return errors.New("openclaw provider requires an API key")
@@ -188,21 +348,60 @@ func (p *OpenClawProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+
+// Summary: GetCredentials is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *OpenClawProvider) GetCredentials() Credentials { return p.load() }
-func (p *OpenClawProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
+
+// Summary: IsAuthenticated is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
+func (p *OpenClawProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── IronClaw ──────────────────────────────────────────────────────────────────
 
-// IronClawProvider implements Provider for the IronClaw agent.
+// Summary: IronClawProvider implements Provider for the IronClaw agent.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type IronClawProvider struct{ baseProvider }
 
+// Summary: Type is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *IronClawProvider) Type() ProviderType { return ProviderTypeIronClaw }
+
+// Summary: Description is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *IronClawProvider) Description() string {
 	return "IronClaw — security and audit-focused agent with deep static-analysis capabilities"
 }
+
+// Summary: SupportedRoles is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *IronClawProvider) SupportedRoles() []string {
 	return []string{"SECURITY_ENGINEER", "AUDIT_MANAGER", "QA_TESTER"}
 }
+
+// Summary: Authenticate is undocumented.
+// Params: creds
+// Returns: None
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (p *IronClawProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" {
 		return errors.New("ironclaw provider requires an API key")
@@ -210,19 +409,51 @@ func (p *IronClawProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+
+// Summary: GetCredentials is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *IronClawProvider) GetCredentials() Credentials { return p.load() }
-func (p *IronClawProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
+
+// Summary: IsAuthenticated is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
+func (p *IronClawProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── Builtin ───────────────────────────────────────────────────────────────────
 
-// BuiltinProvider implements Provider for the platform's own lightweight agent.
-// It requires no external credentials and is always considered authenticated.
+// Summary: BuiltinProvider implements Provider for the platform's own lightweight agent. It requires no external credentials and is always considered authenticated.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type BuiltinProvider struct{}
 
+// Summary: Type is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *BuiltinProvider) Type() ProviderType { return ProviderTypeBuiltin }
+
+// Summary: Description is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *BuiltinProvider) Description() string {
 	return "Built-in — platform-native agent; no external credentials required"
 }
+
+// Summary: SupportedRoles is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (p *BuiltinProvider) SupportedRoles() []string {
 	return []string{
 		"CEO", "PRODUCT_MANAGER", "SOFTWARE_ENGINEER", "ENGINEERING_DIRECTOR",
@@ -232,6 +463,24 @@ func (p *BuiltinProvider) SupportedRoles() []string {
 		"AUDIT_MANAGER", "PAYROLL_MANAGER",
 	}
 }
+
+// Summary: Authenticate is undocumented.
+// Params: None
+// Returns: None
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func (p *BuiltinProvider) Authenticate(_ Credentials) error { return nil }
-func (p *BuiltinProvider) GetCredentials() Credentials      { return Credentials{} }
-func (p *BuiltinProvider) IsAuthenticated() bool            { return true }
+
+// Summary: GetCredentials is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
+func (p *BuiltinProvider) GetCredentials() Credentials { return Credentials{} }
+
+// Summary: IsAuthenticated is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
+func (p *BuiltinProvider) IsAuthenticated() bool { return true }

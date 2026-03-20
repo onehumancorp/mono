@@ -10,11 +10,21 @@ import (
 	"strings"
 )
 
+// Summary: Server is undocumented.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Server struct {
 	staticDir string
 	proxy     *httputil.ReverseProxy
 }
 
+// Summary: New is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: Returns an error if the operation fails
+// Side Effects: None
 func New() (*Server, error) {
 	backendURL := os.Getenv("BACKEND_URL")
 	if backendURL == "" {
@@ -37,6 +47,11 @@ func New() (*Server, error) {
 	}, nil
 }
 
+// Summary: Handler is undocumented.
+// Params: None
+// Returns: Returns the computed value
+// Errors: None
+// Side Effects: None
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
