@@ -19,10 +19,20 @@ import (
 	"time"
 )
 
-// DefaultBaseURL is the in-cluster URL for the Chatwoot service.
+// Summary: DefaultBaseURL is the in-cluster URL for the Chatwoot service.
+// Intent: DefaultBaseURL is the in-cluster URL for the Chatwoot service.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 const DefaultBaseURL = "http://chatwoot:3000"
 
-// Client interacts with the Chatwoot REST API v1.
+// Summary: Client interacts with the Chatwoot REST API v1.
+// Intent: Client interacts with the Chatwoot REST API v1.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Client struct {
 	BaseURL     string
 	AccessToken string // api_access_token for authenticated requests
@@ -30,8 +40,12 @@ type Client struct {
 	httpClient  *http.Client
 }
 
-// NewClientFromEnv creates a Client using environment variables.
-// CHATWOOT_URL overrides the base URL.
+// Summary: NewClientFromEnv creates a Client using environment variables. CHATWOOT_URL overrides the base URL.
+// Intent: NewClientFromEnv creates a Client using environment variables. CHATWOOT_URL overrides the base URL.
+// Params: None
+// Returns: *Client
+// Errors: None
+// Side Effects: None
 func NewClientFromEnv() *Client {
 	base := os.Getenv("CHATWOOT_URL")
 	if base == "" {
@@ -43,7 +57,12 @@ func NewClientFromEnv() *Client {
 	}
 }
 
-// NewClient creates a Client with an explicit base URL (useful in tests).
+// Summary: NewClient creates a Client with an explicit base URL (useful in tests).
+// Intent: NewClient creates a Client with an explicit base URL (useful in tests).
+// Params: baseURL
+// Returns: *Client
+// Errors: None
+// Side Effects: None
 func NewClient(baseURL string) *Client {
 	return &Client{
 		BaseURL:    baseURL,
@@ -67,8 +86,12 @@ type signInResponse struct {
 	Data signInData `json:"data"`
 }
 
-// SignIn authenticates with Chatwoot and stores the resulting access token and
-// account ID on the Client.
+// Summary: SignIn authenticates with Chatwoot and stores the resulting access token and account ID on the Client.
+// Intent: SignIn authenticates with Chatwoot and stores the resulting access token and account ID on the Client.
+// Params: email, password
+// Returns: error
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (c *Client) SignIn(email, password string) error {
 	var resp signInResponse
 	if err := c.post("/auth/sign_in", signInRequest{Email: email, Password: password}, &resp); err != nil {
@@ -84,7 +107,12 @@ func (c *Client) SignIn(email, password string) error {
 
 // ── Inboxes ───────────────────────────────────────────────────────────────────
 
-// Inbox represents a Chatwoot inbox (a communication channel).
+// Summary: Inbox represents a Chatwoot inbox (a communication channel).
+// Intent: Inbox represents a Chatwoot inbox (a communication channel).
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Inbox struct {
 	ID        int    `json:"id"`
 	Name      string `json:"name"`
@@ -102,7 +130,12 @@ type createInboxRequest struct {
 	Channel     map[string]string `json:"channel"`
 }
 
-// ListInboxes returns all inboxes in the account.
+// Summary: ListInboxes returns all inboxes in the account.
+// Intent: ListInboxes returns all inboxes in the account.
+// Params: None
+// Returns: ([]Inbox, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (c *Client) ListInboxes() ([]Inbox, error) {
 	var resp inboxListResponse
 	if err := c.get(c.accountPath("/inboxes"), &resp); err != nil {
@@ -111,7 +144,12 @@ func (c *Client) ListInboxes() ([]Inbox, error) {
 	return resp.Payload, nil
 }
 
-// CreateAPIInbox creates a new API-type inbox with the given name.
+// Summary: CreateAPIInbox creates a new API-type inbox with the given name.
+// Intent: CreateAPIInbox creates a new API-type inbox with the given name.
+// Params: name
+// Returns: (Inbox, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (c *Client) CreateAPIInbox(name string) (Inbox, error) {
 	body := createInboxRequest{
 		Name:        name,
@@ -127,7 +165,12 @@ func (c *Client) CreateAPIInbox(name string) (Inbox, error) {
 
 // ── Contacts ──────────────────────────────────────────────────────────────────
 
-// Contact represents a Chatwoot contact (a participant in conversations).
+// Summary: Contact represents a Chatwoot contact (a participant in conversations).
+// Intent: Contact represents a Chatwoot contact (a participant in conversations).
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Contact struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`
@@ -139,7 +182,12 @@ type createContactRequest struct {
 	Email string `json:"email"`
 }
 
-// CreateContact creates a new contact.
+// Summary: CreateContact creates a new contact.
+// Intent: CreateContact creates a new contact.
+// Params: name, email
+// Returns: (Contact, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (c *Client) CreateContact(name, email string) (Contact, error) {
 	var contact Contact
 	if err := c.post(c.accountPath("/contacts"), createContactRequest{Name: name, Email: email}, &contact); err != nil {
@@ -150,7 +198,12 @@ func (c *Client) CreateContact(name, email string) (Contact, error) {
 
 // ── Conversations ─────────────────────────────────────────────────────────────
 
-// Conversation represents a Chatwoot conversation (a chat thread).
+// Summary: Conversation represents a Chatwoot conversation (a chat thread).
+// Intent: Conversation represents a Chatwoot conversation (a chat thread).
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Conversation struct {
 	ID          int    `json:"id"`
 	InboxID     int    `json:"inbox_id"`
@@ -165,7 +218,12 @@ type createConversationRequest struct {
 	AdditionalAttributes map[string]string `json:"additional_attributes,omitempty"`
 }
 
-// CreateConversation opens a new conversation in the given inbox.
+// Summary: CreateConversation opens a new conversation in the given inbox.
+// Intent: CreateConversation opens a new conversation in the given inbox.
+// Params: inboxID, contactID
+// Returns: (Conversation, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (c *Client) CreateConversation(inboxID, contactID int) (Conversation, error) {
 	body := createConversationRequest{
 		InboxID:   inboxID,
@@ -180,7 +238,12 @@ func (c *Client) CreateConversation(inboxID, contactID int) (Conversation, error
 
 // ── Messages ──────────────────────────────────────────────────────────────────
 
-// Message represents a single message in a conversation.
+// Summary: Message represents a single message in a conversation.
+// Intent: Message represents a single message in a conversation.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Message struct {
 	ID             int    `json:"id"`
 	Content        string `json:"content"`
@@ -199,7 +262,12 @@ type messageListResponse struct {
 	Payload []Message `json:"payload"`
 }
 
-// SendMessage posts a message into a conversation.
+// Summary: SendMessage posts a message into a conversation.
+// Intent: SendMessage posts a message into a conversation.
+// Params: conversationID, content, messageType
+// Returns: (Message, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (c *Client) SendMessage(conversationID int, content, messageType string) (Message, error) {
 	if messageType == "" {
 		messageType = "outgoing"
@@ -213,7 +281,12 @@ func (c *Client) SendMessage(conversationID int, content, messageType string) (M
 	return msg, nil
 }
 
-// ListMessages returns all messages in a conversation.
+// Summary: ListMessages returns all messages in a conversation.
+// Intent: ListMessages returns all messages in a conversation.
+// Params: conversationID
+// Returns: ([]Message, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (c *Client) ListMessages(conversationID int) ([]Message, error) {
 	var resp messageListResponse
 	path := fmt.Sprintf("%s/conversations/%d/messages", c.accountBase(), conversationID)

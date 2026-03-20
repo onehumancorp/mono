@@ -127,9 +127,12 @@ func Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// Verbosity controls the detail level of standard output logging for the telemetry module.
-//
-// Constraints: Defaults to 1. Set to 2 or higher for verbose request logging.
+// Summary: Verbosity controls the detail level of standard output logging for the telemetry module.  Constraints: Defaults to 1. Set to 2 or higher for verbose request logging.
+// Intent: Verbosity controls the detail level of standard output logging for the telemetry module.  Constraints: Defaults to 1. Set to 2 or higher for verbose request logging.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 var Verbosity = 1 // Default level
 
 // MetricsHandler provides an HTTP handler that exposes the collected Prometheus metrics.

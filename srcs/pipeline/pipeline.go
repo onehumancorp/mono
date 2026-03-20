@@ -10,22 +10,58 @@ import (
 	"github.com/onehumancorp/mono/srcs/orchestration"
 )
 
-// PipelineState represents the current phase of the SDLC.
-//
-// Constraints: Must be one of the predefined State constants.
+// Summary: PipelineState represents the current phase of the SDLC.  Constraints: Must be one of the predefined State constants.
+// Intent: PipelineState represents the current phase of the SDLC.  Constraints: Must be one of the predefined State constants.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type PipelineState string
 
 const (
+	// Summary: Defines the StateImplementing type.
+	// Intent: Defines the StateImplementing type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	StateImplementing PipelineState = "IMPLEMENTING"
+	// Summary: Defines the StateTesting type.
+	// Intent: Defines the StateTesting type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	StateTesting      PipelineState = "TESTING"
+	// Summary: Defines the StateStagingReady type.
+	// Intent: Defines the StateStagingReady type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	StateStagingReady PipelineState = "STAGING_READY"
+	// Summary: Defines the StateDeployed type.
+	// Intent: Defines the StateDeployed type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	StateDeployed     PipelineState = "DEPLOYED"
+	// Summary: Defines the StateRollback type.
+	// Intent: Defines the StateRollback type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
 	StateRollback     PipelineState = "ROLLBACK"
 )
 
-// Pipeline models the SDLC progression for a specific feature branch.
-//
-// Constraints: Requires a unique ID and an associated branch name.
+// Summary: Pipeline models the SDLC progression for a specific feature branch.  Constraints: Requires a unique ID and an associated branch name.
+// Intent: Pipeline models the SDLC progression for a specific feature branch.  Constraints: Requires a unique ID and an associated branch name.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Pipeline struct {
 	ID        string
 	Branch    string
@@ -34,25 +70,34 @@ type Pipeline struct {
 	CreatedAt time.Time
 }
 
-// SpecApprovedEvent models the parsed content of an EventSpecApproved message.
-//
-// Constraints: The Branch field must not be empty.
+// Summary: SpecApprovedEvent models the parsed content of an EventSpecApproved message.  Constraints: The Branch field must not be empty.
+// Intent: SpecApprovedEvent models the parsed content of an EventSpecApproved message.  Constraints: The Branch field must not be empty.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type SpecApprovedEvent struct {
 	Branch  string `json:"branch"`
 	Details string `json:"details"`
 }
 
-// CIJob represents a mock CI build/test job triggered by the Hub.
-//
-// Constraints: Contains a predefined test command associated with a specific branch.
+// Summary: CIJob represents a mock CI build/test job triggered by the Hub.  Constraints: Contains a predefined test command associated with a specific branch.
+// Intent: CIJob represents a mock CI build/test job triggered by the Hub.  Constraints: Contains a predefined test command associated with a specific branch.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type CIJob struct {
 	Command string
 	Branch  string
 }
 
-// Orchestrator manages automated SDLC pipelines and interacts with the Hub.
-//
-// Constraints: Uses an internal read-write mutex to ensure thread-safe map and slice operations.
+// Summary: Orchestrator manages automated SDLC pipelines and interacts with the Hub.  Constraints: Uses an internal read-write mutex to ensure thread-safe map and slice operations.
+// Intent: Orchestrator manages automated SDLC pipelines and interacts with the Hub.  Constraints: Uses an internal read-write mutex to ensure thread-safe map and slice operations.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type Orchestrator struct {
 	mu        sync.RWMutex
 	hub       *orchestration.Hub
