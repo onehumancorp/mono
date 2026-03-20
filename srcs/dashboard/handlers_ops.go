@@ -289,3 +289,68 @@ func (s *Server) handlePipelineStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Error(w, "pipeline not found", http.StatusNotFound)
 }
+
+// Summary: ScaleRequest defines the payload for scaling a team member role.
+// Intent: Structure for POST /api/v1/scale.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
+type ScaleRequest struct {
+	Role  string `json:"role"`
+	Count int    `json:"count"`
+}
+
+func (s *Server) handleScale(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req ScaleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.Role == "" {
+		http.Error(w, "role is required", http.StatusBadRequest)
+		return
+	}
+
+	// Mocking successful scale interaction with K8s Operator
+	writeJSON(w, map[string]interface{}{
+		"status": "success",
+		"role":   req.Role,
+		"count":  req.Count,
+	})
+}
+
+// Summary: handleScaleStream streams real-time scaling trace events to the dashboard.
+// Intent: Endpoint for GET /api/v1/scale/stream.
+// Params: w, r
+// Returns: None
+// Errors: None
+// Side Effects: None
+func (s *Server) handleScaleStream(w http.ResponseWriter, r *http.Request) {
+	// Set headers for SSE
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	rc := http.NewResponseController(w)
+
+	// Simulated events
+	events := []string{
+		`{"event":"K8s Operator: Reconciling TeamMember resource.","status":"INFO"}`,
+		`{"event":"K8s Operator: Spinning up new pods...","status":"INFO"}`,
+		`{"event":"AgentHired","status":"Ready"}`,
+	}
+
+	for _, event := range events {
+		data := []byte("data: " + event + "\n\n")
+		w.Write(data)
+		if err := rc.Flush(); err != nil {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+}

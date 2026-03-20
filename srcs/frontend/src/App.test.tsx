@@ -2686,3 +2686,193 @@ describe("App – War Room Enter key submit", () => {
     expect(messageSent).toBe(false);
   });
 });
+
+describe("App - Dynamic Scaling", () => {
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = input.toString();
+      if (url === "/api/dashboard") {
+        return { ok: true, json: async () => ({
+          org: { name: "Acme Software" },
+          stats: { budgetUsedUsd: 100 },
+          tasks: [],
+          users: [],
+          agents: []
+        })};
+      }
+      if (url === "/api/settings") {
+         return { ok: true, json: async () => ({}) };
+      }
+      if (url === "/api/auth/me") {
+        return { ok: true, json: async () => ({ username: "admin" }) };
+      }
+      if (url === "/api/v1/scale") {
+        return { ok: true, json: async () => ({ status: "success", role: "sales_rep", count: 2 }) };
+      }
+      if (url === "/api/domains") {
+        return { ok: true, json: async () => ([]) };
+      }
+      return originalFetch(input, init);
+    }) as any;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    delete (window as any).EventSource;
+    vi.clearAllMocks();
+  });
+
+  it("navigates to scaling tab and submits scaling form", async () => {
+    let _onmessage: ((ev: any) => void) | null = null;
+    let _onerror: (() => void) | null = null;
+
+    class MockEventSource {
+      close() {}
+      set onmessage(fn: (ev: any) => void) { _onmessage = fn; }
+      set onerror(fn: () => void) { _onerror = fn; }
+    }
+
+    (window as any).EventSource = MockEventSource;
+
+    render(<App />);
+    await screen.findByText("One Human Corp Dashboard");
+
+    const scalingTab = screen.getByText("Dynamic Scaling");
+    await act(async () => {
+      fireEvent.click(scalingTab);
+    });
+
+    expect(screen.getByText(/Scale AI agents dynamically/i)).toBeInTheDocument();
+
+    const applyButton = screen.getByText("Apply Scaling Changes");
+    await act(async () => {
+      fireEvent.click(applyButton);
+    });
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/v1/scale", expect.objectContaining({ method: "POST" }));
+    });
+
+    // Simulate SSE
+    await act(async () => {
+      if (_onmessage) {
+        _onmessage({ data: JSON.stringify({ event: "K8s Operator: Reconciling...", status: "INFO" }) });
+      }
+    });
+
+    expect(screen.getByText("K8s Operator: Reconciling...")).toBeInTheDocument();
+
+    await act(async () => {
+      if (_onmessage) {
+        _onmessage({ data: JSON.stringify({ event: "AgentHired", status: "SUCCESS" }) });
+      }
+    });
+
+    await act(async () => {
+      if (_onerror) {
+        _onerror();
+      }
+    });
+  });
+
+  it("handles malformed SSE data", async () => {
+    let _onmessage: ((ev: any) => void) | null = null;
+
+    class MockEventSource {
+      close() {}
+      set onmessage(fn: (ev: any) => void) { _onmessage = fn; }
+      set onerror(_fn: () => void) {}
+    }
+
+    (window as any).EventSource = MockEventSource;
+
+    render(<App />);
+    await screen.findByText("One Human Corp Dashboard");
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Dynamic Scaling"));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByText("Apply Scaling Changes"));
+    });
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/v1/scale", expect.objectContaining({ method: "POST" }));
+    });
+
+    await act(async () => {
+      if (_onmessage) {
+        _onmessage({ data: "invalid json" });
+      }
+    });
+  });
+
+  it("handles scaleAgents api error", async () => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = input.toString();
+      if (url === "/api/dashboard") {
+        return { ok: true, json: async () => ({ org: {}, stats: {}, tasks: [], users: [], agents: [] })};
+      }
+      if (url === "/api/auth/me") {
+        return { ok: true, json: async () => ({ username: "admin" }) };
+      }
+      if (url === "/api/settings") {
+         return { ok: true, json: async () => ({}) };
+      }
+      if (url === "/api/domains") {
+        return { ok: true, json: async () => ([]) };
+      }
+      if (url === "/api/v1/scale") {
+        return {
+           ok: false,
+           status: 500,
+           text: async () => "Internal Server Error"
+        };
+      }
+      return originalFetch(input, init);
+    }) as any;
+
+    render(<App />);
+    await screen.findByText("One Human Corp Dashboard");
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Dynamic Scaling"));
+    });
+
+    // Create an unhandled rejection guard, or simply wait for notice
+    await act(async () => {
+      fireEvent.click(screen.getByText("Apply Scaling Changes"));
+    });
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/v1/scale", expect.objectContaining({ method: "POST" }));
+    });
+
+    // There is no UI notice displayed when this throws, it just logs to console and sets isScalingActive=false.
+    // So we just verify that it completed processing and the button is re-enabled.
+    await waitFor(() => {
+        expect(screen.getByText("Apply Scaling Changes")).toBeInTheDocument();
+        expect(screen.getByText("Apply Scaling Changes")).not.toBeDisabled();
+    });
+  });
+
+  it("updates slider values", async () => {
+    render(<App />);
+    await screen.findByText("One Human Corp Dashboard");
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Dynamic Scaling"));
+    });
+
+    const sliders = screen.getAllByRole("slider");
+    expect(sliders.length).toBe(3);
+
+    await act(async () => {
+      fireEvent.change(sliders[0], { target: { value: "5" } });
+      fireEvent.change(sliders[1], { target: { value: "8" } });
+      fireEvent.change(sliders[2], { target: { value: "10" } });
+    });
+  });
+});

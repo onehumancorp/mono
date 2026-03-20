@@ -20,6 +20,7 @@ import {
   getStoredToken,
   createUser,
   deleteUser,
+  scaleAgents,
 } from "./api";
 import type {
   AgentRuntime,
@@ -306,6 +307,13 @@ export function App() {
   const [notice, setNotice] = useState("");
   const [activeNav, setActiveNav] = useState<NavSection>("overview");
   const [showHireModal, setShowHireModal] = useState(false);
+
+  // Scaling State
+  const [salesReps, setSalesReps] = useState(2);
+  const [sweAgents, setSweAgents] = useState(4);
+  const [supportAgents, setSupportAgents] = useState(1);
+  const [scalingLogs, setScalingLogs] = useState<{time: string, msg: string, type: string}[]>([]);
+  const [isScalingActive, setIsScalingActive] = useState(false);
   const [agentActionLoading, setAgentActionLoading] = useState(false);
   const [domains, setDomains] = useState<DomainInfo[]>([]);
   const [mcpTools, setMcpTools] = useState<MCPTool[]>([]);
@@ -2085,44 +2093,81 @@ export function App() {
                   <div style={{ marginBottom: "1.5rem" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                       <strong>Sales Representative</strong>
-                      <span><span style={{color: "var(--accent-hire)"}}>2</span> / 10 active</span>
+                      <span><span style={{color: "var(--accent-hire)"}}>{salesReps}</span> / 10 active</span>
                     </div>
-                    <input type="range" min="0" max="10" defaultValue="2" className="scaling-slider"
+                    <input type="range" min="0" max="10" value={salesReps} onChange={(e) => setSalesReps(parseInt(e.target.value))} className="scaling-slider"
                            style={{ accentColor: "var(--accent-hire)" }} />
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
                       <span>Cost: $500/mo per agent</span>
-                      <span>Total: $1,000/mo</span>
+                      <span>Total: ${salesReps * 500}/mo</span>
                     </div>
                   </div>
 
                   <div style={{ marginBottom: "1.5rem" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                       <strong>Software Engineer</strong>
-                      <span><span style={{color: "var(--accent-hire)"}}>4</span> / 15 active</span>
+                      <span><span style={{color: "var(--accent-hire)"}}>{sweAgents}</span> / 15 active</span>
                     </div>
-                    <input type="range" min="0" max="15" defaultValue="4" className="scaling-slider"
+                    <input type="range" min="0" max="15" value={sweAgents} onChange={(e) => setSweAgents(parseInt(e.target.value))} className="scaling-slider"
                            style={{ accentColor: "var(--accent-hire)" }} />
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
                       <span>Cost: $800/mo per agent</span>
-                      <span>Total: $3,200/mo</span>
+                      <span>Total: ${sweAgents * 800}/mo</span>
                     </div>
                   </div>
 
                   <div style={{ marginBottom: "1.5rem" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                       <strong>Customer Support</strong>
-                      <span><span style={{color: "var(--accent-hire)"}}>1</span> / 20 active</span>
+                      <span><span style={{color: "var(--accent-hire)"}}>{supportAgents}</span> / 20 active</span>
                     </div>
-                    <input type="range" min="0" max="20" defaultValue="1" className="scaling-slider"
+                    <input type="range" min="0" max="20" value={supportAgents} onChange={(e) => setSupportAgents(parseInt(e.target.value))} className="scaling-slider"
                            style={{ accentColor: "var(--accent-hire)" }} />
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
                       <span>Cost: $300/mo per agent</span>
-                      <span>Total: $300/mo</span>
+                      <span>Total: ${supportAgents * 300}/mo</span>
                     </div>
                   </div>
 
-                  <button className="btn btn-primary" style={{ width: "100%", marginTop: "1rem" }}>
-                    Apply Scaling Changes
+                  <button className="btn btn-primary" style={{ width: "100%", marginTop: "1rem" }} disabled={isScalingActive} onClick={async () => {
+                    if (isScalingActive) return;
+                    setIsScalingActive(true);
+                    setScalingLogs([]);
+                    try {
+                      await scaleAgents("sales_rep", salesReps);
+                      await scaleAgents("swe", sweAgents);
+                      await scaleAgents("support", supportAgents);
+
+                      const token = getStoredToken();
+                      const url = token ? `/api/v1/scale/stream?token=${encodeURIComponent(token)}` : "/api/v1/scale/stream";
+
+                      const eventSource = new EventSource(url);
+                      eventSource.onmessage = (event) => {
+                        try {
+                          const data = JSON.parse(event.data);
+                          setScalingLogs(prev => [...prev, {
+                            time: new Date().toISOString().substring(11, 19) + "Z",
+                            msg: data.event,
+                            type: data.status
+                          }]);
+                          if (data.event === "AgentHired") {
+                            eventSource.close();
+                            setIsScalingActive(false);
+                          }
+                        } catch (e) {
+                          // Handle error or plain string
+                        }
+                      };
+                      eventSource.onerror = () => {
+                        eventSource.close();
+                        setIsScalingActive(false);
+                      };
+                    } catch (e) {
+                      console.error(e);
+                      setIsScalingActive(false);
+                    }
+                  }}>
+                    {isScalingActive ? "Applying Scaling Changes..." : "Apply Scaling Changes"}
                   </button>
                 </div>
               </article>
@@ -2133,29 +2178,22 @@ export function App() {
                   <span className="chip chip--sm chip--green">Live SSE</span>
                 </header>
                 <div className="panel-body" style={{ maxHeight: "400px", overflowY: "auto", background: "var(--bg-primary)", padding: "1rem", borderRadius: "4px" }}>
-                  <div className="trace-log-item">
-                    <span style={{ color: "var(--text-secondary)", marginRight: "0.5rem" }}>[10:00:00Z]</span>
-                    <strong className="badge-info">INFO</strong> K8s Operator: Reconciling TeamMember resource. Desired: 5, Current: 2.
-                  </div>
-                  <div className="trace-log-item">
-                    <span style={{ color: "var(--text-secondary)", marginRight: "0.5rem" }}>[10:00:02Z]</span>
-                    <strong className="badge-info">INFO</strong> K8s Operator: Spinning up agent-pod-sales-rep-3.
-                  </div>
-                  <div className="trace-log-item">
-                    <span style={{ color: "var(--text-secondary)", marginRight: "0.5rem" }}>[10:00:03Z]</span>
-                    <strong className="badge-info">INFO</strong> K8s Operator: Spinning up agent-pod-sales-rep-4.
-                  </div>
-                  <div className="trace-log-item">
-                    <span style={{ color: "var(--text-secondary)", marginRight: "0.5rem" }}>[10:00:05Z]</span>
-                    <strong className="badge-info">INFO</strong> K8s Operator: Spinning up agent-pod-sales-rep-5.
-                  </div>
-                  <div className="trace-log-item">
-                    <span style={{ color: "var(--text-secondary)", marginRight: "0.5rem" }}>[10:00:15Z]</span>
-                    <strong className="badge-success">SUCCESS</strong> Gateway API: Scale-up complete. 5 Sales Representatives are now active.
-                  </div>
-                  <div className="trace-log-item loading">
-                    Waiting for next event...
-                  </div>
+                  {scalingLogs.map((log, i) => (
+                    <div key={i} className="trace-log-item">
+                      <span style={{ color: "var(--text-secondary)", marginRight: "0.5rem" }}>[{log.time}]</span>
+                      <strong className={log.type === "Ready" || log.type === "SUCCESS" ? "badge-success" : "badge-info"}>{log.type}</strong> {log.msg}
+                    </div>
+                  ))}
+                  {scalingLogs.length > 0 && scalingLogs[scalingLogs.length - 1].msg !== "AgentHired" && (
+                    <div className="trace-log-item loading">
+                      Waiting for next event...
+                    </div>
+                  )}
+                  {scalingLogs.length === 0 && (
+                     <div className="trace-log-item" style={{color: "var(--text-secondary)"}}>
+                        No recent scaling operations.
+                     </div>
+                  )}
                 </div>
               </article>
             </div>
