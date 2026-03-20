@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"google.golang.org/grpc"
@@ -26,6 +28,14 @@ var (
 	listenForMain = http.ListenAndServe
 	fatalForMain  = log.Fatal
 )
+
+func init() {
+	// Initialize structured JSON logging
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
+}
 
 func newDemoSystem(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker) {
 	org := domain.NewSoftwareCompany("demo", "Demo Software Company", "Human CEO", now.UTC())
@@ -57,7 +67,7 @@ func newDemoHandler(now time.Time) (http.Handler, *orchestration.Hub) {
 		go func() {
 			c := chatwoot.NewClientFromEnv()
 			if err := c.Setup(); err != nil {
-				log.Printf("chatwoot setup: %v", err)
+				slog.Error("chatwoot setup", "error", err)
 			}
 		}()
 	}
@@ -65,37 +75,38 @@ func newDemoHandler(now time.Time) (http.Handler, *orchestration.Hub) {
 	return dashboard.NewServer(org, hub, tracker, authStore), hub
 }
 
-func run(now time.Time, listen listenFunc, logger *log.Logger) error {
+func run(now time.Time, listen listenFunc) error {
 	handler, hub := newDemoHandler(now)
 
 	// Start gRPC server
 	go func() {
 		lis, err := net.Listen("tcp", ":9090")
 		if err != nil {
-			logger.Printf("failed to listen for gRPC: %v", err)
+			slog.Error("failed to listen for gRPC", "error", err)
 			return
 		}
 		s := grpc.NewServer()
 		orchestration.RegisterHubService(s, hub)
-		logger.Printf("serving gRPC on :9090")
+		slog.Info("serving gRPC on :9090")
 		if err := s.Serve(lis); err != nil {
-			logger.Printf("failed to serve gRPC: %v", err)
+			slog.Error("failed to serve gRPC", "error", err)
 		}
 	}()
 
-	logger.Printf("serving API on http://%s", defaultAddress)
+	slog.Info("serving API", "address", defaultAddress)
 	return listen(defaultAddress, handler)
 }
 
 func main() {
 	shutdown, err := telemetry.InitTelemetry()
 	if err != nil {
-		log.Printf("warning: failed to initialize telemetry: %v", err)
+		slog.Warn("failed to initialize telemetry", "error", err)
 	} else {
 		defer shutdown()
 	}
 
-	if err := run(nowUTC().UTC(), listenForMain, log.Default()); err != nil {
+	if err := run(nowUTC().UTC(), listenForMain); err != nil {
+		slog.Error("fatal error", "error", err)
 		fatalForMain(err)
 	}
 }

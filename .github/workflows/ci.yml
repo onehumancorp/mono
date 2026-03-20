@@ -38,6 +38,7 @@ jobs:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_OFFICIAL_API_KEY }}
         run: |
           bazelisk test //... \
+            --jobs=auto \
             --test_output=errors \
             --test_summary=terse \
             --test_timeout=300,600,900,1800 \

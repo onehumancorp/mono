@@ -2,7 +2,7 @@ package telemetry
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -122,7 +122,7 @@ func Middleware(next http.Handler) http.Handler {
 			latencyHistogram.Record(r.Context(), duration, attributes)
 		}
 		if Verbosity >= 2 {
-			log.Printf("[telemetry] INFO(2) recorded request: %s %s %.3fs", r.Method, r.URL.Path, duration)
+			slog.Info("recorded request", "component", "telemetry", "method", r.Method, "path", r.URL.Path, "duration", duration)
 		}
 	})
 }

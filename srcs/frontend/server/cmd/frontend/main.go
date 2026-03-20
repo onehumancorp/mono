@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -14,6 +15,14 @@ var (
 	fatalForMain     = log.Fatal
 )
 
+func init() {
+	// Initialize structured JSON logging
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
+}
+
 func main() {
 	frontendServer, err := newServerForMain()
 	if err != nil {
@@ -25,8 +34,9 @@ func main() {
 		addr = ":8081"
 	}
 
-	log.Printf("serving frontend on %s", addr)
+	slog.Info("serving frontend", "address", addr)
 	if err := listenForMain(addr, frontendServer.Handler()); err != nil {
+		slog.Error("failed to serve frontend", "error", err)
 		fatalForMain(err)
 	}
 }
