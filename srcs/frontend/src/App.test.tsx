@@ -170,7 +170,7 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith("/api/dashboard");
+      expect(fetchMock).toHaveBeenCalledWith("/api/dashboard", expect.any(Object));
     });
   });
 });
@@ -2485,6 +2485,98 @@ describe("App – meetings meetingId onChange explicit", () => {
 });
 
 // ── War Room Enter key handler coverage ───────────────────────────────────────
+
+describe("App – War Room Approval Cards", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("renders CEO Approval card and handles Approve/Reject actions", async () => {
+    // Mock snapshot with an ApprovalNeeded message targeting CEO
+    const snapshotWithApproval = {
+      ...richPayload,
+      organization: {
+        ...richPayload.organization,
+        ceoId: "CEO",
+      },
+      meetings: [
+        {
+          id: "launch-readiness",
+          agenda: "Test agenda",
+          participants: ["pm-1", "CEO"],
+          transcript: [
+            {
+              id: "msg-1",
+              fromAgent: "pm-1",
+              toAgent: "CEO",
+              type: "ApprovalNeeded",
+              content: "CEO approval needed for launch",
+              occurredAt: new Date().toISOString(),
+            },
+          ],
+        },
+      ],
+    } as any;
+
+    // we use global fetch mock in other tests, let's stick to the same pattern
+    const dashboardSpy = vi.fn(async () => snapshotWithApproval);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const urlStr = input.toString();
+        if (urlStr === "/api/dashboard") return mockJson(snapshotWithApproval);
+        if (urlStr === "/api/messages") {
+          return mockJson(snapshotWithApproval);
+        }
+        return mockJson({});
+      }),
+    );
+
+    render(<App />);
+
+    // Switch to Meetings tab where the war room is
+    await waitFor(() => {
+      expect(screen.getByText("Meetings")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText("Meetings"));
+
+    // Wait for data load and component rendering
+    await waitFor(() => {
+      expect(screen.getByText("CEO Approval Required")).toBeInTheDocument();
+    });
+
+    const approveBtn = screen.getByRole("button", { name: "Approve" });
+    const rejectBtn = screen.getByRole("button", { name: "Reject" });
+    expect(approveBtn).toBeInTheDocument();
+    expect(rejectBtn).toBeInTheDocument();
+
+    // Test Approve click
+    fireEvent.click(approveBtn);
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/messages",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("messageType=SpecApproved")
+        })
+      );
+    });
+
+    // Test Reject click
+    fireEvent.click(rejectBtn);
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/messages",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining("messageType=direction")
+        })
+      );
+    });
+  });
+});
 
 describe("App – War Room Enter key submit", () => {
   afterEach(() => {

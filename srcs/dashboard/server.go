@@ -673,10 +673,10 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 	})
 	_ = hub.Publish(orchestration.Message{
 		ID:         "seed-4",
-		FromAgent:  "CEO",
-		ToAgent:    "pm-1",
+		FromAgent:  "pm-1",
+		ToAgent:    "CEO",
 		Type:       orchestration.EventApprovalNeeded,
-		Content:    "Looks good. Proceed with the final staging deployment, but keep a close eye on the latency metrics.",
+		Content:    "All pre-launch checks passed. Requesting final CEO approval to deploy to production.",
 		MeetingID:  "launch-readiness",
 		OccurredAt: now.Add(-1 * time.Minute),
 	})
