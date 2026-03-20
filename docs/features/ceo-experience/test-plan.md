@@ -16,21 +16,21 @@ A high-level summary of the testing strategy for the CEO Dashboard feature, ensu
 ### 3.1 Unit Tests
 | Test ID | Component | Description | Expected Result | Status |
 |---------|-----------|-------------|-----------------|--------|
-| UT-01 | AgentGrid | Render agent cards with state | Card displays IDLE/ACTIVE correctly | Pending |
-| UT-02 | ApprovalModal | Parse pipeline diff for approval | Diff renders with Approve/Reject | Pending |
+| UT-01 | AgentGrid | Render agent cards with state | Card displays IDLE/ACTIVE correctly | DONE |
+| UT-02 | ApprovalModal | Parse pipeline diff for approval | Diff renders with Approve/Reject | DONE |
 
 ### 3.2 Integration Tests
 | Test ID | Components | Description | Expected Result | Status |
 |---------|------------|-------------|-----------------|--------|
-| IT-01 | WebSockets | Connect to `/api/ws` | Connection established, messages received | Pending |
-| IT-02 | API Sync | Refresh token and fetch Org Chart | Org data loads correctly | Pending |
+| IT-01 | WebSockets | Connect to `/api/ws` | Connection established, messages received | DONE |
+| IT-02 | API Sync | Refresh token and fetch Org Chart | Org data loads correctly | DONE |
 
 ### 3.3 E2E Tests
 | Test ID | CUJ Reference | Description | Expected Result | Status |
 |---------|---------------|-------------|-----------------|--------|
-| E2E-01 | Dashboard Load | Admin opens dashboard | Handshake < 2s, zero exposed secrets | Pending |
-| E2E-02 | Real-time Sync | Agent changes to THINKING | UI updates < 200ms | Pending |
-| E2E-03 | Approval Gate | CEO clicks "Approve" | HumanAction event emitted | Pending |
+| E2E-01 | Dashboard Load | Admin opens dashboard | Handshake < 2s, zero exposed secrets | DONE |
+| E2E-02 | Real-time Sync | Agent changes to THINKING | UI updates < 200ms | DONE |
+| E2E-03 | Approval Gate | CEO clicks "Approve" | HumanAction event emitted | DONE |
 
 ## 4. Edge Cases & Error Handling
 - **Network Timeout:** Reconnect WebSocket automatically after a 5-second backoff.

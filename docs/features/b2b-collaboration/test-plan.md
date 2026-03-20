@@ -16,21 +16,21 @@ A high-level summary of the testing strategy for the Cross-Org Collaboration fea
 ### 3.1 Unit Tests
 | Test ID | Component | Description | Expected Result | Status |
 |---------|-----------|-------------|-----------------|--------|
-| UT-01 | Trust Manager | Parse partner JWKS | Trust object set to ACTIVE | Pending |
-| UT-02 | Egress Filter | Scan outgoing message for internal keywords | Message blocked and flagged | Pending |
+| UT-01 | Trust Manager | Parse partner JWKS | Trust object set to ACTIVE | DONE |
+| UT-02 | Egress Filter | Scan outgoing message for internal keywords | Message blocked and flagged | DONE |
 
 ### 3.2 Integration Tests
 | Test ID | Components | Description | Expected Result | Status |
 |---------|------------|-------------|-----------------|--------|
-| IT-01 | Hub-A -> Hub-B| Establish mTLS handshake | Secure tunnel active < 1s | Pending |
-| IT-02 | Hub-A -> Hub-B| Sync shared transcript | Both hubs store identical events | Pending |
+| IT-01 | Hub-A -> Hub-B| Establish mTLS handshake | Secure tunnel active < 1s | DONE |
+| IT-02 | Hub-A -> Hub-B| Sync shared transcript | Both hubs store identical events | DONE |
 
 ### 3.3 E2E Tests
 | Test ID | CUJ Reference | Description | Expected Result | Status |
 |---------|---------------|-------------|-----------------|--------|
-| E2E-01 | Partner Invite | CEO A invites CEO B | Partner URL input processed | Pending |
-| E2E-02 | Negotiation | Agents debate price | Multi-org approval modal generated | Pending |
-| E2E-03 | Trust Revocation| Simulate JWKS deletion | Meeting room frozen, CEOs notified | Pending |
+| E2E-01 | Partner Invite | CEO A invites CEO B | Partner URL input processed | DONE |
+| E2E-02 | Negotiation | Agents debate price | Multi-org approval modal generated | DONE |
+| E2E-03 | Trust Revocation| Simulate JWKS deletion | Meeting room frozen, CEOs notified | DONE |
 
 ## 4. Edge Cases & Error Handling
 - **Trust Revocation:** Verify active meeting rooms freeze and CEOs are notified when the partner disconnects.

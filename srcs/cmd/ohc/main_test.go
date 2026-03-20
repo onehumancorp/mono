@@ -209,3 +209,32 @@ func TestMain_TelemetryInitFailure(t *testing.T) {
 	// This should run without fatal, but print a warning about telemetry failure
 	main()
 }
+
+func TestMain_NoTelemetry(t *testing.T) {
+	originalInitTelemetry := initTelemetry
+	originalNow := nowUTC
+	originalListen := listenForMain
+	originalFatal := fatalForMain
+	t.Cleanup(func() {
+		initTelemetry = originalInitTelemetry
+		nowUTC = originalNow
+		listenForMain = originalListen
+		fatalForMain = originalFatal
+	})
+
+	initTelemetry = func() (func(), error) {
+		return func() {}, nil
+	}
+
+	nowUTC = func() time.Time {
+		return time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC)
+	}
+	listenForMain = func(addr string, handler http.Handler) error {
+		return nil
+	}
+	fatalForMain = func(...any) {
+		t.Fatalf("fatal should not be called")
+	}
+
+	main()
+}

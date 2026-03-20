@@ -16,21 +16,21 @@ A high-level summary of the testing strategy for the Core Orchestration Engine f
 ### 3.1 Unit Tests
 | Test ID | Component | Description | Expected Result | Status |
 |---------|-----------|-------------|-----------------|--------|
-| UT-01 | Agent Config | Load `RoleArchetype` | Roles initialized with proper limits | Pending |
-| UT-02 | Context Bloat | Summarize transcript > 8000 tokens | Shorter summary returned | Pending |
+| UT-01 | Agent Config | Load `RoleArchetype` | Roles initialized with proper limits | DONE |
+| UT-02 | Context Bloat | Summarize transcript > 8000 tokens | Shorter summary returned | DONE |
 
 ### 3.2 Integration Tests
 | Test ID | Components | Description | Expected Result | Status |
 |---------|------------|-------------|-----------------|--------|
-| IT-01 | Hub -> Meeting | Create `Feature Scoping` room | Room ID active in Redis | Pending |
-| IT-02 | Agent1 <-> Agent2| Agents exchange messages | Transcripts show mutual context | Pending |
+| IT-01 | Hub -> Meeting | Create `Feature Scoping` room | Room ID active in Redis | DONE |
+| IT-02 | Agent1 <-> Agent2| Agents exchange messages | Transcripts show mutual context | DONE |
 
 ### 3.3 E2E Tests
 | Test ID | CUJ Reference | Description | Expected Result | Status |
 |---------|---------------|-------------|-----------------|--------|
-| E2E-01 | Goal Scoping | "Create Advanced Analytics" input | PRD generated < 5 mins | Pending |
-| E2E-02 | Infinite Loop | Simulate endless debate | Context bloat triggers CEO handoff | Pending |
-| E2E-03 | Message Sent | Send message from UI | Message persists and updates UI < 1s | Pending |
+| E2E-01 | Goal Scoping | "Create Advanced Analytics" input | PRD generated < 5 mins | DONE |
+| E2E-02 | Infinite Loop | Simulate endless debate | Context bloat triggers CEO handoff | DONE |
+| E2E-03 | Message Sent | Send message from UI | Message persists and updates UI < 1s | DONE |
 
 ## 4. Edge Cases & Error Handling
 - **Agent Crash:** Verify the Hub resurrects a crashed agent and replays the last 10 messages from the event log.

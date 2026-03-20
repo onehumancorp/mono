@@ -16,21 +16,21 @@ A high-level summary of the testing strategy for the Tooling & MCP Gateway featu
 ### 3.1 Unit Tests
 | Test ID | Component | Description | Expected Result | Status |
 |---------|-----------|-------------|-----------------|--------|
-| UT-01 | Skill Parser | Parse valid YAML "Skill Pack" | Roles and tools correctly instantiated | Pending |
-| UT-02 | MCP Router | Route `git.commit()` tool call | Call redirected to correct Git server | Pending |
+| UT-01 | Skill Parser | Parse valid YAML "Skill Pack" | Roles and tools correctly instantiated | DONE |
+| UT-02 | MCP Router | Route `git.commit()` tool call | Call redirected to correct Git server | DONE |
 
 ### 3.2 Integration Tests
 | Test ID | Components | Description | Expected Result | Status |
 |---------|------------|-------------|-----------------|--------|
-| IT-01 | Gateway -> Tool | Gateway connects to GitHub MCP | Capabilities list returned | Pending |
-| IT-02 | Agent -> Gateway| Agent executes a read command | Tool result returned as string | Pending |
+| IT-01 | Gateway -> Tool | Gateway connects to GitHub MCP | Capabilities list returned | DONE |
+| IT-02 | Agent -> Gateway| Agent executes a read command | Tool result returned as string | DONE |
 
 ### 3.3 E2E Tests
 | Test ID | CUJ Reference | Description | Expected Result | Status |
 |---------|---------------|-------------|-----------------|--------|
-| E2E-01 | MCP Integration| Register new Tool | Tool available to agents < 1 min | Pending |
-| E2E-02 | Skill Import | CEO uploads Legal Firm Pack | New roles appear in "Hire" modal | Pending |
-| E2E-03 | Skill Execution| Agent uses newly imported skill | Success notification < 3s | Pending |
+| E2E-01 | MCP Integration| Register new Tool | Tool available to agents < 1 min | DONE |
+| E2E-02 | Skill Import | CEO uploads Legal Firm Pack | New roles appear in "Hire" modal | DONE |
+| E2E-03 | Skill Execution| Agent uses newly imported skill | Success notification < 3s | DONE |
 
 ## 4. Edge Cases & Error Handling
 - **Rate Limits:** Verify the gateway automatically throttles and queues calls if the external SaaS API rate-limits the agent.

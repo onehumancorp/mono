@@ -16,21 +16,21 @@ A high-level summary of the testing strategy for the Hardware-Aware Agent Schedu
 ### 3.1 Unit Tests
 | Test ID | Component | Description | Expected Result | Status |
 |---------|-----------|-------------|-----------------|--------|
-| UT-01 | Affinity Engine | Calculate score for 70B model | High `GPU_REQUIRED` score returned | Pending |
-| UT-02 | Quota Check | Validate VRAM limits | Rejects if `min_vram_gb` exceeds quota | Pending |
+| UT-01 | Affinity Engine | Calculate score for 70B model | High `GPU_REQUIRED` score returned | DONE |
+| UT-02 | Quota Check | Validate VRAM limits | Rejects if `min_vram_gb` exceeds quota | DONE |
 
 ### 3.2 Integration Tests
 | Test ID | Components | Description | Expected Result | Status |
 |---------|------------|-------------|-----------------|--------|
-| IT-01 | Hub -> K8s API | Query GPU availability | Correct node taints and totals returned | Pending |
-| IT-02 | Hub -> PodSpec | Generate PodSpec with Tolerations | Tolerations match hardware profile | Pending |
+| IT-01 | Hub -> K8s API | Query GPU availability | Correct node taints and totals returned | DONE |
+| IT-02 | Hub -> PodSpec | Generate PodSpec with Tolerations | Tolerations match hardware profile | DONE |
 
 ### 3.3 E2E Tests
 | Test ID | CUJ Reference | Description | Expected Result | Status |
 |---------|---------------|-------------|-----------------|--------|
-| E2E-01 | GPU Schedule | Trigger complex task | Agent scheduled on GPU node < 10s | Pending |
-| E2E-02 | VIP Task | Trigger urgent CEO task | Task prioritized over generic queue | Pending |
-| E2E-03 | Taint Rejection| Deploy generic agent | Agent placed on CPU node, not GPU | Pending |
+| E2E-01 | GPU Schedule | Trigger complex task | Agent scheduled on GPU node < 10s | DONE |
+| E2E-02 | VIP Task | Trigger urgent CEO task | Task prioritized over generic queue | DONE |
+| E2E-03 | Taint Rejection| Deploy generic agent | Agent placed on CPU node, not GPU | DONE |
 
 ## 4. Edge Cases & Error Handling
 - **OOM Failures:** Verify the Hub kills or migrates an agent before it hits a hard OOM boundary.

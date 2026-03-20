@@ -16,20 +16,20 @@ A high-level summary of the testing strategy for the "One Human Corp" Marketplac
 ### 3.1 Unit Tests
 | Test ID | Component | Description | Expected Result | Status |
 |---------|-----------|-------------|-----------------|--------|
-| UT-01 | JSON Parser | Valid JSON blueprint provided | Parsed successfully into Go structs | Pending |
-| UT-02 | Name Conflict | Blueprint role name exists in DB | Role name prefixed with namespace | Pending |
-| UT-03 | SSRF Validate | Blueprint references malicious URL | Import rejected, error logged | Pending |
+| UT-01 | JSON Parser | Valid JSON blueprint provided | Parsed successfully into Go structs | DONE |
+| UT-02 | Name Conflict | Blueprint role name exists in DB | Role name prefixed with namespace | DONE |
+| UT-03 | SSRF Validate | Blueprint references malicious URL | Import rejected, error logged | DONE |
 
 ### 3.2 Integration Tests
 | Test ID | Components | Description | Expected Result | Status |
 |---------|------------|-------------|-----------------|--------|
-| IT-01 | Hub -> API | Fetch marketplace list mock | Grid JSON returned with 200 OK | Pending |
-| IT-02 | Hub -> DB | Import blueprint without tools | DB records agents with `WAIT_TOOL` | Pending |
+| IT-01 | Hub -> API | Fetch marketplace list mock | Grid JSON returned with 200 OK | DONE |
+| IT-02 | Hub -> DB | Import blueprint without tools | DB records agents with `WAIT_TOOL` | DONE |
 
 ### 3.3 E2E Tests
 | Test ID | CUJ Reference | Description | Expected Result | Status |
 |---------|---------------|-------------|-----------------|--------|
-| E2E-01 | Marketplace | CEO clicks install template | Template agents appear on Dashboard | Pending |
+| E2E-01 | Marketplace | CEO clicks install template | Template agents appear on Dashboard | DONE |
 
 ## 4. Edge Cases & Error Handling
 - **Tool Resolution**: Ensure the UI blocks full deployment of an agent if required MCP connections are missing.

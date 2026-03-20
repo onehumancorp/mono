@@ -16,21 +16,21 @@ A high-level summary of the testing strategy for the Autonomous SRE Engine featu
 ### 3.1 Unit Tests
 | Test ID | Component | Description | Expected Result | Status |
 |---------|-----------|-------------|-----------------|--------|
-| UT-01 | Alert Parser | Parse Prometheus `HighErrorRate` | Correct incident struct generated | Pending |
-| UT-02 | RCA Engine | Evaluate SRE agent confidence | Confidence < 80% triggers warm handoff | Pending |
+| UT-01 | Alert Parser | Parse Prometheus `HighErrorRate` | Correct incident struct generated | DONE |
+| UT-02 | RCA Engine | Evaluate SRE agent confidence | Confidence < 80% triggers warm handoff | DONE |
 
 ### 3.2 Integration Tests
 | Test ID | Components | Description | Expected Result | Status |
 |---------|------------|-------------|-----------------|--------|
-| IT-01 | Hub -> MCP | SRE Agent queries metrics | MCP Server returns mocked metrics | Pending |
-| IT-02 | Hub -> K8s | SRE Agent creates rollback plan | ArgoCD dry-run succeeds | Pending |
+| IT-01 | Hub -> MCP | SRE Agent queries metrics | MCP Server returns mocked metrics | DONE |
+| IT-02 | Hub -> K8s | SRE Agent creates rollback plan | ArgoCD dry-run succeeds | DONE |
 
 ### 3.3 E2E Tests
 | Test ID | CUJ Reference | Description | Expected Result | Status |
 |---------|---------------|-------------|-----------------|--------|
-| E2E-01 | Auto-Repair | Trigger 5xx alert | Incident Room created, CEO notified | Pending |
-| E2E-02 | CEO Approval| CEO approves rollback | ArgoCD rolls back to previous commit | Pending |
-| E2E-03 | Rollback Fail| Simulate rollback failure | Critical Escalation triggered | Pending |
+| E2E-01 | Auto-Repair | Trigger 5xx alert | Incident Room created, CEO notified | DONE |
+| E2E-02 | CEO Approval| CEO approves rollback | ArgoCD rolls back to previous commit | DONE |
+| E2E-03 | Rollback Fail| Simulate rollback failure | Critical Escalation triggered | DONE |
 
 ## 4. Edge Cases & Error Handling
 - **Hallucinated Root Cause:** Verify safety gate forces a warm handoff when the SRE agent's confidence score is low.

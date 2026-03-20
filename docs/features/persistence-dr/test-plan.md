@@ -16,21 +16,21 @@ A high-level summary of the testing strategy for the Persistence & Disaster Reco
 ### 3.1 Unit Tests
 | Test ID | Component | Description | Expected Result | Status |
 |---------|-----------|-------------|-----------------|--------|
-| UT-01 | Event Log | Parse `events.jsonl` | JSON deserializes accurately | Pending |
-| UT-02 | Snapshot Meta| Validate snapshot ID structure | Timestamp and Org match format | Pending |
+| UT-01 | Event Log | Parse `events.jsonl` | JSON deserializes accurately | DONE |
+| UT-02 | Snapshot Meta| Validate snapshot ID structure | Timestamp and Org match format | DONE |
 
 ### 3.2 Integration Tests
 | Test ID | Components | Description | Expected Result | Status |
 |---------|------------|-------------|-----------------|--------|
-| IT-01 | Hub -> DB | Commit checkpoint state | Row written successfully | Pending |
-| IT-02 | Hub -> K8s CSI | Trigger volume snapshot | K8s returns VolumeSnapshot ID | Pending |
+| IT-01 | Hub -> DB | Commit checkpoint state | Row written successfully | DONE |
+| IT-02 | Hub -> K8s CSI | Trigger volume snapshot | K8s returns VolumeSnapshot ID | DONE |
 
 ### 3.3 E2E Tests
 | Test ID | CUJ Reference | Description | Expected Result | Status |
 |---------|---------------|-------------|-----------------|--------|
-| E2E-01 | Snapshot Trigger | Admin clicks Backup | Snapshot created in AWS/GCP < 10s | Pending |
-| E2E-02 | Org Restore | Restore from Snapshot ID | 100% state fidelity after < 5s | Pending |
-| E2E-03 | Partial Corrupt | Try restoring corrupt metadata | Restorer aborts and warns UI | Pending |
+| E2E-01 | Snapshot Trigger | Admin clicks Backup | Snapshot created in AWS/GCP < 10s | DONE |
+| E2E-02 | Org Restore | Restore from Snapshot ID | 100% state fidelity after < 5s | DONE |
+| E2E-03 | Partial Corrupt | Try restoring corrupt metadata | Restorer aborts and warns UI | DONE |
 
 ## 4. Edge Cases & Error Handling
 - **Database Partition:** Verify event log buffers to disk if the LangGraph checkpointer DB is unreachable.

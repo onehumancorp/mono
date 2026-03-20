@@ -16,21 +16,21 @@ A high-level summary of the testing strategy for the Billing & Finance Engine fe
 ### 3.1 Unit Tests
 | Test ID | Component | Description | Expected Result | Status |
 |---------|-----------|-------------|-----------------|--------|
-| UT-01 | Cost Calc | Calculate cost for 1000 GPT-4o tokens | Correct USD amount returned | Pending |
-| UT-02 | VRAM Quota| Check VRAM availability against org limit | Limit enforced correctly | Pending |
+| UT-01 | Cost Calc | Calculate cost for 1000 GPT-4o tokens | Correct USD amount returned | DONE |
+| UT-02 | VRAM Quota| Check VRAM availability against org limit | Limit enforced correctly | DONE |
 
 ### 3.2 Integration Tests
 | Test ID | Components | Description | Expected Result | Status |
 |---------|------------|-------------|-----------------|--------|
-| IT-01 | Gateway -> Billing| Gateway reports token usage | Billing Engine updates ledger | Pending |
-| IT-02 | Billing -> Hub| Budget alert triggered | Hub pauses non-critical agents | Pending |
+| IT-01 | Gateway -> Billing| Gateway reports token usage | Billing Engine updates ledger | DONE |
+| IT-02 | Billing -> Hub| Budget alert triggered | Hub pauses non-critical agents | DONE |
 
 ### 3.3 E2E Tests
 | Test ID | CUJ Reference | Description | Expected Result | Status |
 |---------|---------------|-------------|-----------------|--------|
-| E2E-01 | Cost Tracking | Admin accesses Billing UI | Real-time costs displayed | Pending |
-| E2E-02 | Forecasting | Admin views monthly forecast | Forecast accuracy within 10% | Pending |
-| E2E-03 | Stale Data Check| Simulate Billing Engine offline | UI shows fallback/refresh warning | Pending |
+| E2E-01 | Cost Tracking | Admin accesses Billing UI | Real-time costs displayed | DONE |
+| E2E-02 | Forecasting | Admin views monthly forecast | Forecast accuracy within 10% | DONE |
+| E2E-03 | Stale Data Check| Simulate Billing Engine offline | UI shows fallback/refresh warning | DONE |
 
 ## 4. Edge Cases & Error Handling
 - **Stale Data:** Verify the dashboard correctly identifies when the billing backend is unreachable.
