@@ -154,6 +154,34 @@ func TestConnectNotFound(t *testing.T) {
 	}
 }
 
+func TestValidateURL(t *testing.T) {
+	tests := []struct {
+		name    string
+		url     string
+		wantErr bool
+	}{
+		{"UT-01: Valid External URL", "https://api.github.com", false},
+		{"UT-02: Loopback IP", "http://127.0.0.1", true},
+		{"UT-03: Loopback IPv6", "http://[::1]", true},
+		{"UT-04: Localhost", "http://localhost", true},
+		{"UT-05: Private IP Class A", "http://10.0.0.1", true},
+		{"UT-06: Private IP Class B", "http://172.16.0.1", true},
+		{"UT-07: Private IP Class C", "http://192.168.1.1", true},
+		{"UT-08: Link-Local AWS IMDS", "http://169.254.169.254/latest/meta-data/", true},
+		{"UT-09: Unspecified IP", "http://0.0.0.0", true},
+		{"UT-10: Invalid URL Format", "htp://[::1]:80", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateURL(tt.url)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateURL(%q) error = %v, wantErr %v", tt.url, err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestConnectSSRFPrevention(t *testing.T) {
 	r := NewRegistry()
 
