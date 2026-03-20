@@ -837,3 +837,64 @@ func TestHandleBudgetAlerts_NotifyAtPctHandling(t *testing.T) {
 		})
 	}
 }
+
+func TestInvokeMCPToolErrors(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Telegram SendChatMessage error (integrationID invalid)
+	req1 := mcpInvokeRequest{
+		ToolID: "telegram-mcp",
+		Params: map[string]any{
+			"content":       "hello",
+			"channel":       "test-channel",
+			"integrationId": "invalid-telegram",
+		},
+	}
+	_, err := app.invokeMCPTool(req1)
+	if err == nil {
+		t.Fatalf("expected error from SendChatMessage for invalid integration")
+	}
+
+	// Git CreatePullRequest error (missing repo)
+	req2 := mcpInvokeRequest{
+		ToolID: "git-mcp",
+		Params: map[string]any{
+			"repository":   "", // causes error
+			"title":        "test-title",
+			"body":         "test-body",
+			"sourceBranch": "feat-branch",
+		},
+	}
+	_, err = app.invokeMCPTool(req2)
+	if err == nil {
+		t.Fatalf("expected error from CreatePullRequest for missing repo")
+	}
+
+	// Jira CreateIssue error (missing project)
+	req3 := mcpInvokeRequest{
+		ToolID: "jira-mcp",
+		Params: map[string]any{
+			"project": "", // causes error
+			"title":   "test-title",
+		},
+	}
+	_, err = app.invokeMCPTool(req3)
+	if err == nil {
+		t.Fatalf("expected error from CreateIssue for missing project")
+	}
+}
+
+func TestHandleMCPInvokeError(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Sending missing content to trigger error from invokeMCPTool in handleMCPInvoke
+	reqBody := `{"toolId":"telegram-mcp","params":{}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/invoke", strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.handleMCPInvoke(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 bad request due to error from invokeMCPTool, got %d", rec.Code)
+	}
+}
