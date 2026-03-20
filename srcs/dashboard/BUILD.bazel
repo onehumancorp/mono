@@ -18,7 +18,10 @@ go_library(
 
 go_test(
     name = "dashboard_test",
-    srcs = ["server_test.go"],
+    srcs = [
+        "server_missing_test.go",
+        "server_test.go",
+    ],
     embed = [":dashboard"],
     deps = [
         "//srcs/billing",
