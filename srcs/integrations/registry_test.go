@@ -1221,7 +1221,6 @@ func TestSendDiscordWebhookErrors(t *testing.T) {
 	}
 }
 
-
 func TestTelegramAPIBaseSSRF(t *testing.T) {
 	oldLookupIP := LookupIPFunc
 	LookupIPFunc = mockLookupIP
