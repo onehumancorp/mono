@@ -350,21 +350,27 @@ export function App() {
     }
   }, [activeNav]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submitMessage(payload: typeof form) {
     setSending(true);
     setError("");
     setNotice("");
     try {
-      const data = await sendMessage(form);
+      const data = await sendMessage(payload);
       setSnapshot(data);
-      setSelectedMeetingID(form.meetingId);
+      setSelectedMeetingID(payload.meetingId);
       setNotice("Message delivered to the meeting timeline.");
+      // Optional: clear the composer form after direct submission
+      setForm((f) => ({ ...f, content: "" }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to send message");
     } finally {
       setSending(false);
     }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitMessage(form);
   }
 
   async function handleHire(name: string, role: string) {
@@ -1286,6 +1292,68 @@ export function App() {
                         )}
                         {selectedMeeting.transcript.map((msg) => {
                           const isHuman = snapshot?.organization.members.some(m => m.id === msg.fromAgent && m.isHuman) || msg.fromAgent === "CEO";
+
+                          if (msg.type === "ApprovalNeeded" && msg.toAgent === "CEO") {
+                            return (
+                              <li key={msg.id} className="transcript-item transcript-item--agent">
+                                <div className="transcript-header">
+                                  <span className="transcript-from">{msg.fromAgent}</span>
+                                  <span className="transcript-arrow" aria-hidden="true">→</span>
+                                  <span className="transcript-to">{msg.toAgent}</span>
+                                  <span className="event-chip event-chip--critical" style={{ marginLeft: "4px" }}>{msg.type}</span>
+                                  <span className="transcript-time">{formatTime(msg.occurredAt)}</span>
+                                </div>
+                                <div className="approval-card">
+                                  <div className="approval-card__content">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="approval-icon"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <div>
+                                      <h4 className="approval-card__title">CEO Approval Required</h4>
+                                      <p className="approval-card__desc">{msg.content}</p>
+                                    </div>
+                                  </div>
+                                  <div className="approval-card__actions">
+                                    <button
+                                      type="button"
+                                      className="btn btn-primary btn-sm approval-btn"
+                                      disabled={sending}
+                                      onClick={() => {
+                                        const payload = {
+                                          ...form,
+                                          content: "Approved. Proceed with execution.",
+                                          fromAgent: ceoMember?.id || "CEO",
+                                          toAgent: msg.fromAgent,
+                                          meetingId: selectedMeeting.id,
+                                          messageType: "SpecApproved"
+                                        };
+                                        void submitMessage(payload);
+                                      }}
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn btn-danger btn-sm approval-btn"
+                                      disabled={sending}
+                                      onClick={() => {
+                                        const payload = {
+                                          ...form,
+                                          content: "Rejected. Please review constraints and pivot.",
+                                          fromAgent: ceoMember?.id || "CEO",
+                                          toAgent: msg.fromAgent,
+                                          meetingId: selectedMeeting.id,
+                                          messageType: "direction"
+                                        };
+                                        void submitMessage(payload);
+                                      }}
+                                    >
+                                      Reject
+                                    </button>
+                                  </div>
+                                </div>
+                              </li>
+                            );
+                          }
+
                           return (
                             <li key={msg.id} className={`transcript-item ${isHuman ? "transcript-item--human" : "transcript-item--agent"}`}>
                               <div className="transcript-header">

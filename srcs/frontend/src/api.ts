@@ -45,7 +45,7 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
  * @returns A Promise resolving to the Organization object.
  */
 export function fetchOrganization(): Promise<Organization> {
-  return getJSON<Organization>("/api/org");
+  return authedGetJSON<Organization>("/api/org");
 }
 
 /**
@@ -54,7 +54,7 @@ export function fetchOrganization(): Promise<Organization> {
  * @returns A Promise resolving to an array of MeetingRoom objects.
  */
 export function fetchMeetings(): Promise<MeetingRoom[]> {
-  return getJSON<MeetingRoom[]>("/api/meetings").then(normalizeMeetings);
+  return authedGetJSON<MeetingRoom[]>("/api/meetings").then(normalizeMeetings);
 }
 
 function normalizeCosts(response: Record<string, unknown>): CostSummary {
@@ -141,7 +141,7 @@ function normalizeDashboard(response: Record<string, unknown>): DashboardSnapsho
  * Side Effects: Executes an HTTP GET request to /api/costs.
  */
 export async function fetchCosts(): Promise<CostSummary> {
-  const response = await getJSON<Record<string, unknown>>("/api/costs");
+  const response = await authedGetJSON<Record<string, unknown>>("/api/costs");
   return normalizeCosts(response);
 }
 
@@ -154,7 +154,7 @@ export async function fetchCosts(): Promise<CostSummary> {
  * Side Effects: Executes an HTTP GET request to /api/dashboard.
  */
 export async function fetchDashboard(): Promise<DashboardSnapshot> {
-  const response = await getJSON<Record<string, unknown>>("/api/dashboard");
+  const response = await authedGetJSON<Record<string, unknown>>("/api/dashboard");
   return normalizeDashboard(response);
 }
 
