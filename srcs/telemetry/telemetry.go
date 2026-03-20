@@ -33,8 +33,13 @@ var (
 // Errors: Fails if the Prometheus exporter cannot be created or registered.
 //
 // Side Effects: Modifies global OpenTelemetry state and registers metrics with the default Prometheus registerer.
+// test hook for exporter creation
+var newExporter = func() (sdkmetric.Reader, error) {
+	return otelprom.New(otelprom.WithRegisterer(prometheus.DefaultRegisterer))
+}
+
 func InitTelemetry() (func(), error) {
-	exporter, err := otelprom.New(otelprom.WithRegisterer(prometheus.DefaultRegisterer))
+	exporter, err := newExporter()
 	if err != nil {
 		return nil, err
 	}
@@ -44,57 +49,78 @@ func InitTelemetry() (func(), error) {
 
 	meter = provider.Meter("github.com/onehumancorp/mono/ohc")
 
-	requestCounter, err = meter.Int64Counter(
-		"http_requests_total",
-		metric.WithDescription("Total number of HTTP requests"),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	latencyHistogram, err = meter.Float64Histogram(
-		"http_request_duration_seconds",
-		metric.WithDescription("HTTP request latency in seconds"),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	tokenUsageCounter, err = meter.Int64Counter(
-		"ohc_token_usage_total",
-		metric.WithDescription("Total tokens used by agents"),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	agentApiCallsCounter, err = meter.Int64Counter(
-		"ohc_agent_api_calls_total",
-		metric.WithDescription("Total API calls made by or for agents"),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	humanInteractionsCounter, err = meter.Int64Counter(
-		"ohc_human_interactions_total",
-		metric.WithDescription("Total human-agent interactions"),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	meetingEventsCounter, err = meter.Int64Counter(
-		"ohc_meeting_events_total",
-		metric.WithDescription("Total meeting room events"),
-	)
-	if err != nil {
+	if err := initializeWithMeter(meter); err != nil {
 		return nil, err
 	}
 
 	return func() {
 		_ = provider.Shutdown(context.Background())
 	}, nil
+}
+
+// test hooks for metric creation
+var (
+	createInt64Counter = func(m metric.Meter, name string, opts ...metric.Int64CounterOption) (metric.Int64Counter, error) {
+		return m.Int64Counter(name, opts...)
+	}
+	createFloat64Histogram = func(m metric.Meter, name string, opts ...metric.Float64HistogramOption) (metric.Float64Histogram, error) {
+		return m.Float64Histogram(name, opts...)
+	}
+)
+
+// initializeWithMeter configures the metric instruments using the provided meter.
+func initializeWithMeter(m metric.Meter) error {
+	var err error
+
+	requestCounter, err = createInt64Counter(m,
+		"http_requests_total",
+		metric.WithDescription("Total number of HTTP requests"),
+	)
+	if err != nil {
+		return err
+	}
+
+	latencyHistogram, err = createFloat64Histogram(m,
+		"http_request_duration_seconds",
+		metric.WithDescription("HTTP request latency in seconds"),
+	)
+	if err != nil {
+		return err
+	}
+
+	tokenUsageCounter, err = createInt64Counter(m,
+		"ohc_token_usage_total",
+		metric.WithDescription("Total tokens used by agents"),
+	)
+	if err != nil {
+		return err
+	}
+
+	agentApiCallsCounter, err = createInt64Counter(m,
+		"ohc_agent_api_calls_total",
+		metric.WithDescription("Total API calls made by or for agents"),
+	)
+	if err != nil {
+		return err
+	}
+
+	humanInteractionsCounter, err = createInt64Counter(m,
+		"ohc_human_interactions_total",
+		metric.WithDescription("Total human-agent interactions"),
+	)
+	if err != nil {
+		return err
+	}
+
+	meetingEventsCounter, err = createInt64Counter(m,
+		"ohc_meeting_events_total",
+		metric.WithDescription("Total meeting room events"),
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Middleware injects telemetry instrumentation into an HTTP handler chain.
