@@ -200,6 +200,15 @@ function HireAgentForm({
   );
 }
 
+/**
+ * App acts as the primary React component boundary and top-level router for the One Human Corp dashboard.
+ *
+ * @summary Mounts the root application and bootstraps React router boundaries.
+ * @param none
+ * @returns {JSX.Element} the root virtual DOM tree.
+ * @throws none
+ * @sideeffects triggers initial API data fetches and establishes WebSocket context.
+ */
 export function App() {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
   const [state, setState] = useState<LoadState>("idle");

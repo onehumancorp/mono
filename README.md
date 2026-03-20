@@ -1,37 +1,28 @@
-# mono
+# One Human Corp
 
-This repository is initialized as a Bazel-based monorepo:
+## Identity
+One Human Corp is a Cloud-Native Hybrid Architecture (Agentic OS) that empowers a single human CEO to orchestrate massive, autonomous AI-agent teams seamlessly intertwined with standard business tools.
 
-- application and library code lives under `srcs/`
-- documentation lives under `docs/`
-- contract definitions live under `srcs/proto/`
-- Bazel is pinned to `9.0.0`
-- Go modules target `1.25`
+## Architecture
+The platform is designed natively on Kubernetes using Custom Resource Definitions (CRDs) to manage the structural organization of agents. At its core, it leverages the Model Context Protocol (MCP) to standardize interactions between AI models and third-party tools, eliminating vendor lock-in. System state and interactions are robustly tracked via an append-only event fabric, whileSPIFFE/SPIRE guarantees strict identity, authentication, and security boundaries. The Next.js frontend delivers a clear, human-in-the-loop oversight experience, bridging complex backend abstractions with intuitive interfaces.
 
-## Initial roadmap slice
+## Quick Start
+1. Ensure `bazelisk` and `npm` are installed.
+2. Build the backend server: `bazelisk build //...`
+3. In a separate terminal, start the UI:
+   ```bash
+   cd srcs/frontend
+   npm install
+   npm run build
+   ```
 
-The first implemented slice focuses on the Phase 1 foundation from `docs/roadmap.md`:
+## Developer Workflow
+- This repository utilizes Bazel (`9.0.0`) as its primary build system.
+- To execute builds, use: `bazelisk build //...`
+- To run the full test suite, execute: `bazelisk test //...`
+- Golang targets version `1.25`, and standard `go` tools are configured to interoperate transparently.
 
-- Software Company default organization schema
-- in-memory agent orchestration and virtual meeting rooms
-- model-aware token cost tracking
-- a small CEO dashboard HTTP interface with org chart, project status, meeting, cost, and message form views
-
-## Running tests
-
-```bash
-bazelisk test //...
-```
-
-## Frontend (React)
-
-The repository now includes a React-only frontend scaffold in `srcs/frontend`.
-
-```bash
-cd srcs/frontend
-npm install
-npm run dev
-```
-
-The dev server proxies `/api/*` requests to `http://localhost:8080`, so run the
-Go dashboard backend in parallel when developing the UI.
+## Configuration
+- Environmental secrets and configurations are securely injected at runtime.
+- Never commit secrets to the repository. The system expects dynamic, short-lived SPIFFE/SPIRE credentials.
+- Essential execution settings (e.g., node limits, budgets) are driven by the `alphabet.yaml` custom K8s resource definition.

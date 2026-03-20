@@ -20,48 +20,98 @@ import (
 
 // ── Integration types ─────────────────────────────────────────────────────────
 
-// Category groups integrations by their function.
+// Category represents the functional domain of an external integration.
+//
+// Parameters: none
+// Returns: a Category enum string.
+// Errors: none.
+// Side Effects: none.
 type Category string
 
 const (
+	// CategoryChat maps to conversational platforms like Slack or Mattermost.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	CategoryChat   Category = "chat"
+	// CategoryGit maps to source control systems like GitHub or Gitea.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	CategoryGit    Category = "git"
+	// CategoryIssues maps to ticketing software like Jira or Linear.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	CategoryIssues Category = "issues"
 )
 
-// IntegrationType identifies the specific external service.
+// IntegrationType identifies the specific external service being connected.
+//
+// Parameters: none
+// Returns: an IntegrationType enum string.
+// Errors: none.
+// Side Effects: none.
 type IntegrationType string
 
 const (
 	// Chat services.
+	// IntegrationTypeSlack defines a cloud-hosted Slack chat connection.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IntegrationTypeSlack      IntegrationType = "slack"
+	// IntegrationTypeDiscord defines a Discord server connection.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IntegrationTypeDiscord    IntegrationType = "discord"
+	// IntegrationTypeGoogleChat defines a Google Chat connection.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IntegrationTypeGoogleChat IntegrationType = "google_chat"
+	// IntegrationTypeTelegram defines a Telegram connection.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IntegrationTypeTelegram   IntegrationType = "telegram"
+	// IntegrationTypeTeams defines a Microsoft Teams connection.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IntegrationTypeTeams      IntegrationType = "teams"
 
 	// Git platforms.
+	// IntegrationTypeGitHub defines an external GitHub repository connection.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IntegrationTypeGitHub IntegrationType = "github"
+	// IntegrationTypeGitLab defines a GitLab repository connection.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IntegrationTypeGitLab IntegrationType = "gitlab"
+	// IntegrationTypeGitea defines a self-hosted Gitea repository connection.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IntegrationTypeGitea  IntegrationType = "gitea"
 
 	// Issue trackers.
 	IntegrationTypeJIRA         IntegrationType = "jira"
 	IntegrationTypePlane        IntegrationType = "plane"
+	// IntegrationTypeGitHubIssues defines a connection to GitHub Issues.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IntegrationTypeGitHubIssues IntegrationType = "github_issues"
 	IntegrationTypeLinear       IntegrationType = "linear"
 )
 
-// ConnectionStatus reflects whether an integration is reachable.
+// ConnectionStatus tracks the health and connectivity of an external integration.
+//
+// Parameters: none
+// Returns: a ConnectionStatus enum string.
+// Errors: none.
+// Side Effects: none.
 type ConnectionStatus string
 
 const (
+	// StatusConnected indicates an active, healthy external API link.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	StatusConnected    ConnectionStatus = "connected"
+	// StatusDisconnected indicates an intentional connection tear-down.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	StatusDisconnected ConnectionStatus = "disconnected"
+	// StatusError indicates an unreachable API or bad authentication state.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	StatusError        ConnectionStatus = "error"
 )
 
-// Integration is a configured external service connection.
+// Integration describes a configured connection to a third-party service.
+//
+// Parameters: none
+// Returns: an Integration struct.
+// Errors: none.
+// Side Effects: none.
 type Integration struct {
 	ID          string           `json:"id"`
 	Name        string           `json:"name"`
@@ -75,7 +125,12 @@ type Integration struct {
 
 // ── Chat types ────────────────────────────────────────────────────────────────
 
-// ChatMessage represents a message dispatched through a chat service.
+// ChatMessage represents a single communication event synced from an external chat tool.
+//
+// Parameters: none
+// Returns: a ChatMessage struct.
+// Errors: none.
+// Side Effects: none.
 type ChatMessage struct {
 	ID            string    `json:"id"`
 	IntegrationID string    `json:"integrationId"`
@@ -88,16 +143,32 @@ type ChatMessage struct {
 
 // ── Git types ─────────────────────────────────────────────────────────────────
 
-// PullRequestStatus tracks the lifecycle of a PR/MR.
+// PullRequestStatus tracks the lifecycle of code changes in a Git provider.
+//
+// Parameters: none
+// Returns: a PullRequestStatus enum string.
+// Errors: none.
+// Side Effects: none.
 type PullRequestStatus string
 
 const (
+	// PRStatusOpen indicates an ongoing code review.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	PRStatusOpen   PullRequestStatus = "open"
+	// PRStatusMerged indicates the proposal was applied.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	PRStatusMerged PullRequestStatus = "merged"
+	// PRStatusClosed indicates the proposal was rejected.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	PRStatusClosed PullRequestStatus = "closed"
 )
 
-// PullRequest represents a PR/MR opened on a git hosting platform.
+// PullRequest represents a proposed code modification mapped from an external VCS.
+//
+// Parameters: none
+// Returns: a PullRequest struct tracking code review states.
+// Errors: none.
+// Side Effects: none.
 type PullRequest struct {
 	ID             string            `json:"id"`
 	IntegrationID  string            `json:"integrationId"`
@@ -114,27 +185,58 @@ type PullRequest struct {
 
 // ── Issue types ───────────────────────────────────────────────────────────────
 
-// IssueStatus tracks the lifecycle of an issue/ticket.
+// IssueStatus represents the progress state of a tracked ticket or bug.
+//
+// Parameters: none
+// Returns: an IssueStatus enum string.
+// Errors: none.
+// Side Effects: none.
 type IssueStatus string
 
 const (
+	// IssueStatusOpen signifies work that has not started.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IssueStatusOpen       IssueStatus = "open"
+	// IssueStatusInProgress signifies active execution by an agent or human.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IssueStatusInProgress IssueStatus = "in_progress"
+	// IssueStatusDone signifies the task is successfully fulfilled.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IssueStatusDone       IssueStatus = "done"
+	// IssueStatusClosed signifies the task was dismissed or aborted.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IssueStatusClosed     IssueStatus = "closed"
 )
 
-// IssuePriority indicates ticket urgency.
+// IssuePriority indicates the urgency of resolving an external ticket.
+//
+// Parameters: none
+// Returns: an IssuePriority enum string.
+// Errors: none.
+// Side Effects: none.
 type IssuePriority string
 
 const (
+	// IssuePriorityLow indicates work with no urgent deadlines.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IssuePriorityLow      IssuePriority = "low"
+	// IssuePriorityMedium indicates standard operational work.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IssuePriorityMedium   IssuePriority = "medium"
+	// IssuePriorityHigh indicates blocking tasks requiring immediate attention.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IssuePriorityHigh     IssuePriority = "high"
+	// IssuePriorityCritical indicates a severe organizational outage.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IssuePriorityCritical IssuePriority = "critical"
 )
 
-// Issue represents a ticket created in an external issue tracker.
+// Issue holds the details of a work item synced from an external task tracker.
+//
+// Parameters: none
+// Returns: an Issue struct tracking project management state.
+// Errors: none.
+// Side Effects: none.
 type Issue struct {
 	ID             string        `json:"id"`
 	IntegrationID  string        `json:"integrationId"`
@@ -153,7 +255,12 @@ type Issue struct {
 // ── Registry ─────────────────────────────────────────────────────────────────
 
 // Registry manages all configured external service integrations and records
-// every action taken through them (messages sent, PRs opened, tickets created).
+// Registry acts as the central hub for managing all third-party integrations.
+//
+// Parameters: none
+// Returns: a Registry instance handling integration state.
+// Errors: none.
+// Side Effects: none.
 type Registry struct {
 	mu           sync.RWMutex
 	integrations []Integration
@@ -163,7 +270,12 @@ type Registry struct {
 }
 
 // NewRegistry returns an initialised Registry pre-populated with the default
-// set of supported integrations (all marked as disconnected until configured).
+// NewRegistry initializes an empty integration manager.
+//
+// Parameters: none
+// Returns: A pointer to a newly instantiated Registry.
+// Errors: none.
+// Side Effects: allocates memory for internal maps and slices.
 func NewRegistry() *Registry {
 	return &Registry{
 		integrations: defaultIntegrations(),

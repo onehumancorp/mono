@@ -2,33 +2,81 @@ package domain
 
 import "time"
 
+// Role defines the functional title and permission boundary of an organization member.
+//
+// Parameters: none
+// Returns: a Role type representing an organizational position.
+// Errors: none.
+// Side Effects: none.
 type Role string
 
 const (
+	// RoleCEO is the executive responsible for overall organizational strategy.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleCEO                 Role = "CEO"
+	// RoleProductManager guides product scope and translates requirements.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleProductManager      Role = "PRODUCT_MANAGER"
+	// RoleSoftwareEngineer writes code to fulfill product requirements.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleSoftwareEngineer    Role = "SOFTWARE_ENGINEER"
+	// RoleEngineeringDirector coordinates the execution of engineering teams.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleEngineeringDirector Role = "ENGINEERING_DIRECTOR"
+	// RoleQATester validates product builds against acceptance criteria.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleQATester            Role = "QA_TESTER"
+	// RoleSecurityEngineer audits code and infrastructure for vulnerabilities.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleSecurityEngineer    Role = "SECURITY_ENGINEER"
+	// RoleDesigner crafts user interfaces and experiences.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleDesigner            Role = "DESIGNER"
+	// RoleMarketingManager oversees go-to-market strategies and client acquisition.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleMarketingManager    Role = "MARKETING_MANAGER"
 
 	// Digital Marketing Agency roles.
+	// RoleGrowthAgent drives lead generation and funnel optimization.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleGrowthAgent       Role = "GROWTH_AGENT"
+	// RoleContentStrategist designs content calendars and writes copy.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleContentStrategist Role = "CONTENT_STRATEGIST"
+	// RoleSEOSpecialist optimizes properties for search engine visibility.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleSEOSpecialist     Role = "SEO_SPECIALIST"
+	// RolePaidMediaManager buys and manages ad placements.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RolePaidMediaManager  Role = "PAID_MEDIA_MANAGER"
+	// RoleAnalyticsEngineer builds data pipelines and attribution dashboards.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleAnalyticsEngineer Role = "ANALYTICS_ENGINEER"
 
 	// Accounting Firm roles.
+	// RoleCFO manages financial forecasting, risk, and strategy.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleCFO            Role = "CFO"
+	// RoleBookkeeper maintains daily transaction records and reconciliations.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleBookkeeper     Role = "BOOKKEEPER"
+	// RoleTaxSpecialist ensures compliance and optimizes tax liabilities.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleTaxSpecialist  Role = "TAX_SPECIALIST"
+	// RoleAuditManager investigates internal controls and financial integrity.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RoleAuditManager   Role = "AUDIT_MANAGER"
+	// RolePayrollManager ensures accurate and compliant employee compensation.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	RolePayrollManager Role = "PAYROLL_MANAGER"
 )
 
+// Member represents an individual entity, either human or AI, within an organization.
+//
+// Parameters: none
+// Returns: a Member struct tracking identity, role, and reporting structure.
+// Errors: none.
+// Side Effects: none.
 type Member struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
@@ -37,6 +85,12 @@ type Member struct {
 	IsHuman   bool   `json:"isHuman"`
 }
 
+// RoleProfile defines the operational constraints, capabilities, and system prompts for a specific role.
+//
+// Parameters: none
+// Returns: a RoleProfile struct containing prompt and context configurations.
+// Errors: none.
+// Side Effects: none.
 type RoleProfile struct {
 	Role          Role     `json:"role"`
 	BasePrompt    string   `json:"basePrompt"`
@@ -44,6 +98,12 @@ type RoleProfile struct {
 	ContextInputs []string `json:"contextInputs"`
 }
 
+// Organization represents the entire hierarchical structure and metadata of a corporate entity.
+//
+// Parameters: none
+// Returns: an Organization struct grouping members and role profiles.
+// Errors: none.
+// Side Effects: none.
 type Organization struct {
 	ID           string        `json:"id"`
 	Name         string        `json:"name"`
@@ -54,6 +114,17 @@ type Organization struct {
 	RoleProfiles []RoleProfile `json:"roleProfiles"`
 }
 
+// NewSoftwareCompany constructs an organization preset for a software development domain.
+//
+// Parameters:
+//   - id: The unique identifier for the organization.
+//   - name: The human-readable name of the software company.
+//   - ceoName: The name of the primary human operator (CEO).
+//   - now: The creation timestamp.
+//
+// Returns: A fully seeded Organization struct representing a software company.
+// Errors: none.
+// Side Effects: none.
 func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	directorID := id + "-director-eng"
@@ -230,6 +301,16 @@ func defaultSoftwareCompanyRoleProfiles() []RoleProfile {
 }
 
 // NewDigitalMarketingAgency constructs an organization preset for a digital marketing domain.
+//
+// Parameters:
+//   - id: The unique identifier for the organization.
+//   - name: The human-readable name of the agency.
+//   - ceoName: The name of the primary human operator (CEO).
+//   - now: The creation timestamp.
+//
+// Returns: A fully seeded Organization struct representing a digital marketing agency.
+// Errors: none.
+// Side Effects: none.
 func NewDigitalMarketingAgency(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	marketingDirectorID := id + "-director-mkt"
@@ -310,6 +391,16 @@ func defaultDigitalMarketingRoleProfiles() []RoleProfile {
 }
 
 // NewAccountingFirm constructs an organization preset for an accounting services domain.
+//
+// Parameters:
+//   - id: The unique identifier for the organization.
+//   - name: The human-readable name of the accounting firm.
+//   - ceoName: The name of the primary human operator (CEO).
+//   - now: The creation timestamp.
+//
+// Returns: A fully seeded Organization struct representing an accounting firm.
+// Errors: none.
+// Side Effects: none.
 func NewAccountingFirm(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	cfoID := id + "-cfo"

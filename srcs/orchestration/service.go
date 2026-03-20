@@ -7,21 +7,45 @@ import (
 	"time"
 )
 
+// Status defines the current operational phase of an AI agent.
+//
+// Parameters: none
+// Returns: a Status enum string indicating agent state.
+// Errors: none.
+// Side Effects: none.
 type Status string
 
 const (
+	// StatusIdle indicates the agent is waiting for work.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	StatusIdle      Status = "IDLE"
+	// StatusActive indicates the agent is executing a task.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	StatusActive    Status = "ACTIVE"
+	// StatusInMeeting indicates the agent is collaborating synchronously.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	StatusInMeeting Status = "IN_MEETING"
+	// StatusBlocked indicates the agent requires human intervention.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	StatusBlocked   Status = "BLOCKED"
 )
 
 // Event type constants for the asynchronous pub/sub agent interaction protocol.
 const (
+	// EventTask signals a generic work request via Pub/Sub.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	EventTask           = "task"
+	// EventStatus broadcasts an operational update via Pub/Sub.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	EventStatus         = "status"
+	// EventHandoff initiates an escalation protocol to a human manager.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	EventHandoff        = "handoff"
+	// EventCodeReviewed signals the completion of a PR check.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	EventCodeReviewed   = "CodeReviewed"
+	// EventTestsFailed signals a regression during validation.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	EventTestsFailed    = "TestsFailed"
 	EventTestsPassed    = "TestsPassed"
 	EventSpecApproved   = "SpecApproved"
@@ -33,6 +57,12 @@ const (
 	EventApprovalNeeded = "ApprovalNeeded"
 )
 
+// Agent represents an autonomous actor operating within the swarm.
+//
+// Parameters: none
+// Returns: an Agent struct holding operational state and identification.
+// Errors: none.
+// Side Effects: none.
 type Agent struct {
 	ID             string `json:"id"`
 	Name           string `json:"name"`
@@ -41,6 +71,12 @@ type Agent struct {
 	Status         Status `json:"status"`
 }
 
+// Message represents a serialized event or conversation snippet within the Pub/Sub system.
+//
+// Parameters: none
+// Returns: a Message struct tracking interaction payloads.
+// Errors: none.
+// Side Effects: none.
 type Message struct {
 	ID         string    `json:"id"`
 	FromAgent  string    `json:"fromAgent"`
@@ -51,6 +87,12 @@ type Message struct {
 	OccurredAt time.Time `json:"occurredAt"`
 }
 
+// MeetingRoom defines a synchronous collaboration space for multiple agents.
+//
+// Parameters: none
+// Returns: a MeetingRoom struct tracking discussion transcripts.
+// Errors: none.
+// Side Effects: none.
 type MeetingRoom struct {
 	ID           string    `json:"id"`
 	Agenda       string    `json:"agenda,omitempty"`
@@ -58,6 +100,12 @@ type MeetingRoom struct {
 	Transcript   []Message `json:"transcript"`
 }
 
+// Hub orchestrates the communication and state lifecycle of the entire agent network.
+//
+// Parameters: none
+// Returns: a Hub instance for managing Pub/Sub and virtual meetings.
+// Errors: none.
+// Side Effects: none.
 type Hub struct {
 	mu       sync.RWMutex
 	agents   map[string]Agent
@@ -65,6 +113,12 @@ type Hub struct {
 	meetings map[string]MeetingRoom
 }
 
+// NewHub initializes an event broker for asynchronous agent communication.
+//
+// Parameters: none
+// Returns: A pointer to a newly instantiated Hub.
+// Errors: none.
+// Side Effects: creates underlying state management structures.
 func NewHub() *Hub {
 	return &Hub{
 		agents:   map[string]Agent{},

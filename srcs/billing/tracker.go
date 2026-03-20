@@ -7,11 +7,18 @@ import (
 	"time"
 )
 
+// Price defines the financial cost parameters for using a specific LLM model.
+//
+// Parameters: none
+// Returns: a Price configuration struct.
+// Errors: none.
+// Side Effects: none.
 type Price struct {
 	InputPerMillionUSD  float64
 	OutputPerMillionUSD float64
 }
 
+// DefaultCatalog contains the baseline pricing for supported LLM models.
 var DefaultCatalog = map[string]Price{
 	// Anthropic — Claude 3 family
 	"claude-3-opus":      {InputPerMillionUSD: 15.00, OutputPerMillionUSD: 75.00},
@@ -46,6 +53,12 @@ var DefaultCatalog = map[string]Price{
 	"gemini-2.5-flash":   {InputPerMillionUSD: 0.15, OutputPerMillionUSD: 0.60},
 }
 
+// Usage represents a single inference event and its associated token cost.
+//
+// Parameters: none
+// Returns: a Usage struct holding metrics for one LLM call.
+// Errors: none.
+// Side Effects: none.
 type Usage struct {
 	AgentID          string    `json:"agentId"`
 	OrganizationID   string    `json:"organizationId"`
@@ -56,12 +69,24 @@ type Usage struct {
 	CostUSD          float64   `json:"costUsd"`
 }
 
+// AgentSummary aggregates the total inference cost and token usage for a specific agent.
+//
+// Parameters: none
+// Returns: an AgentSummary struct containing aggregated costs and usage.
+// Errors: none.
+// Side Effects: none.
 type AgentSummary struct {
 	AgentID   string  `json:"agentId"`
 	CostUSD   float64 `json:"costUsd"`
 	TokenUsed int64   `json:"tokenUsed"`
 }
 
+// Summary represents the total aggregated API usage and cost for an entire organization.
+//
+// Parameters: none
+// Returns: a Summary struct detailing total costs, tokens, and per-agent metrics.
+// Errors: none.
+// Side Effects: none.
 type Summary struct {
 	OrganizationID      string         `json:"organizationId"`
 	TotalCostUSD        float64        `json:"totalCostUsd"`
@@ -70,12 +95,26 @@ type Summary struct {
 	Agents              []AgentSummary `json:"agents"`
 }
 
+// Tracker handles real-time cost tracking and usage aggregation for LLM operations.
+//
+// Parameters: none
+// Returns: a Tracker instance.
+// Errors: none.
+// Side Effects: none.
 type Tracker struct {
 	mu      sync.RWMutex
 	catalog map[string]Price
 	usages  []Usage
 }
 
+// NewTracker initializes a new thread-safe Tracker with the given model pricing catalog.
+//
+// Parameters:
+//   - catalog: A map linking model names to their respective Price configurations.
+//
+// Returns: A pointer to a newly instantiated Tracker.
+// Errors: none.
+// Side Effects: allocates memory for the tracking catalog and usages slice.
 func NewTracker(catalog map[string]Price) *Tracker {
 	copied := make(map[string]Price, len(catalog))
 	for model, price := range catalog {
@@ -85,6 +124,14 @@ func NewTracker(catalog map[string]Price) *Tracker {
 	return &Tracker{catalog: copied}
 }
 
+// Track records a single inference usage event and calculates its financial cost.
+//
+// Parameters:
+//   - usage: The Usage struct detailing the agent, model, and token counts.
+//
+// Returns: The updated Usage struct with CostUSD and normalized OccurredAt, or an error.
+// Errors: Returns an error if the model provided in the usage is not found in the catalog.
+// Side Effects: modifies the internal usages slice by appending the new usage event.
 func (t *Tracker) Track(usage Usage) (Usage, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -102,6 +149,14 @@ func (t *Tracker) Track(usage Usage) (Usage, error) {
 	return usage, nil
 }
 
+// Summary calculates and retrieves the aggregated billing summary for a given organization.
+//
+// Parameters:
+//   - organizationID: The string ID of the organization to summarize.
+//
+// Returns: A Summary struct containing total costs, tokens, and per-agent aggregations.
+// Errors: none.
+// Side Effects: none (reads internal state using an RWMutex).
 func (t *Tracker) Summary(organizationID string) Summary {
 	t.mu.RLock()
 	defer t.mu.RUnlock()

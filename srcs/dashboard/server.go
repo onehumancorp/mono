@@ -17,6 +17,12 @@ import (
 	"github.com/onehumancorp/mono/srcs/orchestration"
 )
 
+// Server handles incoming HTTP requests for the dashboard API.
+//
+// Parameters: none
+// Returns: a Server instance mapping routes to internal state.
+// Errors: none.
+// Side Effects: none.
 type Server struct {
 	mu              sync.RWMutex
 	org             domain.Organization
@@ -66,17 +72,33 @@ type fireRequest struct {
 
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 
-// ApprovalStatus represents the lifecycle state of a guardian-gate request.
+// ApprovalStatus defines the current state of a human-in-the-loop approval request.
+//
+// Parameters: none
+// Returns: an ApprovalStatus enum string.
+// Errors: none.
+// Side Effects: none.
 type ApprovalStatus string
 
 const (
+	// ApprovalStatusPending indicates the action is waiting for human review.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	ApprovalStatusPending  ApprovalStatus = "PENDING"
+	// ApprovalStatusApproved indicates the human operator has authorized the action.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	ApprovalStatusApproved ApprovalStatus = "APPROVED"
+	// ApprovalStatusRejected indicates the human operator has blocked the action.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	ApprovalStatusRejected ApprovalStatus = "REJECTED"
 )
 
 // ApprovalRequest is created by the Guardian Agent when a high-risk action
-// requires explicit human sign-off.
+// ApprovalRequest represents a pending action requiring human verification.
+//
+// Parameters: none
+// Returns: an ApprovalRequest struct with risk and cost analysis.
+// Errors: none.
+// Side Effects: none.
 type ApprovalRequest struct {
 	ID               string         `json:"id"`
 	AgentID          string         `json:"agentId"`
@@ -107,7 +129,12 @@ type approvalDecideRequest struct {
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
 
 // HandoffPackage carries the structured context an agent sends to a human manager
-// when escalating a task it cannot complete autonomously.
+// HandoffPackage contains contextual state transferred from an agent to a human.
+//
+// Parameters: none
+// Returns: a HandoffPackage struct detailing agent intent and failure state.
+// Errors: none.
+// Side Effects: none.
 type HandoffPackage struct {
 	ID             string    `json:"id"`
 	FromAgentID    string    `json:"fromAgentId"`
@@ -129,7 +156,12 @@ type handoffCreateRequest struct {
 
 // ── Agent Identity (SPIFFE/SPIRE abstraction) ─────────────────────────────────
 
-// AgentIdentity represents the SPIFFE SVID certificate issued to an agent workload.
+// AgentIdentity holds the SPIFFE identity metadata for a deployed AI agent.
+//
+// Parameters: none
+// Returns: an AgentIdentity struct containing certificate lifespan data.
+// Errors: none.
+// Side Effects: none.
 type AgentIdentity struct {
 	AgentID     string    `json:"agentId"`
 	SVID        string    `json:"svid"`
@@ -140,13 +172,23 @@ type AgentIdentity struct {
 
 // ── Extensible Skill Import Framework ────────────────────────────────────────
 
-// SkillPackRole pairs a role name with its override base prompt.
+// SkillPackRole defines an individual system prompt template within a SkillPack.
+//
+// Parameters: none
+// Returns: a SkillPackRole struct.
+// Errors: none.
+// Side Effects: none.
 type SkillPackRole struct {
 	Role       string `json:"role"`
 	BasePrompt string `json:"basePrompt"`
 }
 
-// SkillPack is an importable module that extends or overrides agent capabilities.
+// SkillPack groups related operational capabilities for importing into an organization.
+//
+// Parameters: none
+// Returns: a SkillPack struct detailing the capabilities and origin.
+// Errors: none.
+// Side Effects: none.
 type SkillPack struct {
 	ID          string          `json:"id"`
 	Name        string          `json:"name"`
@@ -169,7 +211,12 @@ type skillImportRequest struct {
 
 // ── Org Snapshot & Recovery ───────────────────────────────────────────────────
 
-// OrgSnapshot is a point-in-time metadata record of an organization's state.
+// OrgSnapshot captures a point-in-time backup of the entire organization state.
+//
+// Parameters: none
+// Returns: an OrgSnapshot struct used for state recovery.
+// Errors: none.
+// Side Effects: none.
 type OrgSnapshot struct {
 	ID           string    `json:"id"`
 	Label        string    `json:"label"`
@@ -192,7 +239,12 @@ type snapshotRestoreRequest struct {
 
 // ── Marketplace ───────────────────────────────────────────────────────────────
 
-// MarketplaceItem describes a community-published asset.
+// MarketplaceItem represents a downloadable capability available to organizations.
+//
+// Parameters: none
+// Returns: a MarketplaceItem struct for rendering marketplace dashboards.
+// Errors: none.
+// Side Effects: none.
 type MarketplaceItem struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
@@ -206,7 +258,12 @@ type MarketplaceItem struct {
 
 // ── Real-time Analytics ───────────────────────────────────────────────────────
 
-// AnalyticsSummary surfaces operational health metrics.
+// AnalyticsSummary calculates high-level operational metrics across the platform.
+//
+// Parameters: none
+// Returns: an AnalyticsSummary struct holding aggregated system health indicators.
+// Errors: none.
+// Side Effects: none.
 type AnalyticsSummary struct {
 	HumanAgentRatio     float64 `json:"humanAgentRatio"`
 	TotalAgents         int     `json:"totalAgents"`
@@ -218,7 +275,12 @@ type AnalyticsSummary struct {
 	TokenVelocity       int64   `json:"tokenVelocity"`
 }
 
-// MCPTool represents a registered tool in the MCP gateway.
+// MCPTool defines a Model Context Protocol tool available to the agent swarm.
+//
+// Parameters: none
+// Returns: an MCPTool struct describing the tool capability.
+// Errors: none.
+// Side Effects: none.
 type MCPTool struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -227,7 +289,12 @@ type MCPTool struct {
 	Status      string `json:"status"`
 }
 
-// DomainInfo describes a supported organizational domain template.
+// DomainInfo holds metadata for available organizational templates.
+//
+// Parameters: none
+// Returns: a DomainInfo struct.
+// Errors: none.
+// Side Effects: none.
 type DomainInfo struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -270,6 +337,16 @@ var statusOrder = []orchestration.Status{
 	orchestration.StatusInMeeting,
 }
 
+// NewServer creates a new dashboard HTTP handler.
+//
+// Parameters:
+//   - org: the organization domain model.
+//   - hub: the message orchestration hub.
+//   - tracker: the billing tracker instance.
+//
+// Returns: an http.Handler for the API router.
+// Errors: none.
+// Side Effects: initializes internal storage slices and maps.
 func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker) http.Handler {
 	server := &Server{
 		org:             org,
@@ -1690,17 +1767,33 @@ func (s *Server) handleIssueAssign(w http.ResponseWriter, r *http.Request) {
 
 // ── B2B Collaboration ─────────────────────────────────────────────────────────
 
-// TrustAgreementStatus represents the lifecycle of a B2B trust agreement.
+// TrustAgreementStatus defines the operational state of a B2B agreement.
+//
+// Parameters: none
+// Returns: a TrustAgreementStatus string.
+// Errors: none.
+// Side Effects: none.
 type TrustAgreementStatus string
 
 const (
+	// TrustStatusPending indicates an unconfirmed B2B handshake.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	TrustStatusPending TrustAgreementStatus = "PENDING"
+	// TrustStatusActive indicates a secure, validated cross-org connection.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	TrustStatusActive  TrustAgreementStatus = "ACTIVE"
+	// TrustStatusRevoked indicates a severed B2B collaboration link.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	TrustStatusRevoked TrustAgreementStatus = "REVOKED"
 )
 
 // TrustAgreement is a federated trust relationship between two OHC organisations.
-// It enables cross-org agent collaboration using SPIFFE-federated JWTs.
+// TrustAgreement establishes a secure collaboration channel between two organizations.
+//
+// Parameters: none
+// Returns: a TrustAgreement struct tracking the B2B handshake.
+// Errors: none.
+// Side Effects: none.
 type TrustAgreement struct {
 	ID           string               `json:"id"`
 	PartnerOrg   string               `json:"partnerOrg"`
@@ -1790,25 +1883,52 @@ func (s *Server) handleB2BRevoke(w http.ResponseWriter, r *http.Request) {
 
 // ── Autonomous SRE / Incident Management ─────────────────────────────────────
 
-// IncidentSeverity classifies the urgency of an operational incident.
+// IncidentSeverity categorizes the potential impact of an ongoing operational issue.
+//
+// Parameters: none
+// Returns: an IncidentSeverity string.
+// Errors: none.
+// Side Effects: none.
 type IncidentSeverity string
 
 const (
+	// SeverityP0 represents critical system outage requiring immediate intervention.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	SeverityP0 IncidentSeverity = "P0"
+	// SeverityP1 represents degraded core service performance.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	SeverityP1 IncidentSeverity = "P1"
+	// SeverityP2 represents minor operational interruptions.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	SeverityP2 IncidentSeverity = "P2"
 )
 
-// IncidentStatus reflects the investigation lifecycle state.
+// IncidentStatus tracks the lifecycle phase of an operational incident.
+//
+// Parameters: none
+// Returns: an IncidentStatus string.
+// Errors: none.
+// Side Effects: none.
 type IncidentStatus string
 
 const (
+	// IncidentStatusInvestigating indicates root cause analysis is active.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IncidentStatusInvestigating IncidentStatus = "INVESTIGATING"
+	// IncidentStatusProposed indicates a resolution plan has been suggested.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IncidentStatusProposed      IncidentStatus = "PROPOSED"
+	// IncidentStatusResolved indicates normal operations have resumed.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	IncidentStatusResolved      IncidentStatus = "RESOLVED"
 )
 
-// Incident represents an operational event requiring SRE attention.
+// Incident records an anomalous event detected by the swarm requiring triage.
+//
+// Parameters: none
+// Returns: an Incident struct detailing the anomaly and remediation efforts.
+// Errors: none.
+// Side Effects: none.
 type Incident struct {
 	ID               string           `json:"id"`
 	Severity         IncidentSeverity `json:"severity"`
@@ -1905,7 +2025,12 @@ func (s *Server) handleIncidentStatus(w http.ResponseWriter, r *http.Request) {
 
 // ── Compute Optimization / Hardware-Aware Scheduling ─────────────────────────
 
-// ComputeProfile defines the hardware requirements for a given agent role.
+// ComputeProfile outlines the specific hardware requirements for an agent role.
+//
+// Parameters: none
+// Returns: a ComputeProfile struct tracking VRAM and GPU scheduling priorities.
+// Errors: none.
+// Side Effects: none.
 type ComputeProfile struct {
 	RoleID             string    `json:"roleId"`
 	MinVRAMGB          int       `json:"minVramGb"`
@@ -1921,7 +2046,12 @@ type computeProfileRequest struct {
 	SchedulingPriority int    `json:"schedulingPriority"`
 }
 
-// ClusterStatus reflects the health of a remote Kubernetes cluster region.
+// ClusterStatus reports the operational health of a remote execution cluster.
+//
+// Parameters: none
+// Returns: a ClusterStatus struct detailing cluster latency and availability.
+// Errors: none.
+// Side Effects: none.
 type ClusterStatus struct {
 	Region         string    `json:"region"`
 	Status         string    `json:"status"` // healthy, degraded, offline
@@ -1997,7 +2127,12 @@ func (s *Server) handleClusterStatus(w http.ResponseWriter, r *http.Request) {
 // defaultBudgetAlertNotifyPct is the default notification threshold (80 %).
 const defaultBudgetAlertNotifyPct = 0.8
 
-// BudgetAlert defines a spending threshold with notification behaviour.
+// BudgetAlert defines a financial spending limit that triggers a notification.
+//
+// Parameters: none
+// Returns: a BudgetAlert struct used to monitor organization token burn rates.
+// Errors: none.
+// Side Effects: none.
 type BudgetAlert struct {
 	ID             string    `json:"id"`
 	OrganizationID string    `json:"organizationId"`
@@ -2063,19 +2198,41 @@ func (s *Server) handleBudgetAlerts(w http.ResponseWriter, r *http.Request) {
 
 // ── Automated SDLC / Pipelines ────────────────────────────────────────────────
 
-// PipelineStatus reflects the lifecycle of an autonomous CI/CD pipeline.
+// PipelineStatus tracks the current execution phase of an autonomous CI/CD pipeline.
+//
+// Parameters: none
+// Returns: a PipelineStatus enum string.
+// Errors: none.
+// Side Effects: none.
 type PipelineStatus string
 
 const (
+	// PipelineStatusPending indicates a CI/CD job queued for execution.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	PipelineStatusPending      PipelineStatus = "PENDING"
+	// PipelineStatusImplementing indicates autonomous agents are actively writing code.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	PipelineStatusImplementing PipelineStatus = "IMPLEMENTING"
+	// PipelineStatusTesting indicates the system is validating code changes.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	PipelineStatusTesting      PipelineStatus = "TESTING"
+	// PipelineStatusStaging indicates code is deployed to a pre-production environment.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	PipelineStatusStaging      PipelineStatus = "STAGING"
+	// PipelineStatusPromoted indicates final deployment to production.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	PipelineStatusPromoted     PipelineStatus = "PROMOTED"
+	// PipelineStatusFailed indicates the delivery lifecycle encountered a fatal error.
+	// Parameters: none. Returns: none. Errors: none. Side Effects: none.
 	PipelineStatusFailed       PipelineStatus = "FAILED"
 )
 
-// Pipeline represents an autonomous implementation pipeline from spec to production.
+// Pipeline represents an autonomous software delivery pipeline managed by agents.
+//
+// Parameters: none
+// Returns: a Pipeline struct tracking branch states and deployment URLs.
+// Errors: none.
+// Side Effects: none.
 type Pipeline struct {
 	ID          string         `json:"id"`
 	Name        string         `json:"name"`
