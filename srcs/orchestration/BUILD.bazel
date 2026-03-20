@@ -6,6 +6,7 @@ go_library(
     importpath = "github.com/onehumancorp/mono/srcs/orchestration",
     visibility = ["//visibility:public"],
     deps = [
+        "//srcs/proto",
         "//srcs/telemetry",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
@@ -22,6 +23,7 @@ go_test(
     ],
     embed = [":orchestration"],
     deps = [
+        "//srcs/proto",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//metadata",
