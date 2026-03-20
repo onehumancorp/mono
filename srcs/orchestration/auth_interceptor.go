@@ -52,14 +52,16 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 		}
 
 		// Authorization: ensure the caller matches the requested agent ID.
-		parts := strings.Split(strings.TrimPrefix(spiffeID, "spiffe://"), "/")
 		// Expected formats:
 		// ohc.local/org/{orgID}/agent/{agentID}
 		// onehumancorp.io/{orgID}/{agentID} (from dashboard UI logic)
-		if len(parts) < 3 {
+		// ⚡ BOLT: [Eliminate O(N) slice allocations during SPIFFE ID parsing] - Randomized Selection from Top 5
+		trimmed := strings.TrimPrefix(spiffeID, "spiffe://")
+		if strings.Count(trimmed, "/") < 2 {
 			return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID lacks required path segments for agent identity: %s", spiffeID)
 		}
-		agentID := parts[len(parts)-1]
+		lastSlash := strings.LastIndex(trimmed, "/")
+		agentID := trimmed[lastSlash+1:]
 
 		switch v := req.(type) {
 		case *pb.RegisterAgentRequest:
@@ -96,11 +98,13 @@ func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
 			return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID format: %s", spiffeID)
 		}
 
-		parts := strings.Split(strings.TrimPrefix(spiffeID, "spiffe://"), "/")
-		if len(parts) < 3 {
+		// ⚡ BOLT: [Eliminate O(N) slice allocations during SPIFFE ID parsing] - Randomized Selection from Top 5
+		trimmed := strings.TrimPrefix(spiffeID, "spiffe://")
+		if strings.Count(trimmed, "/") < 2 {
 			return status.Errorf(codes.PermissionDenied, "SPIFFE ID lacks required path segments for agent identity: %s", spiffeID)
 		}
-		agentID := parts[len(parts)-1]
+		lastSlash := strings.LastIndex(trimmed, "/")
+		agentID := trimmed[lastSlash+1:]
 
 		// Since StreamMessagesRequest is not directly accessible in the interceptor args,
 		// we wrap the stream to inspect the message when it's received.
