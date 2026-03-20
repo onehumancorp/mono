@@ -1,0 +1,11 @@
+--- BUILD.bazel
++++ BUILD.bazel
+@@ -10,7 +10,8 @@
+ go_test(
+     name = "orchestration_test",
+     srcs = [
+         "service_test.go",
+         "service_grpc_test.go",
++        "benchmark_test.go",
+     ],
+     embed = [":orchestration"],

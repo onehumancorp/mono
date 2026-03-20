@@ -237,6 +237,7 @@ func TestPublishViaGRPCError(t *testing.T) {
 
 func TestStreamMessagesViaGRPCCancellation(t *testing.T) {
 	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "a2", Name: "A2"})
 	srv := NewHubServiceServer(hub)
 
 	ctx, cancel := context.WithCancel(context.Background())

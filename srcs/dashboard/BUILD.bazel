@@ -19,11 +19,13 @@ go_library(
 go_test(
     name = "dashboard_test",
     srcs = [
+        "benchmark_test.go",
         "server_missing_test.go",
         "server_test.go",
     ],
     embed = [":dashboard"],
     deps = [
+        "//srcs/auth",
         "//srcs/billing",
         "//srcs/domain",
         "//srcs/integrations",

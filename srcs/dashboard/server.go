@@ -1328,7 +1328,6 @@ func (s *Server) handleSnapshotCreate(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:    now,
 	}
 
-	// ⚡ BOLT: [Memory leak prevention by pruning old snapshots] - Randomized Selection from Top 5
 	s.snapshots = append(s.snapshots, snap)
 
 	if len(s.snapshots) > 5 {
@@ -1342,7 +1341,10 @@ func (s *Server) handleSnapshotCreate(w http.ResponseWriter, r *http.Request) {
 		if deleteIdx == -1 {
 			deleteIdx = 0
 		}
-		s.snapshots = append(s.snapshots[:deleteIdx], s.snapshots[deleteIdx+1:]...)
+		// Optimized slice deletion to prevent memory leak and shifting
+		copy(s.snapshots[deleteIdx:], s.snapshots[deleteIdx+1:])
+		s.snapshots[len(s.snapshots)-1] = OrgSnapshot{}
+		s.snapshots = s.snapshots[:len(s.snapshots)-1]
 	}
 
 	s.mu.Unlock()

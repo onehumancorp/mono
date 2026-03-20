@@ -87,6 +87,7 @@ type Hub struct {
 	inbox         map[string][]Message
 	meetings      map[string]MeetingRoom
 	minimaxAPIKey string
+	agentSignals  map[string]chan struct{}
 }
 
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
@@ -94,9 +95,10 @@ type Hub struct {
 // Returns: An instantiated *Hub ready to register agents and route events.
 func NewHub() *Hub {
 	return &Hub{
-		agents:   map[string]Agent{},
-		inbox:    map[string][]Message{},
-		meetings: map[string]MeetingRoom{},
+		agents:       map[string]Agent{},
+		inbox:        map[string][]Message{},
+		meetings:     map[string]MeetingRoom{},
+		agentSignals: map[string]chan struct{}{},
 	}
 }
 
@@ -113,6 +115,9 @@ func (h *Hub) RegisterAgent(agent Agent) {
 	}
 
 	h.agents[agent.ID] = agent
+	if _, exists := h.agentSignals[agent.ID]; !exists {
+		h.agentSignals[agent.ID] = make(chan struct{}, 1)
+	}
 }
 
 func (h *Hub) SetMinimaxAPIKey(key string) {
@@ -198,6 +203,7 @@ func (h *Hub) FireAgent(id string) {
 
 	delete(h.agents, id)
 	delete(h.inbox, id)
+	delete(h.agentSignals, id)
 }
 
 // Publish validates and routes a message to a direct recipient, a meeting room, or both.
@@ -218,6 +224,13 @@ func (h *Hub) Publish(message Message) error {
 			return errors.New("recipient agent is not registered")
 		}
 		h.inbox[message.ToAgent] = append(h.inbox[message.ToAgent], message)
+
+		if ch, ok := h.agentSignals[message.ToAgent]; ok {
+			select {
+			case ch <- struct{}{}:
+			default:
+			}
+		}
 	}
 
 	sender := h.agents[message.FromAgent]
@@ -294,7 +307,7 @@ func (h *Hub) Agents() []Agent {
 	}
 	h.mu.RUnlock()
 
-	// ⚡ BOLT: [O(n log n) sorting inside read lock] - Randomized Selection from Top 5
+	// Removed sorting inside read lock bottleneck
 	sort.Slice(agents, func(i, j int) bool {
 		return agents[i].ID < agents[j].ID
 	})
@@ -357,35 +370,51 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 }
 
 func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream pb.HubService_StreamMessagesServer) error {
-	// Simple polling implementation for demonstration.
-	// In production, use a proper pub/sub or channel-based mechanism.
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-
 	var lastCount int
+	doneCh := stream.Context().Done()
+
+	s.hub.mu.RLock()
+	signalCh, ok := s.hub.agentSignals[req.GetAgentId()]
+	s.hub.mu.RUnlock()
+
+	if !ok {
+		return status.Errorf(codes.NotFound, "agent signal channel not found")
+	}
+
 	for {
-		select {
-		case <-stream.Context().Done():
-			return nil
-		case <-ticker.C:
-			msgs := s.hub.Inbox(req.GetAgentId())
-			if len(msgs) > lastCount {
-				for i := lastCount; i < len(msgs); i++ {
-					m := msgs[i]
-					if err := stream.Send(pb.Message_builder{
-						Id:             m.ID,
-						FromAgent:      m.FromAgent,
-						ToAgent:        m.ToAgent,
-						Type:           m.Type,
-						Content:        m.Content,
-						MeetingId:      m.MeetingID,
-						OccurredAtUnix: m.OccurredAt.Unix(),
-					}.Build()); err != nil {
-						return err
-					}
+		s.hub.mu.RLock()
+		inbox := s.hub.inbox[req.GetAgentId()]
+		inboxLen := len(inbox)
+
+		var newMsgs []Message
+		if inboxLen > lastCount {
+			newMsgs = append([]Message(nil), inbox[lastCount:]...)
+		}
+		s.hub.mu.RUnlock()
+
+		if len(newMsgs) > 0 {
+			for _, m := range newMsgs {
+				if err := stream.Send(pb.Message_builder{
+					Id:             m.ID,
+					FromAgent:      m.FromAgent,
+					ToAgent:        m.ToAgent,
+					Type:           m.Type,
+					Content:        m.Content,
+					MeetingId:      m.MeetingID,
+					OccurredAtUnix: m.OccurredAt.Unix(),
+				}.Build()); err != nil {
+					return err
 				}
-				lastCount = len(msgs)
 			}
+			lastCount += len(newMsgs)
+			continue
+		}
+
+		select {
+		case <-doneCh:
+			return nil
+		case <-signalCh:
+			// Woken up by a new message, loop continues to fetch it.
 		}
 	}
 }
@@ -424,15 +453,25 @@ func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, erro
 	}
 
 	url := minimaxAPIURL
-	payload := map[string]interface{}{
-		"model": "MiniMax-M2.7",
-		"messages": []map[string]string{
-			{"role": "user", "content": prompt},
+
+	// Structured payload to avoid reflection overhead during high-frequency JSON encoding
+	type Message struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	}
+	type Payload struct {
+		Model    string    `json:"model"`
+		Messages []Message `json:"messages"`
+	}
+
+	payload := Payload{
+		Model: "MiniMax-M2.7",
+		Messages: []Message{
+			{Role: "user", Content: prompt},
 		},
 	}
 
-	// ⚡ BOLT: [JSON serialization thrashing in LLM API routing] - Randomized Selection from Top 5
-	// Use a sync.Pool for bytes.Buffer and json.Encoder to avoid high-allocation JSON marshalling.
+	// Re-using sync.Pool to allocate buffer for JSON encoding instead of creating new bytes
 	buf := bufferPool.Get().(*bytes.Buffer)
 	buf.Reset()
 	defer bufferPool.Put(buf)
