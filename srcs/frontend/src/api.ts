@@ -436,6 +436,20 @@ export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> 
   return postJSON<DashboardSnapshot>("/api/snapshots/restore", { snapshotId });
 }
 
+/**
+ * Summary: Adjusts the scaling count for a given role.
+ * Intent: Scales up or down the number of agents for a specified role.
+ * Params:
+ *   - role: string
+ *   - count: number
+ * Returns: Promise<DashboardSnapshot>
+ * Errors: Rethrows any network or parsing errors.
+ * Side Effects: Modifies the backend's agent pool.
+ */
+export function scaleRole(role: string, count: number): Promise<DashboardSnapshot> {
+  return postJSON<DashboardSnapshot>("/api/v1/scale", { role, count });
+}
+
 // ── Marketplace ───────────────────────────────────────────────────────────────
 
 /**

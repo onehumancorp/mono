@@ -297,3 +297,65 @@ func (s *Server) handleSnapshotRestore(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, snapshot)
 }
+
+type scaleRequest struct {
+	Role  string `json:"role"`
+	Count int    `json:"count"`
+}
+
+func (s *Server) handleScaleAgents(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req scaleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.Role == "" || req.Count < 0 {
+		http.Error(w, "role and valid count are required", http.StatusBadRequest)
+		return
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Find current agents with this role
+	agentsList := s.hub.Agents()
+	var roleAgents []orchestration.Agent
+	for _, a := range agentsList {
+		if a.Role == req.Role {
+			roleAgents = append(roleAgents, a)
+		}
+	}
+
+	currentCount := len(roleAgents)
+	if req.Count > currentCount {
+		// Scale up
+		diff := req.Count - currentCount
+		for i := 0; i < diff; i++ {
+			id := s.org.ID + "-agent-" + time.Now().UTC().Format("20060102150405000") + "-" + string(rune(i+'A'))
+			name := req.Role + " Bot " + id[len(id)-4:]
+			agent := orchestration.Agent{
+				ID:             id,
+				Name:           name,
+				Role:           req.Role,
+				OrganizationID: s.org.ID,
+				Status:         orchestration.StatusIdle,
+				ProviderType:   string(agents.ProviderTypeBuiltin),
+			}
+			s.hub.RegisterAgent(agent)
+		}
+	} else if req.Count < currentCount {
+		// Scale down
+		diff := currentCount - req.Count
+		for i := 0; i < diff; i++ {
+			s.hub.FireAgent(roleAgents[i].ID)
+		}
+	}
+
+	snapshot := s.snapshotLocked()
+	writeJSON(w, snapshot)
+}

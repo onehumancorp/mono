@@ -1,4 +1,4 @@
-import { fetchCosts, fetchDashboard, fetchDomains, fetchMCPTools, fetchMeetings, fetchOrganization, fireAgent, hireAgent, seedScenario, sendMessage } from "./api";
+import { fetchCosts, fetchDashboard, fetchDomains, fetchMCPTools, fetchMeetings, fetchOrganization, fireAgent, hireAgent, seedScenario, sendMessage, scaleRole } from "./api";
 
 describe("api", () => {
   afterEach(() => {
@@ -302,6 +302,18 @@ describe("api – new endpoints", () => {
   it("fireAgent throws on non-OK response", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}), text: async () => "" })));
     await expect(fireAgent("nobody")).rejects.toThrow("404");
+  });
+
+  it("scaleRole posts to /api/v1/scale and returns dashboard snapshot", async () => {
+    const snap = { agents: [] };
+    vi.stubGlobal("fetch", vi.fn(async (url, init) => {
+      expect(url).toBe("/api/v1/scale");
+      expect(init.method).toBe("POST");
+      expect(JSON.parse(init.body)).toEqual({ role: "sales_rep", count: 5 });
+      return { ok: true, status: 200, json: async () => snap };
+    }));
+    const result = await scaleRole("sales_rep", 5);
+    expect(result).toEqual(snap);
   });
 
   it("fetchDomains returns domain list", async () => {

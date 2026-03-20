@@ -291,8 +291,8 @@ func TestHandleDevSeedResetsServerState(t *testing.T) {
 	if len(payload.Meetings) != 1 || payload.Meetings[0].ID != "launch-readiness" {
 		t.Fatalf("unexpected meetings after seed: %+v", payload.Meetings)
 	}
-	if len(payload.Agents) != 6 {
-		t.Fatalf("expected 6 seeded agents, got %d", len(payload.Agents))
+	if len(payload.Agents) != 12 {
+		t.Fatalf("expected 12 seeded agents, got %d", len(payload.Agents))
 	}
 }
 
@@ -3434,5 +3434,103 @@ func TestHandleHireAgent_UnknownProviderRejected(t *testing.T) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("expected 400 for unknown provider, got %d", resp.StatusCode)
+	}
+}
+
+func TestHandleScaleAgents(t *testing.T) {
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
+	defer server.Close()
+
+	// Initial check, should be 0 Sales Reps
+	var initSnap dashboardSnapshot
+	resp, _ := client.Get(server.URL + "/api/dashboard")
+	json.NewDecoder(resp.Body).Decode(&initSnap)
+	resp.Body.Close()
+
+	initialCount := 0
+	for _, a := range initSnap.Agents {
+		if a.Role == "sales_rep" {
+			initialCount++
+		}
+	}
+	if initialCount != 0 {
+		t.Fatalf("expected 0 sales_reps, got %d", initialCount)
+	}
+
+	// Scale up to 3
+	reqBody := `{"role":"sales_rep","count":3}`
+	resp, err := client.Post(server.URL+"/api/v1/scale", "application/json", strings.NewReader(reqBody))
+	if err != nil {
+		t.Fatalf("scale up error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+
+	var snap1 dashboardSnapshot
+	json.NewDecoder(resp.Body).Decode(&snap1)
+	count1 := 0
+	for _, a := range snap1.Agents {
+		if a.Role == "sales_rep" {
+			count1++
+		}
+	}
+	if count1 != 3 {
+		t.Fatalf("expected 3 sales_reps, got %d", count1)
+	}
+
+	// Scale down to 1
+	reqBody = `{"role":"sales_rep","count":1}`
+	resp, _ = client.Post(server.URL+"/api/v1/scale", "application/json", strings.NewReader(reqBody))
+	var snap2 dashboardSnapshot
+	json.NewDecoder(resp.Body).Decode(&snap2)
+	resp.Body.Close()
+
+	count2 := 0
+	for _, a := range snap2.Agents {
+		if a.Role == "sales_rep" {
+			count2++
+		}
+	}
+	if count2 != 1 {
+		t.Fatalf("expected 1 sales_rep, got %d", count2)
+	}
+}
+
+func TestHandleScaleAgentsBadRequests(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/scale", nil)
+	rec := httptest.NewRecorder()
+	app.handleScaleAgents(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/scale", strings.NewReader("bad-json"))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	app.handleScaleAgents(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for bad json, got %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/scale", strings.NewReader(`{"role":"","count":5}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	app.handleScaleAgents(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for missing role, got %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/scale", strings.NewReader(`{"role":"sales_rep","count":-1}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	app.handleScaleAgents(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for negative count, got %d", rec.Code)
 	}
 }
