@@ -22,6 +22,12 @@ type jwtHeader struct {
 // Claims holds the payload fields for both locally-issued (HS256) and
 // OIDC (RS256) tokens. The standard set is kept small by design.
 //
+// Summary: Represents the authenticated payload embedded within a validated JSON Web Token.
+// Parameters: None
+// Returns: Claims struct instance.
+// Errors: N/A
+// Side Effects: None.
+//
 // Constraints: Serializes to JSON for token encoding. Subject must uniquely identify the user.
 type Claims struct {
 	Subject  string   `json:"sub"`
@@ -35,12 +41,12 @@ type Claims struct {
 
 // HasRole checks whether the token's claims include authorization for a specific role.
 //
+// Summary: Validates whether the active token payload asserts a specific requested role constraint.
 // Parameters:
-//   - role: string; The target role identifier to check for.
-//
-// Returns: A boolean indicating if the role is present (true if present or if the user is an admin).
-//
-// Side Effects: None. Executes a read-only iteration over the claims.
+//   - role: string; The exact RBAC string identifier to query against.
+// Returns: A boolean indicating explicit role possession.
+// Errors: N/A
+// Side Effects: None.
 func (c *Claims) HasRole(role string) bool {
 	for _, r := range c.Roles {
 		if r == role || r == RoleAdmin {

@@ -15,9 +15,13 @@ import (
 	"time"
 )
 
-// OIDCConfig holds configuration for an external OIDC identity provider
-// such as Keycloak or any compliant OAuth2/OIDC provider.
-// Set OIDC_ISSUER_URL and OIDC_CLIENT_ID environment variables to enable.
+// OIDCConfig holds configuration for an external OIDC identity provider.
+//
+// Summary: Encapsulates runtime boundaries connecting the authenticator to an external OpenID Connect authority.
+// Parameters: None
+// Returns: OIDCConfig struct instance.
+// Errors: N/A
+// Side Effects: None.
 type OIDCConfig struct {
 	IssuerURL string // e.g. https://keycloak.example.com/realms/ohc
 	ClientID  string // audience claim to validate
@@ -131,8 +135,15 @@ func rsaPublicKey(k jwk) (*rsa.PublicKey, error) {
 	}, nil
 }
 
-// ValidateOIDCToken validates an RS256 JWT issued by the configured OIDC
-// provider, verifying the signature against the provider's JWKS.
+// ValidateOIDCToken validates an RS256 JWT issued by the configured OIDC provider.
+//
+// Summary: Retrieves external public keys to cryptographically assert and parse a supplied OIDC JWT.
+// Parameters:
+//   - tokenStr: string; The raw Base64 encoded JSON Web Token.
+//   - cfg: OIDCConfig; The initialized OpenID Connect authority parameters.
+// Returns: A pointer to the validated Claims or an explicit cryptographic error.
+// Errors: Fails if the signature is invalid, claims have expired, or issuer boundaries are breached.
+// Side Effects: Caches external JWK payloads retrieved via external HTTP discovery calls.
 func ValidateOIDCToken(tokenStr string, cfg OIDCConfig) (*Claims, error) {
 	if !cfg.Enabled {
 		return nil, errors.New("OIDC not configured")
