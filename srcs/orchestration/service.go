@@ -86,6 +86,7 @@ type Hub struct {
 	agents        map[string]Agent
 	inbox         map[string][]Message
 	meetings      map[string]MeetingRoom
+	subs          map[string][]chan struct{}
 	minimaxAPIKey string
 }
 
@@ -97,6 +98,7 @@ func NewHub() *Hub {
 		agents:   map[string]Agent{},
 		inbox:    map[string][]Message{},
 		meetings: map[string]MeetingRoom{},
+		subs:     map[string][]chan struct{}{},
 	}
 }
 
@@ -125,6 +127,40 @@ func (h *Hub) MinimaxAPIKey() string {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.minimaxAPIKey
+}
+
+// Subscribe creates and registers a wake-up channel for the given agent ID.
+//
+// Parameters:
+//   - agentID: string; The unique identifier of the agent.
+//
+// Returns: A channel that will receive a signal when a new message is published.
+func (h *Hub) Subscribe(agentID string) chan struct{} {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	ch := make(chan struct{}, 1)
+	h.subs[agentID] = append(h.subs[agentID], ch)
+	return ch
+}
+
+// Unsubscribe removes a previously registered wake-up channel.
+//
+// Parameters:
+//   - agentID: string; The unique identifier of the agent.
+//   - ch: chan struct{}; The wake-up channel to remove.
+func (h *Hub) Unsubscribe(agentID string, ch chan struct{}) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	subs := h.subs[agentID]
+	for i, sub := range subs {
+		if sub == ch {
+			h.subs[agentID] = append(subs[:i], subs[i+1:]...)
+			break
+		}
+	}
+	if len(h.subs[agentID]) == 0 {
+		delete(h.subs, agentID)
+	}
 }
 
 // Agent retrieves the runtime state of a specific worker by ID.
@@ -218,6 +254,13 @@ func (h *Hub) Publish(message Message) error {
 			return errors.New("recipient agent is not registered")
 		}
 		h.inbox[message.ToAgent] = append(h.inbox[message.ToAgent], message)
+
+		for _, ch := range h.subs[message.ToAgent] {
+			select {
+			case ch <- struct{}{}:
+			default:
+			}
+		}
 	}
 
 	sender := h.agents[message.FromAgent]
@@ -357,35 +400,41 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 }
 
 func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream pb.HubService_StreamMessagesServer) error {
-	// Simple polling implementation for demonstration.
-	// In production, use a proper pub/sub or channel-based mechanism.
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	// ⚡ BOLT: [Periodic polling in gRPC streams] - Randomized Selection from Top 5
+	// Replace periodic polling with a channel-based wake-up mechanism to eliminate latency
+	// and reduce unnecessary CPU cycles in gRPC streams.
+
+	agentID := req.GetAgentId()
+	wakeCh := s.hub.Subscribe(agentID)
+	defer s.hub.Unsubscribe(agentID, wakeCh)
 
 	var lastCount int
 	for {
+		// Send initial back-log
+		msgs := s.hub.Inbox(agentID)
+		if len(msgs) > lastCount {
+			for i := lastCount; i < len(msgs); i++ {
+				m := msgs[i]
+				if err := stream.Send(pb.Message_builder{
+					Id:             m.ID,
+					FromAgent:      m.FromAgent,
+					ToAgent:        m.ToAgent,
+					Type:           m.Type,
+					Content:        m.Content,
+					MeetingId:      m.MeetingID,
+					OccurredAtUnix: m.OccurredAt.Unix(),
+				}.Build()); err != nil {
+					return err
+				}
+			}
+			lastCount = len(msgs)
+		}
+
 		select {
 		case <-stream.Context().Done():
 			return nil
-		case <-ticker.C:
-			msgs := s.hub.Inbox(req.GetAgentId())
-			if len(msgs) > lastCount {
-				for i := lastCount; i < len(msgs); i++ {
-					m := msgs[i]
-					if err := stream.Send(pb.Message_builder{
-						Id:             m.ID,
-						FromAgent:      m.FromAgent,
-						ToAgent:        m.ToAgent,
-						Type:           m.Type,
-						Content:        m.Content,
-						MeetingId:      m.MeetingID,
-						OccurredAtUnix: m.OccurredAt.Unix(),
-					}.Build()); err != nil {
-						return err
-					}
-				}
-				lastCount = len(msgs)
-			}
+		case <-wakeCh:
+			// Loop around and send the new message
 		}
 	}
 }
