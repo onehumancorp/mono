@@ -179,3 +179,52 @@ func TestNewModelsHavePositivePricing(t *testing.T) {
 		}
 	}
 }
+
+func TestTrackConcurrentWrites(t *testing.T) {
+	tracker := NewTracker(DefaultCatalog)
+
+	done := make(chan bool)
+	for i := 0; i < 100; i++ {
+		go func(agentID string) {
+			_, err := tracker.Track(Usage{
+				AgentID:          agentID,
+				OrganizationID:   "org-1",
+				Model:            "gpt-4o",
+				PromptTokens:     100,
+				CompletionTokens: 50,
+				OccurredAt:       time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC),
+			})
+			if err != nil {
+				t.Errorf("track returned error: %v", err)
+			}
+			done <- true
+		}("agent-" + string(rune(i)))
+	}
+
+	for i := 0; i < 100; i++ {
+		<-done
+	}
+
+	summary := tracker.Summary("org-1")
+	if summary.TotalTokens != 15000 {
+		t.Fatalf("expected 15000 tokens from concurrent writes, got %d", summary.TotalTokens)
+	}
+	if len(summary.Agents) != 100 {
+		t.Fatalf("expected 100 agents from concurrent writes, got %d", len(summary.Agents))
+	}
+}
+
+func TestSummaryEmptyState(t *testing.T) {
+	tracker := NewTracker(DefaultCatalog)
+
+	summary := tracker.Summary("org-empty")
+	if summary.TotalTokens != 0 {
+		t.Fatalf("expected 0 tokens, got %d", summary.TotalTokens)
+	}
+	if summary.TotalCostUSD != 0 {
+		t.Fatalf("expected 0 cost, got %f", summary.TotalCostUSD)
+	}
+	if len(summary.Agents) != 0 {
+		t.Fatalf("expected 0 agents, got %d", len(summary.Agents))
+	}
+}
