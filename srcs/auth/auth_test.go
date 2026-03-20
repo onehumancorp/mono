@@ -454,7 +454,7 @@ kid := "test-key-1"
 srv := mockOIDCServer(t, privKey, kid)
 defer srv.Close()
 
-token := buildRS256Token(t, privKey, kid, srv.URL, time.Now().Add(time.Hour).Unix())
+token := buildRS256Token(t, privKey, kid, srv.URL, "test-client", time.Now().Add(time.Hour).Unix())
 cfg := auth.OIDCConfig{IssuerURL: srv.URL, ClientID: "test-client", Enabled: true}
 
 claims, err := auth.ValidateOIDCToken(token, cfg)
@@ -472,8 +472,8 @@ kid := "exp-key"
 srv := mockOIDCServer(t, privKey, kid)
 defer srv.Close()
 
-token := buildRS256Token(t, privKey, kid, srv.URL, time.Now().Add(-time.Hour).Unix())
-cfg := auth.OIDCConfig{IssuerURL: srv.URL, Enabled: true}
+token := buildRS256Token(t, privKey, kid, srv.URL, "test-client", time.Now().Add(-time.Hour).Unix())
+cfg := auth.OIDCConfig{IssuerURL: srv.URL, ClientID: "test-client", Enabled: true}
 
 if _, err := auth.ValidateOIDCToken(token, cfg); err == nil {
 t.Error("expected error for expired token")
@@ -484,6 +484,52 @@ func TestOIDC_Disabled(t *testing.T) {
 cfg := auth.OIDCConfig{Enabled: false}
 if _, err := auth.ValidateOIDCToken("any.token.here", cfg); err == nil {
 t.Error("expected error when OIDC disabled")
+}
+}
+
+func TestOIDC_InvalidIssuer(t *testing.T) {
+privKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+kid := "test-key-iss"
+srv := mockOIDCServer(t, privKey, kid)
+defer srv.Close()
+
+token := buildRS256Token(t, privKey, kid, "https://wrong-issuer.com", "test-client", time.Now().Add(time.Hour).Unix())
+cfg := auth.OIDCConfig{IssuerURL: srv.URL, ClientID: "test-client", Enabled: true}
+
+if _, err := auth.ValidateOIDCToken(token, cfg); err == nil || !strings.Contains(err.Error(), "invalid issuer") {
+t.Errorf("expected invalid issuer error, got: %v", err)
+}
+}
+
+func TestOIDC_InvalidAudience(t *testing.T) {
+privKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+kid := "test-key-aud"
+srv := mockOIDCServer(t, privKey, kid)
+defer srv.Close()
+
+token := buildRS256Token(t, privKey, kid, srv.URL, "wrong-client", time.Now().Add(time.Hour).Unix())
+cfg := auth.OIDCConfig{IssuerURL: srv.URL, ClientID: "test-client", Enabled: true}
+
+if _, err := auth.ValidateOIDCToken(token, cfg); err == nil || !strings.Contains(err.Error(), "invalid audience") {
+t.Errorf("expected invalid audience error, got: %v", err)
+}
+}
+
+func TestOIDC_ValidRS256Token_ArrayAud(t *testing.T) {
+privKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+kid := "test-key-arr-aud"
+srv := mockOIDCServer(t, privKey, kid)
+defer srv.Close()
+
+token := buildRS256Token(t, privKey, kid, srv.URL, []interface{}{"other-client", "test-client"}, time.Now().Add(time.Hour).Unix())
+cfg := auth.OIDCConfig{IssuerURL: srv.URL, ClientID: "test-client", Enabled: true}
+
+claims, err := auth.ValidateOIDCToken(token, cfg)
+if err != nil {
+t.Fatalf("ValidateOIDCToken array aud failed: %v", err)
+}
+if claims.Subject != "user-sub-1" {
+t.Errorf("subject mismatch: %s", claims.Subject)
 }
 }
 
@@ -519,7 +565,7 @@ http.NotFound(w, r)
 }))
 }
 
-func buildRS256Token(t *testing.T, key *rsa.PrivateKey, kid, issuer string, exp int64) string {
+func buildRS256Token(t *testing.T, key *rsa.PrivateKey, kid, issuer string, aud any, exp int64) string {
 t.Helper()
 hdr := map[string]string{"alg": "RS256", "typ": "JWT", "kid": kid}
 pay := map[string]any{
@@ -527,6 +573,7 @@ pay := map[string]any{
 "email":              "oidc@test.com",
 "preferred_username": "oidcuser",
 "iss":                issuer,
+"aud":                aud,
 "iat":                time.Now().Unix(),
 "exp":                exp,
 "jti":                "test-jti-1",
