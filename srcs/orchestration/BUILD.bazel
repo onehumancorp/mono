@@ -1,5 +1,7 @@
 load("@rules_go//go:def.bzl", "go_library", "go_test")
 
+# gazelle:resolve go github.com/onehumancorp/mono/srcs/proto/ohc/orchestration //srcs/proto:hub_go_proto
+
 go_library(
     name = "orchestration",
     srcs = ["service.go"],
@@ -17,13 +19,17 @@ go_library(
 go_test(
     name = "orchestration_test",
     srcs = [
+        "benchmark_test.go",
         "minimax_client_test.go",
         "service_grpc_test.go",
         "service_test.go",
     ],
     embed = [":orchestration"],
     deps = [
+        "//srcs/proto:hub_go_proto",
         "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//metadata",
+        "@org_golang_google_grpc//status",
     ],
 )

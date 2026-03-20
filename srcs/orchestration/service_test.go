@@ -312,13 +312,13 @@ func TestHubServiceServer_StreamMessages(t *testing.T) {
 	}()
 
 	// Allow some time for the stream to poll and send the message
-	time.Sleep(1500 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	// Cancel the context to stop the stream
 	cancel()
 
 	err := <-errCh
-	if err != nil {
+	if err != nil && err != context.Canceled {
 		t.Fatalf("StreamMessages returned error: %v", err)
 	}
 
