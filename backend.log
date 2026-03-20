@@ -1,0 +1,31 @@
+INFO: Invocation ID: fad931b0-7bce-41a9-adc6-20fa9d02b650
+INFO: Streaming build results to: https://onehumancorp.buildbuddy.io/invocation/fad931b0-7bce-41a9-adc6-20fa9d02b650
+INFO: Options provided by the client:
+  Inherited 'common' options: --isatty=0 --terminal_columns=80
+INFO: Reading rc options for 'run' from /app/.bazelrc:
+  Inherited 'build' options: --config=remote --disk_cache=~/.cache/bazel-disk-cache --action_env=CGO_ENABLED=1 --spawn_strategy=sandboxed,local --incompatible_strict_action_env --announce_rc --action_env=GEMINI_API_KEY --action_env=MCP_BUNDLE_DIR --action_env=CI --remote_header=x-buildbuddy-api-key=SvYf8svkkop6DxtbDJZE
+INFO: Found applicable config definition build:remote in file /app/.bazelrc: --remote_download_all --config=buildbuddy-official --strategy=GenProtoDescriptorSet=local --strategy=GoCompilePkg=remote,sandboxed,local --strategy=GoCompilePkgExternal=remote,sandboxed,local --strategy=GoLink=remote,sandboxed,local --strategy=GoStdlib=remote,sandboxed,local
+INFO: Found applicable config definition common:buildbuddy-official in file /app/.bazelrc: --remote_cache=grpcs://onehumancorp.buildbuddy.io --remote_upload_local_results --remote_timeout=10m --remote_executor=grpcs://onehumancorp.buildbuddy.io --remote_cache_compression --jobs=200 --remote_local_fallback --remote_header=x-buildbuddy-api-key=vGFjlQg7X49NwoQHAfRW
+INFO: Found applicable config definition build:buildbuddy-official in file /app/.bazelrc: --bes_results_url=https://onehumancorp.buildbuddy.io/invocation/ --bes_backend=grpcs://onehumancorp.buildbuddy.io
+INFO: Checking for file changes...
+Computing main repo mapping:
+Loading:
+Loading: 0 packages loaded
+Analyzing: target //srcs/cmd/ohc:ohc (0 packages loaded, 0 targets configured)
+Analyzing: target //srcs/cmd/ohc:ohc (0 packages loaded, 0 targets configured)
+
+INFO: Analyzed target //srcs/cmd/ohc:ohc (0 packages loaded, 0 targets configured).
+[17 / 17] no actions running
+INFO: Found 1 target...
+Target //srcs/cmd/ohc:ohc up-to-date:
+  bazel-bin/srcs/cmd/ohc/ohc_/ohc
+INFO: Elapsed time: 5.492s, Critical Path: 0.09s
+INFO: 1 process: 4 action cache hit, 1 internal.
+INFO: Build completed successfully, 1 total action
+INFO:
+INFO: Running command line: bazel-bin/srcs/cmd/ohc/ohc_/ohc
+WARNING: Uploading BEP referenced local file: UNAUTHENTICATED: Invalid API key "S***E"
+WARNING: Uploading BEP referenced local file /home/jules/.cache/bazel/_bazel_jules/8c069df52082beee3c95ca17836fb8e2/command-fad931b0-7bce-41a9-adc6-20fa9d02b650.profile.gz hash: "2077a0d4990855df9da703f61993155f34eba9a18a1e5e2e8475c2ac6c959030"
+size_bytes: 6406
+: UNAUTHENTICATED: Invalid API key "S***E"
+ERROR: The Build Event Protocol upload failed: Not retrying publishBuildEvents, no more attempts left: status='Status{code=UNAUTHENTICATED, description=Invalid API key "S***E", cause=null}' UNAUTHENTICATED: UNAUTHENTICATED: Invalid API key "S***E" UNAUTHENTICATED: UNAUTHENTICATED: Invalid API key "S***E"
