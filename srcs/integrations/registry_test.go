@@ -47,9 +47,9 @@ func mockLookupIP(host string) ([]net.IP, error) {
 }
 
 func TestValidateURL(t *testing.T) {
-	oldLookupIP := lookupIP
-	lookupIP = mockLookupIP
-	defer func() { lookupIP = oldLookupIP }()
+	oldLookupIP := LookupIPFunc
+	LookupIPFunc = mockLookupIP
+	defer func() { LookupIPFunc = oldLookupIP }()
 
 	tests := []struct {
 		name    string
@@ -72,7 +72,7 @@ func TestValidateURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateURL(tt.url)
+			_, err := validateURL(tt.url)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("validateURL(%q) error = %v, wantErr %v", tt.url, err, tt.wantErr)
 			}
@@ -81,10 +81,10 @@ func TestValidateURL(t *testing.T) {
 
 	// DNS error test
 	t.Run("DNS Resolution Failed", func(t *testing.T) {
-		lookupIP = func(host string) ([]net.IP, error) {
+		LookupIPFunc = func(host string) ([]net.IP, error) {
 			return nil, net.UnknownNetworkError("unknown")
 		}
-		err := validateURL("http://unresolvable.local")
+		_, err := validateURL("http://unresolvable.local")
 		if err == nil {
 			t.Errorf("expected error for DNS resolution failure")
 		}
@@ -92,9 +92,9 @@ func TestValidateURL(t *testing.T) {
 }
 
 func TestConnectSSRF(t *testing.T) {
-	oldLookupIP := lookupIP
-	lookupIP = mockLookupIP
-	defer func() { lookupIP = oldLookupIP }()
+	oldLookupIP := LookupIPFunc
+	LookupIPFunc = mockLookupIP
+	defer func() { LookupIPFunc = oldLookupIP }()
 
 	r := NewRegistry()
 
@@ -120,9 +120,9 @@ func TestConnectSSRF(t *testing.T) {
 }
 
 func TestTestConnectionSSRF(t *testing.T) {
-	oldLookupIP := lookupIP
-	lookupIP = mockLookupIP
-	defer func() { lookupIP = oldLookupIP }()
+	oldLookupIP := LookupIPFunc
+	LookupIPFunc = mockLookupIP
+	defer func() { LookupIPFunc = oldLookupIP }()
 
 	r := NewRegistry()
 	_, _ = r.Connect("discord", "")
@@ -847,6 +847,9 @@ func TestConcurrentOperations(t *testing.T) {
 // ── Mock Http Handlers ────────────────────────────────────────────────────────
 
 func TestSendTelegramMessage(t *testing.T) {
+	AllowLocalIPsForTesting = true
+	defer func() { AllowLocalIPsForTesting = false }()
+
 	// Start a local HTTP server
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if req.URL.String() != "/bot%3Ctoken%3E/sendMessage" {
@@ -895,6 +898,9 @@ func TestSendTelegramMessageError(t *testing.T) {
 }
 
 func TestSendDiscordWebhook(t *testing.T) {
+	AllowLocalIPsForTesting = true
+	defer func() { AllowLocalIPsForTesting = false }()
+
 	// Start a local HTTP server
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusNoContent)
@@ -908,6 +914,9 @@ func TestSendDiscordWebhook(t *testing.T) {
 }
 
 func TestTestConnectionTelegram(t *testing.T) {
+	AllowLocalIPsForTesting = true
+	defer func() { AllowLocalIPsForTesting = false }()
+
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Write([]byte(`{"ok": true}`))
 	}))
@@ -1119,9 +1128,9 @@ func TestNewChatIntegrationsStartDisconnected(t *testing.T) {
 }
 
 func TestConnectAndDisconnectTelegram(t *testing.T) {
-	oldLookupIP := lookupIP
-	lookupIP = mockLookupIP
-	defer func() { lookupIP = oldLookupIP }()
+	oldLookupIP := LookupIPFunc
+	LookupIPFunc = mockLookupIP
+	defer func() { LookupIPFunc = oldLookupIP }()
 
 	r := NewRegistry()
 

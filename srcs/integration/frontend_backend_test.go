@@ -351,6 +351,9 @@ func TestRoleManagement(t *testing.T) {
 // ── Telegram integration test ─────────────────────────────────────────────────
 
 func TestTelegramIntegration_SendMessage(t *testing.T) {
+	integrations.AllowLocalIPsForTesting = true
+	defer func() { integrations.AllowLocalIPsForTesting = false }()
+
 	// Mock Telegram Bot API.
 	var capturedBody map[string]any
 	telegramSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -401,7 +404,9 @@ func TestTelegramIntegration_SendMessage(t *testing.T) {
 // ── Discord integration test ──────────────────────────────────────────────────
 
 func TestDiscordIntegration_SendMessage(t *testing.T) {
-	t.Skip("Skipping TestDiscordIntegration_SendMessage because httptest.Server uses 127.0.0.1 which is blocked by SSRF protections.")
+	integrations.AllowLocalIPsForTesting = true
+	defer func() { integrations.AllowLocalIPsForTesting = false }()
+
 	// Mock Discord webhook.
 	var capturedDiscord map[string]any
 	discordSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

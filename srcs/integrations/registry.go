@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"sync"
 	"time"
+	"context"
 )
 
 // ── Integration types ─────────────────────────────────────────────────────────
@@ -252,39 +253,45 @@ func (r *Registry) Integration(id string) (Integration, bool) {
 }
 
 // lookupIP is a variable to allow mocking net.LookupIP in tests.
-var lookupIP = net.LookupIP
+var LookupIPFunc = net.LookupIP
 
-// validateURL checks if a given URL string is safe from SSRF attacks.
+// AllowLocalIPsForTesting controls whether loopback IPs are allowed by SSRF protections
+var AllowLocalIPsForTesting = false
+
+// validateURL checks if a given URL string is safe from SSRF attacks
+// and returns the resolved, safe IP addresses to prevent TOCTOU DNS rebinding.
 // It explicitly blocks loopback, private, unspecified, and link-local IP addresses.
 // It fails closed on DNS resolution errors.
-func validateURL(u string) error {
+func validateURL(u string) ([]net.IP, error) {
 	parsedURL, err := url.ParseRequestURI(u)
 	if err != nil {
-		return errors.New("invalid URL format")
+		return nil, errors.New("invalid URL format")
 	}
 
 	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
-		return errors.New("invalid URL scheme")
+		return nil, errors.New("invalid URL scheme")
 	}
 
 	host := parsedURL.Hostname()
 	if host == "" {
-		return errors.New("URL must contain a host")
+		return nil, errors.New("URL must contain a host")
 	}
 
-	ips, err := lookupIP(host)
+	ips, err := LookupIPFunc(host)
 	if err != nil {
 		// Fail closed on DNS resolution error
-		return errors.New("DNS resolution failed")
+		return nil, errors.New("DNS resolution failed")
 	}
 
 	for _, ip := range ips {
-		if ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
-			return errors.New("URL resolves to a blocked IP address")
+		if !AllowLocalIPsForTesting {
+			if ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+				return nil, errors.New("URL resolves to a blocked IP address")
+			}
 		}
 	}
 
-	return nil
+	return ips, nil
 }
 
 // Connect marks an integration as connected and sets its base URL.
@@ -299,12 +306,12 @@ func validateURL(u string) error {
 // Returns: The updated Integration, or an error if it was not found.
 func (r *Registry) Connect(id, baseURL string, creds ...IntegrationCredentials) (Integration, error) {
 	if baseURL != "" {
-		if err := validateURL(baseURL); err != nil {
+		if _, err := validateURL(baseURL); err != nil {
 			return Integration{}, err
 		}
 	}
 	if len(creds) > 0 && creds[0].WebhookURL != "" {
-		if err := validateURL(creds[0].WebhookURL); err != nil {
+		if _, err := validateURL(creds[0].WebhookURL); err != nil {
 			return Integration{}, err
 		}
 	}
@@ -464,7 +471,7 @@ func (r *Registry) TestConnection(id string, creds IntegrationCredentials) error
 		if active.WebhookURL == "" {
 			return errors.New("webhook URL is required")
 		}
-		if err := validateURL(active.WebhookURL); err != nil {
+		if _, err := validateURL(active.WebhookURL); err != nil {
 			return err
 		}
 		return sendDiscordWebhook(active.WebhookURL, "One Human Corp",
@@ -786,6 +793,64 @@ func generateID(prefix string, now time.Time) string {
 // Override in tests to point to a mock server.
 var TelegramAPIBase = "https://api.telegram.org"
 
+// getSafeHTTPClient returns an http.Client configured to prevent DNS rebinding
+// and SSRF attacks by pinning the destination to the validated IP address.
+func getSafeHTTPClient(apiURL string) (*http.Client, error) {
+	ips, err := validateURL(apiURL)
+	if err != nil {
+		return nil, fmt.Errorf("url validation failed: %w", err)
+	}
+
+	if len(ips) == 0 {
+		return nil, errors.New("no safe IP addresses found")
+	}
+
+	// Use the first safe IP
+	safeIP := ips[0].String()
+
+	dialer := &net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
+
+	transport := &http.Transport{
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			// In test environments, if we are mocking local IPs for mock servers,
+			// don't try to pin to a single IP because the tests mock the DNS lookup but
+			// the actual connection goes to localhost.
+			if AllowLocalIPsForTesting {
+				return dialer.DialContext(ctx, network, addr)
+			}
+
+			// Extract port from the original address
+			_, port, err := net.SplitHostPort(addr)
+			if err != nil {
+				// Fallback to default ports if not specified
+				parsed, err2 := url.ParseRequestURI(apiURL)
+				if err2 == nil && parsed.Scheme == "https" {
+					port = "443"
+				} else {
+					port = "80"
+				}
+			}
+
+			// Pin the connection to the validated safe IP
+			safeAddr := net.JoinHostPort(safeIP, port)
+			return dialer.DialContext(ctx, network, safeAddr)
+		},
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	return &http.Client{
+		Transport: transport,
+		Timeout:   15 * time.Second,
+	}, nil
+}
+
 // sendTelegramMessage posts a text message to a Telegram chat via the Bot API.
 func sendTelegramMessage(botToken, chatID, text string) error {
 	apiURL := TelegramAPIBase + "/bot" + botToken + "/sendMessage"
@@ -796,7 +861,13 @@ func sendTelegramMessage(botToken, chatID, text string) error {
 	if err != nil {
 		return err
 	}
-	resp, err := http.Post(apiURL, "application/json", bytes.NewReader(payload)) //nolint:noctx
+
+	client, err := getSafeHTTPClient(apiURL)
+	if err != nil {
+		return fmt.Errorf("telegram API SSRF check: %w", err)
+	}
+
+	resp, err := client.Post(apiURL, "application/json", bytes.NewReader(payload)) //nolint:noctx
 	if err != nil {
 		return fmt.Errorf("telegram API: %w", err)
 	}
@@ -824,7 +895,13 @@ func sendDiscordWebhook(webhookURL, username, content string) error {
 	if err != nil {
 		return err
 	}
-	resp, err := http.Post(webhookURL, "application/json", bytes.NewReader(payload)) //nolint:noctx
+
+	client, err := getSafeHTTPClient(webhookURL)
+	if err != nil {
+		return fmt.Errorf("discord API SSRF check: %w", err)
+	}
+
+	resp, err := client.Post(webhookURL, "application/json", bytes.NewReader(payload)) //nolint:noctx
 	if err != nil {
 		return fmt.Errorf("discord API: %w", err)
 	}
