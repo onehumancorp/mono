@@ -1,29 +1,34 @@
 # Frontend Module
 
 ## Identity
-The `frontend` module is the React-based User Interface for the One Human Corp "Agentic OS", providing the human CEO with a real-time, interactive dashboard.
+The `frontend` module represents the primary React-based command and control interface for the One Human Corp "Agentic OS", serving the CEO's administrative layer.
 
 ## Architecture
-Built using Vite, React, and TypeScript, this Single Page Application (SPA) acts as the control plane for the virtual enterprise. It interacts with the Go backend via standard REST APIs documented in `src/api.ts`. The UI leverages a custom Apple-style design system to present complex organizational hierarchies, real-time agent meeting transcripts, external integration status, and token-based billing dashboards in an accessible manner.
+Orchestrated as a Vite + React Single Page Application (SPA) strictly verified through TypeScript (`TSDoc`), it accesses backend controllers over HTTP JSON endpoints defined explicitly within `src/api.ts`. The UI applies high-contrast Apple-style design principles featuring responsive organizational charts, comprehensive meeting transcripts, and dashboard visualizations mapping LangGraph/CrewAI token tracking.
 
 ## Quick Start
-To start the frontend application in development mode:
+Initialize the hot-reloading Vite development stack:
 
 ```bash
+# Navigate to the frontend directory
 cd srcs/frontend
+
+# Install dependencies
 npm install
+
+# Start the Vite React app
 npm run dev
 ```
 
-Note: The development server automatically proxies `/api/*` requests to `http://localhost:8080`. Ensure the Go backend is running concurrently.
+*Note: Vite acts as an upstream proxy on port 5173, mapping any `/api/*` calls directly back to the native Go Backend running at `localhost:8080`.*
 
 ## Developer Workflow
-This module is primarily developed using Node/npm but is also integrated into the broader Bazel monorepo.
+Frontend components may be developed traditionally via npm scripts or seamlessly via the Bazel monorepo graph:
 
 - **Run Dev Server**: `npm run dev`
-- **Build**: `npm run build`
-- **Type Check**: `npm run typecheck`
-- **Test**: `npm run test`
+- **Build assets**: `npm run build`
+- **Enforce typing**: `npm run typecheck`
+- **Execute Vitest / Playwright Verification**: `npm run test` or `bazelisk test //srcs/frontend/...`
 
 ## Configuration
-No `.env` file is required for the default local setup, as proxy rules are embedded directly into `vite.config.ts`. Production builds are packaged as static assets and served by the Go backend via the `MONO_FRONTEND_DIST` environment variable.
+No mandatory `.env` files are required during local development. Upon deployment, static asset generation routes are dictated by the global `MONO_FRONTEND_DIST` variable consumed dynamically by the Go server.

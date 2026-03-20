@@ -1,13 +1,13 @@
 # Domain Module
 
 ## Identity
-The `domain` module defines the core architectural entities (organisations, roles, members, and playbooks) that power the One Human Corp environment.
+The `domain` module acts as the foundational data modeling layer for the One Human Corp ecosystem, rigorously defining the core architectural concepts of Organizations, AI Roles, Membership Trees, and system Playbooks.
 
 ## Architecture
-Built as a pure Go library with zero external dependencies, this module acts as the domain-driven heart of the system. It exposes foundational types like `Organization` and `Member` while offering out-of-the-box organisational templates via factory functions (e.g., `NewSoftwareCompany`, `NewDigitalMarketingAgency`). This makes it trivial to scaffold complex, pre-configured AI workforce hierarchies.
+Implemented strictly as a pure Go library completely unburdened by external or platform dependencies, this package provides canonical data structs (like `Organization` and `Member`). Crucially, it exports standardized industrial blueprint factories (such as `NewSoftwareCompany` and `NewDigitalMarketingAgency`) to instantly construct vast, context-aware AI workforce hierarchies ready for execution.
 
 ## Quick Start
-You can easily spin up a fully structured organisation using the provided factories:
+Instantiate an entire pre-configured enterprise workforce programmatically:
 
 ```go
 package main
@@ -20,23 +20,26 @@ import (
 
 func main() {
 	now := time.Now().UTC()
-	// Scaffolds a complete digital marketing agency with SEO, Growth, and Content agents.
+
+	// Bootstraps a comprehensive digital marketing agency featuring nested SEO, Growth, and Creative agents.
 	agency := domain.NewDigitalMarketingAgency("agency-01", "Acme Marketing", "Alice", now)
 
-	fmt.Printf("Created %s with %d members\n", agency.Name, len(agency.Members))
+	fmt.Printf("Deployed %s initialized with %d members\n", agency.Name, len(agency.Members))
 
-	// Query the org chart
+	// Interrogate the live org chart
 	if member, ok := agency.MemberByID("agency-01-ceo"); ok {
-		fmt.Printf("CEO is: %s\n", member.Name)
+		fmt.Printf("Verified human CEO assignment: %s\n", member.Name)
 	}
 }
 ```
 
 ## Developer Workflow
-This module is built and tested using Bazel.
+This module requires the Bazel build system for all compilation tasks.
 
 - **Build**: `bazelisk build //srcs/domain`
 - **Test**: `bazelisk test //srcs/domain/...`
 
+*Note: All implementations strictly require hermetic test patterns inherited from existing `*_test.go` suites.*
+
 ## Configuration
-No configuration or environment variables are required. This is a stateless structural module.
+Because this is a purely definitional and stateless structural library, no runtime environment variables or external Kubernetes configurations are required.

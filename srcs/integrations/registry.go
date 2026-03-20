@@ -31,8 +31,11 @@ import (
 type Category string
 
 const (
+	// CategoryChat covers integrations responsible for human-agent conversational interfaces.
 	CategoryChat   Category = "chat"
+	// CategoryGit covers source code version control platforms.
 	CategoryGit    Category = "git"
+	// CategoryIssues covers integrations for ticket creation, sprint tracking, and project management.
 	CategoryIssues Category = "issues"
 )
 
@@ -41,21 +44,36 @@ type IntegrationType string
 
 const (
 	// Chat services.
+
+	// IntegrationTypeSlack represents the Slack business communication platform.
 	IntegrationTypeSlack      IntegrationType = "slack"
+	// IntegrationTypeDiscord represents the Discord chat and VoIP platform.
 	IntegrationTypeDiscord    IntegrationType = "discord"
+	// IntegrationTypeGoogleChat represents the Google Workspace Chat application.
 	IntegrationTypeGoogleChat IntegrationType = "google_chat"
+	// IntegrationTypeTelegram represents the Telegram messaging service API.
 	IntegrationTypeTelegram   IntegrationType = "telegram"
+	// IntegrationTypeTeams represents the Microsoft Teams collaboration platform.
 	IntegrationTypeTeams      IntegrationType = "teams"
 
 	// Git platforms.
+
+	// IntegrationTypeGitHub represents GitHub repositories and Pull Request infrastructure.
 	IntegrationTypeGitHub IntegrationType = "github"
+	// IntegrationTypeGitLab represents GitLab instances and Merge Request APIs.
 	IntegrationTypeGitLab IntegrationType = "gitlab"
+	// IntegrationTypeGitea represents self-hosted Gitea version control instances.
 	IntegrationTypeGitea  IntegrationType = "gitea"
 
 	// Issue trackers.
+
+	// IntegrationTypeJIRA represents the Atlassian Jira issue tracking suite.
 	IntegrationTypeJIRA         IntegrationType = "jira"
+	// IntegrationTypePlane represents the open-source Plane project management tool.
 	IntegrationTypePlane        IntegrationType = "plane"
+	// IntegrationTypeGitHubIssues represents the native issue tracking features of GitHub.
 	IntegrationTypeGitHubIssues IntegrationType = "github_issues"
+	// IntegrationTypeLinear represents the Linear software project management app.
 	IntegrationTypeLinear       IntegrationType = "linear"
 )
 
@@ -63,8 +81,11 @@ const (
 type ConnectionStatus string
 
 const (
+	// StatusConnected indicates the service has been successfully authenticated and is active.
 	StatusConnected    ConnectionStatus = "connected"
+	// StatusDisconnected indicates the integration is available but currently lacks valid credentials.
 	StatusDisconnected ConnectionStatus = "disconnected"
+	// StatusError signifies the integration failed to authorize or experienced an unexpected API failure.
 	StatusError        ConnectionStatus = "error"
 )
 
@@ -115,8 +136,11 @@ type ChatMessage struct {
 type PullRequestStatus string
 
 const (
+	// PRStatusOpen implies the branch is currently under review or awaiting CI checks.
 	PRStatusOpen   PullRequestStatus = "open"
+	// PRStatusMerged signifies the proposed changes were accepted and incorporated into the target branch.
 	PRStatusMerged PullRequestStatus = "merged"
+	// PRStatusClosed indicates the pull request was rejected or abandoned without merging.
 	PRStatusClosed PullRequestStatus = "closed"
 )
 
@@ -141,9 +165,13 @@ type PullRequest struct {
 type IssueStatus string
 
 const (
+	// IssueStatusOpen means the ticket has been created but no agent has started working on it.
 	IssueStatusOpen       IssueStatus = "open"
+	// IssueStatusInProgress indicates the task has been actively assigned to an agent.
 	IssueStatusInProgress IssueStatus = "in_progress"
+	// IssueStatusDone signifies the work described in the ticket has been completed.
 	IssueStatusDone       IssueStatus = "done"
+	// IssueStatusClosed means the ticket is resolved, rejected, or otherwise defunct.
 	IssueStatusClosed     IssueStatus = "closed"
 )
 
@@ -151,9 +179,13 @@ const (
 type IssuePriority string
 
 const (
+	// IssuePriorityLow implies the task is a minor enhancement or cosmetic bug.
 	IssuePriorityLow      IssuePriority = "low"
+	// IssuePriorityMedium is the default baseline urgency for standard tickets.
 	IssuePriorityMedium   IssuePriority = "medium"
+	// IssuePriorityHigh indicates the ticket blocks important feature work and requires prompt attention.
 	IssuePriorityHigh     IssuePriority = "high"
+	// IssuePriorityCritical denotes a production-breaking issue requiring immediate hotfix escalation.
 	IssuePriorityCritical IssuePriority = "critical"
 )
 

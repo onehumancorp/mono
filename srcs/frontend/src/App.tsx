@@ -95,6 +95,19 @@ const ICONS: Record<string, string> = {
   users: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>`,
 };
 
+/**
+ * Renders an SVG navigation icon based on the provided name.
+ *
+ * @remarks
+ * Summary: Displays a specific SVG icon used in the main navigation sidebar.
+ *
+ * @param props - Component properties.
+ * @param props.name - The key string corresponding to the desired SVG icon in the `ICONS` map.
+ * @returns A React component rendering the requested SVG.
+ * @throws None.
+ *
+ * Side Effects: None. Pure rendering component.
+ */
 function NavIcon({ name }: { name: string }) {
   return (
     <span
@@ -106,12 +119,41 @@ function NavIcon({ name }: { name: string }) {
 }
 
 /* ── Role Avatar ── */
+
+/**
+ * Generates and displays a two-letter avatar based on a role or name.
+ *
+ * @remarks
+ * Summary: Visual component providing a quick identifier for agents and humans in the UI.
+ *
+ * @param props - Component properties.
+ * @param props.role - The job title or role assigned to the individual.
+ * @param props.name - The individual's display name.
+ * @returns A React element containing the formatted initials.
+ * @throws None.
+ *
+ * Side Effects: None. Pure rendering component.
+ */
 function RoleAvatar({ role, name }: { role: string; name: string }) {
   const initials = roleInitials(role || name);
   return <span className="role-avatar" aria-hidden="true">{initials}</span>;
 }
 
 /* ── Status Badge ── */
+
+/**
+ * Displays a color-coded pill indicating the current operational state of an agent.
+ *
+ * @remarks
+ * Summary: Visual component translating an agent's string status into a clear, colored indicator.
+ *
+ * @param props - Component properties.
+ * @param props.status - The raw string status of the agent (e.g., "ACTIVE", "BLOCKED").
+ * @returns A React element containing the status badge.
+ * @throws None.
+ *
+ * Side Effects: None. Pure rendering component.
+ */
 function StatusBadge({ status }: { status: string }) {
   const tier = statusTier(status);
   return (
@@ -123,6 +165,22 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 /* ── Build org tree ── */
+
+/**
+ * Recursively renders the organizational reporting structure as a nested list.
+ *
+ * @remarks
+ * Summary: Visual component that maps direct reports to their respective managers.
+ *
+ * @param props - Component properties.
+ * @param props.members - The complete array of active organizational members.
+ * @param props.parentId - The ID of the manager whose direct reports should be rendered.
+ * @param props.depth - The current indentation level for the recursive tree.
+ * @returns A React element displaying the nested organizational chart.
+ * @throws None.
+ *
+ * Side Effects: None. Pure rendering component.
+ */
 function OrgTree({
   members,
   parentId,
@@ -156,6 +214,21 @@ function OrgTree({
 }
 
 /* ── Hire Agent Modal ── */
+
+/**
+ * Provides a modal dialog interface to provision and instantiate a new AI agent.
+ *
+ * @remarks
+ * Summary: Form component for expanding the organization's workforce.
+ *
+ * @param props - Component properties.
+ * @param props.onHire - Callback invoked when the user submits the hiring form.
+ * @param props.onClose - Callback invoked to dismiss the modal without hiring.
+ * @returns A React modal dialog element.
+ * @throws None.
+ *
+ * Side Effects: None directly. Form submission triggers the `onHire` callback.
+ */
 function HireAgentForm({
   onHire,
   onClose,

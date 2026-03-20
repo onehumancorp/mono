@@ -1,13 +1,13 @@
 # Dashboard Module
 
 ## Identity
-The `dashboard` module serves as the primary HTTP API and Gateway for the One Human Corp "Agentic OS", allowing the human CEO to direct teams, monitor ongoing operations, and orchestrate the broader AI workforce.
+The `dashboard` module serves as the primary HTTP API and REST Gateway for the One Human Corp "Agentic OS". It enables the human CEO to securely direct teams, monitor real-time operations, and oversee the AI workforce via the React frontend.
 
 ## Architecture
-The Dashboard relies on `net/http` to serve a React frontend application alongside JSON-based REST APIs. It acts as the orchestration proxy, linking the `domain` (organizational structure), `orchestration` (agent communication pub/sub hub), and `billing` (cost tracker) components together. The server maintains unified operational state within a thread-safe registry (`sync.RWMutex`). Functionality includes snapshot and recovery, confidence gating (approvals), and B2B federated handshake processing.
+The Dashboard relies on the standard `net/http` library to serve a unified REST API and proxy static Next.js/React frontend assets. It functions as the central orchestration hub, integrating the `domain` (organizational hierarchy), `orchestration` (Pub/Sub messaging), and `billing` (Cost Estimation Engine) modules. Operational state is safely maintained in memory utilizing a granular sharded lock design (`sync.RWMutex`) to prevent global mutex contention. Core capabilities include data snapshots, confidence gating (HITL approvals), and B2B federated handshake routing.
 
 ## Quick Start
-To initialize the HTTP server in an application context:
+To initialize the HTTP server and bind it to an application context:
 
 ```go
 package main
@@ -35,10 +35,12 @@ func main() {
 ```
 
 ## Developer Workflow
-This module is built and tested using Bazel.
+This module rigidly mandates Bazel for deterministic builds and tests.
 
 - **Build**: `bazelisk build //srcs/dashboard`
 - **Test**: `bazelisk test //srcs/dashboard/...`
 
+*Note: Ensure coverage strictly exceeds 95%. Use `go test -coverprofile=coverage.out ./srcs/dashboard/... && go tool cover -func=coverage.out` to verify line-by-line coverage if needed.*
+
 ## Configuration
-- `MONO_FRONTEND_DIST`: (Optional) Setting this environment variable directs the HTTP handler to serve statically built frontend files from the provided path instead of returning a generic fallback UI.
+- `MONO_FRONTEND_DIST`: *(Optional)* Specifying this environment variable directs the HTTP handler to serve statically compiled Next.js/React frontend files from the provided directory, suppressing the generic fallback UI.

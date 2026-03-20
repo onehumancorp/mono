@@ -1,13 +1,13 @@
 # Pipeline Module
 
 ## Identity
-The `pipeline` module is responsible for modelling and managing the Software Development Life Cycle (SDLC) progression for feature branches within the One Human Corp AI workforce.
+The `pipeline` module orchestrates the complete Software Development Life Cycle (SDLC), advancing autonomous feature branches systematically from specification approval through to staged deployment.
 
 ## Architecture
-The module implements an `Orchestrator` that oversees the automated pipeline phases: Implementing, Testing, Staging Ready, Deployed, and Rollback. It acts as an intermediary, consuming events from the `orchestration.Hub` (e.g., `EventSpecApproved`, `EventPRCreated`) and triggering corresponding CI/CD actions or assigning follow-up tasks to the AI agents (e.g., Software Engineers). State is maintained securely in memory using read-write mutexes.
+This module implements the `Orchestrator` struct, an autonomous event-listener bound to the core `orchestration.Hub`. It dictates phase transitions (Implementing, Testing, Staging Ready, Deployed, Rollback) by responding directly to asynchronous messaging events (such as `EventSpecApproved` or `EventPRCreated`). Concurrency safety is maintained through private, thread-safe memory maps protected by localized `sync.RWMutex` locks, allowing agents to reliably invoke mock CI/CD jobs.
 
 ## Quick Start
-To initialize the orchestrator and process a pipeline event:
+Bind the pipeline orchestrator to the central event hub and simulate a spec approval:
 
 ```go
 package main
@@ -22,37 +22,38 @@ import (
 func main() {
 	hub := orchestration.NewHub()
 
-	// Register system and agents
+	// Provision required baseline agents
 	hub.RegisterAgent(orchestration.Agent{ID: "system-hub"})
 	hub.RegisterAgent(orchestration.Agent{ID: "swe-1"})
 
+	// Boot the pipeline listener
 	orch := pipeline.NewOrchestrator(hub)
 
-	// Simulate an approved specification
+	// Disperse a specification sign-off event
 	msg := orchestration.Message{
-		ID:         "msg-1",
+		ID:         "msg-event-1",
 		FromAgent:  "pm-1",
 		ToAgent:    "system-hub",
 		Type:       orchestration.EventSpecApproved,
-		Content:    "branch=feat-login,details=Implement OAuth2",
+		Content:    "branch=feat-oauth,details=Implement federated login",
 		OccurredAt: time.Now().UTC(),
 	}
 
-	err := orch.HandleSpecApproved(msg)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+	if err := orch.HandleSpecApproved(msg); err != nil {
+		fmt.Printf("Orchestrator fault: %v\n", err)
 	}
 
-	state, _ := orch.GetPipelineState("feat-login")
-	fmt.Printf("Pipeline state: %s\n", state)
+	// Validate pipeline advancement
+	state, _ := orch.GetPipelineState("feat-oauth")
+	fmt.Printf("Initial pipeline progression state: %s\n", state)
 }
 ```
 
 ## Developer Workflow
-This module is built and tested using the Bazel build system.
+Compilation and unit execution depend purely on Bazel rules.
 
 - **Build**: `bazelisk build //srcs/pipeline`
 - **Test**: `bazelisk test //srcs/pipeline/...`
 
 ## Configuration
-No environment configuration is strictly required to run the mocked in-memory simulation. The orchestrator is tightly coupled to the `orchestration.Hub` and relies on correct agent registration within the Hub to successfully dispatch tasks.
+Zero runtime variables are strictly demanded. The package depends solely on the successful initialization of an accompanying `orchestration.Hub`.

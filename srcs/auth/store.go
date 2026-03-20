@@ -16,8 +16,11 @@ import (
 
 // Built-in role names.
 const (
+	// RoleAdmin indicates full read-write access and administrative privileges across the platform.
 	RoleAdmin    = "admin"
+	// RoleOperator indicates standard day-to-day privileges to manage agents and create tasks.
 	RoleOperator = "operator"
+	// RoleViewer indicates read-only access to metrics and dashboards.
 	RoleViewer   = "viewer"
 )
 

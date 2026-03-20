@@ -1,13 +1,13 @@
 # Orchestration Module
 
 ## Identity
-The `orchestration` module provides the asynchronous Pub/Sub Agent Interaction Protocol and Virtual Meeting Room infrastructure for the One Human Corp platform.
+The `orchestration` module provides the asynchronous Pub/Sub Agent Interaction Protocol and Virtual Meeting Room collaboration spaces for the One Human Corp platform.
 
 ## Architecture
-This module implements the `Hub`, a thread-safe message broker and agent registry. Agents collaborate by opening `MeetingRoom` sessions, passing context via `Message` events, and shifting their `Status` (Idle, Active, In_Meeting, Blocked) dynamically. This entirely decouples agent logic from direct synchronous calls, matching the platform's distributed event-driven design.
+This module implements the `Hub`, acting as the primary thread-safe message broker and global agent registry. AI workers interact by instantiating `MeetingRoom` sessions, dispensing context-aware `Message` structs, and dynamically adjusting their `Status` enumerations (e.g., Idle, Active, In_Meeting). This event-driven design cleanly decouples disparate agent logic pipelines, avoiding synchronous blockages entirely.
 
 ## Quick Start
-Initialise the hub, register agents, and create a meeting room:
+Initialize the global broker, enroll agents, and commence a collaborative meeting session:
 
 ```go
 package main
@@ -21,33 +21,33 @@ import (
 func main() {
 	hub := orchestration.NewHub()
 
-	// Register agents
-	hub.RegisterAgent(orchestration.Agent{ID: "pm-1", Name: "Product Manager", Role: "PRODUCT_MANAGER", OrganizationID: "org-1"})
-	hub.RegisterAgent(orchestration.Agent{ID: "swe-1", Name: "Software Engineer", Role: "SOFTWARE_ENGINEER", OrganizationID: "org-1"})
+	// Register workers securely into the registry map
+	hub.RegisterAgent(orchestration.Agent{ID: "pm-1", Name: "Product Manager", Role: "PRODUCT_MANAGER", OrganizationID: "org-alpha"})
+	hub.RegisterAgent(orchestration.Agent{ID: "swe-1", Name: "Software Engineer", Role: "SOFTWARE_ENGINEER", OrganizationID: "org-alpha"})
 
-	// Open a meeting
-	room := hub.OpenMeetingWithAgenda("sprint-planning", "Plan the next sprint", []string{"pm-1", "swe-1"})
+	// Establish a shared contextual room
+	room := hub.OpenMeetingWithAgenda("meeting-sprint-plan", "Coordinate upcoming deliverables", []string{"pm-1", "swe-1"})
 
-	// Publish a message
+	// Dispatch an asynchronous task request into the room
 	_ = hub.Publish(orchestration.Message{
-		ID:         "msg-1",
+		ID:         "msg-001",
 		FromAgent:  "pm-1",
 		ToAgent:    "swe-1",
 		Type:       orchestration.EventTask,
-		Content:    "Please implement the new login page.",
+		Content:    "Draft implementation spec for OAuth 2.0.",
 		MeetingID:  room.ID,
 		OccurredAt: time.Now().UTC(),
 	})
 
-	fmt.Printf("Meeting %s has %d messages\n", room.ID, len(hub.Meeting(room.ID).Transcript))
+	fmt.Printf("Session %s actively holds %d unread events\n", room.ID, len(hub.Meeting(room.ID).Transcript))
 }
 ```
 
 ## Developer Workflow
-This module is built and tested using Bazel.
+The module strictly relies on the Bazel compilation pipeline.
 
 - **Build**: `bazelisk build //srcs/orchestration`
 - **Test**: `bazelisk test //srcs/orchestration/...`
 
 ## Configuration
-No environment configuration is required. State is held entirely in memory in this implementation.
+Because state persistence is handled entirely via secure in-memory structs and checkpointers, no external environment variables or configuration files are strictly required.

@@ -1,13 +1,13 @@
 # Integrations Module
 
 ## Identity
-The `integrations` module is the Model Context Protocol (MCP) gateway layer that securely connects the internal AI agent workforce to standard external SaaS tools (like GitHub, Jira, and Slack).
+The `integrations` module provides the Model Context Protocol (MCP) gateway layer, securely routing AI agent workflows to external SaaS tools (such as GitHub, Jira, Discord, and Slack).
 
 ## Architecture
-This module implements an in-memory `Registry` (thread-safe via `sync.RWMutex`) mimicking external platforms to ensure testing and simulation can occur without live API keys. It abstracts interactions across three categories: Chat, Git, and Issues. Agents interact with this registry instead of raw REST APIs, enforcing the "Zero Lock-in" open-source philosophy of the One Human Corp stack.
+Implementing an overarching in-memory `Registry` (concurrency-protected via `sync.RWMutex`), this module safely proxies and simulates external platform interactions without hard-wiring agents to specific vendors. Abstractions are split across three functional domains: `CategoryChat`, `CategoryGit`, and `CategoryIssues`. By interacting exclusively with this registry rather than raw REST API clients, the platform enforces its strict "Zero Lock-in" open-source mandate while providing seamless fallback mocks for safe CI/CD simulation.
 
 ## Quick Start
-You can initialise the integration registry and simulate external service actions:
+Bootstrap the integrations registry to spoof an external service action:
 
 ```go
 package main
@@ -21,30 +21,32 @@ import (
 func main() {
     reg := integrations.NewRegistry()
 
-    // Connect a mocked GitHub integration
+    // Provision a simulated GitHub endpoint
     reg.Connect("github", "https://api.github.com")
 
-    // Simulate an agent creating a pull request
+    // Dispatch an agent's code submission request
     pr, _ := reg.CreatePullRequest(
         "github",
         "mono-repo",
-        "Fix critical bug",
-        "Detailed PR description.",
-        "fix-bug",
+        "Implement zero-downtime deploy",
+        "Details regarding rolling update fix.",
+        "feat-zero-deploy",
         "main",
         "swe-agent-1",
         time.Now(),
     )
 
-    fmt.Printf("Created PR %s at %s\n", pr.ID, pr.URL)
+    fmt.Printf("Spoofed PR %s successfully deployed to %s\n", pr.ID, pr.URL)
 }
 ```
 
 ## Developer Workflow
-This module is built and tested using Bazel.
+This module explicitly adheres to the Bazel build ecosystem.
 
 - **Build**: `bazelisk build //srcs/integrations`
 - **Test**: `bazelisk test //srcs/integrations/...`
 
+*Note: Ensure any newly mapped external tools properly export their tool definitions under standard GoDoc/MCP schema conventions.*
+
 ## Configuration
-No environment configuration is required to run the mocked in-memory simulation. Future implementations hitting real external APIs will require setting context-specific environment variables for OAuth or API keys (e.g., `GITHUB_TOKEN`).
+Simulating functionality via the in-memory abstractions mandates no external variables. For modules actively forwarding outbound HTTP traffic (e.g., Telegram bots, Slack Webhooks), explicit credentials MUST be loaded into `IntegrationCredentials` dynamically—never store plain text keys in source files.

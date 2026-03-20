@@ -1,13 +1,13 @@
 # Telemetry Module
 
 ## Identity
-The `telemetry` module provides observability and operational metrics for the One Human Corp platform, empowering the human CEO to monitor the real-time performance and resource consumption of the AI workforce.
+The `telemetry` module aggregates deep observability metrics and structured instrumentation events across the One Human Corp platform, giving operators an auditable, real-time dashboard for performance and agent AI token usage.
 
 ## Architecture
-The module integrates OpenTelemetry with Prometheus to capture, record, and expose application metrics. It offers a standardized set of instrumentations including HTTP request latency, total tokens used by AI agents, and specific event counters (e.g., meeting room interactions). The `Middleware` automatically instruments HTTP routes, while explicit package functions allow internal modules to record fine-grained operations.
+Leveraging the industry-standard OpenTelemetry library bridged to a Prometheus pull-exporter, this package natively captures `float64` latency distributions and `int64` system counters. `Middleware` seamlessly envelops HTTP handlers to auto-inject dimension tagging for routes, methods, and status codes. Companion functions (e.g. `RecordAgentApiCall`) grant granular insight into autonomous AI workflows. All exports map securely to a unified, thread-safe meter provider.
 
 ## Quick Start
-Initialize telemetry at the application start and register the Prometheus metrics endpoint:
+To attach telemetry reporting to your application service initialization:
 
 ```go
 package main
@@ -19,32 +19,34 @@ import (
 )
 
 func main() {
-	// Initialize the OpenTelemetry provider
+	// Initialize the central OpenTelemetry metrics provider
 	shutdown, err := telemetry.InitTelemetry()
 	if err != nil {
 		panic(err)
 	}
 	defer shutdown()
 
-	// Expose the /metrics endpoint for Prometheus scraping
+	// Provision a pull-endpoint for standard Prometheus scrapers
 	http.Handle("/metrics", telemetry.MetricsHandler())
 
-	// Start your server
+	// Start your HTTP service
 	http.ListenAndServe(":9090", nil)
 }
 ```
 
-To record custom agent activity within the application:
+To explicitly track agent interactions deep within business logic:
 
 ```go
 telemetry.RecordAgentApiCall(context.Background(), "swe-1", "SOFTWARE_ENGINEER", "github.CreatePullRequest")
 ```
 
 ## Developer Workflow
-This module is built and tested using the Bazel build system.
+This module mandates the Bazel build system.
 
 - **Build**: `bazelisk build //srcs/telemetry`
 - **Test**: `bazelisk test //srcs/telemetry/...`
 
+*Note: All unit tests must be explicitly executed locally to confirm the OpenTelemetry global provider is thoroughly exercised.*
+
 ## Configuration
-No mandatory environment variables are required. By default, telemetry data is exposed via standard Prometheus formats. The output verbosity can be adjusted programmatically using `telemetry.Verbosity`.
+No external environment variables are strictly mandated. Metrics are served in standardized Prometheus formats at the configured `/metrics` URI. System logging verbosity may be scaled dynamically via `telemetry.Verbosity`.

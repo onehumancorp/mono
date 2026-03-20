@@ -6,27 +6,47 @@ import "time"
 type Role string
 
 const (
+	// RoleCEO defines the highest-level operational role, typically held by a human.
 	RoleCEO                 Role = "CEO"
+	// RoleProductManager dictates product scopes and converts user stories into action plans.
 	RoleProductManager      Role = "PRODUCT_MANAGER"
+	// RoleSoftwareEngineer writes, refactors, and tests implementation code.
 	RoleSoftwareEngineer    Role = "SOFTWARE_ENGINEER"
+	// RoleEngineeringDirector coordinates technical efforts across multiple engineers.
 	RoleEngineeringDirector Role = "ENGINEERING_DIRECTOR"
+	// RoleQATester evaluates software implementations against predefined acceptance criteria.
 	RoleQATester            Role = "QA_TESTER"
+	// RoleSecurityEngineer scrutinizes codebase changes for potential vulnerabilities.
 	RoleSecurityEngineer    Role = "SECURITY_ENGINEER"
+	// RoleDesigner constructs UX/UI wireframes and stylistic concepts.
 	RoleDesigner            Role = "DESIGNER"
+	// RoleMarketingManager organizes product launches and promotional messaging.
 	RoleMarketingManager    Role = "MARKETING_MANAGER"
 
 	// Digital Marketing Agency roles.
+
+	// RoleGrowthAgent drives lead generation and conversion optimization experiments.
 	RoleGrowthAgent       Role = "GROWTH_AGENT"
+	// RoleContentStrategist authors articles, blog posts, and campaign copy.
 	RoleContentStrategist Role = "CONTENT_STRATEGIST"
+	// RoleSEOSpecialist audits site health and structures organic search strategy.
 	RoleSEOSpecialist     Role = "SEO_SPECIALIST"
+	// RolePaidMediaManager oversees and optimizes ad spend across commercial platforms.
 	RolePaidMediaManager  Role = "PAID_MEDIA_MANAGER"
+	// RoleAnalyticsEngineer builds data pipelines and dashboards for campaign performance tracking.
 	RoleAnalyticsEngineer Role = "ANALYTICS_ENGINEER"
 
 	// Accounting Firm roles.
+
+	// RoleCFO oversees financial forecasting and strategic fiscal planning.
 	RoleCFO            Role = "CFO"
+	// RoleBookkeeper maintains daily ledger entries and transaction reconciliations.
 	RoleBookkeeper     Role = "BOOKKEEPER"
+	// RoleTaxSpecialist ensures compliance and minimizes liability under current tax codes.
 	RoleTaxSpecialist  Role = "TAX_SPECIALIST"
+	// RoleAuditManager verifies the accuracy and legal integrity of financial statements.
 	RoleAuditManager   Role = "AUDIT_MANAGER"
+	// RolePayrollManager administers employee compensation and jurisdictional tax filings.
 	RolePayrollManager Role = "PAYROLL_MANAGER"
 )
 
