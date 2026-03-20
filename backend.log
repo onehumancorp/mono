@@ -1,29 +1,29 @@
-go: downloading go1.26.0 (linux/amd64)
-go: downloading google.golang.org/grpc v1.79.3
-go: downloading golang.org/x/crypto v0.49.0
-go: downloading github.com/prometheus/client_golang v1.23.2
-go: downloading go.opentelemetry.io/otel v1.42.0
-go: downloading go.opentelemetry.io/otel/exporters/prometheus v0.64.0
-go: downloading go.opentelemetry.io/otel/metric v1.42.0
-go: downloading go.opentelemetry.io/otel/sdk/metric v1.42.0
-go: downloading github.com/prometheus/common v0.67.5
-go: downloading github.com/prometheus/client_model v0.6.2
-go: downloading github.com/beorn7/perks v1.0.1
-go: downloading go.opentelemetry.io/otel/sdk v1.42.0
-go: downloading github.com/cespare/xxhash/v2 v2.3.0
-go: downloading github.com/prometheus/procfs v0.19.2
-go: downloading google.golang.org/protobuf v1.36.11
-go: downloading golang.org/x/net v0.51.0
-go: downloading github.com/go-logr/logr v1.4.3
-go: downloading go.opentelemetry.io/otel/trace v1.42.0
-go: downloading github.com/prometheus/otlptranslator v1.0.0
-go: downloading google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217
-go: downloading github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822
-go: downloading go.yaml.in/yaml/v2 v2.4.3
-go: downloading golang.org/x/sys v0.42.0
-go: downloading github.com/go-logr/stdr v1.2.2
-go: downloading go.opentelemetry.io/auto/sdk v1.2.1
-go: downloading github.com/google/uuid v1.6.0
-go: downloading golang.org/x/text v0.35.0
-2026/03/20 17:11:41 serving API on http://:8080
-2026/03/20 17:11:41 serving gRPC on :9090
+INFO: Invocation ID: d00549eb-67de-4aa2-a46b-c276af3a3c7d
+INFO: Streaming build results to: https://onehumancorp.buildbuddy.io/invocation/d00549eb-67de-4aa2-a46b-c276af3a3c7d
+INFO: Options provided by the client:
+  Inherited 'common' options: --isatty=0 --terminal_columns=80
+INFO: Reading rc options for 'run' from /app/.bazelrc:
+  Inherited 'build' options: --config=remote --disk_cache=~/.cache/bazel-disk-cache --action_env=CGO_ENABLED=1 --spawn_strategy=sandboxed,local --incompatible_strict_action_env --announce_rc --action_env=GEMINI_API_KEY --action_env=MINIMAX_API_KEY --action_env=MCP_BUNDLE_DIR --action_env=CI
+INFO: Found applicable config definition build:remote in file /app/.bazelrc: --remote_download_all --config=buildbuddy-official
+INFO: Found applicable config definition common:buildbuddy-official in file /app/.bazelrc: --remote_cache=grpcs://onehumancorp.buildbuddy.io --remote_upload_local_results --remote_timeout=10m --remote_executor=grpcs://onehumancorp.buildbuddy.io --remote_cache_compression --jobs=200 --remote_local_fallback --remote_header=x-buildbuddy-api-key=vGFjlQg7X49NwoQHAfRW
+INFO: Found applicable config definition build:buildbuddy-official in file /app/.bazelrc: --bes_results_url=https://onehumancorp.buildbuddy.io/invocation/ --bes_backend=grpcs://onehumancorp.buildbuddy.io
+WARNING: --remote_upload_local_results is set, but the remote cache does not support uploading action results or the current account is not authorized to write local results to the remote cache.
+Computing main repo mapping:
+Loading:
+Loading: 0 packages loaded
+Analyzing: target //srcs/cmd/ohc:ohc (0 packages loaded, 0 targets configured)
+Analyzing: target //srcs/cmd/ohc:ohc (0 packages loaded, 0 targets configured)
+
+INFO: Analyzed target //srcs/cmd/ohc:ohc (0 packages loaded, 0 targets configured).
+[5 / 6] [Prepa] runfiles for //srcs/cmd/ohc:ohc
+INFO: Found 1 target...
+Target //srcs/cmd/ohc:ohc up-to-date:
+  bazel-bin/srcs/cmd/ohc/ohc_/ohc
+INFO: Elapsed time: 1.965s, Critical Path: 1.58s
+INFO: 6 processes: 2 internal, 4 linux-sandbox.
+INFO: Build completed successfully, 6 total actions
+INFO:
+INFO: Running command line: bazel-bin/srcs/cmd/ohc/ohc_/ohc <args omitted>
+INFO: Streaming build results to: https://onehumancorp.buildbuddy.io/invocation/d00549eb-67de-4aa2-a46b-c276af3a3c7d
+2026/03/20 22:41:18 serving API on http://:8080
+2026/03/20 22:41:18 serving gRPC on :9090

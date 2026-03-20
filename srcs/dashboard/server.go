@@ -426,7 +426,6 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/domains", server.handleDomains)
 	mux.HandleFunc("/api/mcp/tools", server.handleMCPTools)
 	mux.HandleFunc("/api/mcp/tools/invoke", server.handleMCPInvoke)
-	mux.HandleFunc("/api/dev/seed", server.handleDevSeed)
 	mux.HandleFunc("/api/settings", server.handleSettings)
 	// Phase 2 – Confidence Gating / Guardian Agent
 	mux.HandleFunc("/api/approvals", server.handleApprovals)
@@ -434,6 +433,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/approvals/decide", server.handleApprovalDecide)
 	// Phase 2 – Warm Handoff
 	mux.HandleFunc("/api/handoffs", server.handleHandoffs)
+	mux.HandleFunc("/api/dev/seed", server.handleDevSeed)
 	// Phase 2 – Unified Identity Management (SPIFFE/SPIRE)
 	mux.HandleFunc("/api/identities", server.handleIdentities)
 	// Phase 2 – Extensible Skill Import Framework

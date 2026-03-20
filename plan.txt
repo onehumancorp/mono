@@ -1,0 +1,27 @@
+I need to update `srcs/frontend/tests/cuj.integration.spec.ts` with tests for the B2B Collaboration feature.
+
+Let's summarize the changes for the frontend for B2B Collaboration:
+1. `srcs/frontend/src/api.ts`: Add `fetchB2BAgreements`, `handshakeB2B`, and `revokeB2BAgreement` functions using `authedGetJSON` and `authedPostJSON`.
+2. `srcs/frontend/src/App.tsx`:
+   - Add `b2b` to `NavSection`.
+   - Add `{ key: "b2b", label: "B2B Collaboration" }` to `navItems`.
+   - Add a new section when `activeNav === "b2b"`.
+   - Implement `B2BPartnerList` which will display a list of fetched trust agreements.
+   - Implement "Invite External Org" action which allows inputting `ohc.globex.com` and creates a trust agreement.
+   - For `FederatedTranscriptView` and the `#b2b-contract-artifact`, let's check `App.tsx` again. The test plan says:
+     E2E-01 | Partner Invite | CEO A invites CEO B | Partner URL input processed
+     E2E-02 | Negotiation | Agents debate price | Multi-org approval modal generated
+     E2E-03 | Trust Revocation | Simulate JWKS deletion | Meeting room frozen, CEOs notified
+
+Wait, the instructions say:
+"Real Data Law: NO client-side mocks. You must integrate with the real MCP Gateway, emit real events to events.jsonl, and use the actual K8s state."
+"Performance & Usability: Ensure extreme efficiency (minimal LLM token burn, rapid K8s reconciliation) and Apple-level aesthetic usability for the human CEO dashboard."
+
+Let's just implement the UI exactly matching the Test Plan:
+- A button to "Invite External Org".
+- Enter partner URL (`ohc.globex.com`).
+- A "Shared transcript" view with `CrossOrg` flag visible on messages.
+- A "Multi-org approval modal" showing an artifact `#b2b-contract-artifact`.
+- The UI needs to display `TrustAgreement` elements with `TrustStatusActive` or `TrustStatusRevoked`.
+
+Let's request a plan review.

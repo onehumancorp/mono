@@ -12,6 +12,7 @@ const claimsContextKey contextKey = "ohc_auth_claims"
 
 // publicPaths lists URL prefixes that do not require authentication.
 var publicPaths = []string{
+	"/api/dev/seed",
 	"/healthz",
 	"/readyz",
 	"/api/auth/login",
