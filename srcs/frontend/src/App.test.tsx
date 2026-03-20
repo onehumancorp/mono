@@ -1087,7 +1087,7 @@ describe("App – integrations nav", () => {
     expect(screen.getByText("Chat Services")).toBeInTheDocument();
     expect(screen.getByText("Git Platforms")).toBeInTheDocument();
     expect(screen.getByText("Issue Trackers")).toBeInTheDocument();
-    expect(screen.getByText("Slack")).toBeInTheDocument();
+    await screen.findByText("Slack");
     expect(screen.getByText("GitHub")).toBeInTheDocument();
     expect(screen.getByText("Jira")).toBeInTheDocument();
   });
