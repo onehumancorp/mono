@@ -626,7 +626,7 @@ export function App() {
   return (
     <div className="shell">
       {showHireModal && (
-        <HireAgentForm onHire={handleHire} onClose={() => setShowHireModal(false)} />
+        <HireAgentForm onHire={handleHire} onClose={() => setShowHireModal(false)} orgMembers={snapshot?.org?.members?.map(m => ({id: m.id, name: m.name})) || []} />
       )}
 
       {/* ── Telegram Setup Wizard ── */}

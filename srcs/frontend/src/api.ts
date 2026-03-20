@@ -212,8 +212,8 @@ export async function sendMessage(form: {
  * @param role - The specific role profile the agent will assume.
  * @returns A Promise resolving to the updated DashboardSnapshot.
  */
-export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
-  return authedPostJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
+export function hireAgent(name: string, role: string, managerId?: string, model?: string, providerType?: string): Promise<DashboardSnapshot> {
+  return authedPostJSON<DashboardSnapshot>("/api/agents/hire", { name, role, managerId, model, providerType });
 }
 
 /**
