@@ -21,9 +21,9 @@ sh_binary(
     name = "deploy_dev",
     srcs = ["//deploy:deploy_dev.sh"],
     data = [
-        "//deploy:backend_tarball",
+        "//deploy:backend_load",
         "//deploy:docker-compose.yml",
-        "//deploy:frontend_tarball",
+        "//deploy:frontend_load",
     ],
     tags = ["manual"],
 )

@@ -226,3 +226,27 @@ func RecordMeetingEvent(ctx context.Context, eventType string) {
 		attribute.String("type", eventType),
 	))
 }
+
+// LogAgentExecution provides structured JSON logging for agent execution traces.
+//
+// Parameters:
+//   - ctx: context.Context; The context of the active trace or request.
+//   - agentID: string; The identifier of the agent.
+//   - role: string; The role of the agent.
+//   - api: string; The API or tool being executed.
+//   - eventType: string; The specific type of the event (e.g. task, status).
+//   - content: string; The content or message payload associated with the execution.
+//
+// Returns: Nothing.
+//
+// Side Effects: Emits a structured log via slog.
+func LogAgentExecution(ctx context.Context, agentID, role, api, eventType, content string) {
+	slog.InfoContext(ctx, "agent execution trace",
+		"component", "telemetry",
+		"agent_id", agentID,
+		"role", role,
+		"api", api,
+		"event_type", eventType,
+		"content", content,
+	)
+}

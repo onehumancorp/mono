@@ -4,6 +4,11 @@ metadata:
   name: {{ .Release.Name }}-frontend
 spec:
   replicas: {{ .Values.frontend.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: {{ .Release.Name }}-frontend
@@ -23,13 +28,25 @@ spec:
             runAsUser: 1000
           resources:
             requests:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: "250m"
+              memory: "256Mi"
             limits:
-              cpu: "500m"
-              memory: "512Mi"
+              cpu: "1000m"
+              memory: "1Gi"
           env:
             - name: BACKEND_URL
               value: http://{{ .Release.Name }}-backend:{{ .Values.backend.service.port }}
           ports:
             - containerPort: {{ .Values.frontend.service.port }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.frontend.service.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.frontend.service.port }}
+            initialDelaySeconds: 3
+            periodSeconds: 5
