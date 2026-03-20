@@ -1,0 +1,57 @@
+{
+  "traceLogs": [
+    {
+      "timestamp": "2024-05-18T10:00:00Z",
+      "level": "INFO",
+      "component": "K8s Operator",
+      "message": "Reconciling TeamMember resource. Desired: 5, Current: 2."
+    },
+    {
+      "timestamp": "2024-05-18T10:00:02Z",
+      "level": "INFO",
+      "component": "K8s Operator",
+      "message": "Spinning up agent-pod-sales-rep-3."
+    },
+    {
+      "timestamp": "2024-05-18T10:00:03Z",
+      "level": "INFO",
+      "component": "K8s Operator",
+      "message": "Spinning up agent-pod-sales-rep-4."
+    },
+    {
+      "timestamp": "2024-05-18T10:00:05Z",
+      "level": "INFO",
+      "component": "K8s Operator",
+      "message": "Spinning up agent-pod-sales-rep-5."
+    },
+    {
+      "timestamp": "2024-05-18T10:00:15Z",
+      "level": "SUCCESS",
+      "component": "Gateway API",
+      "message": "Scale-up complete. 5 Sales Representatives are now active."
+    }
+  ],
+  "agentRoles": [
+    {
+      "id": "sales_rep",
+      "name": "Sales Representative",
+      "currentCount": 2,
+      "maxCount": 10,
+      "costPerAgent": "$500/mo"
+    },
+    {
+      "id": "swe",
+      "name": "Software Engineer",
+      "currentCount": 4,
+      "maxCount": 15,
+      "costPerAgent": "$800/mo"
+    },
+    {
+      "id": "customer_support",
+      "name": "Customer Support Specialist",
+      "currentCount": 1,
+      "maxCount": 20,
+      "costPerAgent": "$300/mo"
+    }
+  ]
+}

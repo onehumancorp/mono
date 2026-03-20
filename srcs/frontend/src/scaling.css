@@ -1,0 +1,68 @@
+:root {
+  --bg-primary: #0A0A0A;
+  --bg-panel: #1A1A1A;
+  --text-primary: #F3F4F6;
+  --text-secondary: #9CA3AF;
+  --accent-hire: #10B981;
+  --accent-fire: #EF4444;
+  --border-subtle: #2dd4bf20;
+  --glow-hire: 0 0 15px rgba(16, 185, 129, 0.4);
+  --glow-fire: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+.scaling-panel {
+  background-color: var(--bg-panel);
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-subtle);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.scaling-panel:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.scaling-slider {
+  width: 100%;
+  margin: 1rem 0;
+  accent-color: var(--accent-hire);
+}
+
+.scaling-slider::-webkit-slider-thumb {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scaling-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.trace-log-item {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.trace-log-item:last-child {
+  border-bottom: none;
+}
+
+.trace-log-item.loading {
+  background: linear-gradient(90deg, #1A1A1A 25%, #2A2A2A 50%, #1A1A1A 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  color: transparent;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.badge-success {
+  color: var(--accent-hire);
+}
+
+.badge-info {
+  color: #3b82f6;
+}
