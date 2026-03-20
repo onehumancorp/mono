@@ -16,6 +16,14 @@ go_library(
 
 go_test(
     name = "orchestration_test",
-    srcs = ["service_test.go"],
+    srcs = [
+        "minimax_client_test.go",
+        "service_grpc_test.go",
+        "service_test.go",
+    ],
     embed = [":orchestration"],
+    deps = [
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//metadata",
+    ],
 )

@@ -408,7 +408,7 @@ func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, erro
 		return "", errors.New("minimax API key is not configured")
 	}
 
-	url := "https://api.minimax.io/v1/chat/completions"
+	url := minimaxAPIURL
 	payload := map[string]interface{}{
 		"model": "MiniMax-M2.7",
 		"messages": []map[string]string{
@@ -459,3 +459,5 @@ func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, erro
 
 	return result.Choices[0].Message.Content, nil
 }
+
+var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
