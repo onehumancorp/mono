@@ -2,6 +2,8 @@ load("@gazelle//:def.bzl", "gazelle")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 # gazelle:prefix github.com/onehumancorp/mono
+exports_files(["go.mod"])
+
 # gazelle:exclude srcs/proto
 gazelle(name = "gazelle")
 
@@ -24,4 +26,16 @@ sh_binary(
         "//deploy:frontend_tarball",
     ],
     tags = ["manual"],
+)
+
+# Alias to start the local developer environment quickly.
+alias(
+    name = "up",
+    actual = ":deploy_dev",
+)
+
+# Alias to run tests
+alias(
+    name = "test",
+    actual = "//deploy:kind_e2e_test",
 )
