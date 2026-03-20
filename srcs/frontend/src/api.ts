@@ -172,19 +172,34 @@ export async function sendMessage(form: {
   content: string;
 }): Promise<DashboardSnapshot> {
   const params = new URLSearchParams(form);
+  const token = getStoredToken();
   const response = await fetch("/api/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: params.toString(),
     redirect: "follow",
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearStoredToken();
+      throw new Error("Unauthorized");
+    }
     const text = await response.text().catch(() => "");
-    throw new Error(text || `Failed to send message: ${response.status}`);
+    let errorMessage = text;
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed.error) {
+        errorMessage = parsed.error;
+      }
+    } catch {
+      // Not JSON, use raw text
+    }
+    throw new Error(errorMessage || `Request failed for /api/messages: ${response.status}`);
   }
   const raw = await response.json() as Record<string, unknown>;
   return normalizeDashboard(raw);
@@ -697,7 +712,17 @@ async function authedGetJSON<T>(path: string): Promise<T> {
       clearStoredToken();
       throw new Error("Unauthorized");
     }
-    throw new Error(`Request failed for ${path}: ${response.status}`);
+    const text = await response.text().catch(() => "");
+    let errorMessage = text;
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed.error) {
+        errorMessage = parsed.error;
+      }
+    } catch {
+      // Not JSON, use raw text
+    }
+    throw new Error(errorMessage || `Request failed for ${path}: ${response.status}`);
   }
   return (await response.json()) as T;
 }

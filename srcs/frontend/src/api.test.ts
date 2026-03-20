@@ -99,7 +99,7 @@ describe("api", () => {
   });
 
   it("throws for failed GET request", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}), text: async () => "" })));
 
     await expect(fetchOrganization()).rejects.toThrow("Request failed for /api/org: 500");
   });
@@ -173,6 +173,7 @@ describe("api", () => {
           "Content-Type": "application/x-www-form-urlencoded",
           Accept: "application/json",
         },
+        body: expect.stringContaining("messageType=task"),
         redirect: "follow",
       })
     );
@@ -197,7 +198,7 @@ describe("api", () => {
         messageType: "task",
         content: "x",
       })
-    ).rejects.toThrow("Failed to send message: 400");
+    ).rejects.toThrow("Request failed for /api/messages: 400");
   });
 });
 

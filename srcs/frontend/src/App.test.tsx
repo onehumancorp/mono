@@ -155,7 +155,7 @@ describe("App", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
 
-    await screen.findByText("Failed to send message: 400");
+    await screen.findByText("Request failed for /api/messages: 400");
   });
 
   it("refreshes snapshot when refresh button is pressed", async () => {
