@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -359,7 +360,13 @@ func TestTelegramIntegration_SendMessage(t *testing.T) {
 	}))
 	defer telegramSrv.Close()
 
-	// Point the registry at the mock.
+	// Bypass SSRF check in frontend tests for 127.0.0.1 by providing a mock lookupIP
+	origLookupIP := integrations.LookupIPFunc
+	integrations.LookupIPFunc = func(host string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("8.8.8.8")}, nil
+	}
+	defer func() { integrations.LookupIPFunc = origLookupIP }()
+
 	origBase := integrations.TelegramAPIBase
 	integrations.TelegramAPIBase = telegramSrv.URL
 	defer func() { integrations.TelegramAPIBase = origBase }()
