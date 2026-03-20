@@ -3421,6 +3421,30 @@ func TestHandleHireAgent_DefaultsToBuiltinProvider(t *testing.T) {
 	t.Error("expected newly hired agent in snapshot")
 }
 
+func TestHandleHireAgent_InvalidRoleRejected(t *testing.T) {
+	_, server, token := newTestServer(t)
+	defer server.Close()
+	client := authedClient(token)
+
+	// Build a valid request but with a role not present in defaultSoftwareCompanyRoleProfiles
+	body := strings.NewReader(`{"name":"HackerAgent","role":"HACKER","providerType":"builtin"}`)
+	resp, err := client.Post(server.URL+"/api/agents/hire", "application/json", body)
+	if err != nil {
+		t.Fatalf("POST /api/agents/hire error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("expected 403 Forbidden for invalid role, got %d", resp.StatusCode)
+	}
+
+	var respBody map[string]string
+	json.NewDecoder(resp.Body).Decode(&respBody)
+	if respBody["reason"] != "invalid_role" {
+		t.Fatalf("expected reason 'invalid_role', got %s", respBody["reason"])
+	}
+}
+
 func TestHandleHireAgent_UnknownProviderRejected(t *testing.T) {
 	_, server, token := newTestServer(t)
 	defer server.Close()

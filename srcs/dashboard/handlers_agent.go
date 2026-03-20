@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/onehumancorp/mono/srcs/agents"
+	"github.com/onehumancorp/mono/srcs/domain"
 	"github.com/onehumancorp/mono/srcs/orchestration"
 )
 
@@ -39,6 +40,18 @@ func (s *Server) handleHireAgent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.mu.Lock()
+
+	// 🛡️ Security Fix: Zero-Trust Role Validation
+	// Prevent malicious injection of unprivileged/unmapped agent roles by validating
+	// the requested role against the organization's allowed RoleProfiles.
+	if _, ok := s.org.RoleProfile(domain.Role(req.Role)); !ok {
+		s.mu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]string{"reason": "invalid_role"})
+		return
+	}
+
 	id := s.org.ID + "-agent-" + time.Now().UTC().Format("20060102150405000")
 	agent := orchestration.Agent{
 		ID:             id,
