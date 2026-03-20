@@ -30,6 +30,19 @@ Small businesses face immense challenges navigating today's competitive online l
    - *Pain Point*: Scaling operations—whether managing complex logistics or finding and retaining skilled employees—is incredibly resource-intensive and slow.
    - *Solution*: On-demand AI employees across various domains provide immediate access to top-tier "talent." The CEO can instantly spin up an entire product development or operations team without recruitment costs, interviews, or delays.
 
+## Market Research Supplemental: Detailed Pain Points of Small Businesses Online
+To ensure "One Human Corp" is tackling the most critical online small business pain points, we have incorporated direct market research highlighting the top challenges:
+
+1. **Cash Flow Management**:
+   - *Pain Point*: Maintaining cash flow is tricky. Getting money from sales into bank accounts quickly without high fees is a struggle, and it is the most pressing issue for many small businesses.
+   - *Solution*: AI Finance Agents monitor cash flow in real-time, predict shortfalls, and automatically process and reconcile instant transfers seamlessly.
+2. **Costs of Running a Business**:
+   - *Pain Point*: The funds it takes to simply keep the lights on are a top challenge.
+   - *Solution*: Orchestrating AI agents significantly reduces overhead costs associated with traditional operations, ensuring that margins remain healthy.
+3. **Hiring and/or Retaining Quality Staff**:
+   - *Pain Point*: To be successful, businesses must hire great people and keep them. However, turnover and the cost of quality staff remain severe pain points.
+   - *Solution*: "One Human Corp" entirely mitigates this by allowing the CEO to provision an unlimited number of highly-skilled, specialized AI Agents (SWEs, PMs, Marketers) on-demand, who never churn.
+
 ## Core Concepts & Framework
 To structure this vast capability, One Human Corp is built on multiple layers of concepts. Let's start by modeling our initial rollout: **The Software Company**.
 
@@ -82,6 +95,12 @@ When the CEO defines an issue or sets a goal, the entire company is mobilized co
 - **Automated Implementation Pipelines**: SWE and DevOps agents autonomously trigger CI/CD pipelines, deploy test environments, and present the CEO with a live preview link for approval.
 - **Advanced Agent Interactions & Conflict Resolution**: Enable agents to flag issues (e.g., Security Agent finds a bug in SWE's code) and automatically spin up a dedicated virtual meeting room to resolve the conflict without CEO intervention.
 - **Hybrid Identity Management**: Integrate unified identity issuance (SPIFFE/SPIRE) to provide secure, verifiable identities for both humans and AI agents.
+
+### The Extensibility Framework: Importing New Skills and Domain Knowledge
+The core power of "One Human Corp" is its ability to learn any business domain. The system implements a robust framework for users to continuously import new skills and domains:
+- **Skill Blueprints (JSON/Protobuf)**: Users can upload domain-specific blueprints. These define the new roles, their specific contexts, and the standard operating procedures (SOPs) for that industry.
+- **Dynamic Org Chart Generation**: When a new domain is imported (e.g., Legal Consulting), the Orchestrator autonomously generates the required hierarchy (e.g., Senior Partner Agent manages Associate Agents).
+- **Plug-and-Play MCP Tools**: If the new domain requires specific external software (e.g., specialized CAD software for architecture), the user simply registers an MCP (Model Context Protocol) endpoint. The agents immediately understand how to interact with the new tool via the Switchboard.
 
 ### Phase 3: The Extensibility Framework & New Domains (Q4)
 *Goal: Evolve from a hardcoded "Software Company" into a flexible framework where users can import any knowledge, skill, or domain to tackle any market.*

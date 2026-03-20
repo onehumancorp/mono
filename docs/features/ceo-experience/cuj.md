@@ -25,3 +25,11 @@ A high-level view of how the human CEO manages the AI workforce from the "Missio
 - **Mobile Rendering**: The org chart uses D3.js and collapses cleanly on smaller screens.
 - **Lost Tokens**: If the OIDC token expires during an SSE session, the stream gracefully closes and prompts the user to re-authenticate.
 - **High-Volume Meetings**: In Virtual Meeting Rooms with rapid agent interactions, the UI virtualizes the transcript list to prevent DOM bloat and memory leaks in the browser.
+
+## 5. UI/UX Details
+- **Component IDs**: Rendered via the `VirtualMeetingRoomViewer` and `OrgChartViewer`.
+- **Visual Cues**: Agent status indicators show when an Engineering Director is speaking or when a Security Engineer flags a PR.
+
+## 6. Security & Privacy
+- RBAC ensures that only the CEO or explicit Directors can approve high-risk operations via the dashboard.
+- The CEO dashboard leverages short-lived session tokens mapped to OIDC claims.

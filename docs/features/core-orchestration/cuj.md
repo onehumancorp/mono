@@ -25,3 +25,11 @@ The CEO provides a massive goal and watches the Orchestrator spin up departments
 - **Message Loss**: Redis Pub/Sub failures drop messages into a Dead Letter Queue (DLQ).
 - **Context Flooding**: Lengthy debates triggering LLM context-limit errors are mitigated by an AI summarizer shrinking early transcript context on the fly.
 - **Deadlocks**: If two agents infinitely loop in a disagreement (e.g., SWE vs. Security), the system detects a "timeout" deadlock and escalates a Warm Handoff to a human manager.
+
+## 5. UI/UX Details
+- **Component IDs**: Displayed via the `VirtualMeetingRoomViewer` component in the main console.
+- **Visual Cues**: A real-time transcript viewer highlights the speaker's role (e.g., "Engineering Director", "SWE").
+
+## 6. Security & Privacy
+- SPIFFE IDs ensure that only agents assigned to a specific task force can read the meeting room transcript.
+- All intra-agent communication is secured via mTLS.
