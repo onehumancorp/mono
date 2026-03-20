@@ -33,7 +33,6 @@ jobs:
 
       - name: Test
         env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
           BAZEL_DISK_CACHE: ${{ env.BAZEL_DISK_CACHE }}
           BAZEL_REPOSITORY_CACHE: ${{ env.BAZEL_REPOSITORY_CACHE }}
         run: |
