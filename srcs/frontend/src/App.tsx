@@ -34,7 +34,7 @@ import type {
 } from "./types";
 
 type LoadState = "idle" | "loading" | "ready" | "error";
-type NavSection = "overview" | "meetings" | "agents" | "cost" | "playbooks" | "integrations" | "settings" | "users";
+type NavSection = "overview" | "meetings" | "agents" | "cost" | "playbooks" | "integrations" | "scaling" | "settings" | "users";
 
 function formatCost(value: number): string {
   if (value === 0) return "$0.000000";
@@ -92,6 +92,7 @@ const ICONS: Record<string, string> = {
   playbooks: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/></svg>`,
   integrations: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 7H7v6h6V7z"/><path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"/></svg>`,
   settings: `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>`,
+  scaling: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg>`,
   users: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>`,
 };
 
@@ -573,6 +574,7 @@ export function App() {
     { key: "cost", label: "Cost" },
     { key: "playbooks", label: "Playbooks" },
     { key: "integrations", label: "Integrations" },
+    { key: "scaling", label: "Dynamic Scaling" },
     { key: "settings", label: "Settings" },
     { key: "users", label: "Users" },
   ];
@@ -2060,6 +2062,100 @@ export function App() {
                     <dt>Role Profiles</dt>
                     <dd>{snapshot?.organization.roleProfiles.length ?? 0}</dd>
                   </dl>
+                </div>
+              </article>
+            </div>
+          </>
+        )}
+
+        {activeNav === "scaling" && (
+          <>
+            <div className="page-header">
+              <div>
+                <h2 className="page-heading">Dynamic Scaling</h2>
+                <p className="page-sub">Scale AI agents dynamically across your enterprise. K8s operator handles the rest.</p>
+              </div>
+            </div>
+            <div className="content-grid two-col">
+              <article className="scaling-panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Role Capacities</h2>
+                </header>
+                <div className="panel-body">
+                  <div style={{ marginBottom: "1.5rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                      <strong>Sales Representative</strong>
+                      <span><span style={{color: "var(--accent-hire)"}}>2</span> / 10 active</span>
+                    </div>
+                    <input type="range" min="0" max="10" defaultValue="2" className="scaling-slider"
+                           style={{ accentColor: "var(--accent-hire)" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                      <span>Cost: $500/mo per agent</span>
+                      <span>Total: $1,000/mo</span>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: "1.5rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                      <strong>Software Engineer</strong>
+                      <span><span style={{color: "var(--accent-hire)"}}>4</span> / 15 active</span>
+                    </div>
+                    <input type="range" min="0" max="15" defaultValue="4" className="scaling-slider"
+                           style={{ accentColor: "var(--accent-hire)" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                      <span>Cost: $800/mo per agent</span>
+                      <span>Total: $3,200/mo</span>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: "1.5rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                      <strong>Customer Support</strong>
+                      <span><span style={{color: "var(--accent-hire)"}}>1</span> / 20 active</span>
+                    </div>
+                    <input type="range" min="0" max="20" defaultValue="1" className="scaling-slider"
+                           style={{ accentColor: "var(--accent-hire)" }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                      <span>Cost: $300/mo per agent</span>
+                      <span>Total: $300/mo</span>
+                    </div>
+                  </div>
+
+                  <button className="btn btn-primary" style={{ width: "100%", marginTop: "1rem" }}>
+                    Apply Scaling Changes
+                  </button>
+                </div>
+              </article>
+
+              <article className="scaling-panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Real-Time Trace Logs</h2>
+                  <span className="chip chip--sm chip--green">Live SSE</span>
+                </header>
+                <div className="panel-body" style={{ maxHeight: "400px", overflowY: "auto", background: "var(--bg-primary)", padding: "1rem", borderRadius: "4px" }}>
+                  <div className="trace-log-item">
+                    <span style={{ color: "var(--text-secondary)", marginRight: "0.5rem" }}>[10:00:00Z]</span>
+                    <strong className="badge-info">INFO</strong> K8s Operator: Reconciling TeamMember resource. Desired: 5, Current: 2.
+                  </div>
+                  <div className="trace-log-item">
+                    <span style={{ color: "var(--text-secondary)", marginRight: "0.5rem" }}>[10:00:02Z]</span>
+                    <strong className="badge-info">INFO</strong> K8s Operator: Spinning up agent-pod-sales-rep-3.
+                  </div>
+                  <div className="trace-log-item">
+                    <span style={{ color: "var(--text-secondary)", marginRight: "0.5rem" }}>[10:00:03Z]</span>
+                    <strong className="badge-info">INFO</strong> K8s Operator: Spinning up agent-pod-sales-rep-4.
+                  </div>
+                  <div className="trace-log-item">
+                    <span style={{ color: "var(--text-secondary)", marginRight: "0.5rem" }}>[10:00:05Z]</span>
+                    <strong className="badge-info">INFO</strong> K8s Operator: Spinning up agent-pod-sales-rep-5.
+                  </div>
+                  <div className="trace-log-item">
+                    <span style={{ color: "var(--text-secondary)", marginRight: "0.5rem" }}>[10:00:15Z]</span>
+                    <strong className="badge-success">SUCCESS</strong> Gateway API: Scale-up complete. 5 Sales Representatives are now active.
+                  </div>
+                  <div className="trace-log-item loading">
+                    Waiting for next event...
+                  </div>
                 </div>
               </article>
             </div>
