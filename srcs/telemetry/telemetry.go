@@ -26,6 +26,11 @@ var (
 	meetingEventsCounter     metric.Int64Counter
 )
 
+// test hook variable
+var createExporter = func() (*otelprom.Exporter, error) {
+	return otelprom.New(otelprom.WithRegisterer(prometheus.DefaultRegisterer))
+}
+
 // InitTelemetry configures and starts the OpenTelemetry metrics provider with a Prometheus exporter.
 //
 // Returns: A shutdown function to clean up resources, and an error if initialization fails.
@@ -34,7 +39,7 @@ var (
 //
 // Side Effects: Modifies global OpenTelemetry state and registers metrics with the default Prometheus registerer.
 func InitTelemetry() (func(), error) {
-	exporter, err := otelprom.New(otelprom.WithRegisterer(prometheus.DefaultRegisterer))
+	exporter, err := createExporter()
 	if err != nil {
 		return nil, err
 	}
@@ -42,9 +47,18 @@ func InitTelemetry() (func(), error) {
 	provider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(exporter))
 	otel.SetMeterProvider(provider)
 
-	meter = provider.Meter("github.com/onehumancorp/mono/ohc")
+	return setupMetrics(provider)
+}
 
-	requestCounter, err = meter.Int64Counter(
+// setupMetrics allows isolated testing of the metric registration errors by
+// injecting a mock meter provider that can fail explicitly.
+func setupMetrics(provider metric.MeterProvider) (func(), error) {
+	m := provider.Meter("github.com/onehumancorp/mono/ohc")
+	meter = m
+
+	var err error
+
+	requestCounter, err = m.Int64Counter(
 		"http_requests_total",
 		metric.WithDescription("Total number of HTTP requests"),
 	)
@@ -52,7 +66,7 @@ func InitTelemetry() (func(), error) {
 		return nil, err
 	}
 
-	latencyHistogram, err = meter.Float64Histogram(
+	latencyHistogram, err = m.Float64Histogram(
 		"http_request_duration_seconds",
 		metric.WithDescription("HTTP request latency in seconds"),
 	)
@@ -60,7 +74,7 @@ func InitTelemetry() (func(), error) {
 		return nil, err
 	}
 
-	tokenUsageCounter, err = meter.Int64Counter(
+	tokenUsageCounter, err = m.Int64Counter(
 		"ohc_token_usage_total",
 		metric.WithDescription("Total tokens used by agents"),
 	)
@@ -68,7 +82,7 @@ func InitTelemetry() (func(), error) {
 		return nil, err
 	}
 
-	agentApiCallsCounter, err = meter.Int64Counter(
+	agentApiCallsCounter, err = m.Int64Counter(
 		"ohc_agent_api_calls_total",
 		metric.WithDescription("Total API calls made by or for agents"),
 	)
@@ -76,7 +90,7 @@ func InitTelemetry() (func(), error) {
 		return nil, err
 	}
 
-	humanInteractionsCounter, err = meter.Int64Counter(
+	humanInteractionsCounter, err = m.Int64Counter(
 		"ohc_human_interactions_total",
 		metric.WithDescription("Total human-agent interactions"),
 	)
@@ -84,7 +98,7 @@ func InitTelemetry() (func(), error) {
 		return nil, err
 	}
 
-	meetingEventsCounter, err = meter.Int64Counter(
+	meetingEventsCounter, err = m.Int64Counter(
 		"ohc_meeting_events_total",
 		metric.WithDescription("Total meeting room events"),
 	)
@@ -93,7 +107,9 @@ func InitTelemetry() (func(), error) {
 	}
 
 	return func() {
-		_ = provider.Shutdown(context.Background())
+		if p, ok := provider.(*sdkmetric.MeterProvider); ok {
+			_ = p.Shutdown(context.Background())
+		}
 	}, nil
 }
 
