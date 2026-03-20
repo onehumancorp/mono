@@ -18,6 +18,9 @@ go_library(
 
 go_test(
     name = "auth_test",
-    srcs = ["auth_test.go"],
-    deps = [":auth"],
+    srcs = [
+        "auth_test.go",
+        "oidc_test.go",
+    ],
+    embed = [":auth"],
 )
