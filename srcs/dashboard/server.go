@@ -399,6 +399,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	if key := os.Getenv("MINIMAX_API_KEY"); key != "" {
 		hub.SetMinimaxAPIKey(key)
 		server.settings.MinimaxAPIKey = key
+		_ = server.agentProviderRegistry.Authenticate(agents.ProviderTypeOpenClaw, agents.Credentials{APIKey: key})
 	}
 	// Pre-authenticate providers from environment variables so the platform
 	// forwards credentials to freshly hired agents without requiring manual auth.
