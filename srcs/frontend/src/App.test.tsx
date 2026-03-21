@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, act } from "@testing-library/react";
 import { App } from "./App";
 import { fetchCosts, fetchDashboard } from "./api";
 
@@ -730,6 +730,7 @@ describe("App – navigation tabs", () => {
     expect(screen.getByText("available")).toBeInTheDocument();
   });
 
+
   it("shows current org info in settings", async () => {
     vi.stubGlobal("fetch", makeFetch());
     render(<App />);
@@ -841,6 +842,21 @@ describe("App – navigation tabs", () => {
     await screen.findByText("Acme Software");
     expect(screen.getByText("Live")).toBeInTheDocument();
   });
+
+  it("navigates to Scaling tab and shows dynamic scaling", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => mockJson(dashboardPayload)));
+    render(<App />);
+    await screen.findByText("Acme Software");
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Dynamic Scaling" }));
+    });
+
+    await screen.findByText("Dynamic Scaling", { selector: 'h2' });
+    expect(screen.getByText("Role Capacities")).toBeInTheDocument();
+    expect(screen.getByText("Real-Time Trace Logs")).toBeInTheDocument();
+  });
+
 
   it("shows updated timestamp in header after data loads", async () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
@@ -985,7 +1001,11 @@ describe("App – form field coverage", () => {
     // While loading, navigate to agents tab — snapshot is null, org chart shows Loading...
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     expect(screen.getByText("Loading…")).toBeInTheDocument();
-    resolve(undefined);
+
+    await act(async () => {
+      resolve(undefined);
+      await pending;
+    });
   });
 });
 
@@ -1361,7 +1381,10 @@ describe("App – settings branch coverage", () => {
     expect(screen.getByText("maintenance")).toBeInTheDocument();
 
     // Resolve dashboard to clean up
-    resolveDashboard!(mockJson(dashboardPayload));
+    await act(async () => {
+      resolveDashboard!(mockJson(dashboardPayload));
+      await dashboardPromise;
+    });
   });
 
   it("shows non-available MCP tool with status badge", async () => {
@@ -1618,7 +1641,10 @@ describe("App – cost and playbooks null-snapshot branches", () => {
     expect(zeros.length).toBeGreaterThan(0);
 
     // resolve to prevent act() leaks
-    resolveDashboard!(mockJson(dashboardPayload));
+    await act(async () => {
+      resolveDashboard!(mockJson(dashboardPayload));
+      await neverResolves;
+    });
   });
 
   it("playbooks tab shows empty state with null-snapshot org roleProfiles", async () => {
@@ -1637,7 +1663,10 @@ describe("App – cost and playbooks null-snapshot branches", () => {
 
     expect(screen.getByText(/No role profiles defined/)).toBeInTheDocument();
 
-    resolveDashboard!(mockJson(dashboardPayload));
+    await act(async () => {
+      resolveDashboard!(mockJson(dashboardPayload));
+      await neverResolves;
+    });
   });
 
   it("cost tab burn gauge shows 0% when projectedMonthlyUSD is falsy", async () => {
@@ -2338,7 +2367,9 @@ describe("App – MCP invoke modal (other/default category)", () => {
 
     render(<App />);
     await screen.findByText("Acme Software");
-    fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /settings/i }));
+    });
   });
 
   it("handles users API error", async () => {

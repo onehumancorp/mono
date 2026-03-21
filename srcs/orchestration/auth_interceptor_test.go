@@ -130,6 +130,60 @@ func TestSPIFFEAuthInterceptor_Spoofing_Publish(t *testing.T) {
 	}
 }
 
+func TestSPIFFEAuthInterceptor_BoundaryEscape_Publish(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+	// Malicious SPIFFE ID exploiting the old logic which just split by the last slash
+	ctx := mockSPIFFEContext("spiffe://onehumancorp.io/org-1/attacker-agent/target-agent")
+
+	req := pb.PublishMessageRequest_builder{
+		Message: pb.Message_builder{
+			FromAgent: "target-agent",
+		}.Build(),
+	}.Build()
+
+	_, err := interceptor(ctx, req, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+		return nil, nil
+	})
+
+	if err == nil {
+		t.Fatal("expected error due to boundary escape")
+	}
+	st, ok := status.FromError(err)
+	if !ok || st.Code() != codes.PermissionDenied {
+		t.Errorf("expected PermissionDenied, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "invalid SPIFFE ID path structure for domain onehumancorp.io") {
+		t.Errorf("expected structure error message, got %v", err)
+	}
+}
+
+func TestSPIFFEAuthInterceptor_BoundaryEscape_OHCOSDomain(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+	// Malicious SPIFFE ID exploiting the old logic for ohc.os domain
+	ctx := mockSPIFFEContext("spiffe://ohc.os/agent/attacker-agent/target-agent")
+
+	req := pb.PublishMessageRequest_builder{
+		Message: pb.Message_builder{
+			FromAgent: "target-agent",
+		}.Build(),
+	}.Build()
+
+	_, err := interceptor(ctx, req, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+		return nil, nil
+	})
+
+	if err == nil {
+		t.Fatal("expected error due to boundary escape")
+	}
+	st, ok := status.FromError(err)
+	if !ok || st.Code() != codes.PermissionDenied {
+		t.Errorf("expected PermissionDenied, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "invalid SPIFFE ID path structure for domain ohc.os") {
+		t.Errorf("expected structure error message, got %v", err)
+	}
+}
+
 func TestSPIFFEAuthInterceptor_Spoofing_Register(t *testing.T) {
 	interceptor := SPIFFEAuthInterceptor()
 	ctx := mockSPIFFEContext("spiffe://onehumancorp.io/org-1/attacker-agent")
