@@ -42,3 +42,4 @@ srcs/frontend/dist/
 /ohc
 /frontend
 coverage_html/
+srcs/frontend/coverage/
