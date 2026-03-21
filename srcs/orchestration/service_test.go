@@ -570,6 +570,88 @@ func TestHubServiceServer_OpenMeeting(t *testing.T) {
 	}
 }
 
+func TestHubServiceServer_DelegateTask(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "delegate", Name: "Delegate", Role: "ROUTER", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "specialist", Name: "Specialist", Role: "SWE", OrganizationID: "O1"})
+	server := NewHubServiceServer(hub)
+	ctx := context.Background()
+
+	tests := []struct {
+		name          string
+		req           *pb.DelegateTaskRequest
+		expectSuccess bool
+		expectErrCode codes.Code
+	}{
+		{
+			name: "Valid Delegation",
+			req: pb.DelegateTaskRequest_builder{
+				FromAgentId: "delegate",
+				ToAgentId:   "specialist",
+				Task: pb.Message_builder{
+					Id:             "m1",
+					Type:           EventTask,
+					Content:        "Do work",
+					OccurredAtUnix: time.Now().Unix(),
+				}.Build(),
+			}.Build(),
+			expectSuccess: true,
+			expectErrCode: codes.OK,
+		},
+		{
+			name: "Invalid Delegate Agent",
+			req: pb.DelegateTaskRequest_builder{
+				FromAgentId: "unknown-delegate",
+				ToAgentId:   "specialist",
+				Task: pb.Message_builder{
+					Id:             "m2",
+					Type:           EventTask,
+					Content:        "Do work",
+					OccurredAtUnix: time.Now().Unix(),
+				}.Build(),
+			}.Build(),
+			expectSuccess: false,
+			expectErrCode: codes.Internal,
+		},
+		{
+			name: "Invalid Specialist Agent",
+			req: pb.DelegateTaskRequest_builder{
+				FromAgentId: "delegate",
+				ToAgentId:   "unknown-specialist",
+				Task: pb.Message_builder{
+					Id:             "m3",
+					Type:           EventTask,
+					Content:        "Do work",
+					OccurredAtUnix: time.Now().Unix(),
+				}.Build(),
+			}.Build(),
+			expectSuccess: false,
+			expectErrCode: codes.Internal,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp, err := server.DelegateTask(ctx, tt.req)
+			if err != nil {
+				if tt.expectSuccess {
+					t.Fatalf("expected success, got error: %v", err)
+				}
+				if status.Code(err) != tt.expectErrCode {
+					t.Fatalf("expected error code %v, got %v", tt.expectErrCode, status.Code(err))
+				}
+			} else {
+				if !tt.expectSuccess {
+					t.Fatalf("expected error, got success")
+				}
+				if !resp.GetSuccess() {
+					t.Fatalf("expected DelegateTask to return success")
+				}
+			}
+		})
+	}
+}
+
 func TestHubServiceServer_Publish(t *testing.T) {
 	hub := NewHub()
 	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})

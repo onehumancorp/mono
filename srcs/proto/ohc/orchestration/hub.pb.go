@@ -174,6 +174,44 @@ func (b PublishMessageResponse_builder) Build() *PublishMessageResponse {
 	return &PublishMessageResponse{success: b.Success}
 }
 
+// ─── DelegateTaskRequest ─────────────────────────────────────────────────────
+
+type DelegateTaskRequest struct {
+	fromAgentId string
+	toAgentId   string
+	task        *Message
+}
+
+func (r *DelegateTaskRequest) GetFromAgentId() string { return r.fromAgentId }
+func (r *DelegateTaskRequest) GetToAgentId() string   { return r.toAgentId }
+func (r *DelegateTaskRequest) GetTask() *Message      { return r.task }
+
+type DelegateTaskRequest_builder struct {
+	FromAgentId string
+	ToAgentId   string
+	Task        *Message
+}
+
+func (b DelegateTaskRequest_builder) Build() *DelegateTaskRequest {
+	return &DelegateTaskRequest{
+		fromAgentId: b.FromAgentId,
+		toAgentId:   b.ToAgentId,
+		task:        b.Task,
+	}
+}
+
+// ─── DelegateTaskResponse ────────────────────────────────────────────────────
+
+type DelegateTaskResponse struct{ success bool }
+
+func (r *DelegateTaskResponse) GetSuccess() bool { return r.success }
+
+type DelegateTaskResponse_builder struct{ Success bool }
+
+func (b DelegateTaskResponse_builder) Build() *DelegateTaskResponse {
+	return &DelegateTaskResponse{success: b.Success}
+}
+
 // ─── StreamMessagesRequest ───────────────────────────────────────────────────
 
 type StreamMessagesRequest struct{ agentId string }
@@ -217,6 +255,7 @@ type HubServiceServer interface {
 	RegisterAgent(context.Context, *RegisterAgentRequest) (*RegisterAgentResponse, error)
 	OpenMeeting(context.Context, *OpenMeetingRequest) (*MeetingRoom, error)
 	Publish(context.Context, *PublishMessageRequest) (*PublishMessageResponse, error)
+	DelegateTask(context.Context, *DelegateTaskRequest) (*DelegateTaskResponse, error)
 	StreamMessages(*StreamMessagesRequest, HubService_StreamMessagesServer) error
 	Reason(context.Context, *ReasonRequest) (*ReasonResponse, error)
 	mustEmbedUnimplementedHubServiceServer()
@@ -233,6 +272,9 @@ func (UnimplementedHubServiceServer) OpenMeeting(context.Context, *OpenMeetingRe
 }
 func (UnimplementedHubServiceServer) Publish(context.Context, *PublishMessageRequest) (*PublishMessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Publish not implemented")
+}
+func (UnimplementedHubServiceServer) DelegateTask(context.Context, *DelegateTaskRequest) (*DelegateTaskResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DelegateTask not implemented")
 }
 func (UnimplementedHubServiceServer) StreamMessages(*StreamMessagesRequest, HubService_StreamMessagesServer) error {
 	return status.Errorf(codes.Unimplemented, "method StreamMessages not implemented")
@@ -274,6 +316,10 @@ var HubService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Publish",
 			Handler:    _HubService_Publish_Handler,
+		},
+		{
+			MethodName: "DelegateTask",
+			Handler:    _HubService_DelegateTask_Handler,
 		},
 		{
 			MethodName: "Reason",
@@ -331,6 +377,21 @@ func _HubService_Publish_Handler(srv interface{}, ctx context.Context, dec func(
 	info := &grpc.UnaryServerInfo{Server: srv, FullMethod: "/ohc.orchestration.HubService/Publish"}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(HubServiceServer).Publish(ctx, req.(*PublishMessageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HubService_DelegateTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DelegateTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HubServiceServer).DelegateTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{Server: srv, FullMethod: "/ohc.orchestration.HubService/DelegateTask"}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HubServiceServer).DelegateTask(ctx, req.(*DelegateTaskRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
