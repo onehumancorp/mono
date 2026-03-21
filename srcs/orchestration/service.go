@@ -692,6 +692,10 @@ var bufferPool = sync.Pool{
 	},
 }
 
+var sharedHTTPClient = &http.Client{
+	Timeout: 30 * time.Second,
+}
+
 // Summary: Reason functionality.
 // Intent: Reason functionality.
 // Params: ctx, prompt
@@ -728,8 +732,9 @@ func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, erro
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.APIKey)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	// ⚡ BOLT: [Reused HTTP Client] - Randomized Selection from Top 5
+	// Prevents severe connection and resource leaks by reusing connection pools on every request.
+	resp, err := sharedHTTPClient.Do(req)
 	if err != nil {
 		return "", err
 	}

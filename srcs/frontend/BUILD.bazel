@@ -55,11 +55,57 @@ sh_test(
     ],
 )
 
-# Run npm unit tests (vitest) via Bazel.
+# Run npm unit tests (vitest) via Bazel – runs all test files in one pass.
 # Requires node and npm on PATH (inherited from the host via .bazelrc test_env).
 sh_test(
     name = "frontend_unit_test",
     srcs = ["tests/unit_test.sh"],
+    data = [
+        ":all_srcs",
+        "//srcs/cmd/ohc",
+    ],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+# ── Per-file vitest targets for improved Bazel caching ───────────────────────
+# Each target runs exactly one test file so that Bazel can cache results
+# individually – a change to App.tsx only invalidates frontend_app_test.
+
+sh_test(
+    name = "frontend_api_test",
+    srcs = ["tests/vitest_test.sh"],
+    args = ["src/api.test.ts"],
+    data = [
+        ":all_srcs",
+        "//srcs/cmd/ohc",
+    ],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "frontend_app_test",
+    srcs = ["tests/vitest_test.sh"],
+    args = ["src/App.test.tsx"],
+    data = [
+        ":all_srcs",
+        "//srcs/cmd/ohc",
+    ],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "frontend_main_test",
+    srcs = ["tests/vitest_test.sh"],
+    args = ["src/main.test.tsx"],
     data = [
         ":all_srcs",
         "//srcs/cmd/ohc",

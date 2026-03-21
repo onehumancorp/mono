@@ -25,6 +25,7 @@ oci_load(
     name = "backend_load",
     image = ":backend_image",
     repo_tags = ["onehumancorp/mono-backend:bazel"],
+    visibility = ["//visibility:public"],
 )
 
 # Build frontend static assets in a rule
@@ -63,6 +64,7 @@ oci_load(
     name = "frontend_load",
     image = ":frontend_image",
     repo_tags = ["onehumancorp/mono-frontend:bazel"],
+    visibility = ["//visibility:public"],
 )
 
 sh_test(

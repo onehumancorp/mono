@@ -4,5 +4,5 @@ metadata:
   name: hello-world
 spec:
   role: "SOFTWARE_ENGINEER"
-  model: "gpt-4o"
+  model: "builtin"
   prompt: "You are a friendly Hello World agent. Your only purpose is to print 'Hello, World!' and ensure everything works correctly out of the box."
