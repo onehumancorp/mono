@@ -47,6 +47,7 @@ func (s *Server) handleHireAgent(w http.ResponseWriter, r *http.Request) {
 		OrganizationID: s.org.ID,
 		Status:         orchestration.StatusIdle,
 		ProviderType:   providerType,
+		Region:         req.Region,
 	}
 	s.hub.RegisterAgent(agent)
 	snapshot := s.snapshotLocked()

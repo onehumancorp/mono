@@ -169,6 +169,7 @@ type Agent struct {
 	// (e.g. "claude", "gemini", "opencode").  An empty string or "builtin" means
 	// the platform's own lightweight agent is used.
 	ProviderType string `json:"providerType,omitempty"`
+	Region       string `json:"region,omitempty"`
 }
 
 // Summary: Message encapsulates a discrete event, command, or context update passed between agents or rooms.

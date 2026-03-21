@@ -79,6 +79,7 @@ type hireRequest struct {
 	Role         string `json:"role"`
 	Model        string `json:"model,omitempty"`
 	ProviderType string `json:"providerType,omitempty"`
+	Region       string `json:"region,omitempty"`
 }
 
 // fireRequest carries the ID of the agent to remove.
