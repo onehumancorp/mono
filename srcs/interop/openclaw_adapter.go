@@ -18,13 +18,16 @@ type OpenClawAdapter struct {
 // Summary: NewOpenClawAdapter creates a new OpenClawAdapter.
 // Intent: NewOpenClawAdapter creates a new OpenClawAdapter.
 // Params: identity
-// Returns: *OpenClawAdapter
-// Errors: None
+// Returns: *OpenClawAdapter, error
+// Errors: Returns error if identity is an invalid SPIFFE ID.
 // Side Effects: None
-func NewOpenClawAdapter(identity string) *OpenClawAdapter {
+func NewOpenClawAdapter(identity string) (*OpenClawAdapter, error) {
+	if err := ValidateSPIFFEID(identity); err != nil {
+		return nil, fmt.Errorf("invalid OpenClaw identity: %w", err)
+	}
 	return &OpenClawAdapter{
 		Identity: identity,
-	}
+	}, nil
 }
 
 // Summary: SyncState functionality.

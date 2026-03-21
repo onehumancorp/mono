@@ -18,13 +18,16 @@ type AutoGenAdapter struct {
 // Summary: NewAutoGenAdapter creates a new AutoGenAdapter.
 // Intent: NewAutoGenAdapter creates a new AutoGenAdapter.
 // Params: identity
-// Returns: *AutoGenAdapter
-// Errors: None
+// Returns: *AutoGenAdapter, error
+// Errors: Returns error if identity is an invalid SPIFFE ID.
 // Side Effects: None
-func NewAutoGenAdapter(identity string) *AutoGenAdapter {
+func NewAutoGenAdapter(identity string) (*AutoGenAdapter, error) {
+	if err := ValidateSPIFFEID(identity); err != nil {
+		return nil, fmt.Errorf("invalid AutoGen identity: %w", err)
+	}
 	return &AutoGenAdapter{
 		Identity: identity,
-	}
+	}, nil
 }
 
 // Summary: SyncState functionality.

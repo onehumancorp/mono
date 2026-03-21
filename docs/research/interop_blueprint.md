@@ -28,7 +28,9 @@ This document outlines the state of AI agent framework interoperability within t
 ## Architecture
 
 - **MCP Switchboard:** Acts as a proxy for JSON-RPC calls, managing rate-limiting and authorization.
+  - **New Feature:** Supports MCP Pagination for handling large context windows and iterative data streaming across agents.
 - **State Management:** LangGraph checkpointers persist agent state to the cluster, ensuring fault tolerance and resumability.
+  - **New Feature:** Supports LangGraph Time-Travel Debugging to allow rewinding and re-evaluating shared state dynamically.
 - **Identity:** All intra-swarm communications require cryptographically verified SPIRE identities.
 
 ## Future Work

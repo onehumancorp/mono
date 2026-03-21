@@ -18,13 +18,16 @@ type CrewAIAdapter struct {
 // Summary: NewCrewAIAdapter creates a new CrewAIAdapter.
 // Intent: NewCrewAIAdapter creates a new CrewAIAdapter.
 // Params: identity
-// Returns: *CrewAIAdapter
-// Errors: None
+// Returns: *CrewAIAdapter, error
+// Errors: Returns error if identity is an invalid SPIFFE ID.
 // Side Effects: None
-func NewCrewAIAdapter(identity string) *CrewAIAdapter {
+func NewCrewAIAdapter(identity string) (*CrewAIAdapter, error) {
+	if err := ValidateSPIFFEID(identity); err != nil {
+		return nil, fmt.Errorf("invalid CrewAI identity: %w", err)
+	}
 	return &CrewAIAdapter{
 		Identity: identity,
-	}
+	}, nil
 }
 
 // Summary: SyncState functionality.

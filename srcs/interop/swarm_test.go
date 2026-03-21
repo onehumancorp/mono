@@ -8,10 +8,22 @@ import (
 func TestSwarmInteropStateSync(t *testing.T) {
 	ctx := context.Background()
 
-	openClaw := NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01")
-	autoGen := NewAutoGenAdapter("spiffe://ohc.os/agent/autogen-01")
-	crewAI := NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01")
-	semanticKernel := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01")
+	openClaw, err := NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01")
+	if err != nil {
+		t.Fatalf("Failed to create OpenClawAdapter: %v", err)
+	}
+	autoGen, err := NewAutoGenAdapter("spiffe://ohc.os/agent/autogen-01")
+	if err != nil {
+		t.Fatalf("Failed to create AutoGenAdapter: %v", err)
+	}
+	crewAI, err := NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01")
+	if err != nil {
+		t.Fatalf("Failed to create CrewAIAdapter: %v", err)
+	}
+	semanticKernel, err := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01")
+	if err != nil {
+		t.Fatalf("Failed to create SemanticKernelAdapter: %v", err)
+	}
 
 	// Simulate shared K8s / LangGraph State
 	sharedState := &State{
@@ -21,7 +33,7 @@ func TestSwarmInteropStateSync(t *testing.T) {
 	}
 
 	// Step 1: OpenClaw syncs state
-	err := openClaw.SyncState(ctx, sharedState)
+	err = openClaw.SyncState(ctx, sharedState)
 	if err != nil {
 		t.Fatalf("OpenClaw SyncState failed: %v", err)
 	}
@@ -69,6 +81,11 @@ func TestSwarmInteropStateSync(t *testing.T) {
 func TestExecuteCommand(t *testing.T) {
 	ctx := context.Background()
 
+	openClawAdapter, _ := NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01")
+	autoGenAdapter, _ := NewAutoGenAdapter("spiffe://ohc.os/agent/autogen-01")
+	crewAIAdapter, _ := NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01")
+	semanticKernelAdapter, _ := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01")
+
 	tests := []struct {
 		name     string
 		adapter  UniversalAdapter
@@ -78,56 +95,56 @@ func TestExecuteCommand(t *testing.T) {
 	}{
 		{
 			name:     "OpenClaw execution",
-			adapter:  NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01"),
+			adapter:  openClawAdapter,
 			cmd:      "scan-metrics",
 			expected: "OpenClaw executed: scan-metrics",
 			wantErr:  false,
 		},
 		{
 			name:     "OpenClaw execution empty command",
-			adapter:  NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01"),
+			adapter:  openClawAdapter,
 			cmd:      "",
 			expected: "",
 			wantErr:  true,
 		},
 		{
 			name:     "AutoGen execution",
-			adapter:  NewAutoGenAdapter("spiffe://ohc.os/agent/autogen-01"),
+			adapter:  autoGenAdapter,
 			cmd:      "analyze-data",
 			expected: "AutoGen executed: analyze-data",
 			wantErr:  false,
 		},
 		{
 			name:     "AutoGen execution empty command",
-			adapter:  NewAutoGenAdapter("spiffe://ohc.os/agent/autogen-01"),
+			adapter:  autoGenAdapter,
 			cmd:      "",
 			expected: "",
 			wantErr:  true,
 		},
 		{
 			name:     "CrewAI execution",
-			adapter:  NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01"),
+			adapter:  crewAIAdapter,
 			cmd:      "research-topic",
 			expected: "CrewAI executed: research-topic",
 			wantErr:  false,
 		},
 		{
 			name:     "CrewAI execution empty command",
-			adapter:  NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01"),
+			adapter:  crewAIAdapter,
 			cmd:      "",
 			expected: "",
 			wantErr:  true,
 		},
 		{
 			name:     "SemanticKernel execution",
-			adapter:  NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01"),
+			adapter:  semanticKernelAdapter,
 			cmd:      "solve-problem",
 			expected: "SemanticKernel executed: solve-problem",
 			wantErr:  false,
 		},
 		{
 			name:     "SemanticKernel execution empty command",
-			adapter:  NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01"),
+			adapter:  semanticKernelAdapter,
 			cmd:      "",
 			expected: "",
 			wantErr:  true,
@@ -150,25 +167,25 @@ func TestExecuteCommand(t *testing.T) {
 
 func TestSyncStateNil(t *testing.T) {
 	ctx := context.Background()
-	openClaw := NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01")
+	openClaw, _ := NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01")
 	err := openClaw.SyncState(ctx, nil)
 	if err == nil {
 		t.Errorf("Expected error when syncing nil state")
 	}
 
-	autoGen := NewAutoGenAdapter("spiffe://ohc.os/agent/autogen-01")
+	autoGen, _ := NewAutoGenAdapter("spiffe://ohc.os/agent/autogen-01")
 	err = autoGen.SyncState(ctx, nil)
 	if err == nil {
 		t.Errorf("Expected error when syncing nil state")
 	}
 
-	crewAI := NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01")
+	crewAI, _ := NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01")
 	err = crewAI.SyncState(ctx, nil)
 	if err == nil {
 		t.Errorf("Expected error when syncing nil state")
 	}
 
-	semanticKernel := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01")
+	semanticKernel, _ := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01")
 	err = semanticKernel.SyncState(ctx, nil)
 	if err == nil {
 		t.Errorf("Expected error when syncing nil state")
@@ -179,7 +196,7 @@ func TestStateDataNilInit(t *testing.T) {
 	ctx := context.Background()
 
 	// OpenClaw Data init test
-	openClaw := NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01")
+	openClaw, _ := NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01")
 	state1 := &State{}
 	err := openClaw.SyncState(ctx, state1)
 	if err != nil {
@@ -190,7 +207,7 @@ func TestStateDataNilInit(t *testing.T) {
 	}
 
 	// AutoGen Data init test
-	autoGen := NewAutoGenAdapter("spiffe://ohc.os/agent/autogen-01")
+	autoGen, _ := NewAutoGenAdapter("spiffe://ohc.os/agent/autogen-01")
 	state2 := &State{}
 	err = autoGen.SyncState(ctx, state2)
 	if err != nil {
@@ -201,7 +218,7 @@ func TestStateDataNilInit(t *testing.T) {
 	}
 
 	// CrewAI Data init test
-	crewAI := NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01")
+	crewAI, _ := NewCrewAIAdapter("spiffe://ohc.os/agent/crewai-01")
 	state3 := &State{}
 	err = crewAI.SyncState(ctx, state3)
 	if err != nil {
@@ -212,7 +229,7 @@ func TestStateDataNilInit(t *testing.T) {
 	}
 
 	// SemanticKernel Data init test
-	semanticKernel := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01")
+	semanticKernel, _ := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01")
 	state4 := &State{}
 	err = semanticKernel.SyncState(ctx, state4)
 	if err != nil {
@@ -220,5 +237,43 @@ func TestStateDataNilInit(t *testing.T) {
 	}
 	if state4.Data == nil {
 		t.Errorf("Expected state.Data to be initialized")
+	}
+}
+
+func TestInvalidSPIFFEID(t *testing.T) {
+	invalidIDs := []string{
+		"", // Empty
+		"http://ohc.os/agent/openclaw-01", // Wrong scheme
+		"spiffe://unknown.com/agent/openclaw-01", // Wrong domain
+		"spiffe://ohc.os", // Missing path
+		"spiffe://ohc.os/", // Empty path
+		"spiffe://ohc.os/agent", // Only 1 segment
+	}
+
+	for _, id := range invalidIDs {
+		t.Run("OpenClaw-"+id, func(t *testing.T) {
+			_, err := NewOpenClawAdapter(id)
+			if err == nil {
+				t.Errorf("Expected error for invalid SPIFFE ID: %q", id)
+			}
+		})
+		t.Run("AutoGen-"+id, func(t *testing.T) {
+			_, err := NewAutoGenAdapter(id)
+			if err == nil {
+				t.Errorf("Expected error for invalid SPIFFE ID: %q", id)
+			}
+		})
+		t.Run("CrewAI-"+id, func(t *testing.T) {
+			_, err := NewCrewAIAdapter(id)
+			if err == nil {
+				t.Errorf("Expected error for invalid SPIFFE ID: %q", id)
+			}
+		})
+		t.Run("SemanticKernel-"+id, func(t *testing.T) {
+			_, err := NewSemanticKernelAdapter(id)
+			if err == nil {
+				t.Errorf("Expected error for invalid SPIFFE ID: %q", id)
+			}
+		})
 	}
 }
