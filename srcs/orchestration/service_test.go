@@ -94,6 +94,62 @@ func TestOpenMeetingMarksParticipantsInMeeting(t *testing.T) {
 	}
 }
 
+func TestDelegateTask(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "delegate", Name: "Delegate", Role: "ROUTER", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "specialist", Name: "Specialist", Role: "SWE", OrganizationID: "org-1"})
+
+	task := Message{
+		ID:         "msg-1",
+		Type:       EventTask,
+		Content:    "Implement feature",
+		OccurredAt: time.Now().UTC(),
+	}
+
+	err := hub.DelegateTask("delegate", "specialist", task)
+	if err != nil {
+		t.Fatalf("expected successful delegation, got error: %v", err)
+	}
+
+	inbox := hub.Inbox("specialist")
+	if len(inbox) != 1 {
+		t.Fatalf("expected exactly 1 message in specialist inbox, got %d", len(inbox))
+	}
+
+	received := inbox[0]
+	if received.FromAgent != "delegate" {
+		t.Fatalf("expected FromAgent to be 'delegate', got %q", received.FromAgent)
+	}
+	if received.ToAgent != "specialist" {
+		t.Fatalf("expected ToAgent to be 'specialist', got %q", received.ToAgent)
+	}
+	if received.Content != "Implement feature" {
+		t.Fatalf("expected content 'Implement feature', got %q", received.Content)
+	}
+}
+
+func TestDelegateTask_AgentNotFound(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "delegate", Name: "Delegate", Role: "ROUTER", OrganizationID: "org-1"})
+
+	task := Message{
+		ID:         "msg-1",
+		Type:       EventTask,
+		Content:    "Implement feature",
+		OccurredAt: time.Now().UTC(),
+	}
+
+	err := hub.DelegateTask("delegate", "missing-specialist", task)
+	if err == nil {
+		t.Fatalf("expected error delegating to missing specialist, got nil")
+	}
+
+	err = hub.DelegateTask("missing-delegate", "delegate", task)
+	if err == nil {
+		t.Fatalf("expected error from missing delegating agent, got nil")
+	}
+}
+
 func TestPublishValidationErrors(t *testing.T) {
 	hub := NewHub()
 	hub.RegisterAgent(Agent{ID: "a", Name: "A", Role: "PM", OrganizationID: "org-1"})
