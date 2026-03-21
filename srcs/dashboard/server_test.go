@@ -55,6 +55,7 @@ func (bt *bearerTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 
 func newTestServer(t *testing.T) (*Server, *httptest.Server, string) {
 	t.Helper()
+	integrations.AllowLocalIPsForTesting = true
 
 	org := domain.NewSoftwareCompany("org-1", "Acme Software", "Casey CEO", time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC))
 	hub := orchestration.NewHub()

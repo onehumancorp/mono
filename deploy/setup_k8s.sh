@@ -22,7 +22,7 @@ else
         kubectl config use-context kind-kind
     else
         echo "Kind is not installed. Please install Kind or ensure you have a local Kubernetes cluster running."
-        return 1 2>/dev/null || exit 1
+        exit 1
     fi
 fi
 

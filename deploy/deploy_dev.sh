@@ -22,6 +22,17 @@ else
   PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fi
 
+echo "--- Setting up Local Kubernetes Context ---"
+if [[ -f "$PROJECT_ROOT/deploy/setup_k8s.sh" ]]; then
+  bash "$PROJECT_ROOT/deploy/setup_k8s.sh" || true
+else
+  # Fallback for bazel runfiles
+  SETUP_SCRIPT=$(find . -name setup_k8s.sh | head -n 1)
+  if [[ -n "$SETUP_SCRIPT" ]]; then
+    bash "$SETUP_SCRIPT" || true
+  fi
+fi
+
 echo "--- Loading Bazel-built images ---"
 # bazel run outputs the tarballs to fixed locations in the runfiles.
 # We'll use the environment variable if available, or just check the current dir.
