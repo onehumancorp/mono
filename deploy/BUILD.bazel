@@ -5,6 +5,7 @@ load("@rules_shell//shell:sh_test.bzl", "sh_test")
 exports_files([
     "deploy_dev.sh",
     "docker-compose.yml",
+    "setup_k8s.sh",
 ])
 
 # Package backend binary
