@@ -187,6 +187,22 @@ type Message struct {
 	OccurredAt time.Time `json:"occurredAt"`
 }
 
+// DelegateTask allows an agent in Delegate Mode to act as a routing proxy.
+// It inspects an incoming task, updates the sender and recipient fields,
+// and forwards the task to the best-fit specialist agent from the registry.
+//
+// Parameters:
+//   - fromAgentID: string; The unique identifier of the delegating agent.
+//   - toAgentID: string; The unique identifier of the specialist agent.
+//   - task: Message; The task payload to be delegated.
+//
+// Returns: An error if either the delegating agent or the specialist agent does not exist.
+func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
+	task.FromAgent = fromAgentID
+	task.ToAgent = toAgentID
+	return h.Publish(task)
+}
+
 // Summary: MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
 // Intent: MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
 // Params: None
