@@ -1,6 +1,7 @@
 package integrations
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -995,22 +996,75 @@ func TestTestConnectionTelegram(t *testing.T) {
 	}
 }
 
+func TestSafeClientDialContextErrors(t *testing.T) {
+	oldAllow := AllowLocalIPsForTesting
+	AllowLocalIPsForTesting = false // Ensure we trigger SSRF protections
+	defer func() { AllowLocalIPsForTesting = oldAllow }()
+
+	oldLookup := LookupIPFunc
+	defer func() { LookupIPFunc = oldLookup }()
+
+	// 1. DNS Resolution failure
+	LookupIPFunc = func(host string) ([]net.IP, error) {
+		return nil, net.UnknownNetworkError("unknown")
+	}
+	_, err := safeClient.Get("http://unresolvable.local/path")
+	if err == nil || !strings.Contains(err.Error(), "DNS resolution failed") {
+		t.Errorf("expected DNS resolution failure error, got: %v", err)
+	}
+
+	// 2. No IP addresses returned
+	LookupIPFunc = func(host string) ([]net.IP, error) {
+		return []net.IP{}, nil
+	}
+	_, err = safeClient.Get("http://no-ips.local/path")
+	if err == nil || !strings.Contains(err.Error(), "no IP addresses found for host") {
+		t.Errorf("expected no IP addresses error, got: %v", err)
+	}
+
+	// 3. Blocked IP address
+	LookupIPFunc = func(host string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("127.0.0.1")}, nil
+	}
+	_, err = safeClient.Get("http://blocked.local/path")
+	if err == nil || !strings.Contains(err.Error(), "resolves to a blocked IP address") {
+		t.Errorf("expected blocked IP error, got: %v", err)
+	}
+
+	// 4. SplitHostPort failure
+	// net/http will naturally handle this or pass a clean host/port depending on request
+	// We can manually trigger DialContext to test the SplitHostPort error
+	transport, ok := safeClient.Transport.(*http.Transport)
+	if ok {
+		_, err = transport.DialContext(context.Background(), "tcp", "invalid-address-without-port")
+		if err == nil {
+			t.Errorf("expected SplitHostPort error, got nil")
+		}
+	}
+}
+
 func TestTestConnectionDiscord(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == "/error" {
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		rw.WriteHeader(http.StatusNoContent)
 	}))
 	defer server.Close()
 
+	oldAllow := AllowLocalIPsForTesting
+	AllowLocalIPsForTesting = true
+	defer func() { AllowLocalIPsForTesting = oldAllow }()
+
+	oldLookup := LookupIPFunc
+	LookupIPFunc = func(host string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("127.0.0.1")}, nil
+	}
+	defer func() { LookupIPFunc = oldLookup }()
+
 	r := NewRegistry()
 	_, _ = r.Connect("discord", "")
-
-	// Disable URL validation temporarily or stub it for this test.
-	// Since validateURL is internal, we could either intercept net.LookupIP
-	// or create a valid URL in the test environment if needed, but the simplest
-	// approach for this specific package is to pass an external URL that we mock or skip.
-	// We will skip testing the success case with `server.URL` because it is a loopback URL
-	// and gets rejected by SSRF prevention.
-	// We will just test the failure path and TestConnection for default integration type instead.
 
 	err := r.TestConnection("jira", IntegrationCredentials{})
 	if err != nil {
@@ -1020,6 +1074,20 @@ func TestTestConnectionDiscord(t *testing.T) {
 	err = r.TestConnection("discord", IntegrationCredentials{})
 	if err == nil {
 		t.Fatalf("expected error for missing webhook url")
+	}
+
+	err = r.TestConnection("discord", IntegrationCredentials{
+		WebhookURL: server.URL,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error for valid test connection: %v", err)
+	}
+
+	err = r.TestConnection("discord", IntegrationCredentials{
+		WebhookURL: server.URL + "/error",
+	})
+	if err == nil {
+		t.Fatalf("expected error for discord server error response")
 	}
 }
 
@@ -1206,11 +1274,18 @@ func TestSendTelegramMessageErrors(t *testing.T) {
 	oldBase := TelegramAPIBase
 	defer func() { TelegramAPIBase = oldBase }()
 
-	// 1. HTTP Post error
+	// 1. NewRequest error (bad URL)
+	TelegramAPIBase = "http://127.0.0.1\x7f/path"
+	err := sendTelegramMessage("tok", "chat", "msg")
+	if err == nil || !strings.Contains(err.Error(), "invalid URL format") {
+		t.Errorf("expected validation error, got %v", err)
+	}
+
+	// 2. HTTP Post error
 	closedServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
 	closedServer.Close()
 	TelegramAPIBase = closedServer.URL
-	err := sendTelegramMessage("tok", "chat", "msg")
+	err = sendTelegramMessage("tok", "chat", "msg")
 	if err == nil || !strings.Contains(err.Error(), "telegram API") {
 		t.Errorf("expected HTTP Post error, got %v", err)
 	}
@@ -1254,6 +1329,31 @@ func TestSendDiscordWebhookErrors(t *testing.T) {
 	err := sendDiscordWebhook(serverStatusError.URL, "user", "msg")
 	if err == nil || !strings.Contains(err.Error(), "discord API returned status 500") {
 		t.Errorf("expected API error, got %v", err)
+	}
+
+	// 2. NewRequest failure (bad URL parsing for NewRequestWithContext)
+	err = sendDiscordWebhook("http://127.0.0.1\x7f/path", "user", "msg")
+	if err == nil || !strings.Contains(err.Error(), "invalid URL format") { // caught by validateURL first
+		t.Errorf("expected validation error, got %v", err)
+	}
+
+	// Disable validation temporarily to trigger create request error
+	oldLookupIP := LookupIPFunc
+	LookupIPFunc = func(host string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("127.0.0.1")}, nil
+	}
+	defer func() { LookupIPFunc = oldLookupIP }()
+
+	// Trigger NewRequestWithContext error by passing an invalid method character implicitly via url
+	// Actually NewRequestWithContext fails on bad URL. But validateURL catches bad URLs first.
+	// We can skip NewRequestWithContext test as it is covered by validateURL or just test client.Do error
+
+	// 3. Client Do error
+	// A closed server will cause Do to fail
+	serverStatusError.Close()
+	err = sendDiscordWebhook(serverStatusError.URL, "user", "msg")
+	if err == nil || !strings.Contains(err.Error(), "discord API:") {
+		t.Errorf("expected API connection error, got %v", err)
 	}
 }
 
