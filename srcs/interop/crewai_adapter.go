@@ -3,6 +3,7 @@ package interop
 import (
 	"context"
 	"fmt"
+	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
 // Summary: CrewAIAdapter implements UniversalAdapter for CrewAI.
@@ -57,5 +58,6 @@ func (a *CrewAIAdapter) ExecuteCommand(ctx context.Context, cmd string) (string,
 	if cmd == "" {
 		return "", fmt.Errorf("empty command")
 	}
+	telemetry.LogAgentExecution(ctx, a.Identity, "CrewAI", "ExecuteCommand", "command", cmd)
 	return fmt.Sprintf("CrewAI executed: %s", cmd), nil
 }

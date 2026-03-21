@@ -3,6 +3,7 @@ package interop
 import (
 	"context"
 	"fmt"
+	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
 // Summary: AutoGenAdapter implements UniversalAdapter for AutoGen.
@@ -56,5 +57,6 @@ func (a *AutoGenAdapter) ExecuteCommand(ctx context.Context, cmd string) (string
 	if cmd == "" {
 		return "", fmt.Errorf("empty command")
 	}
+	telemetry.LogAgentExecution(ctx, a.Identity, "AutoGen", "ExecuteCommand", "command", cmd)
 	return fmt.Sprintf("AutoGen executed: %s", cmd), nil
 }

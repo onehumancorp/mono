@@ -22,7 +22,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleAdmin    = "admin"
+	RoleAdmin = "admin"
 	// Summary: Defines the RoleOperator type.
 	// Intent: Defines the RoleOperator type.
 	// Params: None
@@ -36,7 +36,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleViewer   = "viewer"
+	RoleViewer = "viewer"
 )
 
 // rolePermissions defines the default permission sets for built-in roles.

@@ -3,7 +3,6 @@ package dashboard
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"os"
 	"sync"
@@ -16,6 +15,7 @@ import (
 	"github.com/onehumancorp/mono/srcs/integrations"
 	"github.com/onehumancorp/mono/srcs/orchestration"
 	"github.com/onehumancorp/mono/srcs/telemetry"
+	"log/slog"
 )
 
 // Summary: Server encapsulates the HTTP handlers and state for the One Human Corp dashboard.  Constraints: Must be instantiated with a valid domain.Organization, orchestration.Hub, and billing.Tracker.
@@ -401,7 +401,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 		hub.SetMinimaxAPIKey(key)
 		server.settings.MinimaxAPIKey = key
 		if err := server.agentProviderRegistry.Authenticate(agents.ProviderTypeOpenClaw, agents.Credentials{APIKey: key}); err != nil {
-			log.Printf("warn: failed to authenticate OpenClaw provider with MINIMAX_API_KEY: %v", err)
+			slog.Warn("failed to authenticate OpenClaw provider with MINIMAX_API_KEY", "error", err, "component", "telemetry")
 		}
 	}
 	// Pre-authenticate providers from environment variables so the platform

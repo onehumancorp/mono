@@ -34,14 +34,14 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	StatusIdle      Status = "IDLE"
+	StatusIdle Status = "IDLE"
 	// Summary: Defines the StatusActive type.
 	// Intent: Defines the StatusActive type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	StatusActive    Status = "ACTIVE"
+	StatusActive Status = "ACTIVE"
 	// Summary: Defines the StatusInMeeting type.
 	// Intent: Defines the StatusInMeeting type.
 	// Params: None
@@ -55,7 +55,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	StatusBlocked   Status = "BLOCKED"
+	StatusBlocked Status = "BLOCKED"
 )
 
 // Event type constants for the asynchronous pub/sub agent interaction protocol.
@@ -66,56 +66,56 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	EventTask           = "task"
+	EventTask = "task"
 	// Summary: Defines the EventStatus type.
 	// Intent: Defines the EventStatus type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	EventStatus         = "status"
+	EventStatus = "status"
 	// Summary: Defines the EventHandoff type.
 	// Intent: Defines the EventHandoff type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	EventHandoff        = "handoff"
+	EventHandoff = "handoff"
 	// Summary: Defines the EventCodeReviewed type.
 	// Intent: Defines the EventCodeReviewed type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	EventCodeReviewed   = "CodeReviewed"
+	EventCodeReviewed = "CodeReviewed"
 	// Summary: Defines the EventTestsFailed type.
 	// Intent: Defines the EventTestsFailed type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	EventTestsFailed    = "TestsFailed"
+	EventTestsFailed = "TestsFailed"
 	// Summary: Defines the EventTestsPassed type.
 	// Intent: Defines the EventTestsPassed type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	EventTestsPassed    = "TestsPassed"
+	EventTestsPassed = "TestsPassed"
 	// Summary: Defines the EventSpecApproved type.
 	// Intent: Defines the EventSpecApproved type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	EventSpecApproved   = "SpecApproved"
+	EventSpecApproved = "SpecApproved"
 	// Summary: Defines the EventBlockerRaised type.
 	// Intent: Defines the EventBlockerRaised type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	EventBlockerRaised  = "BlockerRaised"
+	EventBlockerRaised = "BlockerRaised"
 	// Summary: Defines the EventBlockerCleared type.
 	// Intent: Defines the EventBlockerCleared type.
 	// Params: None
@@ -129,14 +129,14 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	EventPRCreated      = "PRCreated"
+	EventPRCreated = "PRCreated"
 	// Summary: Defines the EventPRMerged type.
 	// Intent: Defines the EventPRMerged type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	EventPRMerged       = "PRMerged"
+	EventPRMerged = "PRMerged"
 	// Summary: Defines the EventDesignReviewed type.
 	// Intent: Defines the EventDesignReviewed type.
 	// Params: None

@@ -10,7 +10,7 @@ exports_files([
 # Package backend binary
 pkg_tar(
     name = "backend_pkg",
-    srcs = ["//srcs/cmd/ohc:ohc"],
+    srcs = ["//srcs/cmd/ohc"],
     package_dir = "/usr/local/bin",
 )
 
@@ -34,7 +34,7 @@ genrule(
     name = "frontend_static_assets",
     srcs = ["//srcs/frontend:all_srcs"],
     outs = ["frontend_dist.tar"],
-    cmd = "export HOME=/tmp && cd srcs/frontend && npm install && npm run build && tar -C dist -cf ../../$@ .",
+    cmd = "export HOME=/tmp && export PATH=$$(dirname $$(which node)):$$PATH && cd srcs/frontend && npm install && npm run build && tar -C dist -cf ../../$@ .",
     tags = [
         "local",
         "no-remote-exec",
@@ -44,7 +44,7 @@ genrule(
 
 pkg_tar(
     name = "frontend_server_pkg",
-    srcs = ["//srcs/frontend/server/cmd/frontend:frontend"],
+    srcs = ["//srcs/frontend/server/cmd/frontend"],
     package_dir = "/usr/local/bin",
 )
 

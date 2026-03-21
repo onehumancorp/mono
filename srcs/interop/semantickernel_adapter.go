@@ -3,6 +3,7 @@ package interop
 import (
 	"context"
 	"fmt"
+	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
 // Summary: SemanticKernelAdapter implements UniversalAdapter for Semantic Kernel.
@@ -57,5 +58,6 @@ func (a *SemanticKernelAdapter) ExecuteCommand(ctx context.Context, cmd string) 
 	if cmd == "" {
 		return "", fmt.Errorf("empty command")
 	}
+	telemetry.LogAgentExecution(ctx, a.Identity, "SemanticKernel", "ExecuteCommand", "command", cmd)
 	return fmt.Sprintf("SemanticKernel executed: %s", cmd), nil
 }

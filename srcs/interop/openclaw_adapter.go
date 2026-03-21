@@ -3,6 +3,7 @@ package interop
 import (
 	"context"
 	"fmt"
+	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
 // Summary: OpenClawAdapter implements UniversalAdapter for OpenClaw.
@@ -57,5 +58,6 @@ func (a *OpenClawAdapter) ExecuteCommand(ctx context.Context, cmd string) (strin
 	if cmd == "" {
 		return "", fmt.Errorf("empty command")
 	}
+	telemetry.LogAgentExecution(ctx, a.Identity, "OpenClaw", "ExecuteCommand", "command", cmd)
 	return fmt.Sprintf("OpenClaw executed: %s", cmd), nil
 }
