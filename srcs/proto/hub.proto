@@ -54,6 +54,16 @@ message PublishMessageResponse {
   bool success = 1;
 }
 
+message DelegateTaskRequest {
+  string from_agent_id = 1;
+  string to_agent_id = 2;
+  Message task = 3;
+}
+
+message DelegateTaskResponse {
+  bool success = 1;
+}
+
 message StreamMessagesRequest {
   string agent_id = 1;
 }
@@ -70,6 +80,7 @@ service HubService {
   rpc RegisterAgent(RegisterAgentRequest) returns (RegisterAgentResponse);
   rpc OpenMeeting(OpenMeetingRequest) returns (MeetingRoom);
   rpc Publish(PublishMessageRequest) returns (PublishMessageResponse);
+  rpc DelegateTask(DelegateTaskRequest) returns (DelegateTaskResponse);
   rpc StreamMessages(StreamMessagesRequest) returns (stream Message);
   rpc Reason(ReasonRequest) returns (ReasonResponse);
 }

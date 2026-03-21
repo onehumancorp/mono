@@ -615,6 +615,32 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 	return pb.PublishMessageResponse_builder{Success: true}.Build(), nil
 }
 
+// Summary: DelegateTask functionality.
+// Intent: DelegateTask functionality.
+// Params: ctx, req
+// Returns: (*pb.DelegateTaskResponse, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
+func (s *HubServiceServer) DelegateTask(ctx context.Context, req *pb.DelegateTaskRequest) (*pb.DelegateTaskResponse, error) {
+	msgReq := req.GetTask()
+	msg := Message{
+		ID:         msgReq.GetId(),
+		FromAgent:  msgReq.GetFromAgent(),
+		ToAgent:    msgReq.GetToAgent(),
+		Type:       msgReq.GetType(),
+		Content:    msgReq.GetContent(),
+		MeetingID:  msgReq.GetMeetingId(),
+		OccurredAt: time.Unix(msgReq.GetOccurredAtUnix(), 0),
+	}
+
+	err := s.hub.DelegateTask(req.GetFromAgentId(), req.GetToAgentId(), msg)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "delegate task failed: %v", err)
+	}
+
+	return pb.DelegateTaskResponse_builder{Success: true}.Build(), nil
+}
+
 // Summary: StreamMessages functionality.
 // Intent: StreamMessages functionality.
 // Params: req, stream
