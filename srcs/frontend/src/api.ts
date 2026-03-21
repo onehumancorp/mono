@@ -939,3 +939,18 @@ export function createRole(body: { name: string; permissions?: string[] }): Prom
   return authedPostJSON<Role>("/api/roles", body);
 }
 
+
+/**
+ * Summary: Scales the number of agents for a specific role dynamically.
+ * Intent: Scales the number of agents for a specific role dynamically.
+ * Params: role, count
+ * Returns: Promise<{ status: string; role: string; count: number }>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+export function scaleAgents(
+  role: string,
+  count: number,
+): Promise<{ status: string; role: string; count: number }> {
+  return authedPostJSON<{ status: string; role: string; count: number }>("/api/v1/scale", { role, count });
+}

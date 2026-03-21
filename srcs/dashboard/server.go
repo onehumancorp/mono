@@ -103,7 +103,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	ApprovalStatusPending  ApprovalStatus = "PENDING"
+	ApprovalStatusPending ApprovalStatus = "PENDING"
 	// Summary: Defines the ApprovalStatusApproved type.
 	// Intent: Defines the ApprovalStatusApproved type.
 	// Params: None
@@ -471,6 +471,8 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/b2b/handshake", server.handleB2BHandshake)
 	mux.HandleFunc("/api/b2b/revoke", server.handleB2BRevoke)
 	// Phase 5 – Autonomous SRE / Incident Management
+	mux.HandleFunc("/api/v1/scale", server.handleScale)
+	mux.HandleFunc("/api/v1/scale/stream", server.handleScaleStream)
 	mux.HandleFunc("/api/incidents", server.handleIncidents)
 	mux.HandleFunc("/api/incidents/status", server.handleIncidentStatus)
 	// Phase 5 – Compute Optimisation / Hardware-Aware Scheduling
@@ -1160,7 +1162,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	TrustStatusActive  TrustAgreementStatus = "ACTIVE"
+	TrustStatusActive TrustAgreementStatus = "ACTIVE"
 	// Summary: Defines the TrustStatusRevoked type.
 	// Intent: Defines the TrustStatusRevoked type.
 	// Params: None
@@ -1247,14 +1249,14 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IncidentStatusProposed      IncidentStatus = "PROPOSED"
+	IncidentStatusProposed IncidentStatus = "PROPOSED"
 	// Summary: Defines the IncidentStatusResolved type.
 	// Intent: Defines the IncidentStatusResolved type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IncidentStatusResolved      IncidentStatus = "RESOLVED"
+	IncidentStatusResolved IncidentStatus = "RESOLVED"
 )
 
 // Summary: Incident represents an operational event requiring SRE attention.
@@ -1367,7 +1369,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	PipelineStatusPending      PipelineStatus = "PENDING"
+	PipelineStatusPending PipelineStatus = "PENDING"
 	// Summary: Defines the PipelineStatusImplementing type.
 	// Intent: Defines the PipelineStatusImplementing type.
 	// Params: None
@@ -1381,28 +1383,28 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	PipelineStatusTesting      PipelineStatus = "TESTING"
+	PipelineStatusTesting PipelineStatus = "TESTING"
 	// Summary: Defines the PipelineStatusStaging type.
 	// Intent: Defines the PipelineStatusStaging type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	PipelineStatusStaging      PipelineStatus = "STAGING"
+	PipelineStatusStaging PipelineStatus = "STAGING"
 	// Summary: Defines the PipelineStatusPromoted type.
 	// Intent: Defines the PipelineStatusPromoted type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	PipelineStatusPromoted     PipelineStatus = "PROMOTED"
+	PipelineStatusPromoted PipelineStatus = "PROMOTED"
 	// Summary: Defines the PipelineStatusFailed type.
 	// Intent: Defines the PipelineStatusFailed type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	PipelineStatusFailed       PipelineStatus = "FAILED"
+	PipelineStatusFailed PipelineStatus = "FAILED"
 )
 
 // Summary: Pipeline represents an autonomous implementation pipeline from spec to production.

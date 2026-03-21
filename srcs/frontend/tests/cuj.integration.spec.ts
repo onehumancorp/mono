@@ -55,3 +55,21 @@ test("CUJ 3: backend /app route remains reachable for bundled frontend", async (
 
   await saveShot(page, "cuj-03-backend-app-route");
 });
+
+test("CUJ 4: Dynamic Scaling triggers SSE trace logs", async ({ page }) => {
+  await page.goto("/");
+
+  // Navigate to Dynamic Scaling tab
+  await page.getByRole("button", { name: "Dynamic Scaling" }).click();
+  await expect(page.getByRole("heading", { name: "Dynamic Scaling" })).toBeVisible();
+
+  // Apply scaling changes
+  const applyButton = page.getByRole("button", { name: /Apply Scaling Changes/i });
+  await applyButton.click();
+
+  // Verify that the SSE trace logs stream in
+  await expect(page.getByText("K8s Operator: Reconciling TeamMember resource.")).toBeVisible();
+  await expect(page.getByText("AgentHired")).toBeVisible();
+
+  await saveShot(page, "cuj-04-dynamic-scaling");
+});
