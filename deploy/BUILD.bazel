@@ -25,6 +25,7 @@ oci_load(
     name = "backend_load",
     image = ":backend_image",
     repo_tags = ["onehumancorp/mono-backend:bazel"],
+    visibility = ["//visibility:public"],
 )
 
 # Build frontend static assets in a rule
@@ -34,7 +35,7 @@ genrule(
     name = "frontend_static_assets",
     srcs = ["//srcs/frontend:all_srcs"],
     outs = ["frontend_dist.tar"],
-    cmd = "export HOME=/tmp && cd srcs/frontend && npm install && npm run build && tar -C dist -cf ../../$@ .",
+    cmd = "export HOME=/tmp && cd srcs/frontend && npm install --engine-strict=false && npm run build && tar -C dist -cf ../../$@ .",
     tags = [
         "local",
         "no-remote-exec",
@@ -63,6 +64,7 @@ oci_load(
     name = "frontend_load",
     image = ":frontend_image",
     repo_tags = ["onehumancorp/mono-frontend:bazel"],
+    visibility = ["//visibility:public"],
 )
 
 sh_test(
