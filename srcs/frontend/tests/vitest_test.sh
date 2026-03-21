@@ -21,8 +21,15 @@ cd "${tmp}/frontend"
 
 export npm_config_cache="${tmp}/npm_cache"
 
-# Install dependencies.
-npm install --prefer-offline --no-audit --no-fund 2>&1 | tail -5
+# Install dependencies; capture output to a log file so failures are diagnosable.
+npm_log="${tmp}/npm_install.log"
+if ! npm install --prefer-offline --no-audit --no-fund > "${npm_log}" 2>&1; then
+    cat "${npm_log}"
+    echo "npm install failed – see output above" >&2
+    exit 1
+fi
+# Show last few lines so the test runner confirms installation succeeded.
+tail -5 "${npm_log}"
 
 # Start the compiled Go backend so tests that hit real /api/* routes can do so.
 if [[ -f "${root}/srcs/cmd/ohc/ohc_/ohc" ]]; then

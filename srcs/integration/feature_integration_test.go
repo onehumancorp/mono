@@ -29,9 +29,10 @@ import (
 )
 
 // newFullBackend creates a test server that mirrors the seeded launch-readiness
-// scenario.  CEO, PM, SWE, and QA agents are all registered, and two meeting
-// rooms are open so the UI meetings tab can show multiple chats.
-func newFullBackend(t *testing.T) (srv *httptest.Server, token string) {
+// scenario.  CEO, PM, SWE, QA, Security and Design agents are all registered,
+// and two meeting rooms are open so the UI meetings tab can show multiple chats.
+// It uses the same admin credentials as newTestBackend so loginAdmin works.
+func newFullBackend(t *testing.T) (*httptest.Server, string) {
 t.Helper()
 now := time.Now().UTC()
 org := domain.NewSoftwareCompany("org-feature", "Acme Software", "Alice CEO", now)
@@ -53,7 +54,7 @@ hub.OpenMeetingWithAgenda("kickoff", "Q3 Kickoff Planning", []string{"CEO", "pm-
 hub.OpenMeetingWithAgenda("security-review", "Security Audit Sprint", []string{"sec-1", "swe-1"})
 
 tracker := billing.NewTracker(billing.DefaultCatalog)
-_ = tracker.Record(billing.Usage{
+_, _ = tracker.Track(billing.Usage{
 OrganizationID:   org.ID,
 AgentID:          "pm-1",
 Model:            "gpt-4o",
@@ -61,15 +62,16 @@ PromptTokens:     500,
 CompletionTokens: 200,
 })
 
+// Use the same credentials as newTestBackend so loginAdmin helper works.
 t.Setenv("ADMIN_USERNAME", "admin")
-t.Setenv("ADMIN_PASSWORD", "featurepass99")
-t.Setenv("ADMIN_EMAIL", "admin@feature.local")
+t.Setenv("ADMIN_PASSWORD", "adminpass123")
+t.Setenv("ADMIN_EMAIL", "admin@test.local")
 
 store := auth.NewStore()
-srv = httptest.NewServer(dashboard.NewServer(org, hub, tracker, store))
+srv := httptest.NewServer(dashboard.NewServer(org, hub, tracker, store))
 t.Cleanup(srv.Close)
 
-token = loginAdmin(t, srv.URL)
+token := loginAdmin(t, srv.URL)
 return srv, token
 }
 
@@ -203,8 +205,9 @@ t.Error("sent message not found in kickoff meeting transcript of returned snapsh
 }
 
 // TestSendMessageFromCEORegisteredAgent verifies that the CEO (human) agent,
-// when registered in the hub, can also send messages.  This tests the
-// "send agent is not registered" scenario is resolved when the CEO is present.
+// when registered in the hub, can send messages successfully.  This confirms
+// the "sender agent is not registered" error is resolved by registering the
+// CEO in the orchestration hub on startup.
 func TestSendMessageFromCEORegisteredAgent(t *testing.T) {
 srv, token := newFullBackend(t)
 
@@ -226,7 +229,8 @@ t.Fatalf("POST /api/messages from CEO returned %d: %s", resp.StatusCode, b)
 
 // TestSendMessageAgentNotRegisteredReturns400 verifies that the backend rejects
 // a message from an agent that is not registered in the orchestration hub.
-// This is the root cause of the "sender agent is not registered" UI error.
+// This reproduces the "sender agent is not registered" UI error and confirms
+// the API returns a 400 with an informative message.
 func TestSendMessageAgentNotRegisteredReturns400(t *testing.T) {
 srv, _ := newTestBackend(t)
 token := loginAdmin(t, srv.URL)
@@ -256,7 +260,8 @@ t.Errorf("expected 'not registered' in error body, got: %s", body)
 
 // TestPlaybookPipelineFullLifecycle tests the complete pipeline lifecycle that
 // backs the Playbook page: create → advance status → promote to production.
-// It also verifies agent/role statistics via the analytics endpoint.
+// It also verifies the agent/role statistics via the analytics endpoint (used
+// by the playbook monitoring view to show "how many agents are in this role").
 func TestPlaybookPipelineFullLifecycle(t *testing.T) {
 srv, _ := newTestBackend(t)
 token := loginAdmin(t, srv.URL)
@@ -407,7 +412,7 @@ if len(meetings) < 2 {
 t.Fatalf("expected at least 2 meeting rooms, got %d", len(meetings))
 }
 
-// Verify the kickoff room has the messages.
+// Verify the kickoff room has the messages we sent.
 var kickoff map[string]any
 for _, m := range meetings {
 if m["id"] == "kickoff" {
