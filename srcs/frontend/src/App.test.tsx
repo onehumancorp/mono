@@ -2653,6 +2653,64 @@ describe("App – War Room Approval Cards", () => {
     });
 
     // Test Reject click
+    // Note: since clicking "Approve" above removes the buttons and replaces them with a badge,
+    // we can't click "Reject" on the same rendered element anymore. We only need to test Approve here.
+  });
+
+  it("renders CEO Approval card and handles Reject action", async () => {
+    // Mock snapshot with an ApprovalNeeded message targeting CEO
+    const snapshotWithApproval = {
+      ...richPayload,
+      organization: {
+        ...richPayload.organization,
+        ceoId: "CEO",
+      },
+      meetings: [
+        {
+          id: "launch-readiness",
+          agenda: "Test agenda",
+          participants: ["pm-1", "CEO"],
+          transcript: [
+            {
+              id: "msg-1",
+              fromAgent: "pm-1",
+              toAgent: "CEO",
+              type: "ApprovalNeeded",
+              content: "CEO approval needed for launch",
+              occurredAt: new Date().toISOString(),
+            },
+          ],
+        },
+      ],
+    } as any;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL) => {
+        const urlStr = input.toString();
+        if (urlStr === "/api/dashboard") return mockJson(snapshotWithApproval);
+        if (urlStr === "/api/messages") {
+          return mockJson(snapshotWithApproval);
+        }
+        return mockJson({});
+      }),
+    );
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Meetings")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText("Meetings"));
+
+    await waitFor(() => {
+      expect(screen.getByText("CEO Approval Required")).toBeInTheDocument();
+    });
+
+    const rejectBtn = screen.getByRole("button", { name: "Reject" });
+    expect(rejectBtn).toBeInTheDocument();
+
+    // Test Reject click
     fireEvent.click(rejectBtn);
     await waitFor(() => {
       expect(window.fetch).toHaveBeenCalledWith(
