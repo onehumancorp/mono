@@ -191,6 +191,32 @@ func RecordAgentApiCall(ctx context.Context, agentID, role, api string) {
 	))
 }
 
+type agentApiCallEvent struct {
+	agentID string
+	role    string
+	api     string
+}
+
+var apiCallQueue = make(chan agentApiCallEvent, 1024)
+
+// EnqueueAgentApiCall queues an API call telemetry event asynchronously to avoid blocking the caller.
+//
+// Parameters:
+//   - agentID: string; The identifier of the agent making the call.
+//   - role: string; The role of the agent.
+//   - api: string; The name or route of the invoked API/tool.
+//
+// Returns: Nothing.
+//
+// Side Effects: Enqueues a metric update.
+func EnqueueAgentApiCall(agentID, role, api string) {
+	select {
+	case apiCallQueue <- agentApiCallEvent{agentID, role, api}:
+	default:
+		// Queue is full, drop to avoid blocking. Or handle better.
+	}
+}
+
 // RecordHumanInteraction increments the global counter for events involving direct human oversight.
 //
 // Parameters:
@@ -249,4 +275,50 @@ func LogAgentExecution(ctx context.Context, agentID, role, api, eventType, conte
 		"event_type", eventType,
 		"content", content,
 	)
+}
+
+type agentExecutionEvent struct {
+	agentID   string
+	role      string
+	api       string
+	eventType string
+	content   string
+}
+
+var executionQueue = make(chan agentExecutionEvent, 1024)
+
+// EnqueueAgentExecutionLog queues an execution trace log asynchronously.
+//
+// Parameters:
+//   - agentID: string; The identifier of the agent.
+//   - role: string; The role of the agent.
+//   - api: string; The API or tool being executed.
+//   - eventType: string; The specific type of the event (e.g. task, status).
+//   - content: string; The content or message payload associated with the execution.
+//
+// Returns: Nothing.
+//
+// Side Effects: Enqueues a structured log message.
+func EnqueueAgentExecutionLog(agentID, role, api, eventType, content string) {
+	select {
+	case executionQueue <- agentExecutionEvent{agentID, role, api, eventType, content}:
+	default:
+		// Queue is full, drop to avoid blocking.
+	}
+}
+
+func init() {
+	go processTelemetryQueues()
+}
+
+func processTelemetryQueues() {
+	ctx := context.Background()
+	for {
+		select {
+		case ev := <-apiCallQueue:
+			RecordAgentApiCall(ctx, ev.agentID, ev.role, ev.api)
+		case ev := <-executionQueue:
+			LogAgentExecution(ctx, ev.agentID, ev.role, ev.api, ev.eventType, ev.content)
+		}
+	}
 }

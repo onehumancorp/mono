@@ -406,10 +406,11 @@ func (h *Hub) Publish(message Message) error {
 	h.agents[message.FromAgent] = sender
 
 	// ⚡ BOLT: [Asynchronous telemetry recording to reduce critical path latency] - Randomized Selection from Top 5
-	go telemetry.RecordAgentApiCall(context.Background(), sender.ID, sender.Role, "publish")
-
-	// Structured logging for agent execution traces
-	telemetry.LogAgentExecution(context.Background(), sender.ID, sender.Role, "publish", message.Type, message.Content)
+	// Using a channel and a worker routine to handle these efficiently off the critical path could be better,
+	// but simplest is to dispatch to telemetry directly via the global async log handlers (which we'll add)
+	// or avoid string formatting overhead in the hot path. Let's make telemetry non-blocking.
+	telemetry.EnqueueAgentExecutionLog(sender.ID, sender.Role, "publish", message.Type, message.Content)
+	telemetry.EnqueueAgentApiCall(sender.ID, sender.Role, "publish")
 
 	return nil
 }
