@@ -311,6 +311,10 @@ export function App() {
   const [mcpTools, setMcpTools] = useState<MCPTool[]>([]);
   const [integrationsList, setIntegrationsList] = useState<Integration[]>([]);
   const [selectedScenario, setSelectedScenario] = useState("launch-readiness");
+  const [selectedAgentID, setSelectedAgentID] = useState<string | null>(null);
+  const [agentDetailTab, setAgentDetailTab] = useState<"config" | "metrics" | "activity">("config");
+  const [agentChatContent, setAgentChatContent] = useState("");
+  const [agentChatSending, setAgentChatSending] = useState(false);
 
   // ── Auth state ─────────────────────────────────────────────────────────────
   const [authToken, setAuthToken] = useState<string | null>(getStoredToken);
@@ -1495,7 +1499,7 @@ export function App() {
         )}
 
         {/* ────────────────── Agents ────────────────── */}
-        {activeNav === "agents" && (
+        {activeNav === "agents" && !selectedAgentID && (
           <>
             <div className="page-header">
               <div>
@@ -1514,7 +1518,15 @@ export function App() {
 
             <div className="agent-grid">
               {(snapshot?.agents ?? []).map((agent: AgentRuntime) => (
-                <article key={agent.id} className="agent-card">
+                <article
+                  key={agent.id}
+                  className="agent-card agent-card--clickable"
+                  onClick={() => { setSelectedAgentID(agent.id); setAgentDetailTab("config"); }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View details for ${agent.name}`}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedAgentID(agent.id); setAgentDetailTab("config"); } }}
+                >
                   <div className="agent-card__top">
                     <RoleAvatar role={agent.role} name={agent.name} />
                     <StatusBadge status={agent.status} />
@@ -1527,7 +1539,7 @@ export function App() {
                       type="button"
                       className="btn btn-danger btn-sm btn-full"
                       disabled={agentActionLoading}
-                      onClick={() => { void handleFire(agent.id, agent.name); }}
+                      onClick={(e) => { e.stopPropagation(); void handleFire(agent.id, agent.name); }}
                     >
                       Remove
                     </button>
@@ -1555,6 +1567,220 @@ export function App() {
             </article>
           </>
         )}
+
+        {/* ────────────────── Agent Detail ────────────────── */}
+        {activeNav === "agents" && selectedAgentID && (() => {
+          const detailAgent = snapshot?.agents.find((a) => a.id === selectedAgentID);
+          if (!detailAgent) return <p className="empty-state">Agent not found.</p>;
+
+          const roleProfile = snapshot?.organization.roleProfiles?.find((rp) => rp.role === detailAgent.role);
+          const agentCost = snapshot?.costs.agents.find((c) => c.agentID === detailAgent.id);
+          const agentMessages = (snapshot?.meetings ?? []).flatMap((m) =>
+            m.transcript.filter((msg) => msg.fromAgent === detailAgent.id || msg.toAgent === detailAgent.id)
+          );
+
+          async function submitAgentChat() {
+            if (!agentChatContent.trim()) return;
+            if (!detailAgent) return;
+            const meetingId = snapshot?.meetings.find((m) => m.participants.includes(detailAgent.id))?.id
+              ?? snapshot?.meetings[0]?.id;
+            if (!meetingId) {
+              setError("No active meeting found to send this message to.");
+              return;
+            }
+            setAgentChatSending(true);
+            setError("");
+            try {
+              const data = await sendMessage({
+                fromAgent: ceoMember?.id ?? "CEO",
+                toAgent: detailAgent?.id || "",
+                meetingId,
+                messageType: "direction",
+                content: agentChatContent.trim(),
+              });
+              setSnapshot(data);
+              setAgentChatContent("");
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Failed to send message");
+            } finally {
+              setAgentChatSending(false);
+            }
+          }
+
+          function handleAgentChat(e: FormEvent<HTMLFormElement>) {
+            e.preventDefault();
+            void submitAgentChat();
+          }
+
+          return (
+            <>
+              <div className="page-header">
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => setSelectedAgentID(null)}
+                    aria-label="Back to agents"
+                  >
+                    ← Back
+                  </button>
+                  <div>
+                    <h2 className="page-heading">{detailAgent.name}</h2>
+                    <p className="page-sub">{detailAgent.role.replace(/_/g, " ")}</p>
+                  </div>
+                  <StatusBadge status={detailAgent.status} />
+                </div>
+              </div>
+
+              <div className="tabs" style={{ marginBottom: "1rem" }}>
+                {(["config", "metrics", "activity"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    className={`tab-btn${agentDetailTab === tab ? " tab-btn--active" : ""}`}
+                    onClick={() => setAgentDetailTab(tab)}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              {agentDetailTab === "config" && (
+                <article className="panel">
+                  <header className="panel-head">
+                    <h2 className="panel-title">Role Profile — {detailAgent.role.replace(/_/g, " ")}</h2>
+                  </header>
+                  <div className="panel-body">
+                    {roleProfile ? (
+                      <>
+                        <div className="field" style={{ marginBottom: "1rem" }}>
+                          <span className="field-label">Base Prompt</span>
+                          <pre className="mcp-result__body" style={{ whiteSpace: "pre-wrap" }}>{roleProfile.basePrompt}</pre>
+                        </div>
+                        {roleProfile.capabilities && roleProfile.capabilities.length > 0 && (
+                          <div className="field" style={{ marginBottom: "1rem" }}>
+                            <span className="field-label">Capabilities</span>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.25rem" }}>
+                              {roleProfile.capabilities.map((cap) => (
+                                <span key={cap} className="chip chip--sm">{cap}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {roleProfile.contextInputs && roleProfile.contextInputs.length > 0 && (
+                          <div className="field">
+                            <span className="field-label">Context Inputs</span>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.25rem" }}>
+                              {roleProfile.contextInputs.map((ci) => (
+                                <span key={ci} className="chip chip--sm">{ci}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="empty-state">No role profile found for {detailAgent.role.replace(/_/g, " ")}.</p>
+                    )}
+                  </div>
+                </article>
+              )}
+
+              {agentDetailTab === "metrics" && (
+                <article className="panel">
+                  <header className="panel-head">
+                    <h2 className="panel-title">Token Usage &amp; Cost</h2>
+                  </header>
+                  <div className="panel-body">
+                    {agentCost ? (
+                      <div className="kpi-row" style={{ marginTop: 0 }}>
+                        <article className="kpi-card kpi-card--accent">
+                          <p className="kpi-label">Total Cost</p>
+                          <p className="kpi-value">{formatCost(agentCost.costUSD)}</p>
+                        </article>
+                        <article className="kpi-card">
+                          <p className="kpi-label">Tokens Used</p>
+                          <p className="kpi-value">{formatTokens(agentCost.tokenUsed)}</p>
+                        </article>
+                        <article className="kpi-card">
+                          <p className="kpi-label">Model</p>
+                          <p className="kpi-value" style={{ fontSize: "1rem" }}>{agentCost.model || "—"}</p>
+                        </article>
+                      </div>
+                    ) : (
+                      <p className="empty-state">No cost data recorded for this agent yet.</p>
+                    )}
+                  </div>
+                </article>
+              )}
+
+              {agentDetailTab === "activity" && (
+                <article className="panel">
+                  <header className="panel-head">
+                    <h2 className="panel-title">Activity</h2>
+                    <span className="chip">{agentMessages.length} messages</span>
+                  </header>
+                  <div className="panel-body">
+                    {agentMessages.length === 0 ? (
+                      <p className="empty-state">No activity recorded for this agent.</p>
+                    ) : (
+                      <ul className="transcript">
+                        {agentMessages.map((msg) => (
+                          <li key={msg.id} className={`transcript-item ${msg.fromAgent === detailAgent.id ? "transcript-item--agent" : "transcript-item--human"}`}>
+                            <div className="transcript-header">
+                              <span className="transcript-from">{msg.fromAgent}</span>
+                              {msg.toAgent && (
+                                <>
+                                  <span className="transcript-arrow" aria-hidden="true">→</span>
+                                  <span className="transcript-to">{msg.toAgent}</span>
+                                </>
+                              )}
+                              <span className="event-chip" style={{ marginLeft: "4px" }}>{msg.type}</span>
+                              <span className="transcript-time">{formatTime(msg.occurredAt)}</span>
+                            </div>
+                            <div className="transcript-bubble">
+                              <p className="transcript-body">{msg.content}</p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </article>
+              )}
+
+              {/* Chat Box */}
+              <article className="panel" style={{ marginTop: "1.25rem" }}>
+                <header className="panel-head">
+                  <h2 className="panel-title">Chat with {detailAgent.name}</h2>
+                </header>
+                <div className="panel-body">
+                  <form onSubmit={(e) => { void handleAgentChat(e); }} className="war-room-composer">
+                    <textarea
+                      className="textarea"
+                      placeholder={`Send a message to ${detailAgent.name}…`}
+                      value={agentChatContent}
+                      onChange={(e) => setAgentChatContent(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          void submitAgentChat();
+                        }
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      className="btn btn-primary war-room-send-btn"
+                      disabled={agentChatSending || !agentChatContent.trim()}
+                    >
+                      {agentChatSending ? "..." : "Send"}
+                    </button>
+                  </form>
+                  {error && <p className="field-error" style={{ marginTop: "0.5rem" }} role="alert">{error}</p>}
+                </div>
+              </article>
+            </>
+          );
+        })()}
 
         {/* ────────────────── Cost Analytics ────────────────── */}
         {activeNav === "cost" && (

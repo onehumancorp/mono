@@ -3,6 +3,7 @@ package dashboard
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"os"
 	"sync"
@@ -399,6 +400,9 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	if key := os.Getenv("MINIMAX_API_KEY"); key != "" {
 		hub.SetMinimaxAPIKey(key)
 		server.settings.MinimaxAPIKey = key
+		if err := server.agentProviderRegistry.Authenticate(agents.ProviderTypeOpenClaw, agents.Credentials{APIKey: key}); err != nil {
+			log.Printf("warn: failed to authenticate OpenClaw provider with MINIMAX_API_KEY: %v", err)
+		}
 	}
 	// Pre-authenticate providers from environment variables so the platform
 	// forwards credentials to freshly hired agents without requiring manual auth.

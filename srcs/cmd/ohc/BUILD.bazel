@@ -20,6 +20,7 @@ go_library(
 go_binary(
     name = "ohc",
     embed = [":ohc_lib"],
+    pure = "on",
     visibility = ["//visibility:public"],
 )
 
