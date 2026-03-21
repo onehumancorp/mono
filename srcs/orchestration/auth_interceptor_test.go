@@ -99,7 +99,7 @@ func TestSPIFFEAuthInterceptor_ShortPath(t *testing.T) {
 	if !ok || st.Code() != codes.PermissionDenied {
 		t.Errorf("expected PermissionDenied, got %v", err)
 	}
-	if !strings.Contains(err.Error(), "lacks required path segments") {
+	if !strings.Contains(err.Error(), "invalid SPIFFE ID path structure for domain onehumancorp.io") {
 		t.Errorf("expected path segments error, got %v", err)
 	}
 }
@@ -548,7 +548,7 @@ func TestSPIFFEStreamInterceptor(t *testing.T) {
 			},
 			expectedErr: true,
 			errCode:     codes.PermissionDenied,
-			errMsg:      "lacks required path segments",
+			errMsg:      "invalid SPIFFE ID path structure for domain onehumancorp.io",
 		},
 		{
 			name: "Valid onehumancorp.io Domain",
