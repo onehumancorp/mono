@@ -21,6 +21,10 @@ import {
   createUser,
   deleteUser,
   scaleAgents,
+  fetchPipelines,
+  createPipeline,
+  promotePipeline,
+  updatePipelineStatus,
 } from "./api";
 import type {
   AgentRuntime,
@@ -33,9 +37,10 @@ import type {
   Settings,
   UserPublic,
 } from "./types";
+import type { ApiPipeline } from "./proto_types";
 
 type LoadState = "idle" | "loading" | "ready" | "error";
-type NavSection = "overview" | "meetings" | "agents" | "cost" | "playbooks" | "integrations" | "scaling" | "settings" | "users";
+type NavSection = "overview" | "meetings" | "agents" | "cost" | "playbooks" | "integrations" | "scaling" | "settings" | "users" | "pipelines";
 
 function formatCost(value: number): string {
   if (value === 0) return "$0.000000";
@@ -318,6 +323,7 @@ export function App() {
   const [domains, setDomains] = useState<DomainInfo[]>([]);
   const [mcpTools, setMcpTools] = useState<MCPTool[]>([]);
   const [integrationsList, setIntegrationsList] = useState<Integration[]>([]);
+  const [pipelines, setPipelines] = useState<ApiPipeline[]>([]);
   const [selectedScenario, setSelectedScenario] = useState("launch-readiness");
   const [selectedAgentID, setSelectedAgentID] = useState<string | null>(null);
   const [agentDetailTab, setAgentDetailTab] = useState<"config" | "metrics" | "activity">("config");
@@ -435,6 +441,11 @@ export function App() {
     }
     if (activeNav === "users") {
       void fetchUsers().then(setUsers).catch(() => { });
+    }
+    if (activeNav === "pipelines") {
+      void fetchPipelines().then(setPipelines).catch((e) => {
+        setError(e instanceof Error ? e.message : "Failed to fetch pipelines");
+      });
     }
   }, [activeNav]);
 
@@ -584,6 +595,7 @@ export function App() {
     { key: "meetings", label: "Meetings" },
     { key: "agents", label: "Agents" },
     { key: "cost", label: "Cost" },
+    { key: "pipelines", label: "Active PRs" },
     { key: "playbooks", label: "Playbooks" },
     { key: "integrations", label: "Integrations" },
     { key: "scaling", label: "Dynamic Scaling" },
@@ -1901,6 +1913,167 @@ export function App() {
                   </p>
                 </div>
               </article>
+            </div>
+          </>
+        )}
+
+        {/* ────────────────── Pipelines ────────────────── */}
+        {activeNav === "pipelines" && (
+          <>
+            <div className="page-header">
+              <div>
+                <h2 className="page-heading">Active PRs</h2>
+                <p className="page-sub">Automated implementation pipelines tracking features from spec to deployment</p>
+              </div>
+              <div className="header-actions">
+                <button
+                  className="btn btn-primary"
+                  onClick={async () => {
+                    try {
+                      const rand = Math.floor(Math.random() * 1000);
+                      await createPipeline("New Feature Spec", `feat-${rand}`, ceoMember?.name || "CEO");
+                      setNotice("Spec Approved! Task assigned to SWE.");
+                      void fetchPipelines().then(setPipelines).catch((err) => {
+                        setError(err instanceof Error ? err.message : "Failed to fetch pipelines");
+                      });
+                    } catch (e) {
+                      setError(e instanceof Error ? e.message : "Failed to create pipeline");
+                    }
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+                  Approve Spec
+                </button>
+              </div>
+            </div>
+
+            <div className="card full-width">
+              <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={async () => {
+                    const idlePipeline = pipelines.find(p => p.status === "PENDING" || p.status === "IMPLEMENTING");
+                    if (idlePipeline) {
+                      try {
+                        await updatePipelineStatus(idlePipeline.id || "", "TESTING");
+                        setNotice("Implementation started, running Bazel tests.");
+                        void fetchPipelines().then(setPipelines).catch((err) => {
+                          setError(err instanceof Error ? err.message : "Failed to fetch pipelines");
+                        });
+                      } catch (e) {
+                        setError(e instanceof Error ? e.message : "Failed to start implementation");
+                      }
+                    } else {
+                      setError("No idle pipelines to start implementation for.");
+                    }
+                  }}
+                >
+                  Start Implementation
+                </button>
+              </div>
+
+              <div className="table-responsive">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Branch</th>
+                      <th>Feature Name</th>
+                      <th>Status</th>
+                      <th>Staging URL</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pipelines.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="text-center text-subtle" style={{ padding: "3rem" }}>
+                          No Active PRs currently tracked by the Hub.
+                        </td>
+                      </tr>
+                    ) : (
+                      pipelines.map((p) => (
+                        <tr key={p.id}>
+                          <td className="font-mono text-sm">{p.branch}</td>
+                          <td className="font-medium">{p.name}</td>
+                          <td>
+                            <span className={`status-badge status-${(p.status || "").toLowerCase()}`}>
+                              {p.status}
+                            </span>
+                          </td>
+                          <td>
+                            {p.stagingUrl ? (
+                              <a href={p.stagingUrl} target="_blank" rel="noreferrer" className="text-primary hover-underline">
+                                {p.stagingUrl}
+                              </a>
+                            ) : (
+                              <span className="text-subtle">—</span>
+                            )}
+                          </td>
+                          <td>
+                            <div className="flex gap-2">
+                              {p.status === "TESTING" && (
+                                <button
+                                  className="btn btn-sm btn-secondary"
+                                  onClick={async () => {
+                                    try {
+                                      await updatePipelineStatus(p.id || "", "STAGING", `https://staging-${p.branch}.onehumancorp.com`);
+                                      setNotice(`Tests passed for ${p.branch}. Deployed to Staging.`);
+                                      void fetchPipelines().then(setPipelines).catch((err) => {
+                                        setError(err instanceof Error ? err.message : "Failed to fetch pipelines");
+                                      });
+                                    } catch (e) {
+                                      setError(e instanceof Error ? e.message : "Failed to pass tests");
+                                    }
+                                  }}
+                                >
+                                  Pass Tests
+                                </button>
+                              )}
+
+                              {p.status === "STAGING" && (
+                                <>
+                                  <button
+                                    className="btn btn-sm btn-primary"
+                                    onClick={async () => {
+                                      try {
+                                        await promotePipeline(p.id || "", ceoMember?.name || "CEO");
+                                        setNotice(`Pipeline ${p.branch} promoted to production!`);
+                                        void fetchPipelines().then(setPipelines).catch((err) => {
+                                          setError(err instanceof Error ? err.message : "Failed to fetch pipelines");
+                                        });
+                                      } catch (e) {
+                                        setError(e instanceof Error ? e.message : "Failed to promote");
+                                      }
+                                    }}
+                                  >
+                                    Promote
+                                  </button>
+                                  <button
+                                    className="btn btn-sm btn-danger"
+                                    onClick={async () => {
+                                      try {
+                                        await updatePipelineStatus(p.id || "", "FAILED");
+                                        setNotice(`Staging rejected for ${p.branch}. Rolling back and notifying SWE.`);
+                                        void fetchPipelines().then(setPipelines).catch((err) => {
+                                          setError(err instanceof Error ? err.message : "Failed to fetch pipelines");
+                                        });
+                                      } catch (e) {
+                                        setError(e instanceof Error ? e.message : "Failed to reject");
+                                      }
+                                    }}
+                                  >
+                                    Reject
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </>
         )}

@@ -3186,8 +3186,8 @@ func TestHandlePipelines(t *testing.T) {
 	if err := json.NewDecoder(listResp.Body).Decode(&pipelines); err != nil {
 		t.Fatalf("decode pipelines: %v", err)
 	}
-	if len(pipelines) != 1 {
-		t.Errorf("expected 1 pipeline, got %d", len(pipelines))
+	if len(pipelines) != 4 {
+		t.Errorf("expected 4 pipelines, got %d", len(pipelines))
 	}
 }
 

@@ -17,6 +17,7 @@ import type {
   SkillPack,
   UserPublic,
 } from "./types";
+import type { ApiPipeline } from "./proto_types";
 
 async function getJSON<T>(path: string): Promise<T> {
   const response = await fetch(path);
@@ -953,4 +954,22 @@ export function scaleAgents(
   count: number,
 ): Promise<{ status: string; role: string; count: number }> {
   return authedPostJSON<{ status: string; role: string; count: number }>("/api/v1/scale", { role, count });
+}
+
+export async function fetchPipelines(): Promise<ApiPipeline[]> {
+  return authedGetJSON<ApiPipeline[]>("/api/pipelines");
+}
+
+export async function createPipeline(name: string, branch: string, initiatedBy: string): Promise<ApiPipeline> {
+  return authedPostJSON<ApiPipeline>("/api/pipelines", { name, branch, initiatedBy });
+}
+
+export async function promotePipeline(pipelineId: string, approvedBy: string): Promise<ApiPipeline> {
+  return authedPostJSON<ApiPipeline>("/api/pipelines/promote", { pipelineId, approvedBy });
+}
+
+export async function updatePipelineStatus(pipelineId: string, status: string, stagingUrl?: string): Promise<ApiPipeline> {
+  const payload: any = { pipelineId, status };
+  if (stagingUrl) payload.stagingUrl = stagingUrl;
+  return authedPostJSON<ApiPipeline>("/api/pipelines/status", payload);
 }
