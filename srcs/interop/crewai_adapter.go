@@ -18,13 +18,16 @@ type CrewAIAdapter struct {
 // Summary: NewCrewAIAdapter creates a new CrewAIAdapter.
 // Intent: NewCrewAIAdapter creates a new CrewAIAdapter.
 // Params: identity
-// Returns: *CrewAIAdapter
-// Errors: None
+// Returns: *CrewAIAdapter, error
+// Errors: Returns error if identity is invalid
 // Side Effects: None
-func NewCrewAIAdapter(identity string) *CrewAIAdapter {
+func NewCrewAIAdapter(identity string) (*CrewAIAdapter, error) {
+	if err := ValidateSPIFFEID(identity); err != nil {
+		return nil, fmt.Errorf("invalid identity for CrewAIAdapter: %w", err)
+	}
 	return &CrewAIAdapter{
 		Identity: identity,
-	}
+	}, nil
 }
 
 // Summary: SyncState functionality.
@@ -44,6 +47,9 @@ func (a *CrewAIAdapter) SyncState(ctx context.Context, state *State) error {
 	}
 	state.Data["crewai_synced"] = true
 	state.Data["last_identity"] = a.Identity
+
+	// Ensure shared state via LangGraph is synchronized
+	LogCheckpoint(state, a.Identity)
 	return nil
 }
 

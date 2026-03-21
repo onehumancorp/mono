@@ -18,13 +18,16 @@ type SemanticKernelAdapter struct {
 // Summary: NewSemanticKernelAdapter creates a new SemanticKernelAdapter.
 // Intent: NewSemanticKernelAdapter creates a new SemanticKernelAdapter.
 // Params: identity
-// Returns: *SemanticKernelAdapter
-// Errors: None
+// Returns: *SemanticKernelAdapter, error
+// Errors: Returns error if identity is invalid
 // Side Effects: None
-func NewSemanticKernelAdapter(identity string) *SemanticKernelAdapter {
+func NewSemanticKernelAdapter(identity string) (*SemanticKernelAdapter, error) {
+	if err := ValidateSPIFFEID(identity); err != nil {
+		return nil, fmt.Errorf("invalid identity for SemanticKernelAdapter: %w", err)
+	}
 	return &SemanticKernelAdapter{
 		Identity: identity,
-	}
+	}, nil
 }
 
 // Summary: SyncState synchronizes Semantic Kernel state.
@@ -44,6 +47,9 @@ func (a *SemanticKernelAdapter) SyncState(ctx context.Context, state *State) err
 	}
 	state.Data["semantickernel_synced"] = true
 	state.Data["last_identity"] = a.Identity
+
+	// Ensure shared state via LangGraph is synchronized
+	LogCheckpoint(state, a.Identity)
 	return nil
 }
 
