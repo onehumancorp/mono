@@ -77,6 +77,11 @@ metadata:
   name: {{ .Release.Name }}-chatwoot
 spec:
   replicas: {{ .Values.chatwoot.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: {{ .Release.Name }}-chatwoot
@@ -128,6 +133,13 @@ spec:
               value: "en"
             - name: FORCE_SSL
               value: "false"
+          livenessProbe:
+            httpGet:
+              path: /auth/sign_in
+              port: {{ .Values.chatwoot.service.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 10
           readinessProbe:
             httpGet:
               path: /auth/sign_in
@@ -150,6 +162,11 @@ metadata:
   name: {{ .Release.Name }}-chatwoot-worker
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: {{ .Release.Name }}-chatwoot-worker
