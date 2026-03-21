@@ -403,6 +403,94 @@ func TestSPIFFEAuthInterceptor_OHCOSDomain(t *testing.T) {
 	}
 }
 
+func TestSPIFFEAuthInterceptor_OHCGlobalDomain(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+
+	tests := []struct {
+		name        string
+		spiffeID    string
+		reqAgentID  string
+		expectedErr bool
+		errCode     codes.Code
+	}{
+		{
+			name:        "Valid OHC Global Domain",
+			spiffeID:    "spiffe://ohc.global/org/org-1/agent/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: false,
+		},
+		{
+			name:        "Valid Regional OHC Global Domain",
+			spiffeID:    "spiffe://eu.ohc.global/org/org-1/agent/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: false,
+		},
+		{
+			name:        "Valid Sub-Regional OHC Global Domain",
+			spiffeID:    "spiffe://eu-west.ohc.global/org/org-1/agent/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: false,
+		},
+		{
+			name:        "Boundary Escape OHC Global Domain",
+			spiffeID:    "spiffe://ohc.global/org/org-1/attacker/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name:        "Spoofing Regional OHC Global Domain",
+			spiffeID:    "spiffe://eu.ohc.global/org/org-1/agent/attacker-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name:        "Spoofing Sub-Regional OHC Global Domain",
+			spiffeID:    "spiffe://eu-west.ohc.global/org/org-1/agent/attacker-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name:        "Invalid SPIFFE ID path structure",
+			spiffeID:    "spiffe://ohc.global/org/org-1/agent",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := mockSPIFFEContext(tc.spiffeID)
+			req := pb.RegisterAgentRequest_builder{
+				Agent: pb.Agent_builder{
+					Id: tc.reqAgentID,
+				}.Build(),
+			}.Build()
+
+			_, err := interceptor(ctx, req, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+				return nil, nil
+			})
+
+			if tc.expectedErr {
+				if err == nil {
+					t.Fatal("expected error")
+				}
+				st, ok := status.FromError(err)
+				if !ok || st.Code() != tc.errCode {
+					t.Errorf("expected %v, got %v", tc.errCode, err)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+			}
+		})
+	}
+}
+
 func TestSPIFFEAuthInterceptor_UnsupportedTrustDomain(t *testing.T) {
 	interceptor := SPIFFEAuthInterceptor()
 	ctx := mockSPIFFEContext("spiffe://unknown.domain/agent/agent-1")
@@ -512,6 +600,31 @@ func TestSPIFFEStreamInterceptor(t *testing.T) {
 			expectedErr: true,
 			errCode:     codes.PermissionDenied,
 			errMsg:      "invalid SPIFFE ID path structure for domain ohc.os",
+		},
+		{
+			name: "Valid ohc.global Domain",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://ohc.global/org/org-1/agent/agent-1")
+			},
+			reqAgentID:  "agent-1",
+			expectedErr: false,
+		},
+		{
+			name: "Valid Regional ohc.global Domain",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://eu.ohc.global/org/org-1/agent/agent-1")
+			},
+			reqAgentID:  "agent-1",
+			expectedErr: false,
+		},
+		{
+			name: "Boundary Escape ohc.global Domain",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://ohc.global/org/org-1/attacker/agent-1")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+			errMsg:      "invalid SPIFFE ID path structure",
 		},
 		{
 			name: "Unsupported Trust Domain",
