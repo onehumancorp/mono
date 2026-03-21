@@ -18,13 +18,16 @@ type AutoGenAdapter struct {
 // Summary: NewAutoGenAdapter creates a new AutoGenAdapter.
 // Intent: NewAutoGenAdapter creates a new AutoGenAdapter.
 // Params: identity
-// Returns: *AutoGenAdapter
-// Errors: None
+// Returns: *AutoGenAdapter, error
+// Errors: Returns error if identity is invalid
 // Side Effects: None
-func NewAutoGenAdapter(identity string) *AutoGenAdapter {
+func NewAutoGenAdapter(identity string) (*AutoGenAdapter, error) {
+	if err := ValidateSPIFFEID(identity); err != nil {
+		return nil, fmt.Errorf("invalid identity for AutoGenAdapter: %w", err)
+	}
 	return &AutoGenAdapter{
 		Identity: identity,
-	}
+	}, nil
 }
 
 // Summary: SyncState functionality.
@@ -43,6 +46,9 @@ func (a *AutoGenAdapter) SyncState(ctx context.Context, state *State) error {
 	}
 	state.Data["autogen_synced"] = true
 	state.Data["last_identity"] = a.Identity
+
+	// Ensure shared state via LangGraph is synchronized
+	LogCheckpoint(state, a.Identity)
 	return nil
 }
 

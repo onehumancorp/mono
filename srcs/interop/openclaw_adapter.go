@@ -18,13 +18,16 @@ type OpenClawAdapter struct {
 // Summary: NewOpenClawAdapter creates a new OpenClawAdapter.
 // Intent: NewOpenClawAdapter creates a new OpenClawAdapter.
 // Params: identity
-// Returns: *OpenClawAdapter
-// Errors: None
+// Returns: *OpenClawAdapter, error
+// Errors: Returns error if identity is invalid
 // Side Effects: None
-func NewOpenClawAdapter(identity string) *OpenClawAdapter {
+func NewOpenClawAdapter(identity string) (*OpenClawAdapter, error) {
+	if err := ValidateSPIFFEID(identity); err != nil {
+		return nil, fmt.Errorf("invalid identity for OpenClawAdapter: %w", err)
+	}
 	return &OpenClawAdapter{
 		Identity: identity,
-	}
+	}, nil
 }
 
 // Summary: SyncState functionality.
@@ -44,6 +47,9 @@ func (a *OpenClawAdapter) SyncState(ctx context.Context, state *State) error {
 	}
 	state.Data["openclaw_synced"] = true
 	state.Data["last_identity"] = a.Identity
+
+	// Ensure shared state via LangGraph is synchronized
+	LogCheckpoint(state, a.Identity)
 	return nil
 }
 
