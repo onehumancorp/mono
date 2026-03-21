@@ -6,9 +6,8 @@ import (
 	"time"
 )
 
-// Summary: TrustAgreement represents a mutual trust relationship between two organizations.
-// Intent: TrustAgreement represents a mutual trust relationship between two organizations.
-// Params: None
+// Summary: Defines the TrustAgreement type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -20,17 +19,15 @@ type TrustAgreement struct {
 	Status       string   `json:"status"` // PENDING, ACTIVE, REVOKED
 }
 
-// Summary: TrustManager handles the creation and management of TrustAgreements.
-// Intent: TrustManager handles the creation and management of TrustAgreements.
-// Params: None
+// Summary: Defines the TrustManager type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
 type TrustManager struct{}
 
-// Summary: ParseJWKS parses a partner's JWKS data (JSON) and creates an active TrustAgreement. This implements UT-01 from the test plan.
-// Intent: ParseJWKS parses a partner's JWKS data (JSON) and creates an active TrustAgreement. This implements UT-01 from the test plan.
-// Params: partnerOrg, jwksJSON, allowedRoles
+// Summary: ParseJWKS functionality.
+// Parameters: partnerOrg, jwksJSON, allowedRoles
 // Returns: (TrustAgreement, error)
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -51,9 +48,8 @@ func (tm *TrustManager) ParseJWKS(partnerOrg, jwksJSON string, allowedRoles []st
 	}, nil
 }
 
-// Summary: B2BMessage represents an encapsulated agent message for cross-org tunneling.
-// Intent: B2BMessage represents an encapsulated agent message for cross-org tunneling.
-// Params: None
+// Summary: Defines the B2BMessage type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -63,17 +59,15 @@ type B2BMessage struct {
 	Blocked  bool   `json:"blocked"`
 }
 
-// Summary: EgressFilter enforces the data perimeter for B2B collaboration.
-// Intent: EgressFilter enforces the data perimeter for B2B collaboration.
-// Params: None
+// Summary: Defines the EgressFilter type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
 type EgressFilter struct{}
 
-// Summary: Scan checks the outgoing message content for internal keywords. If a keyword is found, the message is blocked and flagged. Messages entering/leaving an Inter-Org Room are flagged with CrossOrg: true. This implements UT-02 from the test plan.
-// Intent: Scan checks the outgoing message content for internal keywords. If a keyword is found, the message is blocked and flagged. Messages entering/leaving an Inter-Org Room are flagged with CrossOrg: true. This implements UT-02 from the test plan.
-// Params: message, keywords
+// Summary: Scan functionality.
+// Parameters: message, keywords
 // Returns: B2BMessage
 // Errors: None
 // Side Effects: None

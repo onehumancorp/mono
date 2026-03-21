@@ -290,9 +290,8 @@ func (s *Server) handlePipelineStatus(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "pipeline not found", http.StatusNotFound)
 }
 
-// Summary: ScaleRequest defines the payload for scaling a team member role.
-// Intent: Structure for POST /api/v1/scale.
-// Params: None
+// Summary: Defines the ScaleRequest type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None

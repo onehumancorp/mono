@@ -20,9 +20,8 @@ export type {
 } from "./proto_types";
 
 /**
- * Summary: Defines the playbook, prompt, and capabilities for a specific role within the AI workforce.
- * Intent: Defines the playbook, prompt, and capabilities for a specific role within the AI workforce.
- * Params: None
+ * Summary: Defines RoleProfile.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -35,9 +34,8 @@ export type RoleProfile = {
 };
 
 /**
- * Summary: Represents an individual contributor (human or AI agent) within the organisation.
- * Intent: Represents an individual contributor (human or AI agent) within the organisation.
- * Params: None
+ * Summary: Defines OrganizationMember.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -51,9 +49,8 @@ export type OrganizationMember = {
 };
 
 /**
- * Summary: Aggregates the hierarchy, workforce details, and role playbooks for a domain.
- * Intent: Aggregates the hierarchy, workforce details, and role playbooks for a domain.
- * Params: None
+ * Summary: Defines Organization.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -68,9 +65,8 @@ export type Organization = {
 };
 
 /**
- * Summary: Encapsulates a discrete event, command, or context update passed between agents or rooms.
- * Intent: Encapsulates a discrete event, command, or context update passed between agents or rooms.
- * Params: None
+ * Summary: Defines MeetingMessage.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -86,9 +82,8 @@ export type MeetingMessage = {
 };
 
 /**
- * Summary: Maintains a persistent, sequential transcript of inter-agent collaboration.
- * Intent: Maintains a persistent, sequential transcript of inter-agent collaboration.
- * Params: None
+ * Summary: Defines MeetingRoom.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -101,9 +96,8 @@ export type MeetingRoom = {
 };
 
 /**
- * Summary: Provides aggregated cost and token usage for an individual agent.
- * Intent: Provides aggregated cost and token usage for an individual agent.
- * Params: None
+ * Summary: Defines AgentCost.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -116,9 +110,8 @@ export type AgentCost = {
 };
 
 /**
- * Summary: Aggregates total cost and token usage for a specific organisation.
- * Intent: Aggregates total cost and token usage for a specific organisation.
- * Params: None
+ * Summary: Defines CostSummary.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -132,9 +125,8 @@ export type CostSummary = {
 };
 
 /**
- * Summary: Represents an aggregated count of agents in a specific operational phase.
- * Intent: Represents an aggregated count of agents in a specific operational phase.
- * Params: None
+ * Summary: Defines StatusBucket.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -145,9 +137,8 @@ export type StatusBucket = {
 };
 
 /**
- * Summary: Represents the current runtime state of an active, instantiated worker within the AI organisation.
- * Intent: Represents the current runtime state of an active, instantiated worker within the AI organisation.
- * Params: None
+ * Summary: Defines AgentRuntime.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -161,9 +152,8 @@ export type AgentRuntime = {
 };
 
 /**
- * Summary: A point-in-time snapshot of the entire organisation's operational state, including members, meetings, costs, and active agents.
- * Intent: A point-in-time snapshot of the entire organisation's operational state, including members, meetings, costs, and active agents.
- * Params: None
+ * Summary: Defines DashboardSnapshot.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -178,9 +168,8 @@ export type DashboardSnapshot = {
 };
 
 /**
- * Summary: Describes a supported organisational domain template.
- * Intent: Describes a supported organisational domain template.
- * Params: None
+ * Summary: Defines DomainInfo.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -192,9 +181,8 @@ export type DomainInfo = {
 };
 
 /**
- * Summary: Represents a registered tool in the MCP gateway.
- * Intent: Represents a registered tool in the MCP gateway.
- * Params: None
+ * Summary: Defines MCPTool.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -210,9 +198,8 @@ export type MCPTool = {
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 
 /**
- * Summary: Represents the lifecycle state of a guardian-gate request.
- * Intent: Represents the lifecycle state of a guardian-gate request.
- * Params: None
+ * Summary: Defines ApprovalStatus.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -220,9 +207,8 @@ export type MCPTool = {
 export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 /**
- * Summary: Created by the Guardian Agent when a high-risk action requires explicit human sign-off.
- * Intent: Created by the Guardian Agent when a high-risk action requires explicit human sign-off.
- * Params: None
+ * Summary: Defines ApprovalRequest.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -243,9 +229,8 @@ export type ApprovalRequest = {
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
 
 /**
- * Summary: Carries the structured context an agent sends to a human manager when escalating a task.
- * Intent: Carries the structured context an agent sends to a human manager when escalating a task.
- * Params: None
+ * Summary: Defines HandoffPackage.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -264,9 +249,8 @@ export type HandoffPackage = {
 // ── Identity Management ───────────────────────────────────────────────────────
 
 /**
- * Summary: Represents the SPIFFE SVID certificate issued to an agent workload.
- * Intent: Represents the SPIFFE SVID certificate issued to an agent workload.
- * Params: None
+ * Summary: Defines AgentIdentity.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -282,9 +266,8 @@ export type AgentIdentity = {
 // ── Skill Import Framework ────────────────────────────────────────────────────
 
 /**
- * Summary: Pairs a role name with its override base prompt.
- * Intent: Pairs a role name with its override base prompt.
- * Params: None
+ * Summary: Defines SkillPackRole.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -295,9 +278,8 @@ export type SkillPackRole = {
 };
 
 /**
- * Summary: An importable module that extends or overrides agent capabilities.
- * Intent: An importable module that extends or overrides agent capabilities.
- * Params: None
+ * Summary: Defines SkillPack.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -316,9 +298,8 @@ export type SkillPack = {
 // ── Org Snapshot & Recovery ───────────────────────────────────────────────────
 
 /**
- * Summary: A point-in-time metadata record of an organization's state.
- * Intent: A point-in-time metadata record of an organization's state.
- * Params: None
+ * Summary: Defines OrgSnapshot.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -338,9 +319,8 @@ export type OrgSnapshot = {
 // ── Marketplace ───────────────────────────────────────────────────────────────
 
 /**
- * Summary: Describes a community-published asset.
- * Intent: Describes a community-published asset.
- * Params: None
+ * Summary: Defines MarketplaceItem.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -359,9 +339,8 @@ export type MarketplaceItem = {
 // ── Real-time Analytics ───────────────────────────────────────────────────────
 
 /**
- * Summary: Surfaces operational health metrics.
- * Intent: Surfaces operational health metrics.
- * Params: None
+ * Summary: Defines AnalyticsSummary.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -381,8 +360,7 @@ export type AnalyticsSummary = {
 
 /**
  * Summary: Defines IntegrationCategory.
- * Intent: Defines IntegrationCategory.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -391,8 +369,7 @@ export type IntegrationCategory = "chat" | "git" | "issues";
 
 /**
  * Summary: Defines IntegrationStatus.
- * Intent: Defines IntegrationStatus.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -400,9 +377,8 @@ export type IntegrationCategory = "chat" | "git" | "issues";
 export type IntegrationStatus = "connected" | "disconnected" | "error";
 
 /**
- * Summary: A configured external service connection.
- * Intent: A configured external service connection.
- * Params: None
+ * Summary: Defines Integration.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -423,9 +399,8 @@ export type Integration = {
 };
 
 /**
- * Summary: Represents a message dispatched through a chat service.
- * Intent: Represents a message dispatched through a chat service.
- * Params: None
+ * Summary: Defines ChatMessage.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -442,8 +417,7 @@ export type ChatMessage = {
 
 /**
  * Summary: Defines PullRequestStatus.
- * Intent: Defines PullRequestStatus.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -451,9 +425,8 @@ export type ChatMessage = {
 export type PullRequestStatus = "open" | "merged" | "closed";
 
 /**
- * Summary: Represents a PR/MR opened on a git hosting platform.
- * Intent: Represents a PR/MR opened on a git hosting platform.
- * Params: None
+ * Summary: Defines PullRequest.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -474,8 +447,7 @@ export type PullRequest = {
 
 /**
  * Summary: Defines IssueStatus.
- * Intent: Defines IssueStatus.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -484,8 +456,7 @@ export type IssueStatus = "open" | "in_progress" | "done" | "closed";
 
 /**
  * Summary: Defines IssuePriority.
- * Intent: Defines IssuePriority.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -493,9 +464,8 @@ export type IssueStatus = "open" | "in_progress" | "done" | "closed";
 export type IssuePriority = "low" | "medium" | "high" | "critical";
 
 /**
- * Summary: Represents a ticket created in an external issue tracker.
- * Intent: Represents a ticket created in an external issue tracker.
- * Params: None
+ * Summary: Defines Issue.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -515,9 +485,8 @@ export type Issue = {
   createdAt: string;
 };
 /**
- * Summary: ── Auth / User Management ────────────────────────────────────────────────────
- * Intent: ── Auth / User Management ────────────────────────────────────────────────────
- * Params: None
+ * Summary: Defines UserPublic.
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -532,8 +501,7 @@ export type UserPublic = {
 };
 /**
  * Summary: Defines Role.
- * Intent: Defines Role.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -545,8 +513,7 @@ export type Role = {
 };
 /**
  * Summary: Defines LoginResponse.
- * Intent: Defines LoginResponse.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None
@@ -558,8 +525,7 @@ export type LoginResponse = {
 };
 /**
  * Summary: Defines Settings.
- * Intent: Defines Settings.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: None
  * Side Effects: None

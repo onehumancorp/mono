@@ -10,9 +10,8 @@ import (
 	"github.com/onehumancorp/mono/srcs/orchestration"
 )
 
-// Summary: PipelineState represents the current phase of the SDLC.  Constraints: Must be one of the predefined State constants.
-// Intent: PipelineState represents the current phase of the SDLC.  Constraints: Must be one of the predefined State constants.
-// Params: None
+// Summary: Defines the PipelineState type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -20,45 +19,39 @@ type PipelineState string
 
 const (
 	// Summary: Defines the StateImplementing type.
-	// Intent: Defines the StateImplementing type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StateImplementing PipelineState = "IMPLEMENTING"
 	// Summary: Defines the StateTesting type.
-	// Intent: Defines the StateTesting type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StateTesting      PipelineState = "TESTING"
 	// Summary: Defines the StateStagingReady type.
-	// Intent: Defines the StateStagingReady type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StateStagingReady PipelineState = "STAGING_READY"
 	// Summary: Defines the StateDeployed type.
-	// Intent: Defines the StateDeployed type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StateDeployed     PipelineState = "DEPLOYED"
 	// Summary: Defines the StateRollback type.
-	// Intent: Defines the StateRollback type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StateRollback     PipelineState = "ROLLBACK"
 )
 
-// Summary: Pipeline models the SDLC progression for a specific feature branch.  Constraints: Requires a unique ID and an associated branch name.
-// Intent: Pipeline models the SDLC progression for a specific feature branch.  Constraints: Requires a unique ID and an associated branch name.
-// Params: None
+// Summary: Defines the Pipeline type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -70,9 +63,8 @@ type Pipeline struct {
 	CreatedAt time.Time
 }
 
-// Summary: SpecApprovedEvent models the parsed content of an EventSpecApproved message.  Constraints: The Branch field must not be empty.
-// Intent: SpecApprovedEvent models the parsed content of an EventSpecApproved message.  Constraints: The Branch field must not be empty.
-// Params: None
+// Summary: Defines the SpecApprovedEvent type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -81,9 +73,8 @@ type SpecApprovedEvent struct {
 	Details string `json:"details"`
 }
 
-// Summary: CIJob represents a mock CI build/test job triggered by the Hub.  Constraints: Contains a predefined test command associated with a specific branch.
-// Intent: CIJob represents a mock CI build/test job triggered by the Hub.  Constraints: Contains a predefined test command associated with a specific branch.
-// Params: None
+// Summary: Defines the CIJob type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -92,9 +83,8 @@ type CIJob struct {
 	Branch  string
 }
 
-// Summary: Orchestrator manages automated SDLC pipelines and interacts with the Hub.  Constraints: Uses an internal read-write mutex to ensure thread-safe map and slice operations.
-// Intent: Orchestrator manages automated SDLC pipelines and interacts with the Hub.  Constraints: Uses an internal read-write mutex to ensure thread-safe map and slice operations.
-// Params: None
+// Summary: Defines the Orchestrator type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -105,14 +95,11 @@ type Orchestrator struct {
 	ciJobs    []CIJob
 }
 
-// NewOrchestrator creates a new pipeline Orchestrator configured with the provided Hub.
-//
-// Parameters:
-//   - hub: *orchestration.Hub; The communication hub used to publish and receive orchestration messages.
-//
-// Returns: A new instance of Orchestrator initialized with empty pipelines and CI jobs.
-//
-// Side Effects: None.
+// Summary: NewOrchestrator creates a new pipeline Orchestrator configured with the provided Hub.    - hub: *orchestration.Hub; The communication hub used to publish and receive orchestration messages.
+// Parameters: hub
+// Returns: *Orchestrator
+// Errors: None
+// Side Effects: None
 func NewOrchestrator(hub *orchestration.Hub) *Orchestrator {
 	return &Orchestrator{
 		hub:       hub,
@@ -121,16 +108,11 @@ func NewOrchestrator(hub *orchestration.Hub) *Orchestrator {
 	}
 }
 
-// ParseSpecApproved extracts branch and details from the message content.
-//
-// Parameters:
-//   - content: string; The raw, comma-separated event content string.
-//
-// Returns: A SpecApprovedEvent populated with the extracted branch and details.
-//
-// Errors: Returns an error if the content is malformed or if the branch name is missing.
-//
-// Side Effects: None.
+// Summary: ParseSpecApproved extracts branch and details from the message content.    - content: string; The raw, comma-separated event content string.
+// Parameters: content
+// Returns: (SpecApprovedEvent, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func ParseSpecApproved(content string) (SpecApprovedEvent, error) {
 	// Simple mock parsing. Expecting "branch=feat-123,details=..."
 	parts := strings.Split(content, ",")
@@ -157,16 +139,11 @@ func ParseSpecApproved(content string) (SpecApprovedEvent, error) {
 	return event, nil
 }
 
-// HandleSpecApproved processes a specification approval, creates a tracking pipeline, and dispatches an implementation task.
-//
-// Parameters:
-//   - msg: orchestration.Message; The EventSpecApproved message containing branch and detail data.
-//
-// Returns: An error if parsing fails or if the resulting task message cannot be published.
-//
-// Errors: Fails if the message content format is invalid.
-//
-// Side Effects: Modifies the orchestrator's internal pipeline map and publishes a task to the Hub.
+// Summary: HandleSpecApproved processes a specification approval, creates a tracking pipeline, and dispatches an implementation task.    - msg: orchestration.Message; The EventSpecApproved message containing branch and detail data.
+// Parameters: msg
+// Returns: error
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (o *Orchestrator) HandleSpecApproved(msg orchestration.Message) error {
 	event, err := ParseSpecApproved(msg.Content)
 	if err != nil {
@@ -199,16 +176,11 @@ func (o *Orchestrator) HandleSpecApproved(msg orchestration.Message) error {
 	return o.hub.Publish(taskMsg)
 }
 
-// HandlePRCreated advances the pipeline state to testing and triggers a mock CI job.
-//
-// Parameters:
-//   - msg: orchestration.Message; The PR creation message where the content is the branch name.
-//
-// Returns: An error if the pipeline for the associated branch does not exist.
-//
-// Errors: Fails if the pipeline is untracked.
-//
-// Side Effects: Updates the pipeline state to StateTesting and appends a new job to the internal ciJobs slice.
+// Summary: HandlePRCreated advances the pipeline state to testing and triggers a mock CI job.    - msg: orchestration.Message; The PR creation message where the content is the branch name.
+// Parameters: msg
+// Returns: error
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (o *Orchestrator) HandlePRCreated(msg orchestration.Message) error {
 	branch := msg.Content // Assuming content contains just the branch name for simplicity
 
@@ -232,16 +204,11 @@ func (o *Orchestrator) HandlePRCreated(msg orchestration.Message) error {
 	return nil
 }
 
-// HandleTestResults processes the outcome of a CI run and determines the next pipeline state.
-//
-// Parameters:
-//   - msg: orchestration.Message; The CI result message indicating pass or fail, including branch and logs.
-//
-// Returns: An error if the pipeline is missing or if the test result type is unknown.
-//
-// Errors: Fails if the pipeline cannot be found or if the message type is not EventTestsPassed or EventTestsFailed.
-//
-// Side Effects: Mutates pipeline state, publishes an ApprovalNeeded event on success, or a TestsFailed event on failure.
+// Summary: HandleTestResults processes the outcome of a CI run and determines the next pipeline state.    - msg: orchestration.Message; The CI result message indicating pass or fail, including branch and logs.
+// Parameters: msg
+// Returns: error
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (o *Orchestrator) HandleTestResults(msg orchestration.Message) error {
 	// message Type should be EventTestsPassed or EventTestsFailed
 	// Content contains branch name
@@ -309,17 +276,11 @@ func (o *Orchestrator) HandleTestResults(msg orchestration.Message) error {
 	return errors.New("unknown test result type")
 }
 
-// RejectStaging rolls back the staging deployment and issues a fix task to the original agent.
-//
-// Parameters:
-//   - branch: string; The branch name associated with the rejected pipeline.
-//   - reason: string; The descriptive reason provided for the rejection.
-//
-// Returns: An error if the pipeline cannot be found.
-//
-// Errors: Fails if the branch is not currently tracked.
-//
-// Side Effects: Sets the pipeline state to StateRollback and publishes a task message.
+// Summary: RejectStaging rolls back the staging deployment and issues a fix task to the original agent.    - branch: string; The branch name associated with the rejected pipeline.   - reason: string; The descriptive reason provided for the rejection.
+// Parameters: branch, reason
+// Returns: error
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (o *Orchestrator) RejectStaging(branch string, reason string) error {
 	o.mu.Lock()
 	pipeline, exists := o.pipelines[branch]
@@ -342,16 +303,11 @@ func (o *Orchestrator) RejectStaging(branch string, reason string) error {
 	return o.hub.Publish(rejectMsg)
 }
 
-// ApproveForProduction transitions a staging-ready pipeline into a deployed state.
-//
-// Parameters:
-//   - branch: string; The branch name representing the pipeline to promote.
-//
-// Returns: An error if the pipeline is missing or not in the StateStagingReady phase.
-//
-// Errors: Fails if the pipeline does not exist or if it has not yet passed testing and staging.
-//
-// Side Effects: Sets the pipeline state to StateDeployed and publishes an EventPRMerged message to the Hub.
+// Summary: ApproveForProduction transitions a staging-ready pipeline into a deployed state.    - branch: string; The branch name representing the pipeline to promote.
+// Parameters: branch
+// Returns: error
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (o *Orchestrator) ApproveForProduction(branch string) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
@@ -383,16 +339,11 @@ func (o *Orchestrator) ApproveForProduction(branch string) error {
 	return nil
 }
 
-// GetPipelineState retrieves the current SDLC phase for the specified branch pipeline.
-//
-// Parameters:
-//   - branch: string; The target branch name.
-//
-// Returns: The current PipelineState and an error if the pipeline is untracked.
-//
-// Errors: Fails if no pipeline exists for the given branch.
-//
-// Side Effects: None. Executes a read-only lock.
+// Summary: GetPipelineState retrieves the current SDLC phase for the specified branch pipeline.    - branch: string; The target branch name.
+// Parameters: branch
+// Returns: (PipelineState, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (o *Orchestrator) GetPipelineState(branch string) (PipelineState, error) {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
@@ -404,11 +355,11 @@ func (o *Orchestrator) GetPipelineState(branch string) (PipelineState, error) {
 	return pipeline.State, nil
 }
 
-// GetCIJobs safely retrieves a snapshot of all CI jobs triggered by the orchestrator.
-//
-// Returns: A cloned slice of CIJob structures.
-//
-// Side Effects: None. Executes a read-only lock and allocates a new slice.
+// Summary: GetCIJobs safely retrieves a snapshot of all CI jobs triggered by the orchestrator.
+// Parameters: None
+// Returns: []CIJob
+// Errors: None
+// Side Effects: None
 func (o *Orchestrator) GetCIJobs() []CIJob {
 	o.mu.RLock()
 	defer o.mu.RUnlock()

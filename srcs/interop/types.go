@@ -2,9 +2,8 @@ package interop
 
 import "context"
 
-// Summary: State represents shared agent state.
-// Intent: State represents shared agent state.
-// Params: None
+// Summary: Defines the State type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -14,9 +13,8 @@ type State struct {
 	Owner string
 }
 
-// Summary: UniversalAdapter defines the interface for interacting with different agent frameworks.
-// Intent: UniversalAdapter defines the interface for interacting with different agent frameworks.
-// Params: None
+// Summary: Defines the UniversalAdapter type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None

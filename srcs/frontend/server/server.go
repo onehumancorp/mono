@@ -11,8 +11,7 @@ import (
 )
 
 // Summary: Defines the Server type.
-// Intent: Defines the Server type.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -22,8 +21,7 @@ type Server struct {
 }
 
 // Summary: New functionality.
-// Intent: New functionality.
-// Params: None
+// Parameters: None
 // Returns: (*Server, error)
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -50,8 +48,7 @@ func New() (*Server, error) {
 }
 
 // Summary: Handler functionality.
-// Intent: Handler functionality.
-// Params: None
+// Parameters: None
 // Returns: http.Handler
 // Errors: None
 // Side Effects: None

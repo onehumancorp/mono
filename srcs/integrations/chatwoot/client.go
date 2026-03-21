@@ -19,17 +19,15 @@ import (
 	"time"
 )
 
-// Summary: DefaultBaseURL is the in-cluster URL for the Chatwoot service.
-// Intent: DefaultBaseURL is the in-cluster URL for the Chatwoot service.
-// Params: None
+// Summary: Defines the DefaultBaseURL type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
 const DefaultBaseURL = "http://chatwoot:3000"
 
-// Summary: Client interacts with the Chatwoot REST API v1.
-// Intent: Client interacts with the Chatwoot REST API v1.
-// Params: None
+// Summary: Defines the Client type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -40,9 +38,8 @@ type Client struct {
 	httpClient  *http.Client
 }
 
-// Summary: NewClientFromEnv creates a Client using environment variables. CHATWOOT_URL overrides the base URL.
-// Intent: NewClientFromEnv creates a Client using environment variables. CHATWOOT_URL overrides the base URL.
-// Params: None
+// Summary: NewClientFromEnv functionality.
+// Parameters: None
 // Returns: *Client
 // Errors: None
 // Side Effects: None
@@ -57,9 +54,8 @@ func NewClientFromEnv() *Client {
 	}
 }
 
-// Summary: NewClient creates a Client with an explicit base URL (useful in tests).
-// Intent: NewClient creates a Client with an explicit base URL (useful in tests).
-// Params: baseURL
+// Summary: NewClient functionality.
+// Parameters: baseURL
 // Returns: *Client
 // Errors: None
 // Side Effects: None
@@ -86,9 +82,8 @@ type signInResponse struct {
 	Data signInData `json:"data"`
 }
 
-// Summary: SignIn authenticates with Chatwoot and stores the resulting access token and account ID on the Client.
-// Intent: SignIn authenticates with Chatwoot and stores the resulting access token and account ID on the Client.
-// Params: email, password
+// Summary: SignIn functionality.
+// Parameters: email, password
 // Returns: error
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -107,9 +102,8 @@ func (c *Client) SignIn(email, password string) error {
 
 // ── Inboxes ───────────────────────────────────────────────────────────────────
 
-// Summary: Inbox represents a Chatwoot inbox (a communication channel).
-// Intent: Inbox represents a Chatwoot inbox (a communication channel).
-// Params: None
+// Summary: Defines the Inbox type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -130,9 +124,8 @@ type createInboxRequest struct {
 	Channel     map[string]string `json:"channel"`
 }
 
-// Summary: ListInboxes returns all inboxes in the account.
-// Intent: ListInboxes returns all inboxes in the account.
-// Params: None
+// Summary: ListInboxes functionality.
+// Parameters: None
 // Returns: ([]Inbox, error)
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -144,9 +137,8 @@ func (c *Client) ListInboxes() ([]Inbox, error) {
 	return resp.Payload, nil
 }
 
-// Summary: CreateAPIInbox creates a new API-type inbox with the given name.
-// Intent: CreateAPIInbox creates a new API-type inbox with the given name.
-// Params: name
+// Summary: CreateAPIInbox functionality.
+// Parameters: name
 // Returns: (Inbox, error)
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -165,9 +157,8 @@ func (c *Client) CreateAPIInbox(name string) (Inbox, error) {
 
 // ── Contacts ──────────────────────────────────────────────────────────────────
 
-// Summary: Contact represents a Chatwoot contact (a participant in conversations).
-// Intent: Contact represents a Chatwoot contact (a participant in conversations).
-// Params: None
+// Summary: Defines the Contact type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -182,9 +173,8 @@ type createContactRequest struct {
 	Email string `json:"email"`
 }
 
-// Summary: CreateContact creates a new contact.
-// Intent: CreateContact creates a new contact.
-// Params: name, email
+// Summary: CreateContact functionality.
+// Parameters: name, email
 // Returns: (Contact, error)
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -198,9 +188,8 @@ func (c *Client) CreateContact(name, email string) (Contact, error) {
 
 // ── Conversations ─────────────────────────────────────────────────────────────
 
-// Summary: Conversation represents a Chatwoot conversation (a chat thread).
-// Intent: Conversation represents a Chatwoot conversation (a chat thread).
-// Params: None
+// Summary: Defines the Conversation type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -218,9 +207,8 @@ type createConversationRequest struct {
 	AdditionalAttributes map[string]string `json:"additional_attributes,omitempty"`
 }
 
-// Summary: CreateConversation opens a new conversation in the given inbox.
-// Intent: CreateConversation opens a new conversation in the given inbox.
-// Params: inboxID, contactID
+// Summary: CreateConversation functionality.
+// Parameters: inboxID, contactID
 // Returns: (Conversation, error)
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -238,9 +226,8 @@ func (c *Client) CreateConversation(inboxID, contactID int) (Conversation, error
 
 // ── Messages ──────────────────────────────────────────────────────────────────
 
-// Summary: Message represents a single message in a conversation.
-// Intent: Message represents a single message in a conversation.
-// Params: None
+// Summary: Defines the Message type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -262,9 +249,8 @@ type messageListResponse struct {
 	Payload []Message `json:"payload"`
 }
 
-// Summary: SendMessage posts a message into a conversation.
-// Intent: SendMessage posts a message into a conversation.
-// Params: conversationID, content, messageType
+// Summary: SendMessage functionality.
+// Parameters: conversationID, content, messageType
 // Returns: (Message, error)
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -281,9 +267,8 @@ func (c *Client) SendMessage(conversationID int, content, messageType string) (M
 	return msg, nil
 }
 
-// Summary: ListMessages returns all messages in a conversation.
-// Intent: ListMessages returns all messages in a conversation.
-// Params: conversationID
+// Summary: ListMessages functionality.
+// Parameters: conversationID
 // Returns: ([]Message, error)
 // Errors: Returns an error if applicable
 // Side Effects: None

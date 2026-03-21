@@ -19,9 +19,8 @@ type jwtHeader struct {
 	Typ string `json:"typ"`
 }
 
-// Summary: Claims holds the payload fields for both locally-issued (HS256) and OIDC (RS256) tokens. The standard set is kept small by design.  Constraints: Serializes to JSON for token encoding. Subject must uniquely identify the user.
-// Intent: Claims holds the payload fields for both locally-issued (HS256) and OIDC (RS256) tokens. The standard set is kept small by design.  Constraints: Serializes to JSON for token encoding. Subject must uniquely identify the user.
-// Params: None
+// Summary: Defines the Claims type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -35,14 +34,11 @@ type Claims struct {
 	TokenID  string   `json:"jti"`
 }
 
-// HasRole checks whether the token's claims include authorization for a specific role.
-//
-// Parameters:
-//   - role: string; The target role identifier to check for.
-//
-// Returns: A boolean indicating if the role is present (true if present or if the user is an admin).
-//
-// Side Effects: None. Executes a read-only iteration over the claims.
+// Summary: HasRole checks whether the token's claims include authorization for a specific role.    - role: string; The target role identifier to check for.
+// Parameters: role
+// Returns: bool
+// Errors: None
+// Side Effects: None
 func (c *Claims) HasRole(role string) bool {
 	for _, r := range c.Roles {
 		if r == role || r == RoleAdmin {
@@ -52,16 +48,11 @@ func (c *Claims) HasRole(role string) bool {
 	return false
 }
 
-// IssueToken generates and cryptographically signs a new HS256 JWT for the specified user.
-//
-// Parameters:
-//   - u: *User; The user entity to construct the token payload for.
-//
-// Returns: The fully encoded and signed JWT string, or an error if signing fails.
-//
-// Errors: Fails if JSON serialization or cryptographic signing encounters an error.
-//
-// Side Effects: None. Uses the store's symmetric secret for signing.
+// Summary: IssueToken generates and cryptographically signs a new HS256 JWT for the specified user.    - u: *User; The user entity to construct the token payload for.
+// Parameters: u
+// Returns: (string, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (s *Store) IssueToken(u *User) (string, error) {
 	now := time.Now().UTC()
 	claims := Claims{
@@ -76,16 +67,11 @@ func (s *Store) IssueToken(u *User) (string, error) {
 	return signHS256(claims, s.secret)
 }
 
-// ValidateToken decodes and verifies the signature and expiration of a provided JWT string.
-//
-// Parameters:
-//   - token: string; The raw JWT string to be verified.
-//
-// Returns: The successfully parsed token Claims if validation passes.
-//
-// Errors: Fails if the token is malformed, expired, has an invalid signature, or has been revoked.
-//
-// Side Effects: May delegate to external OIDC configuration logic if the primary HS256 parsing fails and OIDC is enabled.
+// Summary: ValidateToken decodes and verifies the signature and expiration of a provided JWT string.    - token: string; The raw JWT string to be verified.
+// Parameters: token
+// Returns: (*Claims, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (s *Store) ValidateToken(token string) (*Claims, error) {
 	claims, err := parseHS256(token, s.secret)
 	if err != nil {

@@ -10,9 +10,8 @@ import (
 	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
-// Summary: Price represents the cost rates for a specific large language model.  Constraints: Cost must be provided per one million tokens.
-// Intent: Price represents the cost rates for a specific large language model.  Constraints: Cost must be provided per one million tokens.
-// Params: None
+// Summary: Defines the Price type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -21,9 +20,11 @@ type Price struct {
 	OutputPerMillionUSD float64
 }
 
-// DefaultCatalog provides a comprehensive list of LLM inference prices.
-//
-// Side Effects: None. It serves as a read-only dictionary used by NewTracker.
+// Summary: DefaultCatalog provides a comprehensive list of LLM inference prices.
+// Parameters: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 var DefaultCatalog = map[string]Price{
 	// Anthropic — Claude 3 family
 	"claude-3-opus":   {InputPerMillionUSD: 15.00, OutputPerMillionUSD: 75.00},
@@ -61,9 +62,8 @@ var DefaultCatalog = map[string]Price{
 	"minimax-m2.7-turbo": {InputPerMillionUSD: 0.50, OutputPerMillionUSD: 0.50},
 }
 
-// Summary: Usage models a single inference event's token consumption and associated cost.  Constraints: Must include valid AgentID, OrganizationID, and Model identifiers.
-// Intent: Usage models a single inference event's token consumption and associated cost.  Constraints: Must include valid AgentID, OrganizationID, and Model identifiers.
-// Params: None
+// Summary: Defines the Usage type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -78,9 +78,8 @@ type Usage struct {
 	CostUSD          float64   `json:"costUsd"`
 }
 
-// Summary: AgentSummary provides aggregated cost and token usage for an individual agent.
-// Intent: AgentSummary provides aggregated cost and token usage for an individual agent.
-// Params: None
+// Summary: Defines the AgentSummary type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -90,9 +89,8 @@ type AgentSummary struct {
 	TokenUsed int64   `json:"tokenUsed"`
 }
 
-// Summary: Summary aggregates total cost and token usage for a specific organisation.
-// Intent: Summary aggregates total cost and token usage for a specific organisation.
-// Params: None
+// Summary: Defines the Summary type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -114,9 +112,8 @@ type trackerShard struct {
 	usages []Usage
 }
 
-// Summary: Tracker calculates and stores LLM token consumption safely across concurrent calls.  Constraints: Uses an internal read-write mutex for thread-safe event ingestion.
-// Intent: Tracker calculates and stores LLM token consumption safely across concurrent calls.  Constraints: Uses an internal read-write mutex for thread-safe event ingestion.
-// Params: None
+// Summary: Defines the Tracker type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -134,12 +131,11 @@ func getShardIndex(orgID string) uint32 {
 	return hash % numShards
 }
 
-// NewTracker constructs a Tracker configured with the specified model pricing catalog.
-//
-// Parameters:
-//   - catalog: map[string]Price; A dictionary mapping model names to pricing structures.
-//
-// Returns: A thread-safe instance of Tracker initialized with a copied catalog.
+// Summary: NewTracker constructs a Tracker configured with the specified model pricing catalog.    - catalog: map[string]Price; A dictionary mapping model names to pricing structures.
+// Parameters: catalog
+// Returns: *Tracker
+// Errors: None
+// Side Effects: None
 func NewTracker(catalog map[string]Price) *Tracker {
 	copied := make(map[string]Price, len(catalog))
 	for model, price := range catalog {
@@ -153,16 +149,11 @@ func NewTracker(catalog map[string]Price) *Tracker {
 	return t
 }
 
-// Track calculates the USD cost for a token consumption event and persists it in memory.
-//
-// Parameters:
-//   - usage: Usage; The event containing token counts and the utilized model identifier.
-//
-// Returns: The updated Usage record with CostUSD and normalized UTC timestamp on success.
-//
-// Errors: Returns an error if the specified model is missing from the pricing catalog.
-//
-// Side Effects: Modifies the internal append-only slice of usages.
+// Summary: Track calculates the USD cost for a token consumption event and persists it in memory.    - usage: Usage; The event containing token counts and the utilized model identifier.
+// Parameters: usage
+// Returns: (Usage, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (t *Tracker) Track(usage Usage) (Usage, error) {
 	price, ok := t.catalog[usage.Model]
 	if !ok {
@@ -184,12 +175,11 @@ func (t *Tracker) Track(usage Usage) (Usage, error) {
 	return usage, nil
 }
 
-// Summary collates all recorded usage events to compute aggregate costs for an organisation.
-//
-// Parameters:
-//   - organizationID: string; The UUID of the organization to filter usage metrics by.
-//
-// Returns: A Summary record detailing the organization's total spend, token count, and per-agent metrics.
+// Summary: Summary collates all recorded usage events to compute aggregate costs for an organisation.    - organizationID: string; The UUID of the organization to filter usage metrics by.
+// Parameters: organizationID
+// Returns: Summary
+// Errors: None
+// Side Effects: None
 func (t *Tracker) Summary(organizationID string) Summary {
 	shard := t.shards[getShardIndex(organizationID)]
 	shard.mu.RLock()

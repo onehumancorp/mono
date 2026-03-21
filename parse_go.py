@@ -36,7 +36,7 @@ def build_go_docstring(name, params_str, returns_str, is_func, existing_comments
             c = c[3:]
         elif c.startswith('//'):
             c = c[2:]
-        if not c.startswith('Summary:') and not c.startswith('Intent:') and not c.startswith('Params:') and not c.startswith('Returns:') and not c.startswith('Errors:') and not c.startswith('Side Effects:'):
+        if not c.startswith('Summary:') and not c.startswith('Intent:') and not c.startswith('Params:') and not c.startswith('Parameters:') and not c.startswith('Returns:') and not c.startswith('Errors:') and not c.startswith('Side Effects:'):
              summary_lines.append(c)
 
     summary = ' '.join(summary_lines).strip()
@@ -49,8 +49,7 @@ def build_go_docstring(name, params_str, returns_str, is_func, existing_comments
 
     return [
         f"// Summary: {summary}\n",
-        f"// Intent: {summary}\n",
-        f"// Params: {p_str}\n",
+        f"// Parameters: {p_str}\n",
         f"// Returns: {r_str}\n",
         f"// Errors: {e_str}\n",
         f"// Side Effects: None\n"
@@ -85,15 +84,10 @@ def process_go_files():
                             # Remove old comments from new_lines
                             new_lines = new_lines[:-len(comments)]
 
-                        has_tags = any(tag in ''.join(comments) for tag in ['Summary:', 'Intent:', 'Params:', 'Returns:', 'Errors:', 'Side Effects:'])
-
-                        if not has_tags:
-                            docstring = build_go_docstring(name, params_str, returns_str, True, comments)
-                            for d in docstring:
-                                new_lines.append(d)
-                        else:
-                            for c in comments:
-                                new_lines.append(c)
+                        # We always rebuild to ensure correct format
+                        docstring = build_go_docstring(name, params_str, returns_str, True, comments)
+                        for d in docstring:
+                            new_lines.append(d)
 
                         new_lines.append(line)
                         i += 1
@@ -108,15 +102,9 @@ def process_go_files():
                         if comments:
                             new_lines = new_lines[:-len(comments)]
 
-                        has_tags = any(tag in ''.join(comments) for tag in ['Summary:', 'Intent:', 'Params:', 'Returns:', 'Errors:', 'Side Effects:'])
-
-                        if not has_tags:
-                            docstring = build_go_docstring(name, "", "", False, comments)
-                            for d in docstring:
-                                new_lines.append(d)
-                        else:
-                            for c in comments:
-                                new_lines.append(c)
+                        docstring = build_go_docstring(name, "", "", False, comments)
+                        for d in docstring:
+                            new_lines.append(d)
 
                         new_lines.append(line)
                         i += 1
@@ -131,15 +119,9 @@ def process_go_files():
                         if comments:
                             new_lines = new_lines[:-len(comments)]
 
-                        has_tags = any(tag in ''.join(comments) for tag in ['Summary:', 'Intent:', 'Params:', 'Returns:', 'Errors:', 'Side Effects:'])
-
-                        if not has_tags:
-                            docstring = build_go_docstring(name, "", "", False, comments)
-                            for d in docstring:
-                                new_lines.append(d)
-                        else:
-                            for c in comments:
-                                new_lines.append(c)
+                        docstring = build_go_docstring(name, "", "", False, comments)
+                        for d in docstring:
+                            new_lines.append(d)
 
                         new_lines.append(line)
                         i += 1

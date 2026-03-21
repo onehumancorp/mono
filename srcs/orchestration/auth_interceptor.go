@@ -14,8 +14,11 @@ import (
 	pb "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration"
 )
 
-// ExtractSPIFFEID gets the SPIFFE ID from the context.
-// It extracts the ID exclusively from the mTLS peer certificate.
+// Summary: ExtractSPIFFEID gets the SPIFFE ID from the context. It extracts the ID exclusively from the mTLS peer certificate.
+// Parameters: ctx
+// Returns: (string, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 func ExtractSPIFFEID(ctx context.Context) (string, error) {
 	p, ok := peer.FromContext(ctx)
 	if !ok {
@@ -34,7 +37,11 @@ func ExtractSPIFFEID(ctx context.Context) (string, error) {
 	return "", fmt.Errorf("no SPIFFE ID found in peer certificate")
 }
 
-// SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
+// Summary: SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
+// Parameters: None
+// Returns: grpc.UnaryServerInterceptor
+// Errors: None
+// Side Effects: None
 func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -107,7 +114,11 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
-// SPIFFEStreamInterceptor validates SPIFFE IDs for streaming gRPC calls.
+// Summary: SPIFFEStreamInterceptor validates SPIFFE IDs for streaming gRPC calls.
+// Parameters: None
+// Returns: grpc.StreamServerInterceptor
+// Errors: None
+// Side Effects: None
 func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
 	return func(
 		srv interface{},
@@ -172,6 +183,11 @@ type recvWrapper struct {
 	agentID  string
 }
 
+// Summary: RecvMsg functionality.
+// Parameters: m
+// Returns: error
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (w *recvWrapper) RecvMsg(m interface{}) error {
 	if err := w.ServerStream.RecvMsg(m); err != nil {
 		return err

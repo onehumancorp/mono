@@ -19,9 +19,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Summary: Status indicates the current operational phase of an AI agent within the workforce.
-// Intent: Status indicates the current operational phase of an AI agent within the workforce.
-// Params: None
+// Summary: Defines the Status type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -29,29 +28,25 @@ type Status string
 
 const (
 	// Summary: Defines the StatusIdle type.
-	// Intent: Defines the StatusIdle type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StatusIdle      Status = "IDLE"
 	// Summary: Defines the StatusActive type.
-	// Intent: Defines the StatusActive type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StatusActive    Status = "ACTIVE"
 	// Summary: Defines the StatusInMeeting type.
-	// Intent: Defines the StatusInMeeting type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StatusInMeeting Status = "IN_MEETING"
 	// Summary: Defines the StatusBlocked type.
-	// Intent: Defines the StatusBlocked type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -61,101 +56,87 @@ const (
 // Event type constants for the asynchronous pub/sub agent interaction protocol.
 const (
 	// Summary: Defines the EventTask type.
-	// Intent: Defines the EventTask type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventTask           = "task"
 	// Summary: Defines the EventStatus type.
-	// Intent: Defines the EventStatus type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventStatus         = "status"
 	// Summary: Defines the EventHandoff type.
-	// Intent: Defines the EventHandoff type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventHandoff        = "handoff"
 	// Summary: Defines the EventCodeReviewed type.
-	// Intent: Defines the EventCodeReviewed type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventCodeReviewed   = "CodeReviewed"
 	// Summary: Defines the EventTestsFailed type.
-	// Intent: Defines the EventTestsFailed type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventTestsFailed    = "TestsFailed"
 	// Summary: Defines the EventTestsPassed type.
-	// Intent: Defines the EventTestsPassed type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventTestsPassed    = "TestsPassed"
 	// Summary: Defines the EventSpecApproved type.
-	// Intent: Defines the EventSpecApproved type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventSpecApproved   = "SpecApproved"
 	// Summary: Defines the EventBlockerRaised type.
-	// Intent: Defines the EventBlockerRaised type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventBlockerRaised  = "BlockerRaised"
 	// Summary: Defines the EventBlockerCleared type.
-	// Intent: Defines the EventBlockerCleared type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventBlockerCleared = "BlockerCleared"
 	// Summary: Defines the EventPRCreated type.
-	// Intent: Defines the EventPRCreated type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventPRCreated      = "PRCreated"
 	// Summary: Defines the EventPRMerged type.
-	// Intent: Defines the EventPRMerged type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventPRMerged       = "PRMerged"
 	// Summary: Defines the EventDesignReviewed type.
-	// Intent: Defines the EventDesignReviewed type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventDesignReviewed = "DesignReviewed"
 	// Summary: Defines the EventApprovalNeeded type.
-	// Intent: Defines the EventApprovalNeeded type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventApprovalNeeded = "ApprovalNeeded"
 )
 
-// Summary: Agent represents an active, instantiated worker within the AI organisation.
-// Intent: Agent represents an active, instantiated worker within the AI organisation.
-// Params: None
+// Summary: Defines the Agent type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -171,9 +152,8 @@ type Agent struct {
 	ProviderType string `json:"providerType,omitempty"`
 }
 
-// Summary: Message encapsulates a discrete event, command, or context update passed between agents or rooms.
-// Intent: Message encapsulates a discrete event, command, or context update passed between agents or rooms.
-// Params: None
+// Summary: Defines the Message type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -187,25 +167,19 @@ type Message struct {
 	OccurredAt time.Time `json:"occurredAt"`
 }
 
-// DelegateTask allows an agent in Delegate Mode to act as a routing proxy.
-// It inspects an incoming task, updates the sender and recipient fields,
-// and forwards the task to the best-fit specialist agent from the registry.
-//
-// Parameters:
-//   - fromAgentID: string; The unique identifier of the delegating agent.
-//   - toAgentID: string; The unique identifier of the specialist agent.
-//   - task: Message; The task payload to be delegated.
-//
-// Returns: An error if either the delegating agent or the specialist agent does not exist.
+// Summary: DelegateTask allows an agent in Delegate Mode to act as a routing proxy. It inspects an incoming task, updates the sender and recipient fields, and forwards the task to the best-fit specialist agent from the registry.    - fromAgentID: string; The unique identifier of the delegating agent.   - toAgentID: string; The unique identifier of the specialist agent.   - task: Message; The task payload to be delegated.
+// Parameters: fromAgentID, toAgentID, task
+// Returns: error
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
 	task.FromAgent = fromAgentID
 	task.ToAgent = toAgentID
 	return h.Publish(task)
 }
 
-// Summary: MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
-// Intent: MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
-// Params: None
+// Summary: Defines the MeetingRoom type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -216,9 +190,8 @@ type MeetingRoom struct {
 	Transcript   []Message `json:"transcript"`
 }
 
-// Summary: Hub acts as the thread-safe central message broker and runtime state manager for the AI workforce.  Constraints: Must be accessed via its exported methods to preserve data race safety.
-// Intent: Hub acts as the thread-safe central message broker and runtime state manager for the AI workforce.  Constraints: Must be accessed via its exported methods to preserve data race safety.
-// Params: None
+// Summary: Defines the Hub type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -231,9 +204,11 @@ type Hub struct {
 	subs          map[string][]chan struct{}
 }
 
-// NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
-//
-// Returns: An instantiated *Hub ready to register agents and route events.
+// Summary: NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
+// Parameters: None
+// Returns: *Hub
+// Errors: None
+// Side Effects: None
 func NewHub() *Hub {
 	return &Hub{
 		agents:   map[string]Agent{},
@@ -243,9 +218,8 @@ func NewHub() *Hub {
 	}
 }
 
-// Summary: RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.  Parameters:   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
-// Intent: RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.  Parameters:   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
-// Params: agent
+// Summary: RegisterAgent functionality.
+// Parameters: agent
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -261,8 +235,7 @@ func (h *Hub) RegisterAgent(agent Agent) {
 }
 
 // Summary: SetMinimaxAPIKey functionality.
-// Intent: SetMinimaxAPIKey functionality.
-// Params: key
+// Parameters: key
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -273,8 +246,7 @@ func (h *Hub) SetMinimaxAPIKey(key string) {
 }
 
 // Summary: MinimaxAPIKey functionality.
-// Intent: MinimaxAPIKey functionality.
-// Params: None
+// Parameters: None
 // Returns: string
 // Errors: None
 // Side Effects: None
@@ -284,12 +256,11 @@ func (h *Hub) MinimaxAPIKey() string {
 	return h.minimaxAPIKey
 }
 
-// Agent retrieves the runtime state of a specific worker by ID.
-//
-// Parameters:
-//   - id: string; The unique identifier of the agent.
-//
-// Returns: The matching Agent object and a boolean indicating if it exists in the registry.
+// Summary: Agent retrieves the runtime state of a specific worker by ID.    - id: string; The unique identifier of the agent.
+// Parameters: id
+// Returns: (Agent, bool)
+// Errors: None
+// Side Effects: None
 func (h *Hub) Agent(id string) (Agent, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -298,13 +269,11 @@ func (h *Hub) Agent(id string) (Agent, bool) {
 	return agent, ok
 }
 
-// OpenMeeting instantiates a new collaborative context window and marks all participants as InMeeting.
-//
-// Parameters:
-//   - id: string; Unique identifier for the room.
-//   - participants: []string; A list of agent IDs to be enrolled in the discussion.
-//
-// Returns: The instantiated MeetingRoom.
+// Summary: OpenMeeting instantiates a new collaborative context window and marks all participants as InMeeting.    - id: string; Unique identifier for the room.   - participants: []string; A list of agent IDs to be enrolled in the discussion.
+// Parameters: id, participants
+// Returns: MeetingRoom
+// Errors: None
+// Side Effects: None
 func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -321,14 +290,11 @@ func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 	return meeting
 }
 
-// OpenMeetingWithAgenda creates a meeting room with an explicit agenda descriptor.
-//
-// Parameters:
-//   - id: string; Unique identifier for the room.
-//   - agenda: string; The primary objective guiding the agents' conversation.
-//   - participants: []string; A list of agent IDs to be enrolled in the discussion.
-//
-// Returns: The instantiated MeetingRoom.
+// Summary: OpenMeetingWithAgenda creates a meeting room with an explicit agenda descriptor.    - id: string; Unique identifier for the room.   - agenda: string; The primary objective guiding the agents' conversation.   - participants: []string; A list of agent IDs to be enrolled in the discussion.
+// Parameters: id, agenda, participants
+// Returns: MeetingRoom
+// Errors: None
+// Side Effects: None
 func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -345,9 +311,8 @@ func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) Me
 	return meeting
 }
 
-// Summary: FireAgent removes an agent from the hub and clears their inbox.  Parameters:   - id: string; The unique identifier of the agent to terminate.
-// Intent: FireAgent removes an agent from the hub and clears their inbox.  Parameters:   - id: string; The unique identifier of the agent to terminate.
-// Params: id
+// Summary: FireAgent functionality.
+// Parameters: id
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -359,12 +324,11 @@ func (h *Hub) FireAgent(id string) {
 	delete(h.inbox, id)
 }
 
-// Publish validates and routes a message to a direct recipient, a meeting room, or both.
-//
-// Parameters:
-//   - message: Message; The event payload containing routing headers and content.
-//
-// Returns: An error if the sender or recipient agents do not exist, or if the target meeting is unrecognised.
+// Summary: Publish validates and routes a message to a direct recipient, a meeting room, or both.    - message: Message; The event payload containing routing headers and content.
+// Parameters: message
+// Returns: error
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (h *Hub) Publish(message Message) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -430,7 +394,11 @@ func (h *Hub) Publish(message Message) error {
 	return nil
 }
 
-// Subscribe returns a channel that receives real-time messages for the given agent.
+// Summary: Subscribe returns a channel that receives real-time messages for the given agent.
+// Parameters: agentID
+// Returns: (<-chan struct
+// Errors: None
+// Side Effects: None
 func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -455,12 +423,11 @@ func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 	return ch, unsubscribe
 }
 
-// Inbox retrieves all undelivered or direct messages routed exclusively to a single agent.
-//
-// Parameters:
-//   - agentID: string; The unique identifier of the worker.
-//
-// Returns: A slice of direct Message objects.
+// Summary: Inbox retrieves all undelivered or direct messages routed exclusively to a single agent.    - agentID: string; The unique identifier of the worker.
+// Parameters: agentID
+// Returns: []Message
+// Errors: None
+// Side Effects: None
 func (h *Hub) Inbox(agentID string) []Message {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -474,12 +441,11 @@ func (h *Hub) Inbox(agentID string) []Message {
 	return inbox
 }
 
-// Meeting retrieves the current state and transcript of a specified virtual meeting room.
-//
-// Parameters:
-//   - id: string; The unique identifier of the room.
-//
-// Returns: The matching MeetingRoom object and a boolean indicating if it exists.
+// Summary: Meeting retrieves the current state and transcript of a specified virtual meeting room.    - id: string; The unique identifier of the room.
+// Parameters: id
+// Returns: (MeetingRoom, bool)
+// Errors: None
+// Side Effects: None
 func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -489,9 +455,11 @@ func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 	return meeting, ok
 }
 
-// Meetings fetches a point-in-time snapshot of all active meeting rooms.
-//
-// Returns: A slice containing all MeetingRoom objects.
+// Summary: Meetings fetches a point-in-time snapshot of all active meeting rooms.
+// Parameters: None
+// Returns: []MeetingRoom
+// Errors: None
+// Side Effects: None
 func (h *Hub) Meetings() []MeetingRoom {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -505,9 +473,11 @@ func (h *Hub) Meetings() []MeetingRoom {
 	return meetings
 }
 
-// Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID.
-//
-// Returns: A slice of all active Agent objects in the orchestration Hub.
+// Summary: Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID.
+// Parameters: None
+// Returns: []Agent
+// Errors: None
+// Side Effects: None
 func (h *Hub) Agents() []Agent {
 	h.mu.RLock()
 	agents := make([]Agent, 0, len(h.agents))
@@ -524,9 +494,8 @@ func (h *Hub) Agents() []Agent {
 	return agents
 }
 
-// Summary: HubServiceServer implements the gRPC HubService defined in hub.proto.
-// Intent: HubServiceServer implements the gRPC HubService defined in hub.proto.
-// Params: s, hub
+// Summary: RegisterHubService functionality.
+// Parameters: s, hub
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -535,8 +504,7 @@ func RegisterHubService(s *grpc.Server, hub *Hub) {
 }
 
 // Summary: Defines the HubServiceServer type.
-// Intent: Defines the HubServiceServer type.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -546,8 +514,7 @@ type HubServiceServer struct {
 }
 
 // Summary: NewHubServiceServer functionality.
-// Intent: NewHubServiceServer functionality.
-// Params: hub
+// Parameters: hub
 // Returns: *HubServiceServer
 // Errors: None
 // Side Effects: None
@@ -556,8 +523,7 @@ func NewHubServiceServer(hub *Hub) *HubServiceServer {
 }
 
 // Summary: RegisterAgent functionality.
-// Intent: RegisterAgent functionality.
-// Params: ctx, req
+// Parameters: ctx, req
 // Returns: (*pb.RegisterAgentResponse, error)
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -576,8 +542,7 @@ func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAg
 }
 
 // Summary: OpenMeeting functionality.
-// Intent: OpenMeeting functionality.
-// Params: ctx, req
+// Parameters: ctx, req
 // Returns: (*pb.MeetingRoom, error)
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -591,8 +556,7 @@ func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingR
 }
 
 // Summary: Publish functionality.
-// Intent: Publish functionality.
-// Params: ctx, req
+// Parameters: ctx, req
 // Returns: (*pb.PublishMessageResponse, error)
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -614,8 +578,7 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 }
 
 // Summary: StreamMessages functionality.
-// Intent: StreamMessages functionality.
-// Params: req, stream
+// Parameters: req, stream
 // Returns: error
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -664,8 +627,7 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 }
 
 // Summary: Reason functionality.
-// Intent: Reason functionality.
-// Params: ctx, req
+// Parameters: ctx, req
 // Returns: (*pb.ReasonResponse, error)
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -682,9 +644,8 @@ func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*
 // ⚡ BOLT: [Configurable endpoint] - Randomized Selection from Top 5
 var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
 
-// Summary: MinimaxClient handles interaction with the Minimax Model 2.7.
-// Intent: MinimaxClient handles interaction with the Minimax Model 2.7.
-// Params: None
+// Summary: Defines the MinimaxClient type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -693,8 +654,7 @@ type MinimaxClient struct {
 }
 
 // Summary: NewMinimaxClient functionality.
-// Intent: NewMinimaxClient functionality.
-// Params: apiKey
+// Parameters: apiKey
 // Returns: *MinimaxClient
 // Errors: None
 // Side Effects: None
@@ -713,8 +673,7 @@ var sharedHTTPClient = &http.Client{
 }
 
 // Summary: Reason functionality.
-// Intent: Reason functionality.
-// Params: ctx, prompt
+// Parameters: ctx, prompt
 // Returns: (string, error)
 // Errors: Returns an error if applicable
 // Side Effects: None

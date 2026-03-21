@@ -9,6 +9,8 @@ def process_ts_files():
                     continue
 
                 filepath = os.path.join(root, file)
+                # Restore to make sure we don't duplicate
+                os.system(f"git restore {filepath}")
 
                 with open(filepath, 'r') as f:
                     lines = f.readlines()
@@ -82,7 +84,7 @@ def process_ts_files():
                             c = re.sub(r'^\*', '', c)
                             c = re.sub(r'^\/\/', '', c)
                             c = c.strip()
-                            if c and not c.startswith('@') and not c.startswith('Summary:') and not c.startswith('Intent:') and not c.startswith('Params:') and not c.startswith('Returns:') and not c.startswith('Errors:') and not c.startswith('Side Effects:'):
+                            if c and not c.startswith('@') and not c.startswith('Summary:') and not c.startswith('Intent:') and not c.startswith('Params:') and not c.startswith('Parameters:') and not c.startswith('Returns:') and not c.startswith('Errors:') and not c.startswith('Side Effects:'):
                                 summary_lines.append(c)
 
                         summary = ' '.join(summary_lines).strip()
@@ -98,8 +100,7 @@ def process_ts_files():
                         docstring = [
                             '/**\n',
                             f" * Summary: {summary}\n",
-                            f" * Intent: {summary}\n",
-                            f" * Params: {p_str}\n",
+                            f" * Parameters: {p_str}\n",
                             f" * Returns: {r_str}\n",
                             f" * Errors: {e_str}\n",
                             f" * Side Effects: None\n",

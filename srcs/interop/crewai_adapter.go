@@ -5,9 +5,8 @@ import (
 	"fmt"
 )
 
-// Summary: CrewAIAdapter implements UniversalAdapter for CrewAI.
-// Intent: CrewAIAdapter implements UniversalAdapter for CrewAI.
-// Params: None
+// Summary: Defines the CrewAIAdapter type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -15,9 +14,8 @@ type CrewAIAdapter struct {
 	Identity string
 }
 
-// Summary: NewCrewAIAdapter creates a new CrewAIAdapter.
-// Intent: NewCrewAIAdapter creates a new CrewAIAdapter.
-// Params: identity
+// Summary: NewCrewAIAdapter functionality.
+// Parameters: identity
 // Returns: *CrewAIAdapter
 // Errors: None
 // Side Effects: None
@@ -28,8 +26,7 @@ func NewCrewAIAdapter(identity string) *CrewAIAdapter {
 }
 
 // Summary: SyncState functionality.
-// Intent: SyncState functionality.
-// Params: ctx, state
+// Parameters: ctx, state
 // Returns: error
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -48,8 +45,7 @@ func (a *CrewAIAdapter) SyncState(ctx context.Context, state *State) error {
 }
 
 // Summary: ExecuteCommand functionality.
-// Intent: ExecuteCommand functionality.
-// Params: ctx, cmd
+// Parameters: ctx, cmd
 // Returns: (string, error)
 // Errors: Returns an error if applicable
 // Side Effects: None

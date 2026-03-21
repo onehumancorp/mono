@@ -5,9 +5,8 @@ import (
 	"sync"
 )
 
-// Summary: Registry manages the set of available agent providers and their stored credentials.  Providers are registered once (typically at startup via DefaultRegistry) and then authenticated on-demand through the dashboard API.  Multiple goroutines may call Registry methods concurrently.
-// Intent: Registry manages the set of available agent providers and their stored credentials.  Providers are registered once (typically at startup via DefaultRegistry) and then authenticated on-demand through the dashboard API.  Multiple goroutines may call Registry methods concurrently.
-// Params: None
+// Summary: Defines the Registry type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -16,9 +15,8 @@ type Registry struct {
 	providers map[ProviderType]Provider
 }
 
-// Summary: NewRegistry returns an empty Registry.  Use DefaultRegistry to get a pre-populated instance with all built-in providers.
-// Intent: NewRegistry returns an empty Registry.  Use DefaultRegistry to get a pre-populated instance with all built-in providers.
-// Params: None
+// Summary: NewRegistry functionality.
+// Parameters: None
 // Returns: *Registry
 // Errors: None
 // Side Effects: None
@@ -26,9 +24,8 @@ func NewRegistry() *Registry {
 	return &Registry{providers: make(map[ProviderType]Provider)}
 }
 
-// Summary: DefaultRegistry returns a Registry pre-populated with every built-in provider.  This is the standard factory used by the dashboard server at startup.
-// Intent: DefaultRegistry returns a Registry pre-populated with every built-in provider.  This is the standard factory used by the dashboard server at startup.
-// Params: None
+// Summary: DefaultRegistry functionality.
+// Parameters: None
 // Returns: *Registry
 // Errors: None
 // Side Effects: None
@@ -43,9 +40,8 @@ func DefaultRegistry() *Registry {
 	return r
 }
 
-// Summary: Register adds a Provider to the Registry, overwriting any previously registered provider with the same type.
-// Intent: Register adds a Provider to the Registry, overwriting any previously registered provider with the same type.
-// Params: p
+// Summary: Register functionality.
+// Parameters: p
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -55,9 +51,8 @@ func (r *Registry) Register(p Provider) {
 	r.providers[p.Type()] = p
 }
 
-// Summary: Get returns the Provider for the given type, or false if not found.
-// Intent: Get returns the Provider for the given type, or false if not found.
-// Params: t
+// Summary: Get functionality.
+// Parameters: t
 // Returns: (Provider, bool)
 // Errors: None
 // Side Effects: None
@@ -68,9 +63,8 @@ func (r *Registry) Get(t ProviderType) (Provider, bool) {
 	return p, ok
 }
 
-// Summary: All returns a snapshot of all registered providers, ordered by type string.
-// Intent: All returns a snapshot of all registered providers, ordered by type string.
-// Params: None
+// Summary: All functionality.
+// Parameters: None
 // Returns: []Provider
 // Errors: None
 // Side Effects: None
@@ -103,9 +97,8 @@ func (r *Registry) All() []Provider {
 	return out
 }
 
-// Summary: Authenticate forwards credentials to the named provider.  Returns an error if the provider type is unknown or if the provider rejects the supplied credentials.
-// Intent: Authenticate forwards credentials to the named provider.  Returns an error if the provider type is unknown or if the provider rejects the supplied credentials.
-// Params: t, creds
+// Summary: Authenticate functionality.
+// Parameters: t, creds
 // Returns: error
 // Errors: Returns an error if applicable
 // Side Effects: None
@@ -119,9 +112,8 @@ func (r *Registry) Authenticate(t ProviderType, creds Credentials) error {
 	return p.Authenticate(creds)
 }
 
-// Summary: ProviderInfo is a serializable summary of a provider used by the dashboard API.
-// Intent: ProviderInfo is a serializable summary of a provider used by the dashboard API.
-// Params: None
+// Summary: Defines the ProviderInfo type.
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -132,9 +124,8 @@ type ProviderInfo struct {
 	IsAuthenticated bool         `json:"isAuthenticated"`
 }
 
-// Summary: Infos returns a ProviderInfo summary for every registered provider.
-// Intent: Infos returns a ProviderInfo summary for every registered provider.
-// Params: None
+// Summary: Infos functionality.
+// Parameters: None
 // Returns: []ProviderInfo
 // Errors: None
 // Side Effects: None
