@@ -1581,6 +1581,7 @@ export function App() {
 
           async function submitAgentChat() {
             if (!agentChatContent.trim()) return;
+            if (!detailAgent) return;
             const meetingId = snapshot?.meetings.find((m) => m.participants.includes(detailAgent.id))?.id
               ?? snapshot?.meetings[0]?.id;
             if (!meetingId) {
@@ -1592,7 +1593,7 @@ export function App() {
             try {
               const data = await sendMessage({
                 fromAgent: ceoMember?.id ?? "CEO",
-                toAgent: detailAgent.id,
+                toAgent: detailAgent?.id || "",
                 meetingId,
                 messageType: "direction",
                 content: agentChatContent.trim(),
