@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -1205,6 +1206,12 @@ func TestHandleIntegrationsMethodNotAllowed(t *testing.T) {
 }
 
 func TestHandleIntegrationConnect(t *testing.T) {
+	oldLookup := integrations.LookupIPFunc
+	integrations.LookupIPFunc = func(host string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("93.184.216.34")}, nil
+	}
+	defer func() { integrations.LookupIPFunc = oldLookup }()
+
 	_, server, token := newTestServer(t)
 	client := authedClient(token)
 	defer server.Close()

@@ -3,7 +3,7 @@ package dashboard
 import (
 	"encoding/json"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"sync"
@@ -401,7 +401,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 		hub.SetMinimaxAPIKey(key)
 		server.settings.MinimaxAPIKey = key
 		if err := server.agentProviderRegistry.Authenticate(agents.ProviderTypeOpenClaw, agents.Credentials{APIKey: key}); err != nil {
-			log.Printf("warn: failed to authenticate OpenClaw provider with MINIMAX_API_KEY: %v", err)
+			slog.Warn("failed to authenticate OpenClaw provider with MINIMAX_API_KEY", "error", err)
 		}
 	}
 	// Pre-authenticate providers from environment variables so the platform
@@ -812,6 +812,14 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
+	// Emit structured trace for MCP tool invocation
+	slog.Info("agent execution trace",
+		"component", "telemetry",
+		"api", "invokeMCPTool",
+		"tool_id", req.ToolID,
+		"action", req.Action,
+	)
+
 	getString := func(key string) string {
 		if v, ok := req.Params[key]; ok {
 			if str, ok := v.(string); ok {
