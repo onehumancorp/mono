@@ -1,5 +1,8 @@
 # UI / Dashboard Roadmap
 
+## Phase 1
+- [x] Cross-Cluster Handoff UI (Mocking and Blueprint Completed)
+
 ## Phase 3: Dynamic Scaling UI
 - [x] Design: Aesthetic Blueprint & CSS Tokens.
 - [x] Layout: Introduce the "Scaling" Nav Tab in the CEO Dashboard.

@@ -1,5 +1,8 @@
 # Server / API Roadmap
 
+## Phase 1
+- [x] Cross-Cluster Handoff UI (Mocking and Blueprint Completed)
+
 ## Phase 3: Extensibility & Dynamic Scaling
 - [x] Design: Establish K8s Operator CRD pattern for TeamMembers.
 - [x] API: Build Gateway REST endpoint `/api/v1/scale`.

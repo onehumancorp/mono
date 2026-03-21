@@ -1,4 +1,4 @@
-# Server Roadmap\n\n## Phase 1\n- Cross-Cluster Handoff UI\n- Dynamic Org Scaling
+# Server Roadmap\n\n## Phase 1\n- [x] Cross-Cluster Handoff UI\n- Dynamic Org Scaling
 
 ## Phase 2: AI Agent Framework Evolution (Top 50 Feature Mandate)
 - **Agent Memory (Short/Long-Term)**: Native K8s stateful sets with Redis/Pinecone backing

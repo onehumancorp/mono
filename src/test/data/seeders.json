@@ -29,6 +29,24 @@
       "level": "SUCCESS",
       "component": "Gateway API",
       "message": "Scale-up complete. 5 Sales Representatives are now active."
+    },
+    {
+      "timestamp": "2024-05-18T10:15:00Z",
+      "level": "INFO",
+      "component": "Gateway API",
+      "message": "Handoff initiated: customer_support transferring context to swe."
+    },
+    {
+      "timestamp": "2024-05-18T10:15:02Z",
+      "level": "INFO",
+      "component": "K8s Operator",
+      "message": "Allocating ephemeral swe pod in cluster-b."
+    },
+    {
+      "timestamp": "2024-05-18T10:15:06Z",
+      "level": "SUCCESS",
+      "component": "Orchestration Hub",
+      "message": "Context securely transferred. swe agent assumed control of thread-0x9F2A."
     }
   ],
   "agentRoles": [
