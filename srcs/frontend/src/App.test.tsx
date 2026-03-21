@@ -2859,7 +2859,8 @@ describe("App - Dynamic Scaling", () => {
         return {
            ok: false,
            status: 500,
-           text: async () => "Internal Server Error"
+           json: async () => ({}),
+           text: async (): Promise<string> => "Internal Server Error"
         };
       }
       return originalFetch(input, init);
