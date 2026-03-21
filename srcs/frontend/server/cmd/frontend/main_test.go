@@ -43,7 +43,7 @@ func TestMainUsesDefaultFrontendAddr(t *testing.T) {
 		}
 		return nil
 	}
-	fatalForMain = func(...any) {
+	fatalForMain = func(err error) {
 		t.Fatalf("fatal should not be called")
 	}
 
@@ -79,7 +79,7 @@ func TestMainUsesConfiguredFrontendAddr(t *testing.T) {
 		}
 		return nil
 	}
-	fatalForMain = func(...any) {
+	fatalForMain = func(err error) {
 		t.Fatalf("fatal should not be called")
 	}
 
@@ -101,10 +101,8 @@ func TestMainCallsFatalWhenServerCreationFails(t *testing.T) {
 	listenForMain = func(string, http.Handler) error { return nil }
 
 	var got any
-	fatalForMain = func(v ...any) {
-		if len(v) == 1 {
-			got = v[0]
-		}
+	fatalForMain = func(err error) {
+		got = err
 	}
 
 	main()
@@ -135,10 +133,8 @@ func TestMainCallsFatalWhenListenFails(t *testing.T) {
 	listenForMain = func(string, http.Handler) error { return wantErr }
 
 	var got any
-	fatalForMain = func(v ...any) {
-		if len(v) == 1 {
-			got = v[0]
-		}
+	fatalForMain = func(err error) {
+		got = err
 	}
 
 	main()

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"log/slog"
 	"net"
 	"net/http"
@@ -26,7 +25,10 @@ type listenFunc func(string, http.Handler) error
 var (
 	nowUTC        = time.Now
 	listenForMain = http.ListenAndServe
-	fatalForMain  = log.Fatal
+	fatalForMain  = func(err error) {
+		slog.Error("fatal error", "error", err)
+		os.Exit(1)
+	}
 	initTelemetry = telemetry.InitTelemetry
 )
 
@@ -110,7 +112,6 @@ func main() {
 	}
 
 	if err := run(nowUTC().UTC(), listenForMain); err != nil {
-		slog.Error("fatal error", "error", err)
 		fatalForMain(err)
 	}
 }
