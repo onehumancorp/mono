@@ -21,6 +21,7 @@ import {
   createUser,
   deleteUser,
   scaleAgents,
+  fetchHandoffs,
 } from "./api";
 import type {
   AgentRuntime,
@@ -35,7 +36,7 @@ import type {
 } from "./types";
 
 type LoadState = "idle" | "loading" | "ready" | "error";
-type NavSection = "overview" | "meetings" | "agents" | "cost" | "playbooks" | "integrations" | "scaling" | "settings" | "users";
+type NavSection = "overview" | "meetings" | "agents" | "handoffs" | "cost" | "playbooks" | "integrations" | "scaling" | "settings" | "users";
 
 function formatCost(value: number): string {
   if (value === 0) return "$0.000000";
@@ -89,6 +90,7 @@ const ICONS: Record<string, string> = {
   overview: `<svg viewBox="0 0 20 20" fill="currentColor"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg>`,
   meetings: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v7a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"/></svg>`,
   agents: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 110 6 3 3 0 010-6zm-7 9a7 7 0 0114 0H2z"/><path d="M14.5 8a2.5 2.5 0 110 5 2.5 2.5 0 010-5zm3.5 9a5.5 5.5 0 00-7-5.33A5.48 5.48 0 0118 17h0z"/></svg>`,
+  handoffs: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><path d="M12 7v6"></path><path d="M12 17h.01"></path></svg>`,
   cost: `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979a1 1 0 001.715-1.029C12.279 4.784 11.232 4 10 4s-2.279.784-2.979 1.95c-.285.475-.507 1-.67 1.55H6a1 1 0 000 2h.013a9.135 9.135 0 000 1h-.013a1 1 0 100 2h.351c.163.55.385 1.075.67 1.55C7.721 15.216 8.768 16 10 16s2.279-.784 2.979-1.95a1 1 0 10-1.715-1.029c-.472.786-.96.979-1.264.979-.304 0-.792-.193-1.264-.979a4.265 4.265 0 01-.264-.521H10a1 1 0 100-2H8.017a7.36 7.36 0 010-1H10a1 1 0 100-2H8.472c.08-.185.167-.36.264-.521z" clip-rule="evenodd"/></svg>`,
   playbooks: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/></svg>`,
   integrations: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 7H7v6h6V7z"/><path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"/></svg>`,
@@ -304,6 +306,7 @@ export function App() {
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
   const [selectedMeetingID, setSelectedMeetingID] = useState("");
+  const [resolvedApprovals, setResolvedApprovals] = useState<Record<string, "approved" | "rejected">>({});
   const [notice, setNotice] = useState("");
   const [activeNav, setActiveNav] = useState<NavSection>("overview");
   const [showHireModal, setShowHireModal] = useState(false);
@@ -323,6 +326,7 @@ export function App() {
   const [agentDetailTab, setAgentDetailTab] = useState<"config" | "metrics" | "activity">("config");
   const [agentChatContent, setAgentChatContent] = useState("");
   const [agentChatSending, setAgentChatSending] = useState(false);
+  const [handoffList, setHandoffList] = useState<HandoffPackage[]>([]);
 
   // ── Auth state ─────────────────────────────────────────────────────────────
   const [authToken, setAuthToken] = useState<string | null>(getStoredToken);
@@ -436,6 +440,9 @@ export function App() {
     if (activeNav === "users") {
       void fetchUsers().then(setUsers).catch(() => { });
     }
+    if (activeNav === "handoffs") {
+      void fetchHandoffs().then(setHandoffList).catch(() => { });
+    }
   }, [activeNav]);
 
   async function submitMessage(payload: typeof form) {
@@ -450,7 +457,16 @@ export function App() {
       // Optional: clear the composer form after direct submission
       setForm((f) => ({ ...f, content: "" }));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to send message");
+      let errMsg = e instanceof Error ? e.message : "Failed to send message";
+      if (errMsg.includes("sender agent is not registered")) {
+        errMsg = "The sending agent is no longer active. Please check the Agent Network to hire or assign a valid agent.";
+      } else if (errMsg.includes("recipient agent is not registered")) {
+        errMsg = "The recipient agent could not be found. They may have been removed. Please verify the Org Chart.";
+      } else if (errMsg.includes("meeting room is not registered")) {
+        errMsg = "This virtual meeting room has been closed or is invalid. Please select an active meeting.";
+      }
+      setError(errMsg);
+      throw new Error(errMsg);
     } finally {
       setSending(false);
     }
@@ -458,7 +474,7 @@ export function App() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await submitMessage(form);
+    await submitMessage(form).catch(() => {});
   }
 
   async function handleHire(name: string, role: string) {
@@ -583,6 +599,7 @@ export function App() {
     { key: "overview", label: "Overview" },
     { key: "meetings", label: "Meetings" },
     { key: "agents", label: "Agents" },
+    { key: "handoffs", label: "Handoffs" },
     { key: "cost", label: "Cost" },
     { key: "playbooks", label: "Playbooks" },
     { key: "integrations", label: "Integrations" },
@@ -1400,44 +1417,56 @@ export function App() {
                                       <p className="approval-card__desc">{msg.content}</p>
                                     </div>
                                   </div>
-                                  <div className="approval-card__actions">
-                                    <button
-                                      type="button"
-                                      className="btn btn-primary btn-sm approval-btn"
-                                      disabled={sending}
-                                      onClick={() => {
-                                        const payload = {
-                                          ...form,
-                                          content: "Approved. Proceed with execution.",
-                                          fromAgent: ceoMember?.id || "CEO",
-                                          toAgent: msg.fromAgent,
-                                          meetingId: selectedMeeting.id,
-                                          messageType: "SpecApproved"
-                                        };
-                                        void submitMessage(payload);
-                                      }}
-                                    >
-                                      Approve
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="btn btn-danger btn-sm approval-btn"
-                                      disabled={sending}
-                                      onClick={() => {
-                                        const payload = {
-                                          ...form,
-                                          content: "Rejected. Please review constraints and pivot.",
-                                          fromAgent: ceoMember?.id || "CEO",
-                                          toAgent: msg.fromAgent,
-                                          meetingId: selectedMeeting.id,
-                                          messageType: "direction"
-                                        };
-                                        void submitMessage(payload);
-                                      }}
-                                    >
-                                      Reject
-                                    </button>
-                                  </div>
+                                  {resolvedApprovals[msg.id] ? (
+                                    <div className="approval-card__actions" style={{ justifyContent: "center", padding: "0.5rem" }}>
+                                      <span className={`chip ${resolvedApprovals[msg.id] === "approved" ? "chip--green" : "status-badge--blocked"}`}>
+                                        {resolvedApprovals[msg.id] === "approved" ? "✓ Approved by CEO" : "✕ Rejected by CEO"}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="approval-card__actions">
+                                      <button
+                                        type="button"
+                                        className="btn btn-primary btn-sm approval-btn"
+                                        disabled={sending}
+                                        onClick={() => {
+                                          const payload = {
+                                            ...form,
+                                            content: "Approved. Proceed with execution.",
+                                            fromAgent: ceoMember?.id || "CEO",
+                                            toAgent: msg.fromAgent,
+                                            meetingId: selectedMeeting.id,
+                                            messageType: "SpecApproved"
+                                          };
+                                          void submitMessage(payload).then(() => {
+                                            setResolvedApprovals(prev => ({ ...prev, [msg.id]: "approved" }));
+                                          }).catch(() => {});
+                                        }}
+                                      >
+                                        Approve
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn btn-danger btn-sm approval-btn"
+                                        disabled={sending}
+                                        onClick={() => {
+                                          const payload = {
+                                            ...form,
+                                            content: "Rejected. Please review constraints and pivot.",
+                                            fromAgent: ceoMember?.id || "CEO",
+                                            toAgent: msg.fromAgent,
+                                            meetingId: selectedMeeting.id,
+                                            messageType: "direction"
+                                          };
+                                          void submitMessage(payload).then(() => {
+                                            setResolvedApprovals(prev => ({ ...prev, [msg.id]: "rejected" }));
+                                          }).catch(() => {});
+                                        }}
+                                      >
+                                        Reject
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               </li>
                             );
@@ -1503,6 +1532,59 @@ export function App() {
                 </div>
               </div>
             )}
+          </>
+        )}
+
+        {/* ────────────────── Handoffs ────────────────── */}
+        {activeNav === "handoffs" && (
+          <>
+            <div className="page-header">
+              <div>
+                <h2 className="page-heading">Warm Handoffs</h2>
+                <p className="page-sub">Review tasks escalated from autonomous agents to human managers</p>
+              </div>
+            </div>
+
+            <div className="handoff-list" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {handoffList.length === 0 ? (
+                <p className="empty-state">No pending handoffs found.</p>
+              ) : (
+                handoffList.map((handoff) => (
+                  <article key={handoff.id} className="panel" style={{ padding: "1rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+                      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                        <RoleAvatar role={snapshot?.agents.find(a => a.id === handoff.fromAgentId)?.role || "AGENT"} name={handoff.fromAgentId} />
+                        <div>
+                          <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>
+                            Escalated by {handoff.fromAgentId}
+                          </h3>
+                          <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Target Role: {handoff.toHumanRole}</p>
+                        </div>
+                      </div>
+                      <StatusBadge status={handoff.status.toUpperCase()} />
+                    </div>
+
+                    <div style={{ background: "rgba(255,255,255,0.03)", padding: "0.75rem", borderRadius: "6px", margin: "0.75rem 0" }}>
+                      <h4 style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", marginBottom: "0.25rem" }}>Intent</h4>
+                      <p style={{ fontSize: "13px", color: "var(--text-primary)" }}>{handoff.intent}</p>
+
+                      <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid var(--border)" }}>
+                        <h4 style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", marginBottom: "0.25rem" }}>Current State</h4>
+                        <p style={{ fontSize: "12px", color: "var(--text-secondary)", whiteSpace: "pre-wrap", fontFamily: "ui-monospace, monospace" }}>{handoff.currentState}</p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Failed Attempts: {handoff.failedAttempts}</span>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <button className="btn btn-ghost btn-sm" disabled={handoff.status !== "pending"}>Acknowledge</button>
+                        <button className="btn btn-primary btn-sm" disabled={handoff.status === "resolved"}>Resolve & Resume</button>
+                      </div>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
           </>
         )}
 
