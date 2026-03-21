@@ -36,7 +36,7 @@ func TestMainStartsServerWithoutFatal(t *testing.T) {
 		}
 		return nil
 	}
-	fatalForMain = func(...any) {
+	fatalForMain = func(err error) {
 		t.Fatalf("fatal should not be called")
 	}
 
@@ -64,11 +64,8 @@ func TestMainCallsFatalOnRunError(t *testing.T) {
 		return wantErr
 	}
 	var got any
-	fatalForMain = func(v ...any) {
-		if len(v) != 1 {
-			t.Fatalf("expected one fatal argument, got %d", len(v))
-		}
-		got = v[0]
+	fatalForMain = func(err error) {
+		got = err
 	}
 
 	main()
@@ -194,7 +191,7 @@ func TestMain_TelemetryInitFailure(t *testing.T) {
 	listenForMain = func(addr string, handler http.Handler) error {
 		return nil
 	}
-	fatalForMain = func(...any) {
+	fatalForMain = func(err error) {
 		t.Fatalf("fatal should not be called")
 	}
 

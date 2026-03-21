@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -12,7 +11,10 @@ import (
 var (
 	newServerForMain = server.New
 	listenForMain    = http.ListenAndServe
-	fatalForMain     = log.Fatal
+	fatalForMain     = func(err error) {
+		slog.Error("fatal error", "error", err)
+		os.Exit(1)
+	}
 )
 
 func init() {
