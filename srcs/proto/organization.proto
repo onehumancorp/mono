@@ -30,6 +30,8 @@ message TeamMember {
   ohc.common.Role role = 4;
   string manager_id = 5;
   bool is_human = 6;
+  int32 resource_quota_vram_gb = 7;
+  string spiffe_id = 8;
 }
 
 message OrganizationChart {

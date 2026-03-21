@@ -1,0 +1,14 @@
+load("@rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "security_test",
+    srcs = ["exploit_test.go"],
+    deps = [
+        "//srcs/orchestration",
+        "//srcs/proto:hub_go_proto",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//credentials",
+        "@org_golang_google_grpc//peer",
+        "@org_golang_google_grpc//status",
+    ],
+)

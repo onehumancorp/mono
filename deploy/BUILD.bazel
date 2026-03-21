@@ -10,7 +10,7 @@ exports_files([
 # Package backend binary
 pkg_tar(
     name = "backend_pkg",
-    srcs = ["//srcs/cmd/ohc:ohc"],
+    srcs = ["//srcs/cmd/ohc"],
     package_dir = "/usr/local/bin",
 )
 
@@ -45,7 +45,7 @@ genrule(
 
 pkg_tar(
     name = "frontend_server_pkg",
-    srcs = ["//srcs/frontend/server/cmd/frontend:frontend"],
+    srcs = ["//srcs/frontend/server/cmd/frontend"],
     package_dir = "/usr/local/bin",
 )
 

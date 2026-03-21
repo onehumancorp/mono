@@ -216,7 +216,8 @@ func TestSPIFFEAuthInterceptor_Valid(t *testing.T) {
 
 	req := pb.PublishMessageRequest_builder{
 		Message: pb.Message_builder{
-			FromAgent: "a1",
+			FromAgent:      "a1",
+			OrganizationId: "org-1",
 		}.Build(),
 	}.Build()
 

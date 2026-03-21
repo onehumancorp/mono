@@ -51,6 +51,7 @@ type Message struct {
 	content        string
 	meetingId      string
 	occurredAtUnix int64
+	organizationId string
 }
 
 func (m *Message) GetId() string            { return m.id }
@@ -60,6 +61,7 @@ func (m *Message) GetType() string          { return m.msgType }
 func (m *Message) GetContent() string       { return m.content }
 func (m *Message) GetMeetingId() string     { return m.meetingId }
 func (m *Message) GetOccurredAtUnix() int64 { return m.occurredAtUnix }
+func (m *Message) GetOrganizationId() string { return m.organizationId }
 
 type Message_builder struct {
 	Id             string
@@ -69,13 +71,14 @@ type Message_builder struct {
 	Content        string
 	MeetingId      string
 	OccurredAtUnix int64
+	OrganizationId string
 }
 
 func (b Message_builder) Build() *Message {
 	return &Message{
 		id: b.Id, fromAgent: b.FromAgent, toAgent: b.ToAgent,
 		msgType: b.Type, content: b.Content, meetingId: b.MeetingId,
-		occurredAtUnix: b.OccurredAtUnix,
+		occurredAtUnix: b.OccurredAtUnix, organizationId: b.OrganizationId,
 	}
 }
 

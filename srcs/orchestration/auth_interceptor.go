@@ -65,6 +65,7 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 		}
 
 		var agentID string
+		var orgID string
 		domain := parts[0]
 
 		switch domain {
@@ -73,12 +74,14 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			if len(parts) != 3 {
 				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain onehumancorp.io: %s", spiffeID)
 			}
+			orgID = parts[1]
 			agentID = parts[2]
 		case "ohc.local":
 			// format: ohc.local/org/{orgID}/agent/{agentID}
 			if len(parts) != 5 || parts[1] != "org" || parts[3] != "agent" {
 				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.local: %s", spiffeID)
 			}
+			orgID = parts[2]
 			agentID = parts[4]
 		case "ohc.os":
 			// format: ohc.os/agent/{agentID}
@@ -93,13 +96,21 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 		switch v := req.(type) {
 		case *pb.RegisterAgentRequest:
 			reqAgentID := v.GetAgent().GetId()
+			reqOrgID := v.GetAgent().GetOrganizationId()
 			if agentID != reqAgentID {
 				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot register agent %s", spiffeID, reqAgentID)
 			}
+			if orgID != "" && orgID != reqOrgID {
+				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot register agent in org %s", spiffeID, reqOrgID)
+			}
 		case *pb.PublishMessageRequest:
 			reqFromAgent := v.GetMessage().GetFromAgent()
+			reqOrgID := v.GetMessage().GetOrganizationId()
 			if agentID != reqFromAgent {
 				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot publish as agent %s", spiffeID, reqFromAgent)
+			}
+			if orgID != "" && orgID != reqOrgID {
+				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot publish for org %s", spiffeID, reqOrgID)
 			}
 		}
 

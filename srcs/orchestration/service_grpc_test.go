@@ -87,6 +87,7 @@ func TestPublishViaGRPC(t *testing.T) {
 			Type:           "task",
 			Content:        "Do it",
 			OccurredAtUnix: time.Now().Unix(),
+			OrganizationId: "org-1",
 		}.Build(),
 	}.Build()
 
@@ -227,6 +228,7 @@ func TestPublishViaGRPCError(t *testing.T) {
 			Type:           "task",
 			Content:        "Do it",
 			OccurredAtUnix: time.Now().Unix(),
+			OrganizationId: "org-1",
 		}.Build(),
 	}.Build()
 

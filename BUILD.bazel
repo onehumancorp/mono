@@ -2,6 +2,7 @@ load("@gazelle//:def.bzl", "gazelle")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 # gazelle:prefix github.com/onehumancorp/mono
+# gazelle:proto disable_global
 exports_files(["go.mod"])
 
 # gazelle:exclude srcs/proto

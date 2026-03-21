@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"log/slog"
 	"net"
@@ -8,6 +9,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/spiffe/go-spiffe/v2/spiffegrpc/grpccredentials"
+	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
+	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"google.golang.org/grpc"
 
 	"github.com/onehumancorp/mono/srcs/auth"
@@ -86,7 +90,19 @@ func run(now time.Time, listen listenFunc) error {
 			slog.Error("failed to listen for gRPC", "error", err)
 			return
 		}
+
+		ctx := context.Background()
+		source, err := workloadapi.NewX509Source(ctx)
+		if err != nil {
+			slog.Error("failed to fetch X.509 SVID", "error", err)
+			return
+		}
+		defer source.Close()
+
+		creds := grpccredentials.MTLSServerCredentials(source, source, tlsconfig.AuthorizeAny())
+
 		s := grpc.NewServer(
+			grpc.Creds(creds),
 			grpc.UnaryInterceptor(orchestration.SPIFFEAuthInterceptor()),
 			grpc.StreamInterceptor(orchestration.SPIFFEStreamInterceptor()),
 		)
