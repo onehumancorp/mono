@@ -535,3 +535,292 @@ if snap["costs"] == nil {
 t.Error("missing costs in dashboard snapshot")
 }
 }
+
+// ── Chat API integration tests ────────────────────────────────────────────────
+
+// TestChatSendAndListIntegration seeds a backend, sends a chat message via the
+// /api/integrations/chat/send endpoint, then verifies it appears in
+// /api/integrations/chat/messages – testing the full request/response cycle.
+func TestChatSendAndListIntegration(t *testing.T) {
+srv, _ := newTestBackend(t)
+token := loginAdmin(t, srv.URL)
+
+// Seed the integration so the registry has a "slack" entry.
+connBody := `{"integrationId":"slack","channel":"#general","fromAgent":"swe-1","content":"Integration test message"}`
+sendResp := authedPost(t, srv.URL+"/api/integrations/chat/send", token, json.RawMessage(connBody))
+defer sendResp.Body.Close()
+if sendResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(sendResp.Body)
+t.Fatalf("POST /api/integrations/chat/send returned %d: %s", sendResp.StatusCode, b)
+}
+
+var msg map[string]any
+if err := json.NewDecoder(sendResp.Body).Decode(&msg); err != nil {
+t.Fatalf("decode send response: %v", err)
+}
+if msg["content"] != "Integration test message" {
+t.Errorf("unexpected content in send response: %v", msg["content"])
+}
+if msg["integrationId"] != "slack" {
+t.Errorf("expected integrationId 'slack', got %v", msg["integrationId"])
+}
+
+// List messages and verify it appears.
+listResp := authedGet(t, srv.URL+"/api/integrations/chat/messages?integrationId=slack", token)
+defer listResp.Body.Close()
+if listResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(listResp.Body)
+t.Fatalf("GET /api/integrations/chat/messages returned %d: %s", listResp.StatusCode, b)
+}
+
+var msgs []map[string]any
+if err := json.NewDecoder(listResp.Body).Decode(&msgs); err != nil {
+t.Fatalf("decode messages response: %v", err)
+}
+if len(msgs) == 0 {
+t.Fatal("expected at least one message in chat history")
+}
+found := false
+for _, m := range msgs {
+if m["content"] == "Integration test message" {
+found = true
+break
+}
+}
+if !found {
+t.Error("sent message not found in chat history")
+}
+}
+
+// TestChatSendMultipleIntegrationsIntegration verifies that messages sent to
+// different integrations are correctly segregated when fetched.
+func TestChatSendMultipleIntegrationsIntegration(t *testing.T) {
+srv, _ := newTestBackend(t)
+token := loginAdmin(t, srv.URL)
+
+messages := []struct {
+integID string
+channel string
+content string
+}{
+{"slack", "#eng", "Slack test message"},
+{"discord", "general", "Discord test message"},
+}
+
+for _, m := range messages {
+body := map[string]string{
+"integrationId": m.integID,
+"channel":       m.channel,
+"fromAgent":     "pm-1",
+"content":       m.content,
+}
+bodyBytes, _ := json.Marshal(body)
+resp := authedPost(t, srv.URL+"/api/integrations/chat/send", token, json.RawMessage(bodyBytes))
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("POST chat/send for %s returned %d: %s", m.integID, resp.StatusCode, b)
+}
+}
+
+// Verify Slack messages don't contain Discord messages.
+slackResp := authedGet(t, srv.URL+"/api/integrations/chat/messages?integrationId=slack", token)
+defer slackResp.Body.Close()
+var slackMsgs []map[string]any
+if err := json.NewDecoder(slackResp.Body).Decode(&slackMsgs); err != nil {
+t.Fatalf("decode slack messages: %v", err)
+}
+for _, m := range slackMsgs {
+if m["content"] == "Discord test message" {
+t.Error("Discord message found in Slack message list")
+}
+}
+
+// Verify Discord messages are present when fetching Discord.
+discordResp := authedGet(t, srv.URL+"/api/integrations/chat/messages?integrationId=discord", token)
+defer discordResp.Body.Close()
+var discordMsgs []map[string]any
+if err := json.NewDecoder(discordResp.Body).Decode(&discordMsgs); err != nil {
+t.Fatalf("decode discord messages: %v", err)
+}
+found := false
+for _, m := range discordMsgs {
+if m["content"] == "Discord test message" {
+found = true
+}
+}
+if !found {
+t.Error("Discord test message not found in Discord message list")
+}
+}
+
+// TestChatSendWithThreadIDIntegration verifies that threadId is preserved
+// across send and list operations.
+func TestChatSendWithThreadIDIntegration(t *testing.T) {
+srv, _ := newTestBackend(t)
+token := loginAdmin(t, srv.URL)
+
+body := `{"integrationId":"slack","channel":"#support","fromAgent":"swe-1","content":"Thread reply","threadId":"thread-42"}`
+resp := authedPost(t, srv.URL+"/api/integrations/chat/send", token, json.RawMessage(body))
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(resp.Body)
+t.Fatalf("POST chat/send with threadId returned %d: %s", resp.StatusCode, b)
+}
+
+var msg map[string]any
+if err := json.NewDecoder(resp.Body).Decode(&msg); err != nil {
+t.Fatalf("decode send response: %v", err)
+}
+if msg["threadId"] != "thread-42" {
+t.Errorf("expected threadId 'thread-42', got %v", msg["threadId"])
+}
+}
+
+// TestChatMessagesAllIntegrationsIntegration verifies that fetching without an
+// integrationId filter returns messages from all integrations.
+func TestChatMessagesAllIntegrationsIntegration(t *testing.T) {
+srv, _ := newTestBackend(t)
+token := loginAdmin(t, srv.URL)
+
+// Send messages to two different integrations.
+for _, payload := range []string{
+`{"integrationId":"slack","channel":"#general","fromAgent":"pm-1","content":"Hello from Slack"}`,
+`{"integrationId":"teams","channel":"General","fromAgent":"pm-1","content":"Hello from Teams"}`,
+} {
+r := authedPost(t, srv.URL+"/api/integrations/chat/send", token, json.RawMessage(payload))
+if r.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(r.Body)
+t.Fatalf("POST chat/send returned %d: %s", r.StatusCode, b)
+}
+r.Body.Close()
+}
+
+// Fetch all messages (no integrationId filter).
+allResp := authedGet(t, srv.URL+"/api/integrations/chat/messages", token)
+defer allResp.Body.Close()
+if allResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(allResp.Body)
+t.Fatalf("GET chat/messages (all) returned %d: %s", allResp.StatusCode, b)
+}
+
+var allMsgs []map[string]any
+if err := json.NewDecoder(allResp.Body).Decode(&allMsgs); err != nil {
+t.Fatalf("decode all messages: %v", err)
+}
+if len(allMsgs) < 2 {
+t.Errorf("expected at least 2 messages from all integrations, got %d", len(allMsgs))
+}
+}
+
+// TestChatSendInvalidBodyIntegration verifies that malformed JSON is rejected
+// by the server with a 400 status code.
+func TestChatSendInvalidBodyIntegration(t *testing.T) {
+srv, _ := newTestBackend(t)
+token := loginAdmin(t, srv.URL)
+
+req, _ := http.NewRequest(http.MethodPost, srv.URL+"/api/integrations/chat/send", strings.NewReader("not-json"))
+req.Header.Set("Content-Type", "application/json")
+req.Header.Set("Authorization", "Bearer "+token)
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+t.Fatalf("POST chat/send with invalid JSON: %v", err)
+}
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusBadRequest {
+t.Errorf("expected 400 for invalid JSON, got %d", resp.StatusCode)
+}
+}
+
+// TestChatSendMethodNotAllowedIntegration verifies that GET on /api/integrations/chat/send
+// returns 405 Method Not Allowed.
+func TestChatSendMethodNotAllowedIntegration(t *testing.T) {
+srv, _ := newTestBackend(t)
+token := loginAdmin(t, srv.URL)
+
+resp := authedGet(t, srv.URL+"/api/integrations/chat/send", token)
+defer resp.Body.Close()
+if resp.StatusCode != http.StatusMethodNotAllowed {
+t.Errorf("expected 405 for GET on /api/integrations/chat/send, got %d", resp.StatusCode)
+}
+}
+
+// TestChatViaAgentMeetingIntegration tests the complete critical user journey
+// for agent chat: seed agents + meetings, then send a message as an agent,
+// and verify the message appears in the meeting transcript.
+func TestChatViaAgentMeetingIntegration(t *testing.T) {
+srv, _ := newFullBackend(t)
+
+// Seed the launch-readiness scenario which sets up agents and meetings.
+seedResp, err := http.Post(srv.URL+"/api/dev/seed", "application/json",
+strings.NewReader(`{"scenario":"launch-readiness"}`))
+if err != nil {
+t.Fatalf("seed: %v", err)
+}
+defer seedResp.Body.Close()
+
+token := loginAdmin(t, srv.URL)
+
+// Fetch meetings to get a valid meeting ID.
+meetingsResp := authedGet(t, srv.URL+"/api/meetings", token)
+defer meetingsResp.Body.Close()
+if meetingsResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(meetingsResp.Body)
+t.Fatalf("GET /api/meetings returned %d: %s", meetingsResp.StatusCode, b)
+}
+
+var meetings []map[string]any
+if err := json.NewDecoder(meetingsResp.Body).Decode(&meetings); err != nil {
+t.Fatalf("decode meetings: %v", err)
+}
+if len(meetings) == 0 {
+t.Fatal("no meetings found after seeding")
+}
+meetingID, _ := meetings[0]["id"].(string)
+if meetingID == "" {
+t.Fatal("first meeting has no id")
+}
+
+// Send a message to a meeting via form POST (the war room API).
+msgContent := "Integration test: agent chat message"
+form := url.Values{
+"fromAgent":   {"CEO"},
+"toAgent":     {"pm-1"},
+"meetingId":   {meetingID},
+"messageType": {"direction"},
+"content":     {msgContent},
+}
+msgResp := postForm(t, srv.URL+"/api/messages", token, form)
+defer msgResp.Body.Close()
+if msgResp.StatusCode != http.StatusOK {
+b, _ := io.ReadAll(msgResp.Body)
+t.Fatalf("POST /api/messages returned %d: %s", msgResp.StatusCode, b)
+}
+
+// Verify the message appears in the meeting transcript.
+meetingsResp2 := authedGet(t, srv.URL+"/api/meetings", token)
+defer meetingsResp2.Body.Close()
+var updatedMeetings []map[string]any
+if err := json.NewDecoder(meetingsResp2.Body).Decode(&updatedMeetings); err != nil {
+t.Fatalf("decode updated meetings: %v", err)
+}
+
+found := false
+for _, m := range updatedMeetings {
+mID, _ := m["id"].(string)
+if mID != meetingID {
+continue
+}
+transcript, _ := m["transcript"].([]any)
+for _, entry := range transcript {
+e, _ := entry.(map[string]any)
+if e["content"] == msgContent {
+found = true
+break
+}
+}
+}
+if !found {
+t.Errorf("sent message %q not found in meeting %q transcript", msgContent, meetingID)
+}
+}
