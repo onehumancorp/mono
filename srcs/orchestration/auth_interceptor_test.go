@@ -245,9 +245,354 @@ func (m *mockServerStream) Context() context.Context {
 }
 
 func (m *mockServerStream) RecvMsg(req interface{}) error {
+	if ptr, ok := req.(*pb.StreamMessagesRequest); ok {
+		*ptr = *m.req.(*pb.StreamMessagesRequest)
+	}
 	// simulate receiving the expected request type with correct fields
 	if _, ok := req.(*pb.StreamMessagesRequest); ok {
 		// Just bypassed for test.
 	}
 	return nil
+}
+
+func TestExtractSPIFFEID_MissingURI(t *testing.T) {
+	cert := &x509.Certificate{
+		URIs: []*url.URL{},
+	}
+	tlsInfo := credentials.TLSInfo{
+		State: tls.ConnectionState{
+			PeerCertificates: []*x509.Certificate{cert},
+		},
+	}
+	p := &peer.Peer{
+		AuthInfo: tlsInfo,
+	}
+	ctx := peer.NewContext(context.Background(), p)
+
+	_, err := ExtractSPIFFEID(ctx)
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+	if err.Error() != "no SPIFFE ID found in peer certificate" {
+		t.Errorf("expected no SPIFFE ID found in peer certificate, got %v", err)
+	}
+}
+
+func TestSPIFFEAuthInterceptor_OHCLocalDomain(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+
+	tests := []struct {
+		name        string
+		spiffeID    string
+		reqAgentID  string
+		expectedErr bool
+		errCode     codes.Code
+	}{
+		{
+			name:        "Valid OHC Local Domain",
+			spiffeID:    "spiffe://ohc.local/org/org-1/agent/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: false,
+		},
+		{
+			name:        "Boundary Escape OHC Local Domain",
+			spiffeID:    "spiffe://ohc.local/org/org-1/attacker/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name:        "Spoofing OHC Local Domain",
+			spiffeID:    "spiffe://ohc.local/org/org-1/agent/attacker-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := mockSPIFFEContext(tc.spiffeID)
+			// Must use _builder and .Build()
+			req := pb.RegisterAgentRequest_builder{
+				Agent: pb.Agent_builder{
+					Id: tc.reqAgentID,
+				}.Build(),
+			}.Build()
+
+			_, err := interceptor(ctx, req, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+				return nil, nil
+			})
+
+			if tc.expectedErr {
+				if err == nil {
+					t.Fatal("expected error")
+				}
+				st, ok := status.FromError(err)
+				if !ok || st.Code() != tc.errCode {
+					t.Errorf("expected %v, got %v", tc.errCode, err)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestSPIFFEAuthInterceptor_OHCOSDomain(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+
+	tests := []struct {
+		name        string
+		spiffeID    string
+		reqAgentID  string
+		expectedErr bool
+		errCode     codes.Code
+	}{
+		{
+			name:        "Valid OHC OS Domain",
+			spiffeID:    "spiffe://ohc.os/agent/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: false,
+		},
+		{
+			name:        "Boundary Escape OHC OS Domain 1",
+			spiffeID:    "spiffe://ohc.os/attacker/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name:        "Spoofing OHC OS Domain",
+			spiffeID:    "spiffe://ohc.os/agent/attacker-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := mockSPIFFEContext(tc.spiffeID)
+			req := pb.RegisterAgentRequest_builder{
+				Agent: pb.Agent_builder{
+					Id: tc.reqAgentID,
+				}.Build(),
+			}.Build()
+
+			_, err := interceptor(ctx, req, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+				return nil, nil
+			})
+
+			if tc.expectedErr {
+				if err == nil {
+					t.Fatal("expected error")
+				}
+				st, ok := status.FromError(err)
+				if !ok || st.Code() != tc.errCode {
+					t.Errorf("expected %v, got %v", tc.errCode, err)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestSPIFFEAuthInterceptor_UnsupportedTrustDomain(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+	ctx := mockSPIFFEContext("spiffe://unknown.domain/agent/agent-1")
+	req := pb.RegisterAgentRequest_builder{
+		Agent: pb.Agent_builder{
+			Id: "agent-1",
+		}.Build(),
+	}.Build()
+
+	_, err := interceptor(ctx, req, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+		return nil, nil
+	})
+
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	st, ok := status.FromError(err)
+	if !ok || st.Code() != codes.PermissionDenied {
+		t.Errorf("expected PermissionDenied, got %v", err)
+	}
+}
+
+func TestSPIFFEStreamInterceptor(t *testing.T) {
+	interceptor := SPIFFEStreamInterceptor()
+
+	tests := []struct {
+		name        string
+		setupCtx    func() context.Context
+		reqAgentID  string
+		expectedErr bool
+		errCode     codes.Code
+		errMsg      string
+	}{
+		{
+			name: "Missing SPIFFE ID",
+			setupCtx: func() context.Context {
+				return context.Background()
+			},
+			expectedErr: true,
+			errCode:     codes.Unauthenticated,
+		},
+		{
+			name: "Invalid Format (no spiffe://)",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("invalid-id")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+			errMsg:      "invalid SPIFFE ID format",
+		},
+		{
+			name: "Short Path Segments",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://onehumancorp.io/short")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+			errMsg:      "lacks required path segments",
+		},
+		{
+			name: "Valid onehumancorp.io Domain",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://onehumancorp.io/org-1/agent-1")
+			},
+			reqAgentID:  "agent-1",
+			expectedErr: false,
+		},
+		{
+			name: "Boundary Escape onehumancorp.io Domain",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://onehumancorp.io/org-1/attacker/agent-1")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+			errMsg:      "invalid SPIFFE ID path structure for domain onehumancorp.io",
+		},
+		{
+			name: "Valid ohc.local Domain",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://ohc.local/org/org-1/agent/agent-1")
+			},
+			reqAgentID:  "agent-1",
+			expectedErr: false,
+		},
+		{
+			name: "Boundary Escape ohc.local Domain",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://ohc.local/org/org-1/attacker/agent-1")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+			errMsg:      "invalid SPIFFE ID path structure for domain ohc.local",
+		},
+		{
+			name: "Valid ohc.os Domain",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://ohc.os/agent/agent-1")
+			},
+			reqAgentID:  "agent-1",
+			expectedErr: false,
+		},
+		{
+			name: "Boundary Escape ohc.os Domain",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://ohc.os/attacker/agent-1")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+			errMsg:      "invalid SPIFFE ID path structure for domain ohc.os",
+		},
+		{
+			name: "Unsupported Trust Domain",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://unknown.domain/agent/agent-1")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+			errMsg:      "unsupported SPIFFE trust domain",
+		},
+		{
+			name: "Spoofing Valid stream request",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://onehumancorp.io/org-1/attacker-1")
+			},
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+			errMsg:      "cannot stream messages for agent",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ss := &mockServerStream{
+				ctx: tc.setupCtx(),
+				req: pb.StreamMessagesRequest_builder{
+					AgentId: tc.reqAgentID,
+				}.Build(),
+			}
+
+			err := interceptor(nil, ss, nil, func(srv interface{}, stream grpc.ServerStream) error {
+				// simulate receiving message from stream
+				return stream.RecvMsg(ss.req)
+			})
+
+			if tc.expectedErr {
+				if err == nil {
+					t.Fatal("expected error")
+				}
+				st, ok := status.FromError(err)
+				if !ok || st.Code() != tc.errCode {
+					t.Errorf("expected code %v, got %v", tc.errCode, err)
+				}
+				if tc.errMsg != "" && !strings.Contains(err.Error(), tc.errMsg) {
+					t.Errorf("expected error containing %q, got %q", tc.errMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestRecvWrapper_RecvMsgError(t *testing.T) {
+	errStream := &mockErrorServerStream{
+		err: status.Errorf(codes.Internal, "stream error"),
+	}
+	wrapper := &recvWrapper{
+		ServerStream: errStream,
+		spiffeID:     "spiffe://onehumancorp.io/org-1/a1",
+		agentID:      "a1",
+	}
+
+	err := wrapper.RecvMsg(nil)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	st, ok := status.FromError(err)
+	if !ok || st.Code() != codes.Internal {
+		t.Errorf("expected Internal error, got %v", err)
+	}
+}
+
+type mockErrorServerStream struct {
+	grpc.ServerStream
+	err error
+}
+
+func (m *mockErrorServerStream) RecvMsg(req interface{}) error {
+	return m.err
 }
