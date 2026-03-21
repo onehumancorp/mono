@@ -109,7 +109,7 @@ build:remote --config=buildbuddy-official
 test:remote --local_test_jobs=8
 
 # Optimize testing globally by automatically discovering max parallelism
-test --jobs=auto
+test --jobs=200
 
 # Local config to disable remote execution
 build:local --remote_cache=

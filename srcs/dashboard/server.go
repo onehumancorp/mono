@@ -812,6 +812,14 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
+	// Emit structured trace for MCP tool invocation
+	slog.Info("agent execution trace",
+		"component", "telemetry",
+		"api", "invokeMCPTool",
+		"tool_id", req.ToolID,
+		"action", req.Action,
+	)
+
 	getString := func(key string) string {
 		if v, ok := req.Params[key]; ok {
 			if str, ok := v.(string); ok {
