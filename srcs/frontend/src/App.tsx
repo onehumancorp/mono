@@ -1525,7 +1525,7 @@ export function App() {
                   role="button"
                   tabIndex={0}
                   aria-label={`View details for ${agent.name}`}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { setSelectedAgentID(agent.id); setAgentDetailTab("config"); } }}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedAgentID(agent.id); setAgentDetailTab("config"); } }}
                 >
                   <div className="agent-card__top">
                     <RoleAvatar role={agent.role} name={agent.name} />
@@ -1579,15 +1579,17 @@ export function App() {
             m.transcript.filter((msg) => msg.fromAgent === detailAgent.id || msg.toAgent === detailAgent.id)
           );
 
-          async function handleAgentChat(e: FormEvent<HTMLFormElement>) {
-            e.preventDefault();
+          async function submitAgentChat() {
             if (!agentChatContent.trim()) return;
+            const meetingId = snapshot?.meetings.find((m) => m.participants.includes(detailAgent.id))?.id
+              ?? snapshot?.meetings[0]?.id;
+            if (!meetingId) {
+              setError("No active meeting found to send this message to.");
+              return;
+            }
             setAgentChatSending(true);
             setError("");
             try {
-              const meetingId = snapshot?.meetings.find((m) => m.participants.includes(detailAgent.id))?.id
-                ?? snapshot?.meetings[0]?.id
-                ?? "general";
               const data = await sendMessage({
                 fromAgent: ceoMember?.id ?? "CEO",
                 toAgent: detailAgent.id,
@@ -1602,6 +1604,11 @@ export function App() {
             } finally {
               setAgentChatSending(false);
             }
+          }
+
+          function handleAgentChat(e: FormEvent<HTMLFormElement>) {
+            e.preventDefault();
+            void submitAgentChat();
           }
 
           return (
@@ -1755,8 +1762,7 @@ export function App() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
-                          const event = new Event("submit", { bubbles: true, cancelable: true });
-                          e.currentTarget.form?.dispatchEvent(event);
+                          void submitAgentChat();
                         }
                       }}
                     />
