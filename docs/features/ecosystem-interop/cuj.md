@@ -10,7 +10,7 @@ The CEO spins up a hybrid agent swarm containing a native OHC Manager Agent, an 
 
 | Step | User Action | System Trigger | Resulting State | Verification |
 |------|-------------|----------------|-----------------|--------------|
-| 1 | CEO uploads a multi-framework Skill Blueprint | Hub parses `blueprint.json` | Framework agents provisioned | Pods span up for AutoGen/CrewAI |
+| 1 | CEO uploads a multi-framework Skill Blueprint | Hub parses `blueprint.json` | Framework agents provisioned | Pods spin up for AutoGen/CrewAI |
 | 2 | CEO delegates a complex task | Hub creates LangGraph thread | Universal Agent Interface engaged | `thread_id` created in Postgres |
 | 3 | AutoGen Planner maps subtasks | AutoGen adapter intercepts | OHC pub/sub event generated | AutoGen conversational state persisted to LangGraph |
 | 4 | OpenClaw Researcher requests tool access | OpenClaw adapter calls MCP Switchboard | SPIFFE ID validated by MCP | Real-time state check-pointed to K8s CRD |
