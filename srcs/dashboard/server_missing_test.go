@@ -359,6 +359,80 @@ func TestHandleHealthzReadyz(t *testing.T) {
 	}
 }
 
+func TestHandleScale(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	tests := []struct {
+		name         string
+		method       string
+		body         string
+		expectedCode int
+	}{
+		{
+			name:         "MethodNotAllowed",
+			method:       http.MethodGet,
+			body:         ``,
+			expectedCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:         "InvalidJSON",
+			method:       http.MethodPost,
+			body:         `{`,
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			name:         "MissingRole",
+			method:       http.MethodPost,
+			body:         `{"count": 1}`,
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			name:         "Success",
+			method:       http.MethodPost,
+			body:         `{"role": "developer", "count": 1}`,
+			expectedCode: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(tt.method, "/api/v1/scale", strings.NewReader(tt.body))
+			rec := httptest.NewRecorder()
+			app.handleScale(rec, req)
+
+			if rec.Code != tt.expectedCode {
+				t.Errorf("expected code %d, got %d", tt.expectedCode, rec.Code)
+			}
+			if tt.expectedCode == http.StatusOK {
+				var response map[string]interface{}
+				if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
+					t.Fatalf("failed to decode response: %v", err)
+				}
+				if response["status"] != "success" {
+					t.Errorf("expected status 'success', got %v", response["status"])
+				}
+			}
+		})
+	}
+}
+
+func TestHandleScaleStream(t *testing.T) {
+	app, _, _ := newTestServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/scale/stream", nil)
+	rec := httptest.NewRecorder()
+
+	app.handleScaleStream(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+
+	body := rec.Body.String()
+	if !strings.Contains(body, `data: {"event":"K8s Operator: Reconciling TeamMember resource.","status":"INFO"}`) {
+		t.Errorf("expected stream to contain first event, got %s", body)
+	}
+}
+
 // ── Additional coverage: handleChatTest ──────────────────────────────────────
 
 func TestHandleChatTestMethodNotAllowed(t *testing.T) {

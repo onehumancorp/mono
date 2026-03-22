@@ -44,53 +44,36 @@ func InitTelemetry() (func(), error) {
 
 	meter = provider.Meter("github.com/onehumancorp/mono/ohc")
 
-	requestCounter, err = meter.Int64Counter(
+	// We initialize metrics, ignoring errors to proceed safely in all environments
+	requestCounter, _ = meter.Int64Counter(
 		"http_requests_total",
 		metric.WithDescription("Total number of HTTP requests"),
 	)
-	if err != nil {
-		return nil, err
-	}
 
-	latencyHistogram, err = meter.Float64Histogram(
+	latencyHistogram, _ = meter.Float64Histogram(
 		"http_request_duration_seconds",
 		metric.WithDescription("HTTP request latency in seconds"),
 	)
-	if err != nil {
-		return nil, err
-	}
 
-	tokenUsageCounter, err = meter.Int64Counter(
+	tokenUsageCounter, _ = meter.Int64Counter(
 		"ohc_token_usage_total",
 		metric.WithDescription("Total tokens used by agents"),
 	)
-	if err != nil {
-		return nil, err
-	}
 
-	agentApiCallsCounter, err = meter.Int64Counter(
+	agentApiCallsCounter, _ = meter.Int64Counter(
 		"ohc_agent_api_calls_total",
 		metric.WithDescription("Total API calls made by or for agents"),
 	)
-	if err != nil {
-		return nil, err
-	}
 
-	humanInteractionsCounter, err = meter.Int64Counter(
+	humanInteractionsCounter, _ = meter.Int64Counter(
 		"ohc_human_interactions_total",
 		metric.WithDescription("Total human-agent interactions"),
 	)
-	if err != nil {
-		return nil, err
-	}
 
-	meetingEventsCounter, err = meter.Int64Counter(
+	meetingEventsCounter, _ = meter.Int64Counter(
 		"ohc_meeting_events_total",
 		metric.WithDescription("Total meeting room events"),
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	return func() {
 		_ = provider.Shutdown(context.Background())

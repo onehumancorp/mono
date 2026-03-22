@@ -2,8 +2,10 @@ package telemetry
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -43,40 +45,6 @@ func TestInitTelemetry(t *testing.T) {
 	}
 
 	cleanup() // Clean up resources
-}
-
-func TestInitTelemetryError(t *testing.T) {
-	// Attempting to register again on the same registry will cause the exporter to fail setup sometimes
-	// Or we can mock the registerer to always return an error.
-	// We just want to get branch coverage for "if err != nil" from otelprom.New
-	// Create a registry and register a dummy collector with the same name that otelprom tries to use?
-	// otelprom uses standard prometheus go collector, etc.
-	// Best way is to just call it twice, otelprom might error out if we call otelprom.New multiple times with the same registerer.
-	reg := prometheus.NewRegistry()
-	prometheus.DefaultRegisterer = reg
-
-	// Init normally
-	cleanup, err := InitTelemetry()
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-	defer cleanup()
-
-	// Wait a moment
-	time.Sleep(time.Millisecond)
-
-	// Try init again without resetting registry.
-	// Wait, otelprom.New doesn't error on duplicate calls, it returns a new exporter.
-	// But it registers collectors. The second call to otelprom.New with the *same* registerer will try to register the same collectors.
-	// It will return an error because the collector is already registered!
-	cleanup2, err2 := InitTelemetry()
-	if err2 == nil {
-		// If it doesn't fail, we still pass the test, but won't cover the error path.
-		// So be it. We will accept missing a few lines if we can't force the error.
-		if cleanup2 != nil {
-			cleanup2()
-		}
-	}
 }
 
 func TestMiddleware(t *testing.T) {
@@ -210,4 +178,72 @@ func TestRecordFunctionsUninitialized(t *testing.T) {
 	})
 }
 
+type mockRegisterer struct{}
+
+func (m mockRegisterer) Register(c prometheus.Collector) error {
+	return prometheus.AlreadyRegisteredError{}
+}
+func (m mockRegisterer) MustRegister(c ...prometheus.Collector) {}
+func (m mockRegisterer) Unregister(c prometheus.Collector) bool { return false }
+
+func TestInitTelemetryError(t *testing.T) {
+	// Attempting to register again on the same registry will cause the exporter to fail setup sometimes
+	originalRegisterer := prometheus.DefaultRegisterer
+	defer func() { prometheus.DefaultRegisterer = originalRegisterer }()
+
+	prometheus.DefaultRegisterer = mockRegisterer{}
+
+	cleanup, err := InitTelemetry()
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+	if cleanup != nil {
+		t.Fatalf("expected nil cleanup, got non-nil")
+	}
+}
+
 // Add dummy test to trigger otelprom error for better coverage
+
+func TestLogAgentExecution(t *testing.T) {
+	ctx := context.Background()
+
+	// Capture log output
+	var buf strings.Builder
+	handler := slog.NewTextHandler(&buf, nil)
+
+	originalLogger := slog.Default()
+	defer slog.SetDefault(originalLogger)
+	slog.SetDefault(slog.New(handler))
+
+	agentID := "agent-123"
+	role := "developer"
+	api := "run_in_bash_session"
+	eventType := "task"
+	content := "executing command ls"
+
+	LogAgentExecution(ctx, agentID, role, api, eventType, content)
+
+	logOutput := buf.String()
+
+	if !strings.Contains(logOutput, "agent execution trace") {
+		t.Errorf("expected log to contain message, got %s", logOutput)
+	}
+	if !strings.Contains(logOutput, "component=telemetry") {
+		t.Errorf("expected log to contain component, got %s", logOutput)
+	}
+	if !strings.Contains(logOutput, "agent_id="+agentID) {
+		t.Errorf("expected log to contain agent_id, got %s", logOutput)
+	}
+	if !strings.Contains(logOutput, "role="+role) {
+		t.Errorf("expected log to contain role, got %s", logOutput)
+	}
+	if !strings.Contains(logOutput, "api="+api) {
+		t.Errorf("expected log to contain api, got %s", logOutput)
+	}
+	if !strings.Contains(logOutput, "event_type="+eventType) {
+		t.Errorf("expected log to contain event_type, got %s", logOutput)
+	}
+	if !strings.Contains(logOutput, "content=\"executing command ls\"") {
+		t.Errorf("expected log to contain content, got %s", logOutput)
+	}
+}
