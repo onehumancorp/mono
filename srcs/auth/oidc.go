@@ -10,11 +10,115 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
 )
+
+// AllowLocalIPsForTesting can be set to true by tests to allow resolving to localhost/127.0.0.1.
+// DO NOT use in production.
+var AllowLocalIPsForTesting = false
+
+// LookupIPFunc can be overridden in tests to simulate DNS responses.
+var LookupIPFunc = net.LookupIP
+
+// cgnatRange defines the RFC 6598 Shared Address Space (100.64.0.0/10)
+// often used in Kubernetes and cloud environments for pod networking.
+var _, cgnatRange, _ = net.ParseCIDR("100.64.0.0/10")
+
+// isBlockedIP returns true if the IP is private, loopback, or otherwise
+// restricted, preventing SSRF attacks against internal network resources.
+func isBlockedIP(ip net.IP) bool {
+	if AllowLocalIPsForTesting {
+		return false
+	}
+	return ip.IsLoopback() ||
+		ip.IsPrivate() ||
+		ip.IsUnspecified() ||
+		ip.IsLinkLocalUnicast() ||
+		ip.IsLinkLocalMulticast() ||
+		cgnatRange.Contains(ip)
+}
+
+// validateURL parses the URL, ensures it uses HTTP/HTTPS, and performs
+// DNS resolution to confirm it does not resolve to an internal/blocked IP.
+func validateURL(rawURL string) error {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %w", err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("invalid scheme %q (must be http/https)", u.Scheme)
+	}
+
+	ips, err := LookupIPFunc(u.Hostname())
+	if err != nil {
+		return fmt.Errorf("DNS lookup failed: %w", err)
+	}
+	if len(ips) == 0 {
+		return errors.New("no IP addresses found for host")
+	}
+
+	for _, ip := range ips {
+		if isBlockedIP(ip) {
+			return errors.New("URL resolves to a blocked IP address")
+		}
+	}
+
+	return nil
+}
+
+// initSafeHTTPClient returns an http.Client with a custom DialContext that prevents
+// DNS rebinding (TOCTOU) attacks by pinning the connection to the validated IP.
+func initSafeHTTPClient() *http.Client {
+	dialer := &net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
+
+	transport := &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			host, port, err := net.SplitHostPort(addr)
+			if err != nil {
+				return nil, err
+			}
+
+			ips, err := LookupIPFunc(host)
+			if err != nil {
+				return nil, err
+			}
+			if len(ips) == 0 {
+				return nil, errors.New("no IP addresses found")
+			}
+
+			for _, ip := range ips {
+				if isBlockedIP(ip) {
+					return nil, errors.New("URL resolves to a blocked IP address")
+				}
+			}
+
+			// Connect directly to the first validated IP
+			safeAddr := net.JoinHostPort(ips[0].String(), port)
+			return dialer.DialContext(ctx, network, safeAddr)
+		},
+	}
+
+	return &http.Client{
+		Transport: transport,
+		Timeout:   15 * time.Second,
+	}
+}
+
+var safeClient = initSafeHTTPClient()
 
 // Summary: OIDCConfig holds configuration for an external OIDC identity provider such as Keycloak or any compliant OAuth2/OIDC provider. Set OIDC_ISSUER_URL and OIDC_CLIENT_ID environment variables to enable.
 // Intent: OIDCConfig holds configuration for an external OIDC identity provider such as Keycloak or any compliant OAuth2/OIDC provider. Set OIDC_ISSUER_URL and OIDC_CLIENT_ID environment variables to enable.
@@ -76,11 +180,14 @@ func fetchJWKS(issuerURL string) ([]jwk, error) {
 
 	// Fetch discovery document
 	discURL := strings.TrimRight(issuerURL, "/") + "/.well-known/openid-configuration"
+	if err := validateURL(discURL); err != nil {
+		return nil, fmt.Errorf("validate discovery URL: %w", err)
+	}
 	req1, err := http.NewRequestWithContext(context.Background(), http.MethodGet, discURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create OIDC discovery request: %w", err)
 	}
-	resp, err := http.DefaultClient.Do(req1)
+	resp, err := safeClient.Do(req1)
 	if err != nil {
 		return nil, fmt.Errorf("fetch OIDC discovery: %w", err)
 	}
@@ -95,11 +202,14 @@ func fetchJWKS(issuerURL string) ([]jwk, error) {
 	}
 
 	// Fetch JWKS
+	if err := validateURL(disc.JWKSURI); err != nil {
+		return nil, fmt.Errorf("validate JWKS URL: %w", err)
+	}
 	req2, err := http.NewRequestWithContext(context.Background(), http.MethodGet, disc.JWKSURI, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create JWKS request: %w", err)
 	}
-	kjResp, err := http.DefaultClient.Do(req2)
+	kjResp, err := safeClient.Do(req2)
 	if err != nil {
 		return nil, fmt.Errorf("fetch JWKS: %w", err)
 	}

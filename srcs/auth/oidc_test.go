@@ -14,6 +14,10 @@ import (
 	"time"
 )
 
+func init() {
+	AllowLocalIPsForTesting = true
+}
+
 func TestRSAPublicKey(t *testing.T) {
 	t.Run("invalid key type", func(t *testing.T) {
 		k := jwk{Kty: "EC"}
@@ -99,7 +103,7 @@ func TestFetchJWKS(t *testing.T) {
 		jwksCache.Unlock()
 
 		_, err := fetchJWKS("http://invalid-url-that-does-not-exist.local")
-		if err == nil || !strings.Contains(err.Error(), "fetch OIDC discovery") {
+		if err == nil || (!strings.Contains(err.Error(), "fetch OIDC discovery") && !strings.Contains(err.Error(), "validate discovery URL")) {
 			t.Fatalf("expected discovery error, got %v", err)
 		}
 	})
@@ -156,7 +160,7 @@ func TestFetchJWKS(t *testing.T) {
 		jwksCache.Unlock()
 
 		_, err := fetchJWKS(issuerServer.URL)
-		if err == nil || !strings.Contains(err.Error(), "fetch JWKS") {
+		if err == nil || (!strings.Contains(err.Error(), "fetch JWKS") && !strings.Contains(err.Error(), "validate JWKS URL")) {
 			t.Fatalf("expected fetch JWKS error, got %v", err)
 		}
 	})
@@ -297,7 +301,7 @@ func TestValidateOIDCToken(t *testing.T) {
 			token: func() string {
 				return createTestJWT(priv, "test-key-1", map[string]interface{}{})
 			},
-			wantError: "fetch OIDC discovery",
+			wantError: "validate discovery URL",
 		},
 		{
 			name: "missing kid",

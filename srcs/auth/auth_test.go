@@ -17,6 +17,10 @@ import (
 	"github.com/onehumancorp/mono/srcs/auth"
 )
 
+func init() {
+	auth.AllowLocalIPsForTesting = true
+}
+
 // ── Store / user management ───────────────────────────────────────────────────
 
 func TestNewStore_AdminUserCreated(t *testing.T) {
