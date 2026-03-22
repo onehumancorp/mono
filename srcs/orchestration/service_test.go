@@ -339,6 +339,48 @@ func (m *mockStreamMessagesServer) Send(msg *pb.Message) error {
 	return nil
 }
 
+func TestPublish_SubscriptionBufferFull(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+
+	ch, unsubscribe := hub.Subscribe("receiver")
+	defer unsubscribe()
+
+	// Fill the channel buffer (capacity 1)
+	hub.Publish(Message{FromAgent: "sender", ToAgent: "receiver", Type: EventTask})
+
+	// This should trigger the default branch in select
+	err := hub.Publish(Message{FromAgent: "sender", ToAgent: "receiver", Type: EventStatus})
+	if err != nil {
+		t.Fatalf("expected publish to succeed even if subscription buffer is full, got: %v", err)
+	}
+
+	<-ch // drain
+}
+
+func TestPublish_MeetingSubscriptionBufferFull(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+
+	hub.OpenMeeting("m1", []string{"sender", "receiver"})
+
+	ch, unsubscribe := hub.Subscribe("receiver")
+	defer unsubscribe()
+
+	// Fill the channel buffer (capacity 1)
+	hub.Publish(Message{FromAgent: "sender", MeetingID: "m1", Type: EventTask})
+
+	// This should trigger the default branch in select
+	err := hub.Publish(Message{FromAgent: "sender", MeetingID: "m1", Type: EventStatus})
+	if err != nil {
+		t.Fatalf("expected publish to succeed even if subscription buffer is full, got: %v", err)
+	}
+
+	<-ch // drain
+}
+
 func TestHubServiceServer_StreamMessages(t *testing.T) {
 	hub := NewHub()
 	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
@@ -383,6 +425,122 @@ func TestHubServiceServer_StreamMessages(t *testing.T) {
 	}
 	if mockStream.messages[0].GetContent() != "Hello Streaming" {
 		t.Fatalf("expected 'Hello Streaming', got %q", mockStream.messages[0].GetContent())
+	}
+}
+
+// mockStreamMessagesServerWithError simulates an error during stream.Send
+type mockStreamMessagesServerWithError struct {
+	grpc.ServerStream
+	ctx context.Context
+}
+
+func (m *mockStreamMessagesServerWithError) Context() context.Context {
+	return m.ctx
+}
+
+func (m *mockStreamMessagesServerWithError) Send(msg *pb.Message) error {
+	return status.Error(codes.Internal, "simulated send error")
+}
+
+func TestHubServiceServer_StreamMessages_SendError(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	server := NewHubServiceServer(hub)
+
+	// Publish a message so the inbox has one to drain
+	_ = hub.Publish(Message{
+		ID:         "msg-1",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "Hello Streaming",
+		OccurredAt: time.Now(),
+	})
+
+	ctx := context.Background()
+	mockStream := &mockStreamMessagesServerWithError{ctx: ctx}
+
+	req := pb.StreamMessagesRequest_builder{
+		AgentId: "receiver",
+	}.Build()
+
+	err := server.StreamMessages(req, mockStream)
+	if err == nil {
+		t.Fatalf("expected StreamMessages to return an error, got nil")
+	}
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("expected Internal error, got %v", status.Code(err))
+	}
+}
+
+// mockStreamMessagesServerWithUpdateError succeeds on first send, fails on second
+type mockStreamMessagesServerWithUpdateError struct {
+	grpc.ServerStream
+	ctx     context.Context
+	sendCnt int
+}
+
+func (m *mockStreamMessagesServerWithUpdateError) Context() context.Context {
+	return m.ctx
+}
+
+func (m *mockStreamMessagesServerWithUpdateError) Send(msg *pb.Message) error {
+	if m.sendCnt == 1 {
+		return status.Error(codes.Internal, "simulated send error on update")
+	}
+	m.sendCnt++
+	return nil
+}
+
+func TestHubServiceServer_StreamMessages_SendError_OnUpdate(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	server := NewHubServiceServer(hub)
+
+	// Publish first message so it's in the inbox
+	_ = hub.Publish(Message{
+		ID:         "msg-1",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "First message",
+		OccurredAt: time.Now(),
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	mockStream := &mockStreamMessagesServerWithUpdateError{ctx: ctx}
+
+	req := pb.StreamMessagesRequest_builder{
+		AgentId: "receiver",
+	}.Build()
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- server.StreamMessages(req, mockStream)
+	}()
+
+	// Wait for the first message to be sent
+	time.Sleep(50 * time.Millisecond)
+
+	// Publish a new message to trigger the <-ch select case
+	_ = hub.Publish(Message{
+		ID:         "msg-2",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "Second message",
+		OccurredAt: time.Now(),
+	})
+
+	err := <-errCh
+	if err == nil {
+		t.Fatalf("expected StreamMessages to return an error, got nil")
+	}
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("expected Internal error, got %v", status.Code(err))
 	}
 }
 
@@ -487,6 +645,28 @@ func TestHubServiceServer_Reason_And_MinimaxClient(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMinimaxClient_Reason_NewRequestError(t *testing.T) {
+	originalURL := minimaxAPIURL
+	defer func() { minimaxAPIURL = originalURL }()
+
+	// Provide an invalid URL that fails http.NewRequestWithContext
+	minimaxAPIURL = "://invalid-url"
+
+	client := NewMinimaxClient("valid-key")
+	ctx := context.Background()
+
+	_, err := client.Reason(ctx, "Test prompt")
+	if err == nil {
+		t.Fatalf("expected error from http.NewRequestWithContext, got nil")
+	}
+}
+
+func TestMinimaxClient_Reason_JSONEncodeError(t *testing.T) {
+	// Note: It's notoriously difficult to make json.Encode fail on a valid string.
+	// We do not strictly need to cover json.Encode err branch unless coverage requires it.
+	// Since Go 1.22+ handles invalid UTF8 safely, hitting it without a mocked encoder is hard.
 }
 
 func TestRegisterHubService(t *testing.T) {
