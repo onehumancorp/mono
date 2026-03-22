@@ -836,3 +836,146 @@ func TestHandleBudgetAlerts_NotifyAtPctHandling(t *testing.T) {
 		})
 	}
 }
+
+func TestHandleScale_MethodNotAllowed(t *testing.T) {
+	app, _, _ := newTestServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/scale", nil)
+	rec := httptest.NewRecorder()
+	app.handleScale(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+}
+
+func TestHandleScale_InvalidJSON(t *testing.T) {
+	app, _, _ := newTestServer(t)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/scale", strings.NewReader("bad json"))
+	rec := httptest.NewRecorder()
+	app.handleScale(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandleScale_MissingRole(t *testing.T) {
+	app, _, _ := newTestServer(t)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/scale", strings.NewReader(`{"count": 2}`))
+	rec := httptest.NewRecorder()
+	app.handleScale(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandleScaleStream_Success(t *testing.T) {
+	app, _, _ := newTestServer(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/scale/stream", nil)
+	rec := httptest.NewRecorder()
+	app.handleScaleStream(rec, req)
+
+	// Since we are mocking with sleep inside the handler, the request will take ~3 seconds
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "data: ") {
+		t.Errorf("expected SSE data format, got %s", rec.Body.String())
+	}
+}
+
+func TestHandleScale_Success(t *testing.T) {
+	app, _, _ := newTestServer(t)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/scale", strings.NewReader(`{"role": "worker", "count": 2}`))
+	rec := httptest.NewRecorder()
+	app.handleScale(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+}
+
+// ── Additional coverage: server.go error paths ───────────────────────────────
+
+func TestHandleMCPInvokeInvokeError(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Since we know telegram without content returns an error
+	reqBody := `{"toolId":"telegram-mcp","params":{}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/invoke", strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.handleMCPInvoke(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestNewServerNilAuthStore(t *testing.T) {
+	app, _, _ := newTestServer(t)
+	appHandler := NewServer(app.org, app.hub, app.tracker, nil)
+	if appHandler == nil {
+		t.Fatalf("expected non-nil server handler")
+	}
+}
+
+func TestInvokeMCPTool_GitError(t *testing.T) {
+	app, _, _ := newTestServer(t)
+	// We pass invalid git tool config to trigger error
+	reqBody := `{"toolId":"git-mcp","params":{"integrationId": "not-found"}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/invoke", strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.handleMCPInvoke(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for failing git invocation, got %d", rec.Code)
+	}
+}
+
+func TestInvokeMCPTool_IssueError(t *testing.T) {
+	app, _, _ := newTestServer(t)
+	// We pass invalid jira tool config to trigger error
+	reqBody := `{"toolId":"jira-mcp","params":{"integrationId": "not-found"}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/invoke", strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.handleMCPInvoke(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for failing jira invocation, got %d", rec.Code)
+	}
+}
+
+func TestInvokeMCPTool_TelegramError(t *testing.T) {
+	app, _, _ := newTestServer(t)
+	// Telegram failure - bad integration
+	reqBody := `{"toolId":"telegram-mcp","params":{"integrationId": "not-found", "channel": "c", "content": "c"}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/invoke", strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.handleMCPInvoke(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for failing telegram invocation, got %d", rec.Code)
+	}
+}
+
+func TestNewServerWithAuthStore(t *testing.T) {
+	app, _, _ := newTestServer(t)
+	appHandler := NewServer(app.org, app.hub, app.tracker, app.authStore)
+	if appHandler == nil {
+		t.Fatalf("expected non-nil server handler")
+	}
+}
+
+func TestNewServerWithAPIKeys(t *testing.T) {
+	app, _, _ := newTestServer(t)
+	// Set environment variables to cover the startup authentication flow
+	t.Setenv("MINIMAX_API_KEY", "test-minimax-key")
+	t.Setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
+	t.Setenv("GEMINI_API_KEY", "test-gemini-key")
+	t.Setenv("OPENAI_API_KEY", "test-openai-key")
+	appHandler := NewServer(app.org, app.hub, app.tracker, app.authStore)
+	if appHandler == nil {
+		t.Fatalf("expected non-nil server handler")
+	}
+}
