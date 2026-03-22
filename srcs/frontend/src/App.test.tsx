@@ -158,6 +158,60 @@ describe("App", () => {
     await screen.findByText("Request failed for /api/messages: 400");
   });
 
+  it("shows friendly message when recipient agent is not registered", async () => {
+    const fetchMock = vi.fn(async (input: string) => {
+      if (input === "/api/messages") {
+        return { ok: false, status: 400, json: async () => ({}), text: async () => "recipient agent is not registered" };
+      }
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      return mockJson({}, 404);
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
+
+    await screen.findByText(/The recipient agent could not be found/i);
+  });
+
+  it("shows friendly message when meeting room is not registered", async () => {
+    const fetchMock = vi.fn(async (input: string) => {
+      if (input === "/api/messages") {
+        return { ok: false, status: 400, json: async () => ({}), text: async () => "meeting room is not registered" };
+      }
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      return mockJson({}, 404);
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
+
+    await screen.findByText(/This virtual meeting room has been closed/i);
+  });
+
+  it("shows friendly message when sender agent is not registered", async () => {
+    const fetchMock = vi.fn(async (input: string) => {
+      if (input === "/api/messages") {
+        return { ok: false, status: 400, json: async () => ({}), text: async () => "sender agent is not registered" };
+      }
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      return mockJson({}, 404);
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    render(<App />);
+
+    await screen.findByText("Acme Software");
+    fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
+
+    await screen.findByText(/The sending agent is no longer active/i);
+  });
+
   it("refreshes snapshot when refresh button is pressed", async () => {
     const fetchMock = vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
@@ -2964,5 +3018,312 @@ describe("App - Dynamic Scaling", () => {
       fireEvent.change(sliders[1], { target: { value: "8" } });
       fireEvent.change(sliders[2], { target: { value: "10" } });
     });
+  });
+});
+
+// ── Agent Chat (detail view) ──────────────────────────────────────────────────
+
+// Payload with an agent that participates in a meeting so the chat path can
+// look up a meetingId without falling through to the "no meeting" error.
+const agentChatPayload = {
+  ...richPayload,
+  organization: {
+    ...richPayload.organization,
+    ceoId: "ceo-1",
+    members: [
+      { id: "ceo-1", name: "Alice CEO", role: "CEO", isHuman: true },
+      { id: "swe-1", name: "Bob SWE", role: "SOFTWARE_ENGINEER", managerId: "ceo-1" },
+    ],
+  },
+  agents: [
+    { id: "ceo-1", name: "Alice CEO", role: "CEO", organizationId: "org-1", status: "ACTIVE" },
+    { id: "swe-1", name: "Bob SWE", role: "SOFTWARE_ENGINEER", organizationId: "org-1", status: "IN_MEETING" },
+  ],
+  meetings: [
+    {
+      id: "sprint-1",
+      participants: ["ceo-1", "swe-1"],
+      transcript: [
+        {
+          id: "msg-t1",
+          fromAgent: "swe-1",
+          toAgent: "ceo-1",
+          type: "task",
+          content: "Auth refactor done",
+          meetingId: "sprint-1",
+          occurredAt: "2026-03-13T00:00:00Z",
+        },
+      ],
+    },
+  ],
+  costs: {
+    organizationID: "org-1",
+    totalTokens: 200,
+    totalCostUSD: 0.02,
+    agents: [{ agentID: "swe-1", model: "gpt-4o", tokenUsed: 200, costUSD: 0.02 }],
+  },
+};
+
+function makeAgentChatFetch(overrides?: Record<string, unknown>) {
+  return vi.fn(async (input: string, init?: RequestInit) => {
+    if (input === "/api/dashboard") return mockJson(overrides ?? agentChatPayload);
+    if (input === "/api/messages" && init?.method === "POST") return mockJson(agentChatPayload);
+    return mockJson({}, 404);
+  });
+}
+
+describe("App – agent chat detail view", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  async function openAgentDetail(name = "Bob SWE") {
+    render(<App />);
+    await screen.findByText("One Human Corp Dashboard");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    await screen.findByText("Agent Network");
+    // Click the agent card (role="button" article with aria-label)
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(`View details for ${name}`, "i") }));
+    await screen.findByText(`Chat with ${name}`);
+  }
+
+  it("shows agent detail heading and chat box when agent card is clicked", async () => {
+    vi.stubGlobal("fetch", makeAgentChatFetch());
+    await openAgentDetail("Bob SWE");
+    expect(screen.getByText("Chat with Bob SWE")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Send a message to Bob SWE…")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
+  });
+
+  it("back button returns to agent list", async () => {
+    vi.stubGlobal("fetch", makeAgentChatFetch());
+    await openAgentDetail("Bob SWE");
+    fireEvent.click(screen.getByRole("button", { name: /back to agents/i }));
+    await screen.findByText("Agent Network");
+  });
+
+  it("Send button is enabled when textarea has content", async () => {
+    vi.stubGlobal("fetch", makeAgentChatFetch());
+    await openAgentDetail("Bob SWE");
+    const textarea = screen.getByPlaceholderText("Send a message to Bob SWE…");
+    fireEvent.change(textarea, { target: { value: "Hello Bob" } });
+    expect(screen.getByRole("button", { name: "Send" })).not.toBeDisabled();
+  });
+
+  it("submits chat message and clears textarea on success", async () => {
+    vi.stubGlobal("fetch", makeAgentChatFetch());
+    await openAgentDetail("Bob SWE");
+    const textarea = screen.getByPlaceholderText("Send a message to Bob SWE…");
+    fireEvent.change(textarea, { target: { value: "Hello Bob" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    });
+    await waitFor(() => expect((textarea as HTMLTextAreaElement).value).toBe(""));
+  });
+
+  it("submitting via Enter key also sends the message", async () => {
+    vi.stubGlobal("fetch", makeAgentChatFetch());
+    await openAgentDetail("Bob SWE");
+    const textarea = screen.getByPlaceholderText("Send a message to Bob SWE…");
+    fireEvent.change(textarea, { target: { value: "Enter key test" } });
+    await act(async () => {
+      fireEvent.keyDown(textarea, { key: "Enter", shiftKey: false });
+    });
+    await waitFor(() => expect((textarea as HTMLTextAreaElement).value).toBe(""));
+  });
+
+  it("Shift+Enter does not submit the message", async () => {
+    const fetchMock = makeAgentChatFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    await openAgentDetail("Bob SWE");
+    const textarea = screen.getByPlaceholderText("Send a message to Bob SWE…");
+    fireEvent.change(textarea, { target: { value: "Shift+Enter test" } });
+    fireEvent.keyDown(textarea, { key: "Enter", shiftKey: true });
+    // Message API should not have been called yet
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/messages", expect.objectContaining({ method: "POST" }));
+  });
+
+  it("shows error when there is no active meeting for the agent", async () => {
+    const noMeetingPayload = {
+      ...agentChatPayload,
+      meetings: [],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(noMeetingPayload);
+      return mockJson({}, 404);
+    }));
+    await openAgentDetail("Bob SWE");
+    const textarea = screen.getByPlaceholderText("Send a message to Bob SWE…");
+    fireEvent.change(textarea, { target: { value: "Hey" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    });
+    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+    expect(screen.getByRole("alert").textContent).toMatch(/No active meeting/i);
+  });
+
+  it("shows error when send message API fails", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (input === "/api/dashboard") return mockJson(agentChatPayload);
+      if (input === "/api/messages" && init?.method === "POST") return mockJson({}, 500);
+      return mockJson({}, 404);
+    }));
+    await openAgentDetail("Bob SWE");
+    const textarea = screen.getByPlaceholderText("Send a message to Bob SWE…");
+    fireEvent.change(textarea, { target: { value: "Trigger error" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    });
+    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+  });
+
+  it("shows activity tab with agent messages", async () => {
+    vi.stubGlobal("fetch", makeAgentChatFetch());
+    await openAgentDetail("Bob SWE");
+    fireEvent.click(screen.getByRole("button", { name: /activity/i }));
+    await screen.findByText("Auth refactor done");
+  });
+
+  it("shows empty activity when agent has no messages", async () => {
+    const noActivityPayload = {
+      ...agentChatPayload,
+      meetings: [{ id: "sprint-1", participants: ["ceo-1", "swe-1"], transcript: [] }],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(noActivityPayload);
+      return mockJson({}, 404);
+    }));
+    await openAgentDetail("Bob SWE");
+    fireEvent.click(screen.getByRole("button", { name: /activity/i }));
+    await screen.findByText("No activity recorded for this agent.");
+  });
+
+  it("shows metrics tab with agent cost", async () => {
+    vi.stubGlobal("fetch", makeAgentChatFetch());
+    await openAgentDetail("Bob SWE");
+    fireEvent.click(screen.getByRole("button", { name: /metrics/i }));
+    await screen.findByText("Token Usage & Cost");
+    expect(screen.getByText("gpt-4o")).toBeInTheDocument();
+  });
+
+  it("shows empty cost when agent has no cost data", async () => {
+    const noCostPayload = {
+      ...agentChatPayload,
+      costs: { organizationID: "org-1", totalTokens: 0, totalCostUSD: 0, agents: [] },
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(noCostPayload);
+      return mockJson({}, 404);
+    }));
+    await openAgentDetail("Bob SWE");
+    fireEvent.click(screen.getByRole("button", { name: /metrics/i }));
+    await screen.findByText("No cost data recorded for this agent yet.");
+  });
+
+  it("shows 'Agent not found' when selectedAgentID has no match", async () => {
+    // Load the agents page then navigate to a non-existent agent ID via
+    // the agentChatPayload with no matching agent for 'ghost-id'.
+    // We set up a payload with only CEO so clicking CEO card shows its detail,
+    // then manually switch payload to remove that agent on the next render.
+    const noAgentPayload = {
+      ...agentChatPayload,
+      agents: [],
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(noAgentPayload);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("One Human Corp Dashboard");
+    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
+    await screen.findByText(/No agents registered/);
+  });
+
+  it("submitting empty message is a no-op (send stays disabled)", async () => {
+    vi.stubGlobal("fetch", makeAgentChatFetch());
+    await openAgentDetail("Bob SWE");
+    // Send button remains disabled with empty textarea
+    const sendBtn = screen.getByRole("button", { name: "Send" });
+    expect(sendBtn).toBeDisabled();
+    // Simulate form submit directly (should be no-op)
+    const form = sendBtn.closest("form") as HTMLFormElement;
+    await act(async () => {
+      fireEvent.submit(form);
+    });
+    // No message API call
+    await waitFor(() => {
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
+        ([url, init]: [string, RequestInit?]) => url === "/api/messages" && init?.method === "POST"
+      );
+      expect(calls).toHaveLength(0);
+    });
+  });
+
+  it("shows 'No role profile found' when agent role has no matching profile", async () => {
+    // Use a payload where the agent's role is not in roleProfiles
+    const noProfilePayload = {
+      ...agentChatPayload,
+      organization: {
+        ...agentChatPayload.organization,
+        roleProfiles: [],
+      },
+    };
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(noProfilePayload);
+      return mockJson({}, 404);
+    }));
+    await openAgentDetail("Bob SWE");
+    // Default tab is config — should show "No role profile found"
+    await screen.findByText(/No role profile found for SOFTWARE ENGINEER/i);
+  });
+});
+
+// ── Handoffs tab ──────────────────────────────────────────────────────────────
+
+describe("App – handoffs tab", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("shows empty state when there are no pending handoffs", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/handoffs") return mockJson([]);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("One Human Corp Dashboard");
+    fireEvent.click(screen.getByRole("button", { name: /handoffs/i }));
+    await screen.findByText("Warm Handoffs");
+    await screen.findByText("No pending handoffs found.");
+  });
+
+  it("shows handoff cards when handoffs exist", async () => {
+    const handoffs = [
+      {
+        id: "hoff-1",
+        fromAgentId: "swe-1",
+        toHumanRole: "Engineering Manager",
+        intent: "Needs architecture review",
+        currentState: "Draft PR",
+        status: "pending",
+        failedAttempts: 1,
+        createdAt: "2026-03-13T00:00:00Z",
+      },
+    ];
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/handoffs") return mockJson(handoffs);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("One Human Corp Dashboard");
+    fireEvent.click(screen.getByRole("button", { name: /handoffs/i }));
+    await screen.findByText("Warm Handoffs");
+    await screen.findByText("Escalated by swe-1");
+    expect(screen.getByText("Needs architecture review")).toBeInTheDocument();
+    expect(screen.getByText(/Failed Attempts: 1/)).toBeInTheDocument();
   });
 });
