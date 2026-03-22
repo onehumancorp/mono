@@ -352,6 +352,18 @@ export function createHandoff(body: {
   return postJSON<HandoffPackage>("/api/handoffs", body);
 }
 
+/**
+ * Summary: Updates the status of a handoff escalation (e.g. acknowledged or resolved).
+ * Intent: Updates the status of a handoff escalation (e.g. acknowledged or resolved).
+ * Params: handoffId, status
+ * Returns: Promise<HandoffPackage[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+export function resolveHandoff(handoffId: string, status: "acknowledged" | "resolved"): Promise<HandoffPackage[]> {
+  return postJSON<HandoffPackage[]>("/api/handoffs/resolve", { handoffId, status });
+}
+
 // ── Identity Management ───────────────────────────────────────────────────────
 
 /**

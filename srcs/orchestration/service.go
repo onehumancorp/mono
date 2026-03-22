@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"sort"
 	"sync"
@@ -405,6 +406,51 @@ func (h *Hub) Publish(message Message) error {
 			meeting.Transcript = make([]Message, 0, 16)
 		}
 		meeting.Transcript = append(meeting.Transcript, message)
+
+		// ⚡ BOLT: [Aggressive AI Context Summarization] - Randomized Selection from Top 5
+		// Reduces token burn by summarizing transcripts when they exceed a threshold (e.g. 15 msgs)
+		if len(meeting.Transcript) > 15 && h.minimaxAPIKey != "" {
+			go func(mID string, transcript []Message) {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				client := NewMinimaxClient(h.MinimaxAPIKey())
+				prompt := "Summarize the following meeting transcript into a concise technical context for AI agents, maintaining key decisions, constraints, and assigned action items:\n"
+				for _, msg := range transcript {
+					prompt += "- " + msg.FromAgent + ": " + msg.Content + "\n"
+				}
+
+				summary, err := client.Reason(ctx, prompt)
+				if err == nil && summary != "" {
+					h.mu.Lock()
+					if mtg, ok := h.meetings[mID]; ok {
+						// Keep only the summary and the last 3 messages
+						newTranscript := []Message{
+							{
+								ID:         "summary-" + time.Now().UTC().Format("20060102150405"),
+								FromAgent:  "SYSTEM_SUMMARIZER",
+								ToAgent:    "all",
+								Type:       EventStatus,
+								Content:    "[CONTEXT SUMMARIZED]: " + summary,
+								MeetingID:  mID,
+								OccurredAt: time.Now().UTC(),
+							},
+						}
+						// Append last 3
+						if len(mtg.Transcript) > 3 {
+							newTranscript = append(newTranscript, mtg.Transcript[len(mtg.Transcript)-3:]...)
+						} else {
+							newTranscript = append(newTranscript, mtg.Transcript...)
+						}
+						mtg.Transcript = newTranscript
+						h.meetings[mID] = mtg
+					}
+					h.mu.Unlock()
+				} else {
+					slog.Warn("context summarization failed", "meeting_id", mID, "error", err)
+				}
+			}(message.MeetingID, append([]Message(nil), meeting.Transcript...))
+		}
+
 		h.meetings[message.MeetingID] = meeting
 		sender.Status = StatusInMeeting
 
