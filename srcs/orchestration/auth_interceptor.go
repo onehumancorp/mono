@@ -57,37 +57,56 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 		// onehumancorp.io/{orgID}/{agentID} (from dashboard UI logic)
 		// ohc.os/agent/{agentID} (from interop adapters)
 
-		// Parse the SPIFFE ID strictly to avoid spoofing attacks.
+		// ⚡ BOLT: [Zero-allocation SPIFFE ID parsing] - Randomized Selection from Top 5
+		// Parse the SPIFFE ID strictly to avoid spoofing attacks without memory allocations.
 		trimmed := strings.TrimPrefix(spiffeID, "spiffe://")
-		parts := strings.Split(trimmed, "/")
-		if len(parts) < 3 {
+
+		// Fast path rejection
+		if strings.Count(trimmed, "/") < 2 {
 			return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID lacks required path segments for agent identity: %s", spiffeID)
 		}
+
+		var parts [5]string
+		var n int
+		start := 0
+		for i := 0; i < len(trimmed); i++ {
+			if trimmed[i] == '/' {
+				if n < 5 {
+					parts[n] = trimmed[start:i]
+				}
+				n++
+				start = i + 1
+			}
+		}
+		if n < 5 {
+			parts[n] = trimmed[start:]
+		}
+		n++ // Final segment count
 
 		var agentID string
 		domain := parts[0]
 
 		if domain == "onehumancorp.io" {
 			// format: onehumancorp.io/{orgID}/{agentID}
-			if len(parts) != 3 {
+			if n != 3 {
 				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain onehumancorp.io: %s", spiffeID)
 			}
 			agentID = parts[2]
 		} else if domain == "ohc.local" {
 			// format: ohc.local/org/{orgID}/agent/{agentID}
-			if len(parts) != 5 || parts[1] != "org" || parts[3] != "agent" {
+			if n != 5 || parts[1] != "org" || parts[3] != "agent" {
 				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.local: %s", spiffeID)
 			}
 			agentID = parts[4]
 		} else if domain == "ohc.os" {
 			// format: ohc.os/agent/{agentID}
-			if len(parts) != 3 || parts[1] != "agent" {
+			if n != 3 || parts[1] != "agent" {
 				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.os: %s", spiffeID)
 			}
 			agentID = parts[2]
 		} else if domain == "ohc.global" || strings.HasSuffix(domain, ".ohc.global") {
 			// format: {region}.ohc.global/org/{orgID}/agent/{agentID}
-			if len(parts) != 5 || parts[1] != "org" || parts[3] != "agent" {
+			if n != 5 || parts[1] != "org" || parts[3] != "agent" {
 				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain %s: %s", domain, spiffeID)
 			}
 			agentID = parts[4]
@@ -130,37 +149,56 @@ func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
 			return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID format: %s", spiffeID)
 		}
 
-		// Parse the SPIFFE ID strictly to avoid spoofing attacks.
+		// ⚡ BOLT: [Zero-allocation SPIFFE ID parsing] - Randomized Selection from Top 5
+		// Parse the SPIFFE ID strictly to avoid spoofing attacks without memory allocations.
 		trimmed := strings.TrimPrefix(spiffeID, "spiffe://")
-		parts := strings.Split(trimmed, "/")
-		if len(parts) < 3 {
+
+		// Fast path rejection
+		if strings.Count(trimmed, "/") < 2 {
 			return status.Errorf(codes.PermissionDenied, "SPIFFE ID lacks required path segments for agent identity: %s", spiffeID)
 		}
+
+		var parts [5]string
+		var n int
+		start := 0
+		for i := 0; i < len(trimmed); i++ {
+			if trimmed[i] == '/' {
+				if n < 5 {
+					parts[n] = trimmed[start:i]
+				}
+				n++
+				start = i + 1
+			}
+		}
+		if n < 5 {
+			parts[n] = trimmed[start:]
+		}
+		n++ // Final segment count
 
 		var agentID string
 		domain := parts[0]
 
 		if domain == "onehumancorp.io" {
 			// format: onehumancorp.io/{orgID}/{agentID}
-			if len(parts) != 3 {
+			if n != 3 {
 				return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain onehumancorp.io: %s", spiffeID)
 			}
 			agentID = parts[2]
 		} else if domain == "ohc.local" {
 			// format: ohc.local/org/{orgID}/agent/{agentID}
-			if len(parts) != 5 || parts[1] != "org" || parts[3] != "agent" {
+			if n != 5 || parts[1] != "org" || parts[3] != "agent" {
 				return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.local: %s", spiffeID)
 			}
 			agentID = parts[4]
 		} else if domain == "ohc.os" {
 			// format: ohc.os/agent/{agentID}
-			if len(parts) != 3 || parts[1] != "agent" {
+			if n != 3 || parts[1] != "agent" {
 				return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.os: %s", spiffeID)
 			}
 			agentID = parts[2]
 		} else if domain == "ohc.global" || strings.HasSuffix(domain, ".ohc.global") {
 			// format: {region}.ohc.global/org/{orgID}/agent/{agentID}
-			if len(parts) != 5 || parts[1] != "org" || parts[3] != "agent" {
+			if n != 5 || parts[1] != "org" || parts[3] != "agent" {
 				return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain %s: %s", domain, spiffeID)
 			}
 			agentID = parts[4]
