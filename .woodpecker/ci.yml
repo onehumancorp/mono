@@ -1,0 +1,59 @@
+---
+# Woodpecker CI pipeline — mirrors .github/workflows/ci.yml
+#
+# Triggers: push to main, or any pull-request targeting main.
+# Caching:  BuildBuddy remote cache (always on, via .bazelrc build:remote).
+#           Local disk/repo caches are persisted via host-mounted volumes so
+#           successive pipeline runs on the same agent stay fast.
+
+when:
+  - event: push
+    branch: main
+  - event: pull_request
+    branch: main
+
+# Cancel any already-running pipeline for the same branch/PR to save resources
+# (equivalent to GitHub Actions `concurrency.cancel-in-progress: true`).
+labels:
+  woodpecker/cancel-previous-workflow: "true"
+
+# Hard wall-clock cap for the whole pipeline (minutes).
+timeout: 60
+
+steps:
+  - name: bazel-test
+    image: ghcr.io/catthehacker/ubuntu:act-24.04
+    # Persist Bazel's disk and repository caches between runs on the same agent.
+    # The host directories are created automatically by the Docker daemon the
+    # first time; no pre-provisioning needed.
+    volumes:
+      - /var/cache/woodpecker/bazel-disk:/root/.cache/bazel-disk
+      - /var/cache/woodpecker/bazel-repo:/root/.cache/bazel-repo
+    environment:
+      # Write-enabled BuildBuddy API key for remote cache uploads.
+      BUILDBUDDY_API_KEY:
+        from_secret: BUILDBUDDY_OFFICIAL_API_KEY
+    commands:
+      # ── Set up bazelisk (pre-installed in act-24.04, or easy install) ──────
+      # Note: act-24.04 often has bazelisk, but let's ensure 'bazel' works.
+      - |
+        if ! command -v bazelisk &> /dev/null; then
+          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazelisk
+          chmod +x /usr/local/bin/bazelisk
+        fi
+        ln -sf /usr/local/bin/bazelisk /usr/local/bin/bazel
+
+      # ── Run all tests ───────────────────────────────────────────────────────
+      # --disk_cache / --repository_cache  → local volume-backed caches
+      # --remote_header                     → authenticates BuildBuddy remote
+      #                                       cache (defined in .bazelrc's
+      #                                       build:buildbuddy-official config,
+      #                                       overridden here with the secret).
+      - >-
+        bazelisk test //...
+        --test_output=errors
+        --test_summary=terse
+        --test_timeout=300,600,900,1800
+        --disk_cache=/root/.cache/bazel-disk
+        --repository_cache=/root/.cache/bazel-repo
+        --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY
