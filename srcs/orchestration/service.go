@@ -762,9 +762,7 @@ func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, erro
 	buf.WriteString(`{"model":"MiniMax-M2.7","messages":[{"role":"user","content":`)
 	enc := json.NewEncoder(buf)
 	enc.SetEscapeHTML(false)
-	if err := enc.Encode(prompt); err != nil {
-		return "", err
-	}
+	_ = enc.Encode(prompt)
 	// Encode adds a newline, so we slice it off and add the closing brackets
 	buf.Truncate(buf.Len() - 1)
 	buf.WriteString(`}]}`)
