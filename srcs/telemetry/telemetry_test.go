@@ -1,7 +1,9 @@
 package telemetry
 
 import (
+	"bytes"
 	"context"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -210,4 +212,52 @@ func TestRecordFunctionsUninitialized(t *testing.T) {
 	})
 }
 
-// Add dummy test to trigger otelprom error for better coverage
+func TestLogAgentExecution(t *testing.T) {
+	// Redirect slog output to a buffer to capture it
+	var buf bytes.Buffer
+	handler := slog.NewTextHandler(&buf, nil)
+	originalLogger := slog.Default()
+	slog.SetDefault(slog.New(handler))
+	defer slog.SetDefault(originalLogger)
+
+	ctx := context.Background()
+	LogAgentExecution(ctx, "agent-1", "role-1", "api-1", "event-1", "content-1")
+
+	output := buf.String()
+	if !bytes.Contains(buf.Bytes(), []byte("agent execution trace")) {
+		t.Errorf("Expected output to contain 'agent execution trace', got %q", output)
+	}
+	if !bytes.Contains(buf.Bytes(), []byte("agent_id=agent-1")) {
+		t.Errorf("Expected output to contain 'agent_id=agent-1', got %q", output)
+	}
+	if !bytes.Contains(buf.Bytes(), []byte("role=role-1")) {
+		t.Errorf("Expected output to contain 'role=role-1', got %q", output)
+	}
+}
+
+// A custom prometheus.Registerer that always returns an error
+type errorRegisterer struct{}
+
+func (e errorRegisterer) Register(prometheus.Collector) error {
+	return prometheus.AlreadyRegisteredError{} // or any error
+}
+
+func (e errorRegisterer) MustRegister(...prometheus.Collector) {
+	panic("mock error")
+}
+
+func (e errorRegisterer) Unregister(prometheus.Collector) bool {
+	return true
+}
+
+func TestInitTelemetry_PrometheusError(t *testing.T) {
+	originalReg := prometheus.DefaultRegisterer
+	defer func() { prometheus.DefaultRegisterer = originalReg }()
+
+	prometheus.DefaultRegisterer = errorRegisterer{}
+
+	_, err := InitTelemetry()
+	if err == nil {
+		t.Errorf("Expected error from InitTelemetry due to registerer failure")
+	}
+}
