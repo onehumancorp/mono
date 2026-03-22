@@ -1,14 +1,27 @@
 package telemetry
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/metric"
 )
+
+type mockRegisterer struct {
+	prometheus.Registerer
+}
+
+func (m *mockRegisterer) Register(prometheus.Collector) error {
+	return errors.New("mock register error")
+}
 
 func TestInitTelemetry(t *testing.T) {
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
@@ -46,36 +59,70 @@ func TestInitTelemetry(t *testing.T) {
 }
 
 func TestInitTelemetryError(t *testing.T) {
-	// Attempting to register again on the same registry will cause the exporter to fail setup sometimes
-	// Or we can mock the registerer to always return an error.
-	// We just want to get branch coverage for "if err != nil" from otelprom.New
-	// Create a registry and register a dummy collector with the same name that otelprom tries to use?
-	// otelprom uses standard prometheus go collector, etc.
-	// Best way is to just call it twice, otelprom might error out if we call otelprom.New multiple times with the same registerer.
-	reg := prometheus.NewRegistry()
-	prometheus.DefaultRegisterer = reg
+	originalRegisterer := prometheus.DefaultRegisterer
+	prometheus.DefaultRegisterer = &mockRegisterer{}
+	defer func() { prometheus.DefaultRegisterer = originalRegisterer }()
 
-	// Init normally
 	cleanup, err := InitTelemetry()
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	if err == nil {
+		t.Fatal("expected error, got nil")
 	}
-	defer cleanup()
+	if cleanup != nil {
+		t.Fatal("expected nil cleanup, got non-nil")
+	}
+}
 
-	// Wait a moment
-	time.Sleep(time.Millisecond)
+type errMeter struct {
+	metric.Meter
+	failAt string
+}
 
-	// Try init again without resetting registry.
-	// Wait, otelprom.New doesn't error on duplicate calls, it returns a new exporter.
-	// But it registers collectors. The second call to otelprom.New with the *same* registerer will try to register the same collectors.
-	// It will return an error because the collector is already registered!
-	cleanup2, err2 := InitTelemetry()
-	if err2 == nil {
-		// If it doesn't fail, we still pass the test, but won't cover the error path.
-		// So be it. We will accept missing a few lines if we can't force the error.
-		if cleanup2 != nil {
-			cleanup2()
-		}
+func (m *errMeter) Int64Counter(name string, options ...metric.Int64CounterOption) (metric.Int64Counter, error) {
+	if m.failAt == name {
+		return nil, errors.New("mock meter error for " + name)
+	}
+	return m.Meter.Int64Counter(name, options...)
+}
+
+func (m *errMeter) Float64Histogram(name string, options ...metric.Float64HistogramOption) (metric.Float64Histogram, error) {
+	if m.failAt == name {
+		return nil, errors.New("mock meter error for " + name)
+	}
+	return m.Meter.Float64Histogram(name, options...)
+}
+
+func TestInitTelemetryMeterErrors(t *testing.T) {
+	prometheus.DefaultRegisterer = prometheus.NewRegistry()
+	cleanup, _ := InitTelemetry()
+	if cleanup != nil {
+		cleanup()
+	}
+	originalMeter := meter
+	defer func() { meter = originalMeter }()
+
+	tests := []struct {
+		failAt string
+	}{
+		{"http_requests_total"},
+		{"http_request_duration_seconds"},
+		{"ohc_token_usage_total"},
+		{"ohc_agent_api_calls_total"},
+		{"ohc_human_interactions_total"},
+		{"ohc_meeting_events_total"},
+	}
+
+	for _, tt := range tests {
+		t.Run("Fail "+tt.failAt, func(t *testing.T) {
+			meter = &errMeter{Meter: originalMeter, failAt: tt.failAt}
+			prometheus.DefaultRegisterer = prometheus.NewRegistry()
+			c, err := InitTelemetry()
+			if err == nil {
+				t.Errorf("expected error when failing %s, got nil", tt.failAt)
+			}
+			if c != nil {
+				c()
+			}
+		})
 	}
 }
 
@@ -210,4 +257,32 @@ func TestRecordFunctionsUninitialized(t *testing.T) {
 	})
 }
 
-// Add dummy test to trigger otelprom error for better coverage
+func TestLogAgentExecution(t *testing.T) {
+	var buf bytes.Buffer
+	originalLogger := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	defer slog.SetDefault(originalLogger)
+
+	ctx := context.Background()
+	LogAgentExecution(ctx, "agent-123", "analyst", "fetch_data", "task", "processed 10 records")
+
+	output := buf.String()
+	if !strings.Contains(output, "agent execution trace") {
+		t.Errorf("expected log to contain 'agent execution trace', got %q", output)
+	}
+	if !strings.Contains(output, "agent_id=agent-123") {
+		t.Errorf("expected log to contain 'agent_id=agent-123', got %q", output)
+	}
+	if !strings.Contains(output, "role=analyst") {
+		t.Errorf("expected log to contain 'role=analyst', got %q", output)
+	}
+	if !strings.Contains(output, "api=fetch_data") {
+		t.Errorf("expected log to contain 'api=fetch_data', got %q", output)
+	}
+	if !strings.Contains(output, "event_type=task") {
+		t.Errorf("expected log to contain 'event_type=task', got %q", output)
+	}
+	if !strings.Contains(output, "content=\"processed 10 records\"") {
+		t.Errorf("expected log to contain 'content=\"processed 10 records\"', got %q", output)
+	}
+}

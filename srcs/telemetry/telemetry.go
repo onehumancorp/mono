@@ -42,7 +42,9 @@ func InitTelemetry() (func(), error) {
 	provider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(exporter))
 	otel.SetMeterProvider(provider)
 
-	meter = provider.Meter("github.com/onehumancorp/mono/ohc")
+	if meter == nil { // Allow injection of a mock meter for testing
+		meter = provider.Meter("github.com/onehumancorp/mono/ohc")
+	}
 
 	requestCounter, err = meter.Int64Counter(
 		"http_requests_total",
