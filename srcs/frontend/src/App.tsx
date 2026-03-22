@@ -315,6 +315,14 @@ export function App() {
   const [salesReps, setSalesReps] = useState(2);
   const [sweAgents, setSweAgents] = useState(4);
   const [supportAgents, setSupportAgents] = useState(1);
+
+  useEffect(() => {
+    if (snapshot) {
+      setSalesReps(snapshot.agents.filter(a => a.role === "sales_rep").length);
+      setSweAgents(snapshot.agents.filter(a => a.role === "swe").length);
+      setSupportAgents(snapshot.agents.filter(a => a.role === "support").length);
+    }
+  }, [snapshot]);
   const [scalingLogs, setScalingLogs] = useState<{time: string, msg: string, type: string}[]>([]);
   const [isScalingActive, setIsScalingActive] = useState(false);
   const [agentActionLoading, setAgentActionLoading] = useState(false);
@@ -2445,6 +2453,8 @@ export function App() {
                       await scaleAgents("sales_rep", salesReps);
                       await scaleAgents("swe", sweAgents);
                       await scaleAgents("support", supportAgents);
+                      // Force a snapshot refresh so other parts of the dashboard see the newly created agents
+                      await loadAll();
 
                       const token = getStoredToken();
                       const url = token ? `/api/v1/scale/stream?token=${encodeURIComponent(token)}` : "/api/v1/scale/stream";

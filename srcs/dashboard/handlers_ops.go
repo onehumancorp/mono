@@ -2,9 +2,12 @@ package dashboard
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/onehumancorp/mono/srcs/orchestration"
 )
 
 func (s *Server) handleIncidents(w http.ResponseWriter, r *http.Request) {
@@ -316,7 +319,42 @@ func (s *Server) handleScale(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Mocking successful scale interaction with K8s Operator
+	s.mu.RLock()
+	orgID := s.org.ID
+	agents := s.hub.Agents()
+	s.mu.RUnlock()
+
+	var currentCount int
+	var agentIDs []string
+	for _, agent := range agents {
+		if agent.Role == req.Role {
+			currentCount++
+			agentIDs = append(agentIDs, agent.ID)
+		}
+	}
+
+	diff := req.Count - currentCount
+	nowStr := time.Now().UTC().Format("20060102150405000")
+
+	if diff > 0 {
+		for i := 0; i < diff; i++ {
+			id := fmt.Sprintf("%s-agent-%s-%d", orgID, nowStr, i)
+			newAgent := orchestration.Agent{
+				ID:             id,
+				Name:           req.Role,
+				Role:           req.Role,
+				OrganizationID: orgID,
+				Status:         orchestration.StatusIdle,
+			}
+			s.hub.RegisterAgent(newAgent)
+		}
+	} else if diff < 0 {
+		toRemove := -diff
+		for i := 0; i < toRemove; i++ {
+			s.hub.FireAgent(agentIDs[i])
+		}
+	}
+
 	writeJSON(w, map[string]interface{}{
 		"status": "success",
 		"role":   req.Role,
