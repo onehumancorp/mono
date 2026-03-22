@@ -27,8 +27,7 @@ steps:
     # The host directories are created automatically by the Docker daemon the
     # first time; no pre-provisioning needed.
     volumes:
-      - /var/cache/woodpecker/bazel-disk:/root/.cache/bazel-disk
-      - /var/cache/woodpecker/bazel-repo:/root/.cache/bazel-repo
+      - /var/cache/woodpecker:/root/.cache
     environment:
       # Write-enabled BuildBuddy API key for remote cache uploads.
       BUILDBUDDY_API_KEY:
