@@ -52,3 +52,9 @@ A high-level summary of the testing strategy for the Hardware-Aware Agent Schedu
 - **Quota Thrashing**: Tests simulate rapidly fluctuating department quotas to ensure the controller implements a 5-minute debounce window, preventing endless pod eviction/creation cycles.
 - **Hardware Exhaustion**: Tests simulate a cluster with 0 available GPU nodes while a high-priority task is queued. The suite verifies the controller correctly downgrades the task's model requirement (e.g., to `gpt-4o-mini`) to schedule it on CPU nodes rather than hanging indefinitely.
 - **Eviction Resumption**: A test forcefully evicts an agent pod mid-inference. It verifies that the new pod, when scheduled, reads from the Postgres `events.jsonl` log and resumes the LangGraph state exactly where it left off, confirming the architecture's fault tolerance.
+
+### 3.4 Burn-Rate Tests
+| Test ID | Component | Description | Expected Result | Status |
+|---------|-----------|-------------|-----------------|--------|
+| BURN-01 | Forecasting | Ensure extrapolated token usage meets forecast within margin | Forecast accurate to ~5% | Pending |
+| BURN-02 | Throttling | Verify Agent is queued gracefully on quota hit | Queueing mechanism invoked | Pending |

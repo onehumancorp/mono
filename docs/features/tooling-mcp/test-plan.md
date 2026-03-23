@@ -52,3 +52,10 @@ A high-level summary of the testing strategy for the Tooling & MCP Gateway featu
 - **Malicious URLs/SSRF**: The test suite actively attempts Server-Side Request Forgery by feeding the Gateway loopback (`127.0.0.1`, `::1`), private (`10.0.0.0/8`, `192.168.0.0/16`), and link-local (`169.254.x.x`) IPs. The Gateway is verified to explicitly block these and fail closed on DNS resolution errors.
 - **Rate Limits**: Tests mock a `429 Too Many Requests` response from an external tool. They verify the MCP Gateway intercepts this and issues a backoff command to the LangGraph node to prevent LLM thrashing.
 - **Schema Drift**: An integration test alters the mocked tool's response payload schema mid-execution. It verifies the MCP proxy's strict type-checking rejects the invalid LLM-generated JSON and fails closed to prevent database corruption.
+
+### 3.4 Dynamic Tool Registration Tests
+| Test ID | Component | Description | Expected Result | Status |
+|---------|-----------|-------------|-----------------|--------|
+| DTR-01 | MCP Gateway | Dynamic search for capability | Correct capability mapped | Pending |
+| DTR-02 | Agent Binding | Request tool bind with valid SVID | Tool successfully bound | Pending |
+| DTR-03 | Agent Reject | Request bind with invalid SVID | Bind rejected securely | Pending |

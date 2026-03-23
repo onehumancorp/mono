@@ -23,3 +23,7 @@ The Compute Optimization engine maximizes throughput and Return on Investment (R
 - **Node Exhaustion**: If GPU nodes are full, the system automatically degrades the agent model tier (e.g., `gpt-4o` to `gpt-4o-mini`) to keep the workflow moving, alerting the CEO of reduced quality.
 - **Eviction Race Conditions**: High-priority tasks might attempt to evict lower-priority tasks on the same GPU. The scheduler uses strict preemptive policies based on the `Mission` priority assigned by the CEO.
 - **Cloud Spot Instance Interruptions**: If running on spot instances, the agent state is saved in the `events.jsonl` Postgres log, allowing the agent to resume its task seamlessly when re-scheduled.
+### 3.4 Token Burn-Rate Forecasting
+Enterprise adoption is hindered by unpredictable LLM costs and runaway compute. OHC implements strict **VRAM Quota Management** and **Hardware-Aware Scheduling**, coupled with real-time billing metrics tracked precisely by the MCP Gateway intercept layer.
+- **Forecasting Models**: Telemetry is gathered from individual Agent's LLM consumption. Extrapolations based on active workflow queues build real-time projections.
+- **Quota Throttling**: Runaway compute costs are halted seamlessly by gracefully queuing further actions when defined VRAM / Cost quotas approach their hard limits.

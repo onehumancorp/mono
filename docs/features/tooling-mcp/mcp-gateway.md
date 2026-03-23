@@ -68,3 +68,9 @@ MCP servers are deployed as independent sidecars or centralized deployments in K
 - **Network Partitions:** Fallback to cached state and retry logic for tool calls.
 - **Database Unavailability:** Circuit breakers open, gracefully degrade to read-only mode if possible.
 - **Context Window Bloat:** Agent memory is forcefully summarized to fit within token limits, potentially losing subtle historical nuances.
+
+### 3.4 Dynamic Tool Registration via MCP
+Current frameworks tightly couple agents to hardcoded tool schemas. OHC utilizes our unified **MCP Gateway (Switchboard)**, allowing instant, secure, and dynamic tool synthesis across entire federated clusters.
+- **Dynamic Registration**: Tools are discovered and registered via the SPIFFE-gated MCP Gateway.
+- **Runtime Binding**: Agents can query the registry and dynamically bind to necessary tools based on task requirements, minimizing error loops caused by missing hardcoded configurations.
+- **Seamless Integrations**: Supports a wide array of tools via standardized Model Context Protocols.

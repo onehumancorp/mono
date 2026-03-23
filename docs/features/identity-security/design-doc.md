@@ -23,3 +23,8 @@ The Identity and Security framework ensures that all interactions across the OHC
 - **Revocation Latency**: When an agent is "Fired", there is a maximum 5-second SVID revocation window where the agent could theoretically act before the SPIRE server updates the trust bundle.
 - **Node Eviction**: If a K8s node is evicted and an agent pod moves, it must re-attest to SPIRE before continuing its tasks, momentarily pausing its workflow.
 - **External Collaboration**: B2B (Cross-Cluster) handoffs require Federated SPIRE setups; if the remote trust bundle is unavailable due to network issues, the system fails closed and prevents B2B API access.
+### 3.4 B2B SPIFFE Federation for AI Collaboration
+Inter-agent collaboration is heavily restricted to single-organization silos. OHC establishes **Cross-Org Collaboration (B2B Agent Exchange)** utilizing federated SPIFFE/SPIRE Trust Agreements, enabling secure, real-time negotiation rooms between isolated subsidiary clusters.
+- **Trust Agreements**: B2B organizations securely establish trust using SPIRE's federated endpoints.
+- **Real-Time Rooms**: Negotiation environments between B2B agents utilize validated mTLS.
+- **Zero Lock-In**: OHC agents can seamlessly verify inter-org SVIDs and securely perform tasks.
