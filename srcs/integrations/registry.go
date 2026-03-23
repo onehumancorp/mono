@@ -19,11 +19,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"net/url"
 	"sync"
 	"time"
+
+	"github.com/onehumancorp/mono/srcs/httputil"
 )
 
 // ── Integration types ─────────────────────────────────────────────────────────
@@ -484,102 +484,6 @@ func (r *Registry) Integration(id string) (Integration, bool) {
 	return Integration{}, false
 }
 
-// LookupIPFunc is a variable to allow mocking net.LookupIP in tests across packages.
-var LookupIPFunc = net.LookupIP
-
-// AllowLocalIPsForTesting can be set to true in tests to bypass SSRF IP checks
-var AllowLocalIPsForTesting = false
-
-func isBlockedIP(ip net.IP) bool {
-	if AllowLocalIPsForTesting {
-		return false
-	}
-	return ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast()
-}
-
-// validateURL checks if a given URL string is safe from SSRF attacks.
-// It explicitly blocks loopback, private, unspecified, and link-local IP addresses.
-// It fails closed on DNS resolution errors.
-func validateURL(u string) error {
-	parsedURL, err := url.ParseRequestURI(u)
-	if err != nil {
-		return errors.New("invalid URL format")
-	}
-
-	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
-		return errors.New("invalid URL scheme")
-	}
-
-	host := parsedURL.Hostname()
-	if host == "" {
-		return errors.New("URL must contain a host")
-	}
-
-	ips, err := LookupIPFunc(host)
-	if err != nil {
-		// Fail closed on DNS resolution error
-		return errors.New("DNS resolution failed")
-	}
-
-	for _, ip := range ips {
-		if isBlockedIP(ip) {
-			return errors.New("URL resolves to a blocked IP address")
-		}
-	}
-
-	return nil
-}
-
-// initSafeHTTPClient returns an http.Client with a custom DialContext that prevents
-// DNS rebinding (TOCTOU) attacks by pinning the connection to the validated IP.
-func initSafeHTTPClient() *http.Client {
-	dialer := &net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
-	}
-
-	transport := &http.Transport{
-		Proxy:                 http.ProxyFromEnvironment,
-		ForceAttemptHTTP2:     true,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-			host, port, err := net.SplitHostPort(addr)
-			if err != nil {
-				return nil, err
-			}
-
-			ips, err := LookupIPFunc(host)
-			if err != nil {
-				return nil, fmt.Errorf("DNS resolution failed: %w", err)
-			}
-			if len(ips) == 0 {
-				return nil, errors.New("no IP addresses found for host")
-			}
-
-			// Validate all resolved IPs
-			for _, ip := range ips {
-				if isBlockedIP(ip) {
-					return nil, errors.New("URL resolves to a blocked IP address")
-				}
-			}
-
-			// Connect directly to the first validated IP
-			safeAddr := net.JoinHostPort(ips[0].String(), port)
-			return dialer.DialContext(ctx, network, safeAddr)
-		},
-	}
-
-	return &http.Client{
-		Transport: transport,
-		Timeout:   15 * time.Second,
-	}
-}
-
-var safeClient = initSafeHTTPClient()
-
 // Connect marks an integration as connected and sets its base URL.
 // An optional IntegrationCredentials value stores secrets (e.g. bot tokens)
 // for integrations that make real outbound API calls.
@@ -592,12 +496,12 @@ var safeClient = initSafeHTTPClient()
 // Returns: The updated Integration, or an error if it was not found.
 func (r *Registry) Connect(id, baseURL string, creds ...IntegrationCredentials) (Integration, error) {
 	if baseURL != "" {
-		if err := validateURL(baseURL); err != nil {
+		if err := httputil.ValidateURL(baseURL); err != nil {
 			return Integration{}, err
 		}
 	}
 	if len(creds) > 0 && creds[0].WebhookURL != "" {
-		if err := validateURL(creds[0].WebhookURL); err != nil {
+		if err := httputil.ValidateURL(creds[0].WebhookURL); err != nil {
 			return Integration{}, err
 		}
 	}
@@ -757,7 +661,7 @@ func (r *Registry) TestConnection(id string, creds IntegrationCredentials) error
 		if active.WebhookURL == "" {
 			return errors.New("webhook URL is required")
 		}
-		if err := validateURL(active.WebhookURL); err != nil {
+		if err := httputil.ValidateURL(active.WebhookURL); err != nil {
 			return err
 		}
 		return sendDiscordWebhook(active.WebhookURL, "One Human Corp",
@@ -1085,7 +989,7 @@ var TelegramAPIBase = "https://api.telegram.org"
 
 // sendTelegramMessage posts a text message to a Telegram chat via the Bot API.
 func sendTelegramMessage(botToken, chatID, text string) error {
-	if err := validateURL(TelegramAPIBase); err != nil {
+	if err := httputil.ValidateURL(TelegramAPIBase); err != nil {
 		return err
 	}
 
@@ -1103,7 +1007,7 @@ func sendTelegramMessage(botToken, chatID, text string) error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := safeClient.Do(req)
+	resp, err := httputil.SafeClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("telegram API: %w", err)
 	}
@@ -1124,7 +1028,7 @@ func sendTelegramMessage(botToken, chatID, text string) error {
 
 // sendDiscordWebhook posts a message to a Discord channel via an inbound webhook.
 func sendDiscordWebhook(webhookURL, username, content string) error {
-	if err := validateURL(webhookURL); err != nil {
+	if err := httputil.ValidateURL(webhookURL); err != nil {
 		return err
 	}
 
@@ -1141,7 +1045,7 @@ func sendDiscordWebhook(webhookURL, username, content string) error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := safeClient.Do(req)
+	resp, err := httputil.SafeClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("discord API: %w", err)
 	}

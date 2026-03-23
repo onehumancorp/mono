@@ -5,10 +5,16 @@ go_library(
     srcs = ["registry.go"],
     importpath = "github.com/onehumancorp/mono/srcs/integrations",
     visibility = ["//visibility:public"],
+    deps = [
+        "//srcs/httputil",
+    ],
 )
 
 go_test(
     name = "integrations_test",
     srcs = ["registry_test.go"],
     embed = [":integrations"],
+    deps = [
+        "//srcs/httputil",
+    ],
 )

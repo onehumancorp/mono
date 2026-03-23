@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/onehumancorp/mono/srcs/httputil"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -364,15 +365,15 @@ func TestTelegramIntegration_SendMessage(t *testing.T) {
 	defer telegramSrv.Close()
 
 	// Bypass SSRF check in frontend tests for 127.0.0.1 by providing a mock lookupIP
-	origAllow := integrations.AllowLocalIPsForTesting
-	integrations.AllowLocalIPsForTesting = true
-	defer func() { integrations.AllowLocalIPsForTesting = origAllow }()
+	origAllow := httputil.AllowLocalIPsForTesting
+	httputil.AllowLocalIPsForTesting = true
+	defer func() { httputil.AllowLocalIPsForTesting = origAllow }()
 
-	origLookupIP := integrations.LookupIPFunc
-	integrations.LookupIPFunc = func(host string) ([]net.IP, error) {
+	origLookupIP := httputil.LookupIPFunc
+	httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 		return []net.IP{net.ParseIP("127.0.0.1")}, nil
 	}
-	defer func() { integrations.LookupIPFunc = origLookupIP }()
+	defer func() { httputil.LookupIPFunc = origLookupIP }()
 
 	origBase := integrations.TelegramAPIBase
 	integrations.TelegramAPIBase = telegramSrv.URL

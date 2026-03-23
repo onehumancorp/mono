@@ -14,6 +14,7 @@ import (
 
 	"github.com/onehumancorp/mono/srcs/billing"
 	"github.com/onehumancorp/mono/srcs/domain"
+	"github.com/onehumancorp/mono/srcs/httputil"
 	"github.com/onehumancorp/mono/srcs/integrations"
 	"github.com/onehumancorp/mono/srcs/orchestration"
 )
@@ -56,7 +57,7 @@ func (bt *bearerTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 
 func newTestServer(t *testing.T) (*Server, *httptest.Server, string) {
 	t.Helper()
-	integrations.AllowLocalIPsForTesting = true
+	httputil.AllowLocalIPsForTesting = true
 
 	org := domain.NewSoftwareCompany("org-1", "Acme Software", "Casey CEO", time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC))
 	hub := orchestration.NewHub()
@@ -1207,11 +1208,11 @@ func TestHandleIntegrationsMethodNotAllowed(t *testing.T) {
 }
 
 func TestHandleIntegrationConnect(t *testing.T) {
-	oldLookup := integrations.LookupIPFunc
-	integrations.LookupIPFunc = func(host string) ([]net.IP, error) {
+	oldLookup := httputil.LookupIPFunc
+	httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 		return []net.IP{net.ParseIP("93.184.216.34")}, nil
 	}
-	defer func() { integrations.LookupIPFunc = oldLookup }()
+	defer func() { httputil.LookupIPFunc = oldLookup }()
 
 	_, server, token := newTestServer(t)
 	client := authedClient(token)

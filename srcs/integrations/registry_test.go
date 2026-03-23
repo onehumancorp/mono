@@ -1,6 +1,7 @@
 package integrations
 
 import (
+	"github.com/onehumancorp/mono/srcs/httputil"
 	"context"
 	"net"
 	"net/http"
@@ -46,9 +47,9 @@ func mockLookupIP(host string) ([]net.IP, error) {
 }
 
 func TestValidateURL(t *testing.T) {
-	oldLookupIP := LookupIPFunc
-	LookupIPFunc = mockLookupIP
-	defer func() { LookupIPFunc = oldLookupIP }()
+	oldLookupIP := httputil.LookupIPFunc
+	httputil.LookupIPFunc = mockLookupIP
+	defer func() { httputil.LookupIPFunc = oldLookupIP }()
 
 	tests := []struct {
 		name    string
@@ -71,19 +72,19 @@ func TestValidateURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateURL(tt.url)
+			err := httputil.ValidateURL(tt.url)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("validateURL(%q) error = %v, wantErr %v", tt.url, err, tt.wantErr)
+				t.Errorf("httputil.ValidateURL(%q) error = %v, wantErr %v", tt.url, err, tt.wantErr)
 			}
 		})
 	}
 
 	// DNS error test
 	t.Run("DNS Resolution Failed", func(t *testing.T) {
-		LookupIPFunc = func(host string) ([]net.IP, error) {
+		httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 			return nil, net.UnknownNetworkError("unknown")
 		}
-		err := validateURL("http://unresolvable.local")
+		err := httputil.ValidateURL("http://unresolvable.local")
 		if err == nil {
 			t.Errorf("expected error for DNS resolution failure")
 		}
@@ -91,9 +92,9 @@ func TestValidateURL(t *testing.T) {
 }
 
 func TestConnectSSRF(t *testing.T) {
-	oldLookupIP := LookupIPFunc
-	LookupIPFunc = mockLookupIP
-	defer func() { LookupIPFunc = oldLookupIP }()
+	oldLookupIP := httputil.LookupIPFunc
+	httputil.LookupIPFunc = mockLookupIP
+	defer func() { httputil.LookupIPFunc = oldLookupIP }()
 
 	r := NewRegistry()
 
@@ -119,9 +120,9 @@ func TestConnectSSRF(t *testing.T) {
 }
 
 func TestTestConnectionSSRF(t *testing.T) {
-	oldLookupIP := LookupIPFunc
-	LookupIPFunc = mockLookupIP
-	defer func() { LookupIPFunc = oldLookupIP }()
+	oldLookupIP := httputil.LookupIPFunc
+	httputil.LookupIPFunc = mockLookupIP
+	defer func() { httputil.LookupIPFunc = oldLookupIP }()
 
 	r := NewRegistry()
 	_, _ = r.Connect("discord", "")
@@ -770,15 +771,15 @@ func TestSendChatMessageWithCreds(t *testing.T) {
 	}))
 	defer server.Close()
 
-	oldAllow := AllowLocalIPsForTesting
-	AllowLocalIPsForTesting = true
-	defer func() { AllowLocalIPsForTesting = oldAllow }()
+	oldAllow := httputil.AllowLocalIPsForTesting
+	httputil.AllowLocalIPsForTesting = true
+	defer func() { httputil.AllowLocalIPsForTesting = oldAllow }()
 
-	oldLookup := LookupIPFunc
-	LookupIPFunc = func(host string) ([]net.IP, error) {
+	oldLookup := httputil.LookupIPFunc
+	httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 		return []net.IP{net.ParseIP("8.8.8.8")}, nil
 	}
-	defer func() { LookupIPFunc = oldLookup }()
+	defer func() { httputil.LookupIPFunc = oldLookup }()
 
 	oldBase := TelegramAPIBase
 	TelegramAPIBase = server.URL
@@ -807,9 +808,9 @@ func TestSendChatMessageDiscordWithCreds(t *testing.T) {
 	}))
 	defer server.Close()
 
-	oldAllow := AllowLocalIPsForTesting
-	AllowLocalIPsForTesting = true
-	defer func() { AllowLocalIPsForTesting = oldAllow }()
+	oldAllow := httputil.AllowLocalIPsForTesting
+	httputil.AllowLocalIPsForTesting = true
+	defer func() { httputil.AllowLocalIPsForTesting = oldAllow }()
 
 	r := NewRegistry()
 	_, _ = r.Connect("discord", "", IntegrationCredentials{
@@ -869,15 +870,15 @@ func TestSendTelegramMessage(t *testing.T) {
 	}))
 	defer server.Close()
 
-	oldAllow := AllowLocalIPsForTesting
-	AllowLocalIPsForTesting = true
-	defer func() { AllowLocalIPsForTesting = oldAllow }()
+	oldAllow := httputil.AllowLocalIPsForTesting
+	httputil.AllowLocalIPsForTesting = true
+	defer func() { httputil.AllowLocalIPsForTesting = oldAllow }()
 
-	oldLookup := LookupIPFunc
-	LookupIPFunc = func(host string) ([]net.IP, error) {
+	oldLookup := httputil.LookupIPFunc
+	httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 		return []net.IP{net.ParseIP("127.0.0.1")}, nil
 	}
-	defer func() { LookupIPFunc = oldLookup }()
+	defer func() { httputil.LookupIPFunc = oldLookup }()
 
 	oldBase := TelegramAPIBase
 	TelegramAPIBase = server.URL
@@ -895,9 +896,9 @@ func TestSendDiscordWebhookError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	oldAllow := AllowLocalIPsForTesting
-	AllowLocalIPsForTesting = true
-	defer func() { AllowLocalIPsForTesting = oldAllow }()
+	oldAllow := httputil.AllowLocalIPsForTesting
+	httputil.AllowLocalIPsForTesting = true
+	defer func() { httputil.AllowLocalIPsForTesting = oldAllow }()
 
 	err := sendDiscordWebhook(server.URL, "bot", "test message")
 	if err == nil {
@@ -911,15 +912,15 @@ func TestSendTelegramMessageError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	oldAllow := AllowLocalIPsForTesting
-	AllowLocalIPsForTesting = true
-	defer func() { AllowLocalIPsForTesting = oldAllow }()
+	oldAllow := httputil.AllowLocalIPsForTesting
+	httputil.AllowLocalIPsForTesting = true
+	defer func() { httputil.AllowLocalIPsForTesting = oldAllow }()
 
-	oldLookup := LookupIPFunc
-	LookupIPFunc = func(host string) ([]net.IP, error) {
+	oldLookup := httputil.LookupIPFunc
+	httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 		return []net.IP{net.ParseIP("127.0.0.1")}, nil
 	}
-	defer func() { LookupIPFunc = oldLookup }()
+	defer func() { httputil.LookupIPFunc = oldLookup }()
 
 	oldBase := TelegramAPIBase
 	TelegramAPIBase = server.URL
@@ -938,9 +939,9 @@ func TestSendDiscordWebhook(t *testing.T) {
 	}))
 	defer server.Close()
 
-	oldAllow := AllowLocalIPsForTesting
-	AllowLocalIPsForTesting = true
-	defer func() { AllowLocalIPsForTesting = oldAllow }()
+	oldAllow := httputil.AllowLocalIPsForTesting
+	httputil.AllowLocalIPsForTesting = true
+	defer func() { httputil.AllowLocalIPsForTesting = oldAllow }()
 
 	err := sendDiscordWebhook(server.URL, "bot", "test message")
 	if err != nil {
@@ -954,15 +955,15 @@ func TestTestConnectionTelegram(t *testing.T) {
 	}))
 	defer server.Close()
 
-	oldAllow := AllowLocalIPsForTesting
-	AllowLocalIPsForTesting = true
-	defer func() { AllowLocalIPsForTesting = oldAllow }()
+	oldAllow := httputil.AllowLocalIPsForTesting
+	httputil.AllowLocalIPsForTesting = true
+	defer func() { httputil.AllowLocalIPsForTesting = oldAllow }()
 
-	oldLookup := LookupIPFunc
-	LookupIPFunc = func(host string) ([]net.IP, error) {
+	oldLookup := httputil.LookupIPFunc
+	httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 		return []net.IP{net.ParseIP("127.0.0.1")}, nil
 	}
-	defer func() { LookupIPFunc = oldLookup }()
+	defer func() { httputil.LookupIPFunc = oldLookup }()
 
 	oldBase := TelegramAPIBase
 	TelegramAPIBase = server.URL
@@ -997,36 +998,36 @@ func TestTestConnectionTelegram(t *testing.T) {
 }
 
 func TestSafeClientDialContextErrors(t *testing.T) {
-	oldAllow := AllowLocalIPsForTesting
-	AllowLocalIPsForTesting = false // Ensure we trigger SSRF protections
-	defer func() { AllowLocalIPsForTesting = oldAllow }()
+	oldAllow := httputil.AllowLocalIPsForTesting
+	httputil.AllowLocalIPsForTesting = false // Ensure we trigger SSRF protections
+	defer func() { httputil.AllowLocalIPsForTesting = oldAllow }()
 
-	oldLookup := LookupIPFunc
-	defer func() { LookupIPFunc = oldLookup }()
+	oldLookup := httputil.LookupIPFunc
+	defer func() { httputil.LookupIPFunc = oldLookup }()
 
 	// 1. DNS Resolution failure
-	LookupIPFunc = func(host string) ([]net.IP, error) {
+	httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 		return nil, net.UnknownNetworkError("unknown")
 	}
-	_, err := safeClient.Get("http://unresolvable.local/path")
+	_, err := httputil.SafeClient.Get("http://unresolvable.local/path")
 	if err == nil || !strings.Contains(err.Error(), "DNS resolution failed") {
 		t.Errorf("expected DNS resolution failure error, got: %v", err)
 	}
 
 	// 2. No IP addresses returned
-	LookupIPFunc = func(host string) ([]net.IP, error) {
+	httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 		return []net.IP{}, nil
 	}
-	_, err = safeClient.Get("http://no-ips.local/path")
+	_, err = httputil.SafeClient.Get("http://no-ips.local/path")
 	if err == nil || !strings.Contains(err.Error(), "no IP addresses found for host") {
 		t.Errorf("expected no IP addresses error, got: %v", err)
 	}
 
 	// 3. Blocked IP address
-	LookupIPFunc = func(host string) ([]net.IP, error) {
+	httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 		return []net.IP{net.ParseIP("127.0.0.1")}, nil
 	}
-	_, err = safeClient.Get("http://blocked.local/path")
+	_, err = httputil.SafeClient.Get("http://blocked.local/path")
 	if err == nil || !strings.Contains(err.Error(), "resolves to a blocked IP address") {
 		t.Errorf("expected blocked IP error, got: %v", err)
 	}
@@ -1034,7 +1035,7 @@ func TestSafeClientDialContextErrors(t *testing.T) {
 	// 4. SplitHostPort failure
 	// net/http will naturally handle this or pass a clean host/port depending on request
 	// We can manually trigger DialContext to test the SplitHostPort error
-	transport, ok := safeClient.Transport.(*http.Transport)
+	transport, ok := httputil.SafeClient.Transport.(*http.Transport)
 	if ok {
 		_, err = transport.DialContext(context.Background(), "tcp", "invalid-address-without-port")
 		if err == nil {
@@ -1053,15 +1054,15 @@ func TestTestConnectionDiscord(t *testing.T) {
 	}))
 	defer server.Close()
 
-	oldAllow := AllowLocalIPsForTesting
-	AllowLocalIPsForTesting = true
-	defer func() { AllowLocalIPsForTesting = oldAllow }()
+	oldAllow := httputil.AllowLocalIPsForTesting
+	httputil.AllowLocalIPsForTesting = true
+	defer func() { httputil.AllowLocalIPsForTesting = oldAllow }()
 
-	oldLookup := LookupIPFunc
-	LookupIPFunc = func(host string) ([]net.IP, error) {
+	oldLookup := httputil.LookupIPFunc
+	httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 		return []net.IP{net.ParseIP("127.0.0.1")}, nil
 	}
-	defer func() { LookupIPFunc = oldLookup }()
+	defer func() { httputil.LookupIPFunc = oldLookup }()
 
 	r := NewRegistry()
 	_, _ = r.Connect("discord", "")
@@ -1237,9 +1238,9 @@ func TestNewChatIntegrationsStartDisconnected(t *testing.T) {
 }
 
 func TestConnectAndDisconnectTelegram(t *testing.T) {
-	oldLookupIP := LookupIPFunc
-	LookupIPFunc = mockLookupIP
-	defer func() { LookupIPFunc = oldLookupIP }()
+	oldLookupIP := httputil.LookupIPFunc
+	httputil.LookupIPFunc = mockLookupIP
+	defer func() { httputil.LookupIPFunc = oldLookupIP }()
 
 	r := NewRegistry()
 
@@ -1261,15 +1262,15 @@ func TestConnectAndDisconnectTelegram(t *testing.T) {
 }
 
 func TestSendTelegramMessageErrors(t *testing.T) {
-	oldAllow := AllowLocalIPsForTesting
-	AllowLocalIPsForTesting = true
-	defer func() { AllowLocalIPsForTesting = oldAllow }()
+	oldAllow := httputil.AllowLocalIPsForTesting
+	httputil.AllowLocalIPsForTesting = true
+	defer func() { httputil.AllowLocalIPsForTesting = oldAllow }()
 
-	oldLookup := LookupIPFunc
-	LookupIPFunc = func(host string) ([]net.IP, error) {
+	oldLookup := httputil.LookupIPFunc
+	httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 		return []net.IP{net.ParseIP("127.0.0.1")}, nil
 	}
-	defer func() { LookupIPFunc = oldLookup }()
+	defer func() { httputil.LookupIPFunc = oldLookup }()
 
 	oldBase := TelegramAPIBase
 	defer func() { TelegramAPIBase = oldBase }()
@@ -1322,9 +1323,9 @@ func TestSendDiscordWebhookErrors(t *testing.T) {
 	}))
 	defer serverStatusError.Close()
 
-	oldAllow := AllowLocalIPsForTesting
-	AllowLocalIPsForTesting = true
-	defer func() { AllowLocalIPsForTesting = oldAllow }()
+	oldAllow := httputil.AllowLocalIPsForTesting
+	httputil.AllowLocalIPsForTesting = true
+	defer func() { httputil.AllowLocalIPsForTesting = oldAllow }()
 
 	err := sendDiscordWebhook(serverStatusError.URL, "user", "msg")
 	if err == nil || !strings.Contains(err.Error(), "discord API returned status 500") {
@@ -1333,20 +1334,20 @@ func TestSendDiscordWebhookErrors(t *testing.T) {
 
 	// 2. NewRequest failure (bad URL parsing for NewRequestWithContext)
 	err = sendDiscordWebhook("http://127.0.0.1\x7f/path", "user", "msg")
-	if err == nil || !strings.Contains(err.Error(), "invalid URL format") { // caught by validateURL first
+	if err == nil || !strings.Contains(err.Error(), "invalid URL format") { // caught by httputil.ValidateURL first
 		t.Errorf("expected validation error, got %v", err)
 	}
 
 	// Disable validation temporarily to trigger create request error
-	oldLookupIP := LookupIPFunc
-	LookupIPFunc = func(host string) ([]net.IP, error) {
+	oldLookupIP := httputil.LookupIPFunc
+	httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 		return []net.IP{net.ParseIP("127.0.0.1")}, nil
 	}
-	defer func() { LookupIPFunc = oldLookupIP }()
+	defer func() { httputil.LookupIPFunc = oldLookupIP }()
 
 	// Trigger NewRequestWithContext error by passing an invalid method character implicitly via url
-	// Actually NewRequestWithContext fails on bad URL. But validateURL catches bad URLs first.
-	// We can skip NewRequestWithContext test as it is covered by validateURL or just test client.Do error
+	// Actually NewRequestWithContext fails on bad URL. But httputil.ValidateURL catches bad URLs first.
+	// We can skip NewRequestWithContext test as it is covered by httputil.ValidateURL or just test client.Do error
 
 	// 3. Client Do error
 	// A closed server will cause Do to fail
@@ -1358,9 +1359,9 @@ func TestSendDiscordWebhookErrors(t *testing.T) {
 }
 
 func TestTelegramAPIBaseSSRF(t *testing.T) {
-	oldLookupIP := LookupIPFunc
-	LookupIPFunc = mockLookupIP
-	defer func() { LookupIPFunc = oldLookupIP }()
+	oldLookupIP := httputil.LookupIPFunc
+	httputil.LookupIPFunc = mockLookupIP
+	defer func() { httputil.LookupIPFunc = oldLookupIP }()
 
 	oldBase := TelegramAPIBase
 	defer func() { TelegramAPIBase = oldBase }()
@@ -1374,16 +1375,16 @@ func TestTelegramAPIBaseSSRF(t *testing.T) {
 	parsed, _ := url.Parse(validServer.URL)
 	validHost := parsed.Hostname()
 
-	oldLookup := LookupIPFunc
-	LookupIPFunc = func(host string) ([]net.IP, error) {
+	oldLookup := httputil.LookupIPFunc
+	httputil.LookupIPFunc = func(host string) ([]net.IP, error) {
 		if host == validHost {
 			return []net.IP{net.ParseIP("127.0.0.1")}, nil
 		}
 		return mockLookupIP(host)
 	}
-	defer func() { LookupIPFunc = oldLookup }()
+	defer func() { httputil.LookupIPFunc = oldLookup }()
 
-	oldAllow := AllowLocalIPsForTesting
+	oldAllow := httputil.AllowLocalIPsForTesting
 
 	tests := []struct {
 		name    string
@@ -1398,9 +1399,9 @@ func TestTelegramAPIBaseSSRF(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.name == "Valid URL via Mock" {
-				AllowLocalIPsForTesting = true
+				httputil.AllowLocalIPsForTesting = true
 			} else {
-				AllowLocalIPsForTesting = false
+				httputil.AllowLocalIPsForTesting = false
 			}
 
 			TelegramAPIBase = tt.url
@@ -1411,5 +1412,5 @@ func TestTelegramAPIBaseSSRF(t *testing.T) {
 		})
 	}
 
-	AllowLocalIPsForTesting = oldAllow
+	httputil.AllowLocalIPsForTesting = oldAllow
 }

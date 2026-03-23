@@ -34,6 +34,7 @@ go_test(
     deps = [
         "//srcs/billing",
         "//srcs/domain",
+        "//srcs/httputil",
         "//srcs/integrations",
         "//srcs/orchestration",
     ],
