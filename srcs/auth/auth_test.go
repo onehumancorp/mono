@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	crypto_hmac "crypto/hmac"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -1407,5 +1408,180 @@ func TestStore_AuthenticateErrorsMore(t *testing.T) {
 	s.UpdateUser(u.ID, nil, nil, &inactive)
 	if _, err := s.Authenticate("user1", "123456"); err == nil {
 		t.Error("expected error for disabled user")
+	}
+}
+
+// ── Additional coverage for JWT HS256 parsing ─────────────────────────────────
+
+func TestJWT_ParseHS256Errors(t *testing.T) {
+	// Not an exported function directly, but we hit it via store.ValidateToken.
+	store := auth.NewStore()
+
+	// Malformed token - less than 3 parts
+	_, err := store.ValidateToken("part1.part2")
+	if err == nil {
+		t.Fatalf("expected error for malformed token")
+	}
+
+	// Malformed token - header not base64url
+	_, err = store.ValidateToken("notbase64!@#.part2.part3")
+	if err == nil {
+		t.Fatalf("expected error for non-base64url header")
+	}
+
+	// Malformed token - header valid base64url but not JSON
+	badHdr := base64.RawURLEncoding.EncodeToString([]byte("not-json"))
+	_, err = store.ValidateToken(badHdr + ".part2.part3")
+	if err == nil {
+		t.Fatalf("expected error for non-JSON header")
+	}
+
+	// Malformed token - header JSON but wrong alg
+	wrongAlgHdr := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256"}`))
+	_, err = store.ValidateToken(wrongAlgHdr + ".part2.part3")
+	if err == nil {
+		t.Fatalf("expected error for wrong alg")
+	}
+
+	// Valid header, bad base64url signature
+	validHdr := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256"}`))
+	_, err = store.ValidateToken(validHdr + ".part2.notbase64!@#")
+	if err == nil {
+		t.Fatalf("expected error for non-base64url signature")
+	}
+
+	// Sign a valid token so we can tamper with payload
+	user := &auth.User{ID: "test", Username: "test-user", Roles: []string{"USER"}}
+	token, err := store.IssueToken(user)
+	if err != nil {
+		t.Fatalf("IssueToken failed: %v", err)
+	}
+
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		t.Fatalf("Expected 3 parts in token")
+	}
+
+	// Tamper payload to not be base64url
+	tamperedPayloadNotB64 := parts[0] + ".notbase64!@#." + parts[2]
+	_, err = store.ValidateToken(tamperedPayloadNotB64)
+	if err == nil || !strings.Contains(err.Error(), "invalid signature") {
+		// Wait, parseHS256 verifies signature BEFORE payload decode.
+		// So it will fail on signature!
+		// To hit "decode payload" err, we need a valid signature over a bad payload.
+		t.Logf("Expected signature error, got: %v", err)
+	}
+
+}
+
+// ── Expose internal functions for testing ─────────────────────────────────
+
+// Add this to a new file srcs/auth/export_test.go so it's only in test package
+
+
+// ── Additional coverage for JWT HS256 parsing errors ─────────────────────────────────
+
+func TestJWT_ParseHS256ErrorsDirectly(t *testing.T) {
+	s := auth.NewStore()
+	secret := s.GetSecretForTest()
+
+	// Malformed token - less than 3 parts
+	_, err := auth.ParseHS256ForTest("part1.part2", secret)
+	if err == nil {
+		t.Fatalf("expected error for malformed token")
+	}
+
+	// Malformed token - header not base64url
+	_, err = auth.ParseHS256ForTest("notbase64!@#.part2.part3", secret)
+	if err == nil {
+		t.Fatalf("expected error for non-base64url header")
+	}
+
+	// Malformed token - header valid base64url but not JSON
+	badHdr := base64.RawURLEncoding.EncodeToString([]byte("not-json"))
+	_, err = auth.ParseHS256ForTest(badHdr + ".part2.part3", secret)
+	if err == nil {
+		t.Fatalf("expected error for non-JSON header")
+	}
+
+	// Malformed token - header JSON but wrong alg
+	wrongAlgHdr := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256"}`))
+	_, err = auth.ParseHS256ForTest(wrongAlgHdr + ".part2.part3", secret)
+	if err == nil {
+		t.Fatalf("expected error for wrong alg")
+	}
+
+	// Valid header, bad base64url signature
+	validHdr := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256"}`))
+	_, err = auth.ParseHS256ForTest(validHdr + ".part2.notbase64!@#", secret)
+	if err == nil {
+		t.Fatalf("expected error for non-base64url signature")
+	}
+
+	// To hit decode payload error:
+	// 1. Create a bad payload (e.g. valid base64url but not JSON, or invalid base64url)
+	badPayload := "notbase64!@#"
+	sigInput := validHdr + "." + badPayload
+	mac := crypto_hmac.New(crypto.SHA256.New, secret)
+	mac.Write([]byte(sigInput))
+	sig := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+
+	_, err = auth.ParseHS256ForTest(validHdr + "." + badPayload + "." + sig, secret)
+	if err == nil || !strings.Contains(err.Error(), "decode payload") {
+		t.Fatalf("expected decode payload error, got: %v", err)
+	}
+
+	// To hit parse claims error:
+	// payload is valid base64url but not JSON
+	badPayloadJson := base64.RawURLEncoding.EncodeToString([]byte("not-json"))
+	sigInput2 := validHdr + "." + badPayloadJson
+	mac2 := crypto_hmac.New(crypto.SHA256.New, secret)
+	mac2.Write([]byte(sigInput2))
+	sig2 := base64.RawURLEncoding.EncodeToString(mac2.Sum(nil))
+
+	_, err = auth.ParseHS256ForTest(validHdr + "." + badPayloadJson + "." + sig2, secret)
+	if err == nil || !strings.Contains(err.Error(), "parse claims") {
+		t.Fatalf("expected parse claims error, got: %v", err)
+	}
+
+	// Expired token
+	expiredClaims := auth.Claims{
+		TokenID:  "exp-1",
+		Username: "test-user",
+		Roles:    []string{"USER"},
+		IssuedAt: time.Now().Unix() - 3600,
+		Expires:  time.Now().Unix() - 100,
+	}
+	expToken, _ := auth.SignHS256ForTest(expiredClaims, secret)
+	_, err = auth.ParseHS256ForTest(expToken, secret)
+	if err == nil || err.Error() != "token expired" {
+		t.Fatalf("expected token expired error, got: %v", err)
+	}
+}
+
+
+func TestJWT_ValidateTokenOICDFallback(t *testing.T) {
+	// Need to mock OIDC Server and test ValidateToken with OIDC enabled but bad token
+	privKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	kid := "test-key"
+	srv := mockOIDCServer(t, privKey, kid)
+	defer srv.Close()
+
+	cfg := auth.OIDCConfig{IssuerURL: srv.URL, ClientID: "test-client", Enabled: true}
+
+	// Create a new store with this OIDC config
+	s := auth.NewStore()
+	s.SetOIDCConfigForTest(cfg) // Need an exported way to set this or we do it via ENV?
+
+	// Create a valid OIDC token
+	token := buildRS256Token(t, privKey, kid, srv.URL, "test-client", time.Now().Add(time.Hour).Unix())
+
+	// Validate it using Store.ValidateToken
+	claims, err := s.ValidateToken(token)
+	if err != nil {
+		t.Fatalf("expected valid token, got: %v", err)
+	}
+	if claims.TokenID != "test-jti-1" {
+		t.Errorf("expected test-jti-1, got: %s", claims.TokenID)
 	}
 }

@@ -836,3 +836,99 @@ func TestHandleBudgetAlerts_NotifyAtPctHandling(t *testing.T) {
 		})
 	}
 }
+
+func TestHandleScale(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	tests := []struct {
+		name           string
+		method         string
+		body           string
+		expectedStatus int
+	}{
+		{
+			name:           "MethodNotAllowed",
+			method:         http.MethodGet,
+			body:           "",
+			expectedStatus: http.StatusMethodNotAllowed,
+		},
+		{
+			name:           "InvalidJSON",
+			method:         http.MethodPost,
+			body:           "invalid",
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "MissingRole",
+			method:         http.MethodPost,
+			body:           `{"count": 2}`,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Success",
+			method:         http.MethodPost,
+			body:           `{"role": "SOFTWARE_ENGINEER", "count": 2}`,
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(tt.method, "/api/v1/scale", strings.NewReader(tt.body))
+			rec := httptest.NewRecorder()
+			app.handleScale(rec, req)
+
+			if rec.Code != tt.expectedStatus {
+				t.Errorf("expected status %d, got %d", tt.expectedStatus, rec.Code)
+			}
+		})
+	}
+}
+
+func TestHandleScaleStream(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/scale/stream", nil)
+	rec := httptest.NewRecorder()
+
+	app.handleScaleStream(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	contentType := rec.Header().Get("Content-Type")
+	if contentType != "text/event-stream" {
+		t.Errorf("expected Content-Type text/event-stream, got %s", contentType)
+	}
+
+	body := rec.Body.String()
+	if !strings.Contains(body, "K8s Operator: Reconciling TeamMember resource.") {
+		t.Errorf("expected body to contain specific event, got %s", body)
+	}
+}
+
+// A ResponseRecorder that simulates flush errors
+type errorFlushRecorder struct {
+	*httptest.ResponseRecorder
+}
+
+func (r *errorFlushRecorder) FlushError() error {
+	return http.ErrNotSupported // Can be anything, simulates broken pipe usually
+}
+
+func TestHandleScaleStreamFlushError(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/scale/stream", nil)
+	rec := httptest.NewRecorder()
+
+	errRec := &errorFlushRecorder{rec}
+
+	app.handleScaleStream(errRec, req)
+
+	// Will just terminate early but should not panic
+	if errRec.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, errRec.Code)
+	}
+}
