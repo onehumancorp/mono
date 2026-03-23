@@ -219,6 +219,27 @@ export function hireAgent(name: string, role: string): Promise<DashboardSnapshot
   return authedPostJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
 }
 /**
+ * Summary: Delegates a task from one agent to a specialist agent.
+ * Intent: Delegates a task from one agent to a specialist agent.
+ * Params: fromAgentId, toAgentId, content, meetingId
+ * Returns: Promise<DashboardSnapshot>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+export function delegateTask(
+  fromAgentId: string,
+  toAgentId: string,
+  content: string,
+  meetingId?: string,
+): Promise<DashboardSnapshot> {
+  return authedPostJSON<DashboardSnapshot>("/api/agents/delegate", {
+    fromAgentId,
+    toAgentId,
+    content,
+    meetingId,
+  });
+}
+/**
  * Summary: Terminates an agent's process and removes it from the orchestration hub.
  * Intent: Terminates an agent's process and removes it from the orchestration hub.
  * Params: agentId
