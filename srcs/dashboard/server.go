@@ -549,6 +549,12 @@ func (s *Server) handleDevSeed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Seed the events.jsonl append-only log deterministically.
+	eventsLog := `{"event":"K8s Operator: Reconciling TeamMember resource.","status":"INFO"}
+{"event":"K8s Operator: Spinning up new pods...","status":"INFO"}
+{"event":"AgentHired","status":"Ready"}`
+	_ = os.WriteFile("events.jsonl", []byte(eventsLog), 0644)
+
 	org, hub, tracker, err := seededScenario(payload.Scenario, time.Now().UTC())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

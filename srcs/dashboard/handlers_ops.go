@@ -1,8 +1,10 @@
 package dashboard
 
 import (
+	"bufio"
 	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -316,7 +318,6 @@ func (s *Server) handleScale(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Mocking successful scale interaction with K8s Operator
 	writeJSON(w, map[string]interface{}{
 		"status": "success",
 		"role":   req.Role,
@@ -338,19 +339,20 @@ func (s *Server) handleScaleStream(w http.ResponseWriter, r *http.Request) {
 
 	rc := http.NewResponseController(w)
 
-	// Simulated events
-	events := []string{
-		`{"event":"K8s Operator: Reconciling TeamMember resource.","status":"INFO"}`,
-		`{"event":"K8s Operator: Spinning up new pods...","status":"INFO"}`,
-		`{"event":"AgentHired","status":"Ready"}`,
+	// Stream actual scaling trace logs initialized by the Dev Seeder via events.jsonl
+	file, err := os.Open("events.jsonl")
+	if err != nil {
+		return
 	}
+	defer file.Close()
 
-	for _, event := range events {
-		data := []byte("data: " + event + "\n\n")
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		data := []byte("data: " + scanner.Text() + "\n\n")
 		w.Write(data)
 		if err := rc.Flush(); err != nil {
 			break
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 }
