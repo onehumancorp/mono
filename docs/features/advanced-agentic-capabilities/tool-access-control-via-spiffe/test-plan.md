@@ -1,8 +1,24 @@
-# Test Plan: Tool Access Control via SPIFFE
+# Test Plan: Tool Access Control Via Spiffe
 
 **Author(s):** TPM Agent
-**Status:** In Review
-**Last Updated:** 2026-03-21
+**Status:** Ready
+**Last Updated:** 2026-03-23
 
 ## 1. Overview
-Test strategy for Tool Access Control via SPIFFE.
+This test plan ensures the reliability and correctness of Tool Access Control Via Spiffe.
+
+## 2. Unit Tests
+- Verify that tool-access-control-via-spiffe payloads are serialized and deserialized correctly.
+- Ensure state transitions in the Orchestration Hub occur as expected.
+
+## 3. Integration Tests
+- **Database Seeding:** Use the deterministic `/api/dev/seed` endpoint to establish a known state.
+- **End-to-End Flow:** Simulate an agent invoking Tool Access Control Via Spiffe and verify that the event is correctly logged and accessible via the API.
+
+## 4. Edge Case Testing
+- Test behavior when external MCP tools are unavailable (expecting graceful fallback).
+- Test retry mechanism under simulated network failure conditions.
+- Test authentication failures (missing or invalid SPIFFE IDs).
+
+## 5. Performance Criteria
+- API endpoints for Tool Access Control Via Spiffe must respond within 50ms at p95 under standard load.

@@ -1,8 +1,24 @@
 # Test Plan: Dynamic Team Assembly
 
 **Author(s):** TPM Agent
-**Status:** In Review
-**Last Updated:** 2026-03-21
+**Status:** Ready
+**Last Updated:** 2026-03-23
 
 ## 1. Overview
-Test strategy for Dynamic Team Assembly.
+This test plan ensures the reliability and correctness of Dynamic Team Assembly.
+
+## 2. Unit Tests
+- Verify that dynamic-team-assembly payloads are serialized and deserialized correctly.
+- Ensure state transitions in the Orchestration Hub occur as expected.
+
+## 3. Integration Tests
+- **Database Seeding:** Use the deterministic `/api/dev/seed` endpoint to establish a known state.
+- **End-to-End Flow:** Simulate an agent invoking Dynamic Team Assembly and verify that the event is correctly logged and accessible via the API.
+
+## 4. Edge Case Testing
+- Test behavior when external MCP tools are unavailable (expecting graceful fallback).
+- Test retry mechanism under simulated network failure conditions.
+- Test authentication failures (missing or invalid SPIFFE IDs).
+
+## 5. Performance Criteria
+- API endpoints for Dynamic Team Assembly must respond within 50ms at p95 under standard load.

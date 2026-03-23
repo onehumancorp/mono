@@ -1,47 +1,24 @@
-# Test Plan: Native Vision & Multimodal Reasoning
+# Test Plan: Native Vision
 
 **Author(s):** TPM Agent
-**Status:** In Review
-**Last Updated:** 2026-03-21
+**Status:** Ready
+**Last Updated:** 2026-03-23
 
 ## 1. Overview
-A high-level summary of the testing strategy for the Native Vision & Multimodal Reasoning feature, ensuring it meets the requirements defined in the Design Document and CUJs.
+This test plan ensures the reliability and correctness of Native Vision.
 
-## 2. Test Strategy
-- **Unit Testing:** Focus on verifying the `Message` and payload marshaling logic for handling images (base64 or URL).
-- **Integration Testing:** Verify the interaction between the Hub orchestrator and a mocked LLM API provider simulating a multimodal endpoint.
-- **End-to-End (E2E) Testing:** Validate an agent capturing a visual artifact, analyzing it, and making a decision based on the visual contents.
+## 2. Unit Tests
+- Verify that native-vision payloads are serialized and deserialized correctly.
+- Ensure state transitions in the Orchestration Hub occur as expected.
 
-## 3. Test Cases
-### 3.1 Unit Tests
-| Test ID | Component | Description | Expected Result | Status |
-|---------|-----------|-------------|-----------------|--------|
-| UT-01 | Payload Marshaling | Serialize a multimodal message to JSON | Correct format generated | Pending |
-| UT-02 | Image Resizing | Process an image exceeding size limits | Image scaled to fit bounds | Pending |
-| UT-03 | Artifact Handling | Handoff Object integrates visual data | Object contains valid image reference | Pending |
+## 3. Integration Tests
+- **Database Seeding:** Use the deterministic `/api/dev/seed` endpoint to establish a known state.
+- **End-to-End Flow:** Simulate an agent invoking Native Vision and verify that the event is correctly logged and accessible via the API.
 
-### 3.2 Integration Tests
-| Test ID | Components | Description | Expected Result | Status |
-|---------|------------|-------------|-----------------|--------|
-| IT-01 | Agent -> Orchestrator | Agent sends a screenshot payload | Hub processes and routes payload | Pending |
-| IT-02 | Orchestrator -> LLM API | Hub sends multimodal request to LLM | Mock LLM returns successful analysis | Pending |
-| IT-03 | Agent -> Handoff UI | Agent escalates task with screenshot | Dashboard receives SSE with image data | Pending |
+## 4. Edge Case Testing
+- Test behavior when external MCP tools are unavailable (expecting graceful fallback).
+- Test retry mechanism under simulated network failure conditions.
+- Test authentication failures (missing or invalid SPIFFE IDs).
 
-### 3.3 E2E Tests
-| Test ID | CUJ Reference | Description | Expected Result | Status |
-|---------|---------------|-------------|-----------------|--------|
-| E2E-01 | UI Verification | QA agent tests frontend component visually | Component matches mockup successfully | Pending |
-| E2E-02 | Image Processing Timeout | Simulate a timeout from the LLM API | Agent handles failure gracefully (retries/escalates) | Pending |
-
-## 4. Edge Cases & Error Handling
-- **Unsupported Image Formats**: Test how the orchestrator handles image formats not supported by the underlying LLM provider (e.g., TIFF, SVG).
-- **Network Failures**: Simulate a dropped connection during the transmission of a large multimodal payload to the LLM API.
-
-## 5. Security & Safety
-- **Payload Inspection**: Validate that agents do not accidentally expose PII or sensitive internal source code within screenshots sent externally.
-- **Resource Exhaustion**: Ensure that agents cannot spam the Hub with excessively large image payloads, causing memory exhaustion.
-
-## 6. Implementation Details
-- **Execution**: Run via `bazelisk test //...` under the Bazel sandbox.
-- **Mocks**: External components like LLM APIs and Playwright test executions are mocked for deterministic testing.
-- **Validation**: Strict enforcement of >95% test coverage for the multimodal payload parsing and routing logic.
+## 5. Performance Criteria
+- API endpoints for Native Vision must respond within 50ms at p95 under standard load.

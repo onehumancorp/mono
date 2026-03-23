@@ -3307,7 +3307,11 @@ describe("App – agent chat detail view", () => {
     // No message API call
     await waitFor(() => {
       const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
-        ([url, init]: [string, RequestInit?]) => url === "/api/messages" && init?.method === "POST"
+        (callArgs: any[]) => {
+          const url = callArgs[0] as string;
+          const init = callArgs[1] as RequestInit | undefined;
+          return url === "/api/messages" && init?.method === "POST";
+        }
       );
       expect(calls).toHaveLength(0);
     });
