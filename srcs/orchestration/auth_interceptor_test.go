@@ -295,6 +295,13 @@ func TestSPIFFEAuthInterceptor_OHCLocalDomain(t *testing.T) {
 			expectedErr: false,
 		},
 		{
+			name:        "Spoofing with URL-encoded slash %2f",
+			spiffeID:    "spiffe://ohc.os/agent/attacker%2fagent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
 			name:        "Boundary Escape OHC Local Domain",
 			spiffeID:    "spiffe://ohc.local/org/org-1/attacker/agent-1",
 			reqAgentID:  "agent-1",

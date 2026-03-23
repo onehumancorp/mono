@@ -787,7 +787,7 @@ func TestHandleSettingsGetAndPost(t *testing.T) {
 	app, _, _ := newTestServer(t)
 
 	// POST settings
-	reqBody := `{"minimaxApiKey":"test-minimax-key","theme":"dark"}`
+	reqBody := `{"minimaxApiKey":"test-minimax-key"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/settings", strings.NewReader(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
