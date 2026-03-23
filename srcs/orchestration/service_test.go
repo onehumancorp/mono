@@ -398,8 +398,8 @@ func TestNewMinimaxClient(t *testing.T) {
 
 func TestHubServiceServer_Reason_And_MinimaxClient(t *testing.T) {
 	// Save the original URL to restore it later
-	originalURL := minimaxAPIURL
-	defer func() { minimaxAPIURL = originalURL }()
+	originalURL := MinimaxAPIURL
+	defer func() { MinimaxAPIURL = originalURL }()
 
 	tests := []struct {
 		name          string
@@ -461,7 +461,7 @@ func TestHubServiceServer_Reason_And_MinimaxClient(t *testing.T) {
 			defer ts.Close()
 
 			// Override the package-level URL
-			minimaxAPIURL = ts.URL
+			MinimaxAPIURL = ts.URL
 
 			hub := NewHub()
 			hub.SetMinimaxAPIKey(tt.apiKey)
