@@ -1008,6 +1008,49 @@ func TestHandleApprovalDecideReturns404ForUnknownID(t *testing.T) {
 
 // ── Warm Handoff Tests ────────────────────────────────────────────────────────
 
+func TestHandleHandoffResolveConcurrentLocks(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	now := time.Now().UTC()
+	handoff := HandoffPackage{
+		ID:             "handoff-test-123",
+		FromAgentID:    "swe-1",
+		ToHumanRole:    "CEO",
+		Intent:         "Test intent",
+		FailedAttempts: 1,
+		CurrentState:   "Blocked",
+		Status:         "pending",
+		CreatedAt:      now,
+	}
+
+	app.mu.Lock()
+	app.handoffs = append(app.handoffs, handoff)
+	app.mu.Unlock()
+
+	// First approval/resolution should succeed
+	req1 := httptest.NewRequest(http.MethodPost, "/api/handoffs/resolve", bytes.NewBufferString(`{"handoffId":"handoff-test-123","status":"acknowledged"}`))
+	req1.Header.Set("Content-Type", "application/json")
+	rec1 := httptest.NewRecorder()
+	app.handleHandoffResolve(rec1, req1)
+
+	if rec1.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for first resolution, got %d", rec1.Code)
+	}
+
+	// Second approval/resolution should fail with 409 Conflict
+	req2 := httptest.NewRequest(http.MethodPost, "/api/handoffs/resolve", bytes.NewBufferString(`{"handoffId":"handoff-test-123","status":"resolved"}`))
+	req2.Header.Set("Content-Type", "application/json")
+	rec2 := httptest.NewRecorder()
+	app.handleHandoffResolve(rec2, req2)
+
+	if rec2.Code != http.StatusConflict {
+		t.Fatalf("expected 409 Conflict for concurrent resolution, got %d", rec2.Code)
+	}
+	if !strings.Contains(rec2.Body.String(), "State Changed") {
+		t.Fatalf("expected 'State Changed' error message, got %s", rec2.Body.String())
+	}
+}
+
 func TestHandleHandoffsReturnsEmptyListInitially(t *testing.T) {
 	_, server, token := newTestServer(t)
 	client := authedClient(token)

@@ -186,10 +186,15 @@ func (s *Server) handleHandoffResolve(w http.ResponseWriter, r *http.Request) {
 
 	s.mu.Lock()
 	found := false
+	alreadyResolved := false
 	for i, h := range s.handoffs {
 		if h.ID == req.HandoffID {
-			s.handoffs[i].Status = req.Status
 			found = true
+			if h.Status != "pending" {
+				alreadyResolved = true
+			} else {
+				s.handoffs[i].Status = req.Status
+			}
 			break
 		}
 	}
@@ -197,6 +202,11 @@ func (s *Server) handleHandoffResolve(w http.ResponseWriter, r *http.Request) {
 
 	if !found {
 		http.Error(w, "handoff not found", http.StatusNotFound)
+		return
+	}
+
+	if alreadyResolved {
+		http.Error(w, "State Changed: This handoff has already been acknowledged or resolved.", http.StatusConflict)
 		return
 	}
 

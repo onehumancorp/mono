@@ -129,6 +129,93 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+/* ── Slide to Approve Component ── */
+function SlideToApprove({
+  onApprove,
+  onReject,
+  disabled,
+}: {
+  onApprove: () => void;
+  onReject: () => void;
+  disabled: boolean;
+}) {
+  const [sliderPos, setSliderPos] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const maxDrag = 200; // pixels
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (disabled) return;
+    setIsDragging(true);
+    // @ts-ignore
+    e.target.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    const thumb = e.currentTarget;
+    const parent = thumb.parentElement;
+    if (!parent) return;
+
+    const startX = parent.getBoundingClientRect().left;
+    let newX = e.clientX - startX - 20; // 20 is half the thumb width
+
+    if (newX < 0) newX = 0;
+    if (newX > maxDrag) newX = maxDrag;
+
+    setSliderPos(newX);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    // @ts-ignore
+    e.target.releasePointerCapture(e.pointerId);
+
+    if (sliderPos > maxDrag * 0.9) {
+      // Trigger approval if swiped 90%
+      setSliderPos(maxDrag);
+      onApprove();
+    } else {
+      // Snap back
+      setSliderPos(0);
+    }
+  };
+
+  return (
+    <div className="slide-action-area">
+      <div className="slide-approve-container">
+        <div className="slide-track">
+          <span className="slide-text">Slide to Approve</span>
+          <div
+            ref={sliderRef}
+            className={`slide-thumb ${isDragging ? "dragging" : ""} ${disabled ? "disabled" : ""}`}
+            style={{ transform: `translateX(${sliderPos}px)` }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </div>
+          <div className="slide-fill" style={{ width: `${sliderPos + 20}px` }}></div>
+        </div>
+      </div>
+      <button
+        type="button"
+        className="btn btn-danger btn-sm"
+        disabled={disabled}
+        onClick={onReject}
+        style={{ width: "100%", marginTop: "0.75rem", background: "rgba(255, 59, 48, 0.1)", color: "rgb(255, 69, 58)", border: "1px solid rgba(255, 59, 48, 0.2)" }}
+      >
+        Reject Handoff
+      </button>
+    </div>
+  );
+}
+
 /* ── Build org tree ── */
 function OrgTree({
   members,
@@ -1597,61 +1684,57 @@ export function App() {
               </div>
             </div>
 
-            <div className="handoff-list" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div className="handoff-list">
               {handoffList.length === 0 ? (
                 <p className="empty-state">No pending handoffs found.</p>
               ) : (
                 handoffList.map((handoff) => (
-                  <article key={handoff.id} className="panel" style={{ padding: "1rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
-                      <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                        <RoleAvatar role={snapshot?.agents.find(a => a.id === handoff.fromAgentId)?.role || "AGENT"} name={handoff.fromAgentId} />
-                        <div>
-                          <h3 style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>
-                            Escalated by {handoff.fromAgentId}
-                          </h3>
-                          <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>Target Role: {handoff.toHumanRole}</p>
+                  <article key={handoff.id} className="handoff-card">
+                    <div className="handoff-card__content">
+                      <div className="handoff-card__header">
+                        <div className="handoff-card__agent-info">
+                          <RoleAvatar role={snapshot?.agents.find(a => a.id === handoff.fromAgentId)?.role || "AGENT"} name={handoff.fromAgentId} />
+                          <div>
+                            <h3 className="handoff-card__title">
+                              Escalated by {handoff.fromAgentId}
+                            </h3>
+                            <p className="handoff-card__subtitle">Target Role: {handoff.toHumanRole}</p>
+                          </div>
+                        </div>
+                        <StatusBadge status={handoff.status.toUpperCase()} />
+                      </div>
+
+                      <div className="handoff-card__details">
+                        <div className="handoff-card__section">
+                          <h4 className="handoff-card__label">Intent</h4>
+                          <p className="handoff-card__text">{handoff.intent}</p>
+                        </div>
+
+                        <div className="handoff-card__section">
+                          <h4 className="handoff-card__label">Current State</h4>
+                          <pre className="handoff-card__code">{handoff.currentState}</pre>
                         </div>
                       </div>
-                      <StatusBadge status={handoff.status.toUpperCase()} />
-                    </div>
 
-                    <div style={{ background: "rgba(255,255,255,0.03)", padding: "0.75rem", borderRadius: "6px", margin: "0.75rem 0" }}>
-                      <h4 style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", marginBottom: "0.25rem" }}>Intent</h4>
-                      <p style={{ fontSize: "13px", color: "var(--text-primary)" }}>{handoff.intent}</p>
-
-                      <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid var(--border)" }}>
-                        <h4 style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", marginBottom: "0.25rem" }}>Current State</h4>
-                        <p style={{ fontSize: "12px", color: "var(--text-secondary)", whiteSpace: "pre-wrap", fontFamily: "ui-monospace, monospace" }}>{handoff.currentState}</p>
+                      <div className="handoff-card__footer">
+                        <span className="handoff-card__attempts">Failed Attempts: {handoff.failedAttempts}</span>
                       </div>
                     </div>
-
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Failed Attempts: {handoff.failedAttempts}</span>
-                      <div style={{ display: "flex", gap: "0.5rem" }}>
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          disabled={handoff.status !== "pending" || handoffLoading[handoff.id]}
-                          onClick={() => {
-                            setHandoffLoading(prev => ({ ...prev, [handoff.id]: true }));
-                            void resolveHandoff(handoff.id, "acknowledged").then(() => {
-                              return fetchHandoffs();
-                            }).then(list => {
-                              setHandoffList(list);
-                              setNotice("Handoff acknowledged.");
-                            }).catch(err => {
-                              setError(err instanceof Error ? err.message : "Failed to acknowledge handoff");
-                            }).finally(() => {
-                              setHandoffLoading(prev => ({ ...prev, [handoff.id]: false }));
-                            });
-                          }}
-                        >
-                          {handoffLoading[handoff.id] && handoff.status === "pending" ? "..." : "Acknowledge"}
-                        </button>
-                        <button
-                          className="btn btn-primary btn-sm"
-                          disabled={handoff.status === "resolved" || handoffLoading[handoff.id]}
-                          onClick={() => {
+                    <div className="handoff-card__action-area">
+                      {handoff.status === "resolved" ? (
+                         <div className="handoff-resolved-stamp">
+                           <span className="handoff-resolved-icon">✓</span>
+                           Resolved
+                         </div>
+                      ) : handoff.status === "acknowledged" ? (
+                         <div className="handoff-resolved-stamp handoff-resolved-stamp--rejected">
+                           <span className="handoff-resolved-icon">✕</span>
+                           Rejected
+                         </div>
+                      ) : (
+                        <SlideToApprove
+                          disabled={handoffLoading[handoff.id] || handoff.status !== "pending"}
+                          onApprove={() => {
                             setHandoffLoading(prev => ({ ...prev, [handoff.id]: true }));
                             void resolveHandoff(handoff.id, "resolved").then(() => {
                               return fetchHandoffs();
@@ -1659,15 +1742,34 @@ export function App() {
                               setHandoffList(list);
                               setNotice("Handoff resolved and agent execution resumed.");
                             }).catch(err => {
-                              setError(err instanceof Error ? err.message : "Failed to resolve handoff");
+                              let errMsg = err instanceof Error ? err.message : "Failed to resolve handoff";
+                              if (errMsg.includes("State Changed")) {
+                                errMsg = "State Changed: This handoff has already been acknowledged or resolved.";
+                              }
+                              setError(errMsg);
                             }).finally(() => {
                               setHandoffLoading(prev => ({ ...prev, [handoff.id]: false }));
                             });
                           }}
-                        >
-                          {handoffLoading[handoff.id] && handoff.status !== "resolved" ? "Resolving…" : "Resolve & Resume"}
-                        </button>
-                      </div>
+                          onReject={() => {
+                            setHandoffLoading(prev => ({ ...prev, [handoff.id]: true }));
+                            void resolveHandoff(handoff.id, "acknowledged").then(() => {
+                              return fetchHandoffs();
+                            }).then(list => {
+                              setHandoffList(list);
+                              setNotice("Handoff rejected.");
+                            }).catch(err => {
+                              let errMsg = err instanceof Error ? err.message : "Failed to acknowledge handoff";
+                              if (errMsg.includes("State Changed")) {
+                                errMsg = "State Changed: This handoff has already been acknowledged or resolved.";
+                              }
+                              setError(errMsg);
+                            }).finally(() => {
+                              setHandoffLoading(prev => ({ ...prev, [handoff.id]: false }));
+                            });
+                          }}
+                        />
+                      )}
                     </div>
                   </article>
                 ))
