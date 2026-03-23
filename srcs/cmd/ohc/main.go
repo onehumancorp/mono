@@ -23,11 +23,14 @@ const defaultAddress = ":8080"
 type listenFunc func(string, http.Handler) error
 
 var (
+	netListen = net.Listen
+
 	nowUTC        = time.Now
 	listenForMain = http.ListenAndServe
+	exitFunc      = os.Exit
 	fatalForMain  = func(err error) {
 		slog.Error("fatal error", "error", err)
-		os.Exit(1)
+		exitFunc(1)
 	}
 	initTelemetry = telemetry.InitTelemetry
 )
@@ -67,12 +70,7 @@ func newDemoHandler(now time.Time) (http.Handler, *orchestration.Hub) {
 
 	// Start Chatwoot auto-setup in the background when enabled.
 	if chatwoot.IsEnabled() {
-		go func() {
-			c := chatwoot.NewClientFromEnv()
-			if err := c.Setup(); err != nil {
-				slog.Error("chatwoot setup", "error", err)
-			}
-		}()
+		go startChatwoot()
 	}
 
 	return dashboard.NewServer(org, hub, tracker, authStore), hub
@@ -82,22 +80,7 @@ func run(now time.Time, listen listenFunc) error {
 	handler, hub := newDemoHandler(now)
 
 	// Start gRPC server
-	go func() {
-		lis, err := net.Listen("tcp", ":9090")
-		if err != nil {
-			slog.Error("failed to listen for gRPC", "error", err)
-			return
-		}
-		s := grpc.NewServer(
-			grpc.UnaryInterceptor(orchestration.SPIFFEAuthInterceptor()),
-			grpc.StreamInterceptor(orchestration.SPIFFEStreamInterceptor()),
-		)
-		orchestration.RegisterHubService(s, hub)
-		slog.Info("serving gRPC on :9090")
-		if err := s.Serve(lis); err != nil {
-			slog.Error("failed to serve gRPC", "error", err)
-		}
-	}()
+	go startGRPC(hub)
 
 	slog.Info("serving API", "address", defaultAddress)
 	return listen(defaultAddress, handler)
@@ -113,5 +96,29 @@ func main() {
 
 	if err := run(nowUTC().UTC(), listenForMain); err != nil {
 		fatalForMain(err)
+	}
+}
+
+func startGRPC(hub *orchestration.Hub) {
+	lis, err := netListen("tcp", ":9090")
+	if err != nil {
+		slog.Error("failed to listen for gRPC", "error", err)
+		return
+	}
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(orchestration.SPIFFEAuthInterceptor()),
+		grpc.StreamInterceptor(orchestration.SPIFFEStreamInterceptor()),
+	)
+	orchestration.RegisterHubService(s, hub)
+	slog.Info("serving gRPC on :9090")
+	if err := s.Serve(lis); err != nil {
+		slog.Error("failed to serve gRPC", "error", err)
+	}
+}
+
+func startChatwoot() {
+	c := chatwoot.NewClientFromEnv()
+	if err := c.Setup(); err != nil {
+		slog.Error("chatwoot setup", "error", err)
 	}
 }

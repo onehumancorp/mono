@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net"
+
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -197,4 +199,57 @@ func TestMain_TelemetryInitFailure(t *testing.T) {
 
 	// This should run without fatal, but print a warning about telemetry failure
 	main()
+}
+
+type errListener struct{}
+
+func (e errListener) Accept() (net.Conn, error) {
+	return nil, errors.New("mock accept error")
+}
+
+func (e errListener) Close() error {
+	return nil
+}
+
+func (e errListener) Addr() net.Addr {
+	return &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 9090}
+}
+
+func TestStartGRPC_ServeError(t *testing.T) {
+	originalListen := netListen
+	t.Cleanup(func() { netListen = originalListen })
+
+	netListen = func(network, address string) (net.Listener, error) {
+		return errListener{}, nil // Return a listener that fails on Accept
+	}
+
+	startGRPC(nil)
+}
+
+func TestStartChatwoot_SetupError(t *testing.T) {
+	t.Setenv("CHATWOOT_API_ACCESS_TOKEN", "test-token")
+	t.Setenv("CHATWOOT_ACCOUNT_ID", "1")
+	t.Setenv("CHATWOOT_INBOX_ID", "2")
+	t.Setenv("CHATWOOT_URL", "http://invalid-url.local")
+
+	startChatwoot()
+}
+
+func TestFatalForMainExits(t *testing.T) {
+	originalExit := exitFunc
+	t.Cleanup(func() { exitFunc = originalExit })
+
+	exited := false
+	exitFunc = func(code int) {
+		exited = true
+		if code != 1 {
+			t.Errorf("expected exit code 1, got %d", code)
+		}
+	}
+
+	fatalForMain(errors.New("test error"))
+
+	if !exited {
+		t.Fatalf("expected exitFunc to be called")
+	}
 }
