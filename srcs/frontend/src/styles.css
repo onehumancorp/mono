@@ -2396,3 +2396,267 @@ select.input {
   font-size: 0.8125rem;
   color: var(--text-muted);
 }
+
+/* ── Warm Handoff Split-View Component ── */
+
+.handoff-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.handoff-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  min-height: 280px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.handoff-card__content {
+  flex: 1;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+}
+
+.handoff-card__action-area {
+  width: 260px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(10, 10, 12, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: relative;
+}
+
+.handoff-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.handoff-card__agent-info {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.handoff-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.handoff-card__subtitle {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0.2rem 0 0 0;
+}
+
+.handoff-card__details {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.handoff-card__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.handoff-card__label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin: 0;
+  font-weight: 600;
+}
+
+.handoff-card__text {
+  font-size: 0.875rem;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.handoff-card__code {
+  font-family: 'SF Mono', ui-monospace, Consolas, monospace;
+  font-size: 0.8125rem;
+  color: var(--accent);
+  margin: 0;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.handoff-card__footer {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.handoff-card__attempts {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.handoff-card__attempts::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--warning);
+}
+
+/* ── Slide to Approve Component ── */
+
+.slide-action-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.slide-approve-container {
+  width: 100%;
+  height: 52px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 26px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.slide-track {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.slide-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.02em;
+  z-index: 1;
+  user-select: none;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer 2.5s infinite;
+  background-size: 200% auto;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.slide-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(48, 209, 88, 0.2) 0%, rgba(48, 209, 88, 0.5) 100%);
+  z-index: 0;
+  border-radius: 26px 0 0 26px;
+}
+
+.slide-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffffff 0%, #e0e0e0 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a1a1a;
+  cursor: grab;
+  z-index: 2;
+  transition: transform 0.1s ease-out;
+  touch-action: none;
+}
+
+.slide-thumb:hover {
+  background: #ffffff;
+}
+
+.slide-thumb.dragging {
+  cursor: grabbing;
+  transition: none;
+  transform: scale(0.95);
+}
+
+.slide-thumb.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #a0a0a0;
+}
+
+.handoff-resolved-stamp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--success);
+  font-weight: 600;
+  font-size: 1.125rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.handoff-resolved-stamp--rejected {
+  color: var(--error);
+}
+
+.handoff-resolved-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}

@@ -3378,5 +3378,7 @@ describe("App – handoffs tab", () => {
     await screen.findByText("Escalated by swe-1");
     expect(screen.getByText("Needs architecture review")).toBeInTheDocument();
     expect(screen.getByText(/Failed Attempts: 1/)).toBeInTheDocument();
+    expect(screen.getByText("Slide to Approve")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reject Handoff" })).toBeInTheDocument();
   });
 });
