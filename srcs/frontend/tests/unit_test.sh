@@ -25,6 +25,10 @@ npm install --prefer-offline --no-audit --no-fund 2>&1 | tail -5
 # Setup GOPATH so `go run` inside tests works
 export GOPATH="${tmp}/.gopath"
 
+# Generate dynamic ports for isolated concurrent tests
+export PORT=$(shuf -i 10000-65000 -n 1)
+export GRPC_PORT=$(shuf -i 10000-65000 -n 1)
+
 # Start the Go backend in the background so vitest can hit real APIs.
 cd "${tmp}"
 # We can just run the compiled binary passed in via data!
@@ -39,7 +43,9 @@ fi
 
 cd "${tmp}/frontend"
 
-export VITE_BACKEND_URL="http://127.0.0.1:8080"
+export ADMIN_USERNAME="admin"
+export ADMIN_PASSWORD="adminpass123"
+export VITE_BACKEND_URL="http://127.0.0.1:${PORT}"
 
 # Run vitest once (non-watch mode) with coverage.
 if ! npm test -- --coverage 2>&1; then

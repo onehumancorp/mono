@@ -9,9 +9,12 @@ async function saveShot(page: Page, name: string): Promise<void> {
 }
 
 test.beforeEach(async ({ request }) => {
-  const response = await request.post("http://127.0.0.1:8080/api/dev/seed", {
-    data: { scenario: "launch-readiness" },
+  const loginResp = await request.post("http://127.0.0.1:8080/api/auth/login", {
+    data: { username: "admin", password: "adminpass123" }
   });
+  const { token } = await loginResp.json();
+
+  const response = await request.post("http://127.0.0.1:8080/api/dev/seed", { headers: { Authorization: "Bearer " + token }, data: { scenario: "launch-readiness" } });
   expect(response.ok()).toBeTruthy();
 });
 

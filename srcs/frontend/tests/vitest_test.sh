@@ -31,6 +31,10 @@ fi
 # Show last few lines so the test runner confirms installation succeeded.
 tail -5 "${npm_log}"
 
+# Generate dynamic ports for isolated concurrent tests
+export PORT=$(shuf -i 10000-65000 -n 1)
+export GRPC_PORT=$(shuf -i 10000-65000 -n 1)
+
 # Start the compiled Go backend so tests that hit real /api/* routes can do so.
 if [[ -f "${root}/srcs/cmd/ohc/ohc_/ohc" ]]; then
     "${root}/srcs/cmd/ohc/ohc_/ohc" > "${tmp}/backend.log" 2>&1 &
@@ -41,7 +45,9 @@ else
     BACKEND_PID=""
 fi
 
-export VITE_BACKEND_URL="http://127.0.0.1:8080"
+export ADMIN_USERNAME="admin"
+export ADMIN_PASSWORD="adminpass123"
+export VITE_BACKEND_URL="http://127.0.0.1:${PORT}"
 
 # Run vitest for the single specified test file only.
 if ! npx vitest run --reporter=dot "${test_file}" 2>&1; then

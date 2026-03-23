@@ -22,6 +22,13 @@ const defaultAddress = ":8080"
 
 type listenFunc func(string, http.Handler) error
 
+func getEnvOrDefault(key, fallback string) string {
+	if val, ok := os.LookupEnv(key); ok && val != "" {
+		return ":" + val
+	}
+	return fallback
+}
+
 var (
 	nowUTC        = time.Now
 	listenForMain = http.ListenAndServe
@@ -81,9 +88,12 @@ func newDemoHandler(now time.Time) (http.Handler, *orchestration.Hub) {
 func run(now time.Time, listen listenFunc) error {
 	handler, hub := newDemoHandler(now)
 
+	grpcAddress := getEnvOrDefault("GRPC_PORT", ":9090")
+	httpAddress := getEnvOrDefault("PORT", defaultAddress)
+
 	// Start gRPC server
 	go func() {
-		lis, err := net.Listen("tcp", ":9090")
+		lis, err := net.Listen("tcp", grpcAddress)
 		if err != nil {
 			slog.Error("failed to listen for gRPC", "error", err)
 			return
@@ -93,14 +103,14 @@ func run(now time.Time, listen listenFunc) error {
 			grpc.StreamInterceptor(orchestration.SPIFFEStreamInterceptor()),
 		)
 		orchestration.RegisterHubService(s, hub)
-		slog.Info("serving gRPC on :9090")
+		slog.Info("serving gRPC", "address", grpcAddress)
 		if err := s.Serve(lis); err != nil {
 			slog.Error("failed to serve gRPC", "error", err)
 		}
 	}()
 
-	slog.Info("serving API", "address", defaultAddress)
-	return listen(defaultAddress, handler)
+	slog.Info("serving API", "address", httpAddress)
+	return listen(httpAddress, handler)
 }
 
 func main() {
