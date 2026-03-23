@@ -43,14 +43,14 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	CategoryChat   Category = "chat"
+	CategoryChat Category = "chat"
 	// Summary: Defines the CategoryGit type.
 	// Intent: Defines the CategoryGit type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	CategoryGit    Category = "git"
+	CategoryGit Category = "git"
 	// Summary: Defines the CategoryIssues type.
 	// Intent: Defines the CategoryIssues type.
 	// Params: None
@@ -75,14 +75,14 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IntegrationTypeSlack      IntegrationType = "slack"
+	IntegrationTypeSlack IntegrationType = "slack"
 	// Summary: Defines the IntegrationTypeDiscord type.
 	// Intent: Defines the IntegrationTypeDiscord type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IntegrationTypeDiscord    IntegrationType = "discord"
+	IntegrationTypeDiscord IntegrationType = "discord"
 	// Summary: Defines the IntegrationTypeGoogleChat type.
 	// Intent: Defines the IntegrationTypeGoogleChat type.
 	// Params: None
@@ -96,14 +96,14 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IntegrationTypeTelegram   IntegrationType = "telegram"
+	IntegrationTypeTelegram IntegrationType = "telegram"
 	// Summary: Defines the IntegrationTypeTeams type.
 	// Intent: Defines the IntegrationTypeTeams type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IntegrationTypeTeams      IntegrationType = "teams"
+	IntegrationTypeTeams IntegrationType = "teams"
 
 	// Summary: Git platforms.
 	// Intent: Git platforms.
@@ -125,7 +125,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IntegrationTypeGitea  IntegrationType = "gitea"
+	IntegrationTypeGitea IntegrationType = "gitea"
 
 	// Summary: Issue trackers.
 	// Intent: Issue trackers.
@@ -133,14 +133,14 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IntegrationTypeJIRA         IntegrationType = "jira"
+	IntegrationTypeJIRA IntegrationType = "jira"
 	// Summary: Defines the IntegrationTypePlane type.
 	// Intent: Defines the IntegrationTypePlane type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IntegrationTypePlane        IntegrationType = "plane"
+	IntegrationTypePlane IntegrationType = "plane"
 	// Summary: Defines the IntegrationTypeGitHubIssues type.
 	// Intent: Defines the IntegrationTypeGitHubIssues type.
 	// Params: None
@@ -154,7 +154,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IntegrationTypeLinear       IntegrationType = "linear"
+	IntegrationTypeLinear IntegrationType = "linear"
 )
 
 // Summary: ConnectionStatus reflects whether an integration is currently active and reachable.
@@ -172,7 +172,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	StatusConnected    ConnectionStatus = "connected"
+	StatusConnected ConnectionStatus = "connected"
 	// Summary: Defines the StatusDisconnected type.
 	// Intent: Defines the StatusDisconnected type.
 	// Params: None
@@ -186,7 +186,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	StatusError        ConnectionStatus = "error"
+	StatusError ConnectionStatus = "error"
 )
 
 // Summary: Integration represents a configured external service connection.
@@ -266,7 +266,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	PRStatusOpen   PullRequestStatus = "open"
+	PRStatusOpen PullRequestStatus = "open"
 	// Summary: Defines the PRStatusMerged type.
 	// Intent: Defines the PRStatusMerged type.
 	// Params: None
@@ -320,7 +320,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IssueStatusOpen       IssueStatus = "open"
+	IssueStatusOpen IssueStatus = "open"
 	// Summary: Defines the IssueStatusInProgress type.
 	// Intent: Defines the IssueStatusInProgress type.
 	// Params: None
@@ -334,14 +334,14 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IssueStatusDone       IssueStatus = "done"
+	IssueStatusDone IssueStatus = "done"
 	// Summary: Defines the IssueStatusClosed type.
 	// Intent: Defines the IssueStatusClosed type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IssueStatusClosed     IssueStatus = "closed"
+	IssueStatusClosed IssueStatus = "closed"
 )
 
 // Summary: IssuePriority indicates the urgency of a ticket.
@@ -359,21 +359,21 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IssuePriorityLow      IssuePriority = "low"
+	IssuePriorityLow IssuePriority = "low"
 	// Summary: Defines the IssuePriorityMedium type.
 	// Intent: Defines the IssuePriorityMedium type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IssuePriorityMedium   IssuePriority = "medium"
+	IssuePriorityMedium IssuePriority = "medium"
 	// Summary: Defines the IssuePriorityHigh type.
 	// Intent: Defines the IssuePriorityHigh type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	IssuePriorityHigh     IssuePriority = "high"
+	IssuePriorityHigh IssuePriority = "high"
 	// Summary: Defines the IssuePriorityCritical type.
 	// Intent: Defines the IssuePriorityCritical type.
 	// Params: None
@@ -485,10 +485,22 @@ func (r *Registry) Integration(id string) (Integration, bool) {
 }
 
 // LookupIPFunc is a variable to allow mocking net.LookupIP in tests across packages.
-var LookupIPFunc = net.LookupIP
+var // Summary: LookupIPFunc is a variable to allow mocking net.LookupIP in tests across packages.
+// Intent: LookupIPFunc is a variable to allow mocking net.LookupIP in tests across packages.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
+LookupIPFunc = net.LookupIP
 
 // AllowLocalIPsForTesting can be set to true in tests to bypass SSRF IP checks
-var AllowLocalIPsForTesting = false
+var // Summary: AllowLocalIPsForTesting can be set to true in tests to bypass SSRF IP checks
+// Intent: AllowLocalIPsForTesting can be set to true in tests to bypass SSRF IP checks
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
+AllowLocalIPsForTesting = false
 
 func isBlockedIP(ip net.IP) bool {
 	if AllowLocalIPsForTesting {

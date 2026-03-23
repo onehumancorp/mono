@@ -262,27 +262,27 @@ func TestValidateOIDCToken(t *testing.T) {
 		wantError string
 	}{
 		{
-			name: "not enabled",
-			cfg:  OIDCConfig{Enabled: false},
-			token: func() string { return "token" },
+			name:      "not enabled",
+			cfg:       OIDCConfig{Enabled: false},
+			token:     func() string { return "token" },
 			wantError: "OIDC not configured",
 		},
 		{
-			name: "malformed token",
-			cfg:  cfg,
-			token: func() string { return "invalid.token" },
+			name:      "malformed token",
+			cfg:       cfg,
+			token:     func() string { return "invalid.token" },
 			wantError: "malformed token",
 		},
 		{
-			name: "invalid header base64",
-			cfg:  cfg,
-			token: func() string { return "!!!.payload.sig" },
+			name:      "invalid header base64",
+			cfg:       cfg,
+			token:     func() string { return "!!!.payload.sig" },
 			wantError: "decode header",
 		},
 		{
-			name: "invalid header json",
-			cfg:  cfg,
-			token: func() string { return b64url([]byte(`{bad-json}`)) + ".payload.sig" },
+			name:      "invalid header json",
+			cfg:       cfg,
+			token:     func() string { return b64url([]byte(`{bad-json}`)) + ".payload.sig" },
 			wantError: "parse header",
 		},
 		{
@@ -454,10 +454,10 @@ func TestValidateOIDCToken(t *testing.T) {
 			cfg:  cfg,
 			token: func() string {
 				return createTestJWT(priv, "test-key-1", map[string]interface{}{
-					"sub": "user1",
-					"exp": now + 3600,
-					"iss": cfg.IssuerURL,
-					"aud": cfg.ClientID,
+					"sub":   "user1",
+					"exp":   now + 3600,
+					"iss":   cfg.IssuerURL,
+					"aud":   cfg.ClientID,
 					"roles": []string{"admin"},
 					"realm_access": map[string]interface{}{
 						"roles": []string{"super-admin"},

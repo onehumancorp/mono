@@ -293,7 +293,6 @@ function HireAgentForm({
     </div>
   );
 }
-
 /**
  * Summary: App is the root dashboard view component serving as the CEO's interface for overseeing virtual operations, tracking costs, and directing the AI workforce.
  * Intent: App is the root dashboard view component serving as the CEO's interface for overseeing virtual operations, tracking costs, and directing the AI workforce.

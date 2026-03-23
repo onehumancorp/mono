@@ -24,7 +24,13 @@ type Price struct {
 // DefaultCatalog provides a comprehensive list of LLM inference prices.
 //
 // Side Effects: None. It serves as a read-only dictionary used by NewTracker.
-var DefaultCatalog = map[string]Price{
+var // Summary: DefaultCatalog provides a comprehensive list of LLM inference prices.  Side Effects: None. It serves as a read-only dictionary used by NewTracker.
+// Intent: DefaultCatalog provides a comprehensive list of LLM inference prices.  Side Effects: None. It serves as a read-only dictionary used by NewTracker.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
+DefaultCatalog = map[string]Price{
 	// Anthropic — Claude 3 family
 	"claude-3-opus":   {InputPerMillionUSD: 15.00, OutputPerMillionUSD: 75.00},
 	"claude-3-sonnet": {InputPerMillionUSD: 3.00, OutputPerMillionUSD: 15.00},

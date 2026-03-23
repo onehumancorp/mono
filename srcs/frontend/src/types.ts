@@ -18,7 +18,6 @@ export type {
   OrganizationTeamMember,
   OrganizationRoleProfile,
 } from "./proto_types";
-
 /**
  * Summary: Defines the playbook, prompt, and capabilities for a specific role within the AI workforce.
  * Intent: Defines the playbook, prompt, and capabilities for a specific role within the AI workforce.
@@ -33,7 +32,6 @@ export type RoleProfile = {
   capabilities: string[];
   contextInputs: string[];
 };
-
 /**
  * Summary: Represents an individual contributor (human or AI agent) within the organisation.
  * Intent: Represents an individual contributor (human or AI agent) within the organisation.
@@ -49,7 +47,6 @@ export type OrganizationMember = {
   managerId?: string;
   isHuman?: boolean;
 };
-
 /**
  * Summary: Aggregates the hierarchy, workforce details, and role playbooks for a domain.
  * Intent: Aggregates the hierarchy, workforce details, and role playbooks for a domain.
@@ -66,7 +63,6 @@ export type Organization = {
   members: OrganizationMember[];
   roleProfiles: RoleProfile[];
 };
-
 /**
  * Summary: Encapsulates a discrete event, command, or context update passed between agents or rooms.
  * Intent: Encapsulates a discrete event, command, or context update passed between agents or rooms.
@@ -84,7 +80,6 @@ export type MeetingMessage = {
   meetingId: string;
   occurredAt: string;
 };
-
 /**
  * Summary: Maintains a persistent, sequential transcript of inter-agent collaboration.
  * Intent: Maintains a persistent, sequential transcript of inter-agent collaboration.
@@ -99,7 +94,6 @@ export type MeetingRoom = {
   participants: string[];
   transcript: MeetingMessage[];
 };
-
 /**
  * Summary: Provides aggregated cost and token usage for an individual agent.
  * Intent: Provides aggregated cost and token usage for an individual agent.
@@ -114,7 +108,6 @@ export type AgentCost = {
   tokenUsed: number;
   costUSD: number;
 };
-
 /**
  * Summary: Aggregates total cost and token usage for a specific organisation.
  * Intent: Aggregates total cost and token usage for a specific organisation.
@@ -130,7 +123,6 @@ export type CostSummary = {
   projectedMonthlyUSD?: number;
   agents: AgentCost[];
 };
-
 /**
  * Summary: Represents an aggregated count of agents in a specific operational phase.
  * Intent: Represents an aggregated count of agents in a specific operational phase.
@@ -143,7 +135,6 @@ export type StatusBucket = {
   status: string;
   count: number;
 };
-
 /**
  * Summary: Represents the current runtime state of an active, instantiated worker within the AI organisation.
  * Intent: Represents the current runtime state of an active, instantiated worker within the AI organisation.
@@ -159,7 +150,6 @@ export type AgentRuntime = {
   organizationId: string;
   status: string;
 };
-
 /**
  * Summary: A point-in-time snapshot of the entire organisation's operational state, including members, meetings, costs, and active agents.
  * Intent: A point-in-time snapshot of the entire organisation's operational state, including members, meetings, costs, and active agents.
@@ -176,7 +166,6 @@ export type DashboardSnapshot = {
   statuses: StatusBucket[];
   updatedAt: string;
 };
-
 /**
  * Summary: Describes a supported organisational domain template.
  * Intent: Describes a supported organisational domain template.
@@ -190,7 +179,6 @@ export type DomainInfo = {
   name: string;
   description: string;
 };
-
 /**
  * Summary: Represents a registered tool in the MCP gateway.
  * Intent: Represents a registered tool in the MCP gateway.
@@ -208,7 +196,6 @@ export type MCPTool = {
 };
 
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
-
 /**
  * Summary: Represents the lifecycle state of a guardian-gate request.
  * Intent: Represents the lifecycle state of a guardian-gate request.
@@ -218,7 +205,6 @@ export type MCPTool = {
  * Side Effects: None
  */
 export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
-
 /**
  * Summary: Created by the Guardian Agent when a high-risk action requires explicit human sign-off.
  * Intent: Created by the Guardian Agent when a high-risk action requires explicit human sign-off.
@@ -241,7 +227,6 @@ export type ApprovalRequest = {
 };
 
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
-
 /**
  * Summary: Carries the structured context an agent sends to a human manager when escalating a task.
  * Intent: Carries the structured context an agent sends to a human manager when escalating a task.
@@ -262,7 +247,6 @@ export type HandoffPackage = {
 };
 
 // ── Identity Management ───────────────────────────────────────────────────────
-
 /**
  * Summary: Represents the SPIFFE SVID certificate issued to an agent workload.
  * Intent: Represents the SPIFFE SVID certificate issued to an agent workload.
@@ -280,7 +264,6 @@ export type AgentIdentity = {
 };
 
 // ── Skill Import Framework ────────────────────────────────────────────────────
-
 /**
  * Summary: Pairs a role name with its override base prompt.
  * Intent: Pairs a role name with its override base prompt.
@@ -293,7 +276,6 @@ export type SkillPackRole = {
   role: string;
   basePrompt: string;
 };
-
 /**
  * Summary: An importable module that extends or overrides agent capabilities.
  * Intent: An importable module that extends or overrides agent capabilities.
@@ -314,7 +296,6 @@ export type SkillPack = {
 };
 
 // ── Org Snapshot & Recovery ───────────────────────────────────────────────────
-
 /**
  * Summary: A point-in-time metadata record of an organization's state.
  * Intent: A point-in-time metadata record of an organization's state.
@@ -336,7 +317,6 @@ export type OrgSnapshot = {
 };
 
 // ── Marketplace ───────────────────────────────────────────────────────────────
-
 /**
  * Summary: Describes a community-published asset.
  * Intent: Describes a community-published asset.
@@ -357,7 +337,6 @@ export type MarketplaceItem = {
 };
 
 // ── Real-time Analytics ───────────────────────────────────────────────────────
-
 /**
  * Summary: Surfaces operational health metrics.
  * Intent: Surfaces operational health metrics.
@@ -378,7 +357,6 @@ export type AnalyticsSummary = {
 };
 
 // ── External Integrations ─────────────────────────────────────────────────────
-
 /**
  * Summary: Defines IntegrationCategory.
  * Intent: Defines IntegrationCategory.
@@ -388,7 +366,6 @@ export type AnalyticsSummary = {
  * Side Effects: None
  */
 export type IntegrationCategory = "chat" | "git" | "issues";
-
 /**
  * Summary: Defines IntegrationStatus.
  * Intent: Defines IntegrationStatus.
@@ -398,7 +375,6 @@ export type IntegrationCategory = "chat" | "git" | "issues";
  * Side Effects: None
  */
 export type IntegrationStatus = "connected" | "disconnected" | "error";
-
 /**
  * Summary: A configured external service connection.
  * Intent: A configured external service connection.
@@ -421,7 +397,6 @@ export type Integration = {
   chatspace?: string;
   createdAt: string;
 };
-
 /**
  * Summary: Represents a message dispatched through a chat service.
  * Intent: Represents a message dispatched through a chat service.
@@ -439,7 +414,6 @@ export type ChatMessage = {
   threadId?: string;
   sentAt: string;
 };
-
 /**
  * Summary: Defines PullRequestStatus.
  * Intent: Defines PullRequestStatus.
@@ -449,7 +423,6 @@ export type ChatMessage = {
  * Side Effects: None
  */
 export type PullRequestStatus = "open" | "merged" | "closed";
-
 /**
  * Summary: Represents a PR/MR opened on a git hosting platform.
  * Intent: Represents a PR/MR opened on a git hosting platform.
@@ -471,7 +444,6 @@ export type PullRequest = {
   status: PullRequestStatus;
   createdAt: string;
 };
-
 /**
  * Summary: Defines IssueStatus.
  * Intent: Defines IssueStatus.
@@ -481,7 +453,6 @@ export type PullRequest = {
  * Side Effects: None
  */
 export type IssueStatus = "open" | "in_progress" | "done" | "closed";
-
 /**
  * Summary: Defines IssuePriority.
  * Intent: Defines IssuePriority.
@@ -491,7 +462,6 @@ export type IssueStatus = "open" | "in_progress" | "done" | "closed";
  * Side Effects: None
  */
 export type IssuePriority = "low" | "medium" | "high" | "critical";
-
 /**
  * Summary: Represents a ticket created in an external issue tracker.
  * Intent: Represents a ticket created in an external issue tracker.

@@ -32,7 +32,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	StateTesting      PipelineState = "TESTING"
+	StateTesting PipelineState = "TESTING"
 	// Summary: Defines the StateStagingReady type.
 	// Intent: Defines the StateStagingReady type.
 	// Params: None
@@ -46,14 +46,14 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	StateDeployed     PipelineState = "DEPLOYED"
+	StateDeployed PipelineState = "DEPLOYED"
 	// Summary: Defines the StateRollback type.
 	// Intent: Defines the StateRollback type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	StateRollback     PipelineState = "ROLLBACK"
+	StateRollback PipelineState = "ROLLBACK"
 )
 
 // Summary: Pipeline models the SDLC progression for a specific feature branch.  Constraints: Requires a unique ID and an associated branch name.
