@@ -1,13 +1,18 @@
 # Examples
 
-This directory contains pre-configured agent examples.
+## Identity
+This module provides example configurations, Dockerfiles, and usage patterns for One Human Corp agents.
 
-## Hello World Agent
-The `hello_world_agent.yaml` is a minimal, pre-configured agent definition that works out-of-the-box.
-It uses the `builtin` model to avoid requiring external API credentials.
-Use this example to verify your setup.
+## Architecture
+It contains sample environments that integrate with the broader Kubernetes CRD and SPIFFE/SPIRE identity planes, serving as reference implementations.
 
-You can also run the pre-compiled Go hello world agent easily via Bazel:
-```bash
-bazelisk run //:hello-world
-```
+## Quick Start
+1. Navigate to the desired example directory.
+2. Run `docker-compose up` or apply the Kubernetes manifests directly.
+
+## Developer Workflow
+Use the examples to test structural changes:
+`bazelisk test //examples/...`
+
+## Configuration
+Requires typical One Human Corp environment variables (e.g., \`MCP_BUNDLE_DIR\`, \`CI\`) depending on the specific example run.

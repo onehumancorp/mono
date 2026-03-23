@@ -364,6 +364,11 @@ var statusOrder = []orchestration.Status{
 	orchestration.StatusInMeeting,
 }
 
+// Summary: NewServer initializes a new Dashboard HTTP handler that routes all API and frontend requests. Parameters: - org: domain.Organization; The base organizational structure. - hub: *orchestration.Hub; The agent communication and meeting room registry. - tracker: *billing.Tracker; The cost and token tracking engine. Returns: An http.Handler that serves the dashboard REST APIs and static React frontend.
+// Params: org, hub, tracker, authStore
+// Returns: http.Handler
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // NewServer initializes a new Dashboard HTTP handler that routes all API and frontend requests.
 //
 // Parameters:

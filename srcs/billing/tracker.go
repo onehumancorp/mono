@@ -21,6 +21,11 @@ type Price struct {
 	OutputPerMillionUSD float64
 }
 
+// Summary: DefaultCatalog provides a comprehensive list of LLM inference prices. Side Effects: None. It serves as a read-only dictionary used by NewTracker.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 // DefaultCatalog provides a comprehensive list of LLM inference prices.
 //
 // Side Effects: None. It serves as a read-only dictionary used by NewTracker.
@@ -134,6 +139,11 @@ func getShardIndex(orgID string) uint32 {
 	return hash % numShards
 }
 
+// Summary: NewTracker constructs a Tracker configured with the specified model pricing catalog. Parameters: - catalog: map[string]Price; A dictionary mapping model names to pricing structures. Returns: A thread-safe instance of Tracker initialized with a copied catalog.
+// Params: catalog
+// Returns: *Tracker
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // NewTracker constructs a Tracker configured with the specified model pricing catalog.
 //
 // Parameters:
@@ -153,6 +163,11 @@ func NewTracker(catalog map[string]Price) *Tracker {
 	return t
 }
 
+// Summary: Track calculates the USD cost for a token consumption event and persists it in memory. Parameters: - usage: Usage; The event containing token counts and the utilized model identifier. Returns: The updated Usage record with CostUSD and normalized UTC timestamp on success. Errors: Returns an error if the specified model is missing from the pricing catalog. Side Effects: Modifies the internal append-only slice of usages.
+// Params: usage
+// Returns: Usage, error
+// Errors: Returns an error if the operation fails
+// Side Effects: Modifies state or performs I/O as necessary
 // Track calculates the USD cost for a token consumption event and persists it in memory.
 //
 // Parameters:
@@ -184,6 +199,11 @@ func (t *Tracker) Track(usage Usage) (Usage, error) {
 	return usage, nil
 }
 
+// Summary: Summary collates all recorded usage events to compute aggregate costs for an organisation. Parameters: - organizationID: string; The UUID of the organization to filter usage metrics by. Returns: A Summary record detailing the organization's total spend, token count, and per-agent metrics.
+// Params: organizationID
+// Returns: Summary
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // Summary collates all recorded usage events to compute aggregate costs for an organisation.
 //
 // Parameters:

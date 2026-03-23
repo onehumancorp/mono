@@ -188,6 +188,11 @@ type Message struct {
 	OccurredAt time.Time `json:"occurredAt"`
 }
 
+// Summary: DelegateTask allows an agent in Delegate Mode to act as a routing proxy. It inspects an incoming task, updates the sender and recipient fields, and forwards the task to the best-fit specialist agent from the registry. Parameters: - fromAgentID: string; The unique identifier of the delegating agent. - toAgentID: string; The unique identifier of the specialist agent. - task: Message; The task payload to be delegated. Returns: An error if either the delegating agent or the specialist agent does not exist.
+// Params: fromAgentID, toAgentID, task
+// Returns: error
+// Errors: Returns an error if the operation fails
+// Side Effects: Modifies state or performs I/O as necessary
 // DelegateTask allows an agent in Delegate Mode to act as a routing proxy.
 // It inspects an incoming task, updates the sender and recipient fields,
 // and forwards the task to the best-fit specialist agent from the registry.
@@ -232,6 +237,11 @@ type Hub struct {
 	subs          map[string][]chan struct{}
 }
 
+// Summary: NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries. Returns: An instantiated *Hub ready to register agents and route events.
+// Params: None
+// Returns: *Hub
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
 //
 // Returns: An instantiated *Hub ready to register agents and route events.
@@ -285,6 +295,11 @@ func (h *Hub) MinimaxAPIKey() string {
 	return h.minimaxAPIKey
 }
 
+// Summary: Agent retrieves the runtime state of a specific worker by ID. Parameters: - id: string; The unique identifier of the agent. Returns: The matching Agent object and a boolean indicating if it exists in the registry.
+// Params: id
+// Returns: Agent, bool
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // Agent retrieves the runtime state of a specific worker by ID.
 //
 // Parameters:
@@ -299,6 +314,11 @@ func (h *Hub) Agent(id string) (Agent, bool) {
 	return agent, ok
 }
 
+// Summary: OpenMeeting instantiates a new collaborative context window and marks all participants as InMeeting. Parameters: - id: string; Unique identifier for the room. - participants: []string; A list of agent IDs to be enrolled in the discussion. Returns: The instantiated MeetingRoom.
+// Params: id, participants
+// Returns: MeetingRoom
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // OpenMeeting instantiates a new collaborative context window and marks all participants as InMeeting.
 //
 // Parameters:
@@ -322,6 +342,11 @@ func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 	return meeting
 }
 
+// Summary: OpenMeetingWithAgenda creates a meeting room with an explicit agenda descriptor. Parameters: - id: string; Unique identifier for the room. - agenda: string; The primary objective guiding the agents' conversation. - participants: []string; A list of agent IDs to be enrolled in the discussion. Returns: The instantiated MeetingRoom.
+// Params: id, agenda, participants
+// Returns: MeetingRoom
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // OpenMeetingWithAgenda creates a meeting room with an explicit agenda descriptor.
 //
 // Parameters:
@@ -360,6 +385,11 @@ func (h *Hub) FireAgent(id string) {
 	delete(h.inbox, id)
 }
 
+// Summary: Publish validates and routes a message to a direct recipient, a meeting room, or both. Parameters: - message: Message; The event payload containing routing headers and content. Returns: An error if the sender or recipient agents do not exist, or if the target meeting is unrecognised.
+// Params: message
+// Returns: error
+// Errors: Returns an error if the operation fails
+// Side Effects: Modifies state or performs I/O as necessary
 // Publish validates and routes a message to a direct recipient, a meeting room, or both.
 //
 // Parameters:
@@ -433,6 +463,11 @@ func (h *Hub) Publish(message Message) error {
 	return nil
 }
 
+// Summary: Subscribe returns a channel that receives real-time messages for the given agent.
+// Params: agentID
+// Returns: <-chan struct{}, func()
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // Subscribe returns a channel that receives real-time messages for the given agent.
 func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 	h.mu.Lock()
@@ -458,6 +493,11 @@ func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 	return ch, unsubscribe
 }
 
+// Summary: Inbox retrieves all undelivered or direct messages routed exclusively to a single agent. Parameters: - agentID: string; The unique identifier of the worker. Returns: A slice of direct Message objects.
+// Params: agentID
+// Returns: []Message
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // Inbox retrieves all undelivered or direct messages routed exclusively to a single agent.
 //
 // Parameters:
@@ -477,6 +517,11 @@ func (h *Hub) Inbox(agentID string) []Message {
 	return inbox
 }
 
+// Summary: Meeting retrieves the current state and transcript of a specified virtual meeting room. Parameters: - id: string; The unique identifier of the room. Returns: The matching MeetingRoom object and a boolean indicating if it exists.
+// Params: id
+// Returns: MeetingRoom, bool
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // Meeting retrieves the current state and transcript of a specified virtual meeting room.
 //
 // Parameters:
@@ -492,6 +537,11 @@ func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 	return meeting, ok
 }
 
+// Summary: Meetings fetches a point-in-time snapshot of all active meeting rooms. Returns: A slice containing all MeetingRoom objects.
+// Params: None
+// Returns: []MeetingRoom
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // Meetings fetches a point-in-time snapshot of all active meeting rooms.
 //
 // Returns: A slice containing all MeetingRoom objects.
@@ -508,6 +558,11 @@ func (h *Hub) Meetings() []MeetingRoom {
 	return meetings
 }
 
+// Summary: Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID. Returns: A slice of all active Agent objects in the orchestration Hub.
+// Params: None
+// Returns: []Agent
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID.
 //
 // Returns: A slice of all active Agent objects in the orchestration Hub.

@@ -26,6 +26,11 @@ var (
 	meetingEventsCounter     metric.Int64Counter
 )
 
+// Summary: InitTelemetry configures and starts the OpenTelemetry metrics provider with a Prometheus exporter. Returns: A shutdown function to clean up resources, and an error if initialization fails. Errors: Fails if the Prometheus exporter cannot be created or registered. Side Effects: Modifies global OpenTelemetry state and registers metrics with the default Prometheus registerer.
+// Params: None
+// Returns: func(), error
+// Errors: Returns an error if the operation fails
+// Side Effects: Modifies state or performs I/O as necessary
 // InitTelemetry configures and starts the OpenTelemetry metrics provider with a Prometheus exporter.
 //
 // Returns: A shutdown function to clean up resources, and an error if initialization fails.
@@ -97,6 +102,11 @@ func InitTelemetry() (func(), error) {
 	}, nil
 }
 
+// Summary: Middleware injects telemetry instrumentation into an HTTP handler chain. Parameters: - next: http.Handler; The next HTTP handler in the request pipeline. Returns: An http.Handler that wraps the provided handler with latency and request counting metrics. Side Effects: Records HTTP request duration and count. May log request details based on the Verbosity level.
+// Params: next
+// Returns: http.Handler
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // Middleware injects telemetry instrumentation into an HTTP handler chain.
 //
 // Parameters:
@@ -135,6 +145,11 @@ func Middleware(next http.Handler) http.Handler {
 // Side Effects: None
 var Verbosity = 1 // Default level
 
+// Summary: MetricsHandler provides an HTTP handler that exposes the collected Prometheus metrics. Returns: An http.Handler that serves the /metrics endpoint. Side Effects: None. Read-only exposure of registered Prometheus metrics.
+// Params: None
+// Returns: http.Handler
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // MetricsHandler provides an HTTP handler that exposes the collected Prometheus metrics.
 //
 // Returns: An http.Handler that serves the /metrics endpoint.
@@ -144,6 +159,11 @@ func MetricsHandler() http.Handler {
 	return promhttp.Handler()
 }
 
+// Summary: RecordTokenUsage increments the global counter for LLM tokens consumed by the workforce. Parameters: - ctx: context.Context; The context of the active trace or request. - agentID: string; The identifier of the agent consuming the tokens. - role: string; The role of the agent. - model: string; The specific AI model being inferred (e.g., gpt-4o). - tokenType: string; The type of tokens (e.g., prompt or completion). - count: int64; The number of tokens consumed. Returns: Nothing. Side Effects: Updates the ohc_token_usage_total Prometheus metric.
+// Params: ctx, agentID, role, model, tokenType, count
+// Returns: None
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // RecordTokenUsage increments the global counter for LLM tokens consumed by the workforce.
 //
 // Parameters:
@@ -169,6 +189,11 @@ func RecordTokenUsage(ctx context.Context, agentID, role, model, tokenType strin
 	))
 }
 
+// Summary: RecordAgentApiCall increments the global counter for external tool or API invocations made by agents. Parameters: - ctx: context.Context; The context of the active trace or request. - agentID: string; The identifier of the agent making the call. - role: string; The role of the agent. - api: string; The name or route of the invoked API/tool. Returns: Nothing. Side Effects: Updates the ohc_agent_api_calls_total Prometheus metric.
+// Params: ctx, agentID, role, api
+// Returns: None
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // RecordAgentApiCall increments the global counter for external tool or API invocations made by agents.
 //
 // Parameters:
@@ -191,6 +216,11 @@ func RecordAgentApiCall(ctx context.Context, agentID, role, api string) {
 	))
 }
 
+// Summary: RecordHumanInteraction increments the global counter for events involving direct human oversight. Parameters: - ctx: context.Context; The context of the active trace or request. - interactionType: string; The category of interaction (e.g., approval, handoff). Returns: Nothing. Side Effects: Updates the ohc_human_interactions_total Prometheus metric.
+// Params: ctx, interactionType
+// Returns: None
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // RecordHumanInteraction increments the global counter for events involving direct human oversight.
 //
 // Parameters:
@@ -209,6 +239,11 @@ func RecordHumanInteraction(ctx context.Context, interactionType string) {
 	))
 }
 
+// Summary: RecordMeetingEvent increments the global counter for collaborative meeting room actions. Parameters: - ctx: context.Context; The context of the active trace or request. - eventType: string; The nature of the meeting event (e.g., start, message, end). Returns: Nothing. Side Effects: Updates the ohc_meeting_events_total Prometheus metric.
+// Params: ctx, eventType
+// Returns: None
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // RecordMeetingEvent increments the global counter for collaborative meeting room actions.
 //
 // Parameters:
@@ -227,6 +262,11 @@ func RecordMeetingEvent(ctx context.Context, eventType string) {
 	))
 }
 
+// Summary: LogAgentExecution provides structured JSON logging for agent execution traces. Parameters: - ctx: context.Context; The context of the active trace or request. - agentID: string; The identifier of the agent. - role: string; The role of the agent. - api: string; The API or tool being executed. - eventType: string; The specific type of the event (e.g. task, status). - content: string; The content or message payload associated with the execution. Returns: Nothing. Side Effects: Emits a structured log via slog.
+// Params: ctx, agentID, role, api, eventType, content
+// Returns: None
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // LogAgentExecution provides structured JSON logging for agent execution traces.
 //
 // Parameters:

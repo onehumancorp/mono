@@ -1,49 +1,20 @@
 # One Human Corp
 
 ## Identity
-One Human Corp is an innovative Cloud-Native Hybrid Architecture (Agentic OS) that empowers a single individual to run an entire enterprise by orchestrating highly specialized AI agents natively on Kubernetes.
+One Human Corp is a Cloud-Native Hybrid Architecture (Agentic OS) that orchestrates AI agents natively on Kubernetes using CRDs.
 
 ## Architecture
-Built on a modular, open-source stack (Model Context Protocol, SPIFFE/SPIRE, LangGraph/CrewAI), the system leverages Kubernetes Custom Resource Definitions (CRDs) to manage the organisational structure as Infrastructure as Code. The backend is written in Go (Bazel-based monorepo), and it integrates with a React Next.js-style frontend to allow the human CEO to direct virtual meeting rooms, handle high-risk approvals, and monitor token usage and billing.
-
-```mermaid
-graph TD;
-    User[Human CEO] --> Frontend[React Next.js Frontend];
-    Frontend --> Backend[Go Dashboard Server];
-    Backend --> K8s[Kubernetes Cluster];
-    K8s --> Agents[AI Agents];
-    Agents --> DB[(Database)];
-    K8s --> MCP[Model Context Protocol];
-```
+The system integrates human oversight via a Next.js frontend, communicates via the Model Context Protocol (MCP), tracks state via append-only event logs, and secures inter-service communications using SPIFFE/SPIRE identities. It enforces a strict 'Zero-Lock' paradigm, keeping all interfaces tool-agnostic.
 
 ## Quick Start
-1. Ensure you have `bazelisk` and `npm` installed.
-2. Build the backend:
-   ```bash
-   bazelisk build //...
-   ```
-3. Run all tests to verify setup:
-   ```bash
-   bazelisk test //...
-   ```
-4. Run the Go backend (Dashboard Server) locally on port `8080`.
-5. In parallel, run the frontend dev server:
-   ```bash
-   cd srcs/frontend
-   npm install
-   npm run dev &
-   ```
-6. Access the dashboard at `http://localhost:5173`.
+1. Ensure Bazel (`bazelisk`), Go, and Node.js are installed.
+2. Build the entire monorepo: `bazelisk build //...`
+3. Run the complete test suite: `bazelisk test //...`
 
 ## Developer Workflow
-This project uses Bazel for deterministic builds and testing.
-- **Build all modules:** `bazelisk build //...`
-- **Run all tests:** `bazelisk test //...`
-- **Format code:** Use standard `gofmt` for Go and Prettier for the frontend.
+Strictly adhere to the Golang Google Coding Style for backend code and TSDoc for frontend code. Ensure 95% test coverage.
+Build: `bazelisk build //...`
+Test: `bazelisk test //...`
 
 ## Configuration
-The following environment variables and configurations are commonly used:
-- `GEMINI_API_KEY`: API Key for Gemini models (if using Google models).
-- `MCP_BUNDLE_DIR`: Directory for MCP bundles.
-- `MONO_FRONTEND_DIST`: Path to the compiled frontend dist directory.
-- Kubernetes Secrets are used to inject runtime credentials safely without committing secrets to the repo.
+Requires `GEMINI_API_KEY`, `MINIMAX_API_KEY`, and standard Kubernetes + SPIRE setup for full end-to-end execution. K8s Pods must run as non-root with read-only filesystems.

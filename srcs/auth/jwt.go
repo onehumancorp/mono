@@ -35,6 +35,11 @@ type Claims struct {
 	TokenID  string   `json:"jti"`
 }
 
+// Summary: HasRole checks whether the token's claims include authorization for a specific role. Parameters: - role: string; The target role identifier to check for. Returns: A boolean indicating if the role is present (true if present or if the user is an admin). Side Effects: None. Executes a read-only iteration over the claims.
+// Params: role
+// Returns: bool
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // HasRole checks whether the token's claims include authorization for a specific role.
 //
 // Parameters:
@@ -52,6 +57,11 @@ func (c *Claims) HasRole(role string) bool {
 	return false
 }
 
+// Summary: IssueToken generates and cryptographically signs a new HS256 JWT for the specified user. Parameters: - u: *User; The user entity to construct the token payload for. Returns: The fully encoded and signed JWT string, or an error if signing fails. Errors: Fails if JSON serialization or cryptographic signing encounters an error. Side Effects: None. Uses the store's symmetric secret for signing.
+// Params: u
+// Returns: string, error
+// Errors: Returns an error if the operation fails
+// Side Effects: Modifies state or performs I/O as necessary
 // IssueToken generates and cryptographically signs a new HS256 JWT for the specified user.
 //
 // Parameters:
@@ -76,6 +86,11 @@ func (s *Store) IssueToken(u *User) (string, error) {
 	return signHS256(claims, s.secret)
 }
 
+// Summary: ValidateToken decodes and verifies the signature and expiration of a provided JWT string. Parameters: - token: string; The raw JWT string to be verified. Returns: The successfully parsed token Claims if validation passes. Errors: Fails if the token is malformed, expired, has an invalid signature, or has been revoked. Side Effects: May delegate to external OIDC configuration logic if the primary HS256 parsing fails and OIDC is enabled.
+// Params: token
+// Returns: *Claims, error
+// Errors: Returns an error if the operation fails
+// Side Effects: Modifies state or performs I/O as necessary
 // ValidateToken decodes and verifies the signature and expiration of a provided JWT string.
 //
 // Parameters:

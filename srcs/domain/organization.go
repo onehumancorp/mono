@@ -184,6 +184,11 @@ type Organization struct {
 	RoleProfiles []RoleProfile `json:"roleProfiles"`
 }
 
+// Summary: NewSoftwareCompany constructs a pre-configured engineering organisation with standard tech roles. Parameters: - id: string; Unique identifier for the organization. - name: string; The display name for the company. - ceoName: string; The human CEO's name. - now: time.Time; The organization's creation timestamp. Returns: A fully populated software company Organization ready for the orchestration Hub.
+// Params: id, name, ceoName, now
+// Returns: Organization
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // NewSoftwareCompany constructs a pre-configured engineering organisation with standard tech roles.
 //
 // Parameters:
@@ -220,6 +225,11 @@ func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 	}
 }
 
+// Summary: MemberByID retrieves a specific team member from the organisation by ID. Parameters: - id: string; The unique identifier of the member. Returns: The Member and a boolean indicating if the member was found.
+// Params: id
+// Returns: Member, bool
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // MemberByID retrieves a specific team member from the organisation by ID.
 //
 // Parameters:
@@ -236,6 +246,11 @@ func (o Organization) MemberByID(id string) (Member, bool) {
 	return Member{}, false
 }
 
+// Summary: MembersByManager fetches all direct reports for a given manager ID. Parameters: - managerID: string; The unique identifier of the manager. Returns: A slice of Member objects representing the direct reports.
+// Params: managerID
+// Returns: []Member
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // MembersByManager fetches all direct reports for a given manager ID.
 //
 // Parameters:
@@ -253,6 +268,11 @@ func (o Organization) MembersByManager(managerID string) []Member {
 	return members
 }
 
+// Summary: RoleProfile retrieves the execution playbook for a specific role within this organisation. Parameters: - role: Role; The role archetype to lookup. Returns: The RoleProfile and a boolean indicating if the playbook exists.
+// Params: role
+// Returns: RoleProfile, bool
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // RoleProfile retrieves the execution playbook for a specific role within this organisation.
 //
 // Parameters:
@@ -386,6 +406,11 @@ func defaultSoftwareCompanyRoleProfiles() []RoleProfile {
 	}
 }
 
+// Summary: NewDigitalMarketingAgency constructs a pre-configured marketing organisation with standard growth roles. Parameters: - id: string; Unique identifier for the organization. - name: string; The display name for the agency. - ceoName: string; The human CEO's name. - now: time.Time; The organization's creation timestamp. Returns: A fully populated marketing agency Organization.
+// Params: id, name, ceoName, now
+// Returns: Organization
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // NewDigitalMarketingAgency constructs a pre-configured marketing organisation with standard growth roles.
 //
 // Parameters:
@@ -474,6 +499,11 @@ func defaultDigitalMarketingRoleProfiles() []RoleProfile {
 	}
 }
 
+// Summary: NewAccountingFirm constructs a pre-configured financial services organisation with audit and tax roles. Parameters: - id: string; Unique identifier for the organization. - name: string; The display name for the firm. - ceoName: string; The human CEO's name. - now: time.Time; The organization's creation timestamp. Returns: A fully populated accounting firm Organization.
+// Params: id, name, ceoName, now
+// Returns: Organization
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // NewAccountingFirm constructs a pre-configured financial services organisation with audit and tax roles.
 //
 // Parameters:

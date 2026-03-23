@@ -14,6 +14,11 @@ import (
 	pb "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration"
 )
 
+// Summary: ExtractSPIFFEID gets the SPIFFE ID from the context. It extracts the ID exclusively from the mTLS peer certificate.
+// Params: ctx
+// Returns: string, error
+// Errors: Returns an error if the operation fails
+// Side Effects: Modifies state or performs I/O as necessary
 // ExtractSPIFFEID gets the SPIFFE ID from the context.
 // It extracts the ID exclusively from the mTLS peer certificate.
 func ExtractSPIFFEID(ctx context.Context) (string, error) {
@@ -34,6 +39,11 @@ func ExtractSPIFFEID(ctx context.Context) (string, error) {
 	return "", fmt.Errorf("no SPIFFE ID found in peer certificate")
 }
 
+// Summary: SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
+// Params: None
+// Returns: grpc.UnaryServerInterceptor
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
 func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 	return func(
@@ -112,6 +122,11 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
+// Summary: SPIFFEStreamInterceptor validates SPIFFE IDs for streaming gRPC calls.
+// Params: None
+// Returns: grpc.StreamServerInterceptor
+// Errors: None
+// Side Effects: Modifies state or performs I/O as necessary
 // SPIFFEStreamInterceptor validates SPIFFE IDs for streaming gRPC calls.
 func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
 	return func(
