@@ -525,7 +525,7 @@ func TestInvokeMCPToolTelegram(t *testing.T) {
 	// Telegram missing content
 	req := mcpInvokeRequest{
 		ToolID: "telegram-mcp",
-		Params: map[string]any{},
+		Params: json.RawMessage(`{}`),
 	}
 	_, err := app.invokeMCPTool(req)
 	if err == nil {
@@ -535,9 +535,9 @@ func TestInvokeMCPToolTelegram(t *testing.T) {
 	// Telegram missing channel (no chatspace configured fallback testing)
 	req = mcpInvokeRequest{
 		ToolID: "telegram-mcp",
-		Params: map[string]any{
-			"content": "hello",
-		},
+		Params: json.RawMessage(`{
+			"content": "hello"
+		}`),
 	}
 	_, err = app.invokeMCPTool(req)
 	if err == nil {
@@ -547,10 +547,10 @@ func TestInvokeMCPToolTelegram(t *testing.T) {
 	// Telegram success
 	req = mcpInvokeRequest{
 		ToolID: "telegram-mcp",
-		Params: map[string]any{
+		Params: json.RawMessage(`{
 			"content": "hello",
-			"channel": "test-channel",
-		},
+			"channel": "test-channel"
+		}`),
 	}
 	res, err := app.invokeMCPTool(req)
 	if err != nil {
@@ -567,9 +567,9 @@ func TestInvokeMCPToolSlack(t *testing.T) {
 	// Slack missing channel (no chatspace configured fallback testing)
 	req := mcpInvokeRequest{
 		ToolID: "slack-mcp",
-		Params: map[string]any{
-			"content": "hello",
-		},
+		Params: json.RawMessage(`{
+			"content": "hello"
+		}`),
 	}
 	_, err := app.invokeMCPTool(req)
 	if err == nil {
@@ -579,10 +579,10 @@ func TestInvokeMCPToolSlack(t *testing.T) {
 	// Slack success
 	req = mcpInvokeRequest{
 		ToolID: "slack-mcp",
-		Params: map[string]any{
+		Params: json.RawMessage(`{
 			"content": "hello",
-			"channel": "test-channel",
-		},
+			"channel": "test-channel"
+		}`),
 	}
 	res, err := app.invokeMCPTool(req)
 	if err != nil {
@@ -599,9 +599,9 @@ func TestInvokeMCPToolTeams(t *testing.T) {
 	// Teams missing channel (no chatspace configured fallback testing)
 	req := mcpInvokeRequest{
 		ToolID: "teams-mcp",
-		Params: map[string]any{
-			"content": "hello",
-		},
+		Params: json.RawMessage(`{
+			"content": "hello"
+		}`),
 	}
 	_, err := app.invokeMCPTool(req)
 	if err == nil {
@@ -611,10 +611,10 @@ func TestInvokeMCPToolTeams(t *testing.T) {
 	// Teams success
 	req = mcpInvokeRequest{
 		ToolID: "teams-mcp",
-		Params: map[string]any{
+		Params: json.RawMessage(`{
 			"content": "hello",
-			"channel": "test-channel",
-		},
+			"channel": "test-channel"
+		}`),
 	}
 	res, err := app.invokeMCPTool(req)
 	if err != nil {
@@ -631,12 +631,12 @@ func TestInvokeMCPToolGit(t *testing.T) {
 	// Git success
 	req := mcpInvokeRequest{
 		ToolID: "git-mcp",
-		Params: map[string]any{
+		Params: json.RawMessage(`{
 			"repository":   "test-repo",
 			"title":        "test-title",
 			"body":         "test-body",
-			"sourceBranch": "feat-branch",
-		},
+			"sourceBranch": "feat-branch"
+		}`),
 	}
 	res, err := app.invokeMCPTool(req)
 	if err != nil {
@@ -653,10 +653,10 @@ func TestInvokeMCPToolJira(t *testing.T) {
 	// Jira success
 	req := mcpInvokeRequest{
 		ToolID: "jira-mcp",
-		Params: map[string]any{
+		Params: json.RawMessage(`{
 			"project": "test-project",
-			"title":   "test-title",
-		},
+			"title":   "test-title"
+		}`),
 	}
 	res, err := app.invokeMCPTool(req)
 	if err != nil {
@@ -673,10 +673,10 @@ func TestInvokeMCPToolLinear(t *testing.T) {
 	// Linear success
 	req := mcpInvokeRequest{
 		ToolID: "linear-mcp",
-		Params: map[string]any{
+		Params: json.RawMessage(`{
 			"project": "test-project",
-			"title":   "test-title",
-		},
+			"title":   "test-title"
+		}`),
 	}
 	res, err := app.invokeMCPTool(req)
 	if err != nil {

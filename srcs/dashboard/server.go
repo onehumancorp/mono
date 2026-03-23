@@ -3,6 +3,7 @@ package dashboard
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -781,9 +782,36 @@ type chatTestRequest struct {
 // ── MCP tool invocation ───────────────────────────────────────────────────────
 
 type mcpInvokeRequest struct {
-	ToolID string         `json:"toolId"`
-	Action string         `json:"action"`
-	Params map[string]any `json:"params"`
+	ToolID string          `json:"toolId"`
+	Action string          `json:"action"`
+	Params json.RawMessage `json:"params"`
+}
+
+type communicationMCPParams struct {
+	IntegrationID string `json:"integrationId"`
+	Channel       string `json:"channel"`
+	FromAgent     string `json:"fromAgent"`
+	Content       string `json:"content"`
+	ThreadID      string `json:"threadId"`
+}
+
+type gitMCPParams struct {
+	IntegrationID string `json:"integrationId"`
+	Repository    string `json:"repository"`
+	Title         string `json:"title"`
+	Body          string `json:"body"`
+	SourceBranch  string `json:"sourceBranch"`
+	TargetBranch  string `json:"targetBranch"`
+	CreatedBy     string `json:"createdBy"`
+}
+
+type issueMCPParams struct {
+	IntegrationID string `json:"integrationId"`
+	Project       string `json:"project"`
+	Title         string `json:"title"`
+	Description   string `json:"description"`
+	CreatedBy     string `json:"createdBy"`
+	Priority      string `json:"priority"`
 }
 
 func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
@@ -800,8 +828,8 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "toolId is required", http.StatusBadRequest)
 		return
 	}
-	if req.Params == nil {
-		req.Params = map[string]any{}
+	if len(req.Params) == 0 {
+		req.Params = json.RawMessage(`{}`)
 	}
 	result, err := s.invokeMCPTool(req)
 	if err != nil {
@@ -812,19 +840,15 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
-	getString := func(key string) string {
-		if v, ok := req.Params[key]; ok {
-			if str, ok := v.(string); ok {
-				return str
-			}
-		}
-		return ""
-	}
-
 	switch req.ToolID {
 	// ── Communication tools ───────────────────────────────────────────────────
 	case "telegram-mcp", "slack-mcp", "teams-mcp":
-		integrationID := getString("integrationId")
+		var params communicationMCPParams
+		if err := json.Unmarshal(req.Params, &params); err != nil {
+			return nil, fmt.Errorf("invalid parameters for communication tool: %w", err)
+		}
+
+		integrationID := params.IntegrationID
 		if integrationID == "" {
 			switch req.ToolID {
 			case "telegram-mcp":
@@ -835,10 +859,10 @@ func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 				integrationID = "teams"
 			}
 		}
-		channel := getString("channel")
-		fromAgent := getString("fromAgent")
-		content := getString("content")
-		threadID := getString("threadId")
+		channel := params.Channel
+		fromAgent := params.FromAgent
+		content := params.Content
+		threadID := params.ThreadID
 
 		if content == "" {
 			return nil, errors.New("content is required")
@@ -863,16 +887,21 @@ func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 
 	// ── Git tools ─────────────────────────────────────────────────────────────
 	case "git-mcp":
-		integrationID := getString("integrationId")
+		var params gitMCPParams
+		if err := json.Unmarshal(req.Params, &params); err != nil {
+			return nil, fmt.Errorf("invalid parameters for git tool: %w", err)
+		}
+
+		integrationID := params.IntegrationID
 		if integrationID == "" {
 			integrationID = "github"
 		}
-		repo := getString("repository")
-		title := getString("title")
-		body := getString("body")
-		source := getString("sourceBranch")
-		target := getString("targetBranch")
-		createdBy := getString("createdBy")
+		repo := params.Repository
+		title := params.Title
+		body := params.Body
+		source := params.SourceBranch
+		target := params.TargetBranch
+		createdBy := params.CreatedBy
 		if target == "" {
 			target = "main"
 		}
@@ -884,7 +913,12 @@ func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 
 	// ── Issue tracker tools ───────────────────────────────────────────────────
 	case "jira-mcp", "linear-mcp":
-		integrationID := getString("integrationId")
+		var params issueMCPParams
+		if err := json.Unmarshal(req.Params, &params); err != nil {
+			return nil, fmt.Errorf("invalid parameters for issue tracker tool: %w", err)
+		}
+
+		integrationID := params.IntegrationID
 		if integrationID == "" {
 			if req.ToolID == "jira-mcp" {
 				integrationID = "jira"
@@ -892,11 +926,11 @@ func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 				integrationID = "linear"
 			}
 		}
-		project := getString("project")
-		title := getString("title")
-		description := getString("description")
-		createdBy := getString("createdBy")
-		priority := getString("priority")
+		project := params.Project
+		title := params.Title
+		description := params.Description
+		createdBy := params.CreatedBy
+		priority := params.Priority
 		issue, err := s.integReg.CreateIssue(integrationID, project, title, description, createdBy,
 			integrations.IssuePriority(priority), nil, time.Now().UTC())
 		if err != nil {
