@@ -55,6 +55,7 @@ type Server struct {
 // Side Effects: None
 type Settings struct {
 	MinimaxAPIKey string `json:"minimaxApiKey"`
+	Theme         string `json:"theme,omitempty"`
 }
 
 type statusCount struct {
@@ -549,7 +550,9 @@ func (s *Server) handleDevSeed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var payload seedRequest
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&payload); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -597,7 +600,9 @@ func (s *Server) handleMCPRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req mcpRegisterRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}

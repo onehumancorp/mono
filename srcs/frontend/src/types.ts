@@ -536,4 +536,5 @@ export type LoginResponse = {
  */
 export type Settings = {
   minimaxApiKey?: string;
+  theme?: string;
 };

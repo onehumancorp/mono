@@ -26,7 +26,9 @@ func (s *Server) handleApprovalRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req approvalCreateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -70,7 +72,9 @@ func (s *Server) handleApprovalDecide(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req approvalDecideRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -124,7 +128,9 @@ func (s *Server) handleHandoffs(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, list)
 	case http.MethodPost:
 		var req handoffCreateRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		dec := json.NewDecoder(r.Body)
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&req); err != nil {
 			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 			return
 		}
@@ -162,7 +168,9 @@ func (s *Server) handleHandoffResolve(w http.ResponseWriter, r *http.Request) {
 		HandoffID string `json:"handoffId"`
 		Status    string `json:"status"` // acknowledged | resolved
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -216,7 +224,9 @@ func (s *Server) handleB2BHandshake(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req b2bHandshakeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -249,7 +259,9 @@ func (s *Server) handleB2BRevoke(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		AgreementID string `json:"agreementId"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
