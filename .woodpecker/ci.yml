@@ -11,6 +11,7 @@ when:
     branch: main
   - event: pull_request
     branch: main
+  - event: manual
 
 # Cancel any already-running pipeline for the same branch/PR to save resources
 # (equivalent to GitHub Actions `concurrency.cancel-in-progress: true`).
