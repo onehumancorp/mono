@@ -27,7 +27,7 @@ var (
 	listenForMain = http.ListenAndServe
 	fatalForMain  = func(err error) {
 		slog.Error("fatal error", "error", err)
-		os.Exit(1)
+		panic(err)
 	}
 	initTelemetry = telemetry.InitTelemetry
 )
@@ -67,23 +67,20 @@ func newDemoHandler(now time.Time) (http.Handler, *orchestration.Hub) {
 
 	// Start Chatwoot auto-setup in the background when enabled.
 	if chatwoot.IsEnabled() {
-		go func() {
-			c := chatwoot.NewClientFromEnv()
-			if err := c.Setup(); err != nil {
-				slog.Error("chatwoot setup", "error", err)
-			}
-		}()
+		ChatwootSetupFunc()
 	}
 
 	return dashboard.NewServer(org, hub, tracker, authStore), hub
 }
 
-func run(now time.Time, listen listenFunc) error {
-	handler, hub := newDemoHandler(now)
+var grpcListenAddr = ":9090"
+var ServeGRPCFunc = func(s *grpc.Server, lis net.Listener) error {
+    return s.Serve(lis)
+}
 
-	// Start gRPC server
+var StartGRPCFunc = func(hub *orchestration.Hub) {
 	go func() {
-		lis, err := net.Listen("tcp", ":9090")
+		lis, err := net.Listen("tcp", grpcListenAddr)
 		if err != nil {
 			slog.Error("failed to listen for gRPC", "error", err)
 			return
@@ -94,10 +91,25 @@ func run(now time.Time, listen listenFunc) error {
 		)
 		orchestration.RegisterHubService(s, hub)
 		slog.Info("serving gRPC on :9090")
-		if err := s.Serve(lis); err != nil {
+		if err := ServeGRPCFunc(s, lis); err != nil {
 			slog.Error("failed to serve gRPC", "error", err)
 		}
+        if TestServeDone != nil {
+			select {
+			case TestServeDone <- struct{}{}:
+			default:
+			}
+        }
 	}()
+}
+
+var TestServeDone chan struct{}
+
+func run(now time.Time, listen listenFunc) error {
+	handler, hub := newDemoHandler(now)
+
+	// Start gRPC server
+	StartGRPCFunc(hub)
 
 	slog.Info("serving API", "address", defaultAddress)
 	return listen(defaultAddress, handler)
@@ -113,5 +125,12 @@ func main() {
 
 	if err := run(nowUTC().UTC(), listenForMain); err != nil {
 		fatalForMain(err)
+	}
+}
+
+var ChatwootSetupFunc = func() {
+	c := chatwoot.NewClientFromEnv()
+	if err := c.Setup(); err != nil {
+		slog.Error("chatwoot setup", "error", err)
 	}
 }

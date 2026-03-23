@@ -15,6 +15,11 @@ import (
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 )
 
+var prometheusRegisterer prometheus.Registerer = prometheus.DefaultRegisterer
+
+var GetMeterProvider = func(exporter sdkmetric.Reader) metric.MeterProvider {
+    return sdkmetric.NewMeterProvider(sdkmetric.WithReader(exporter))
+}
 var (
 	meter            metric.Meter
 	requestCounter   metric.Int64Counter
@@ -34,12 +39,12 @@ var (
 //
 // Side Effects: Modifies global OpenTelemetry state and registers metrics with the default Prometheus registerer.
 func InitTelemetry() (func(), error) {
-	exporter, err := otelprom.New(otelprom.WithRegisterer(prometheus.DefaultRegisterer))
+	exporter, err := otelprom.New(otelprom.WithRegisterer(prometheusRegisterer))
 	if err != nil {
 		return nil, err
 	}
 
-	provider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(exporter))
+	provider := GetMeterProvider(exporter)
 	otel.SetMeterProvider(provider)
 
 	meter = provider.Meter("github.com/onehumancorp/mono/ohc")
@@ -93,7 +98,7 @@ func InitTelemetry() (func(), error) {
 	}
 
 	return func() {
-		_ = provider.Shutdown(context.Background())
+		if p, ok := provider.(*sdkmetric.MeterProvider); ok { _ = p.Shutdown(context.Background()) }
 	}, nil
 }
 

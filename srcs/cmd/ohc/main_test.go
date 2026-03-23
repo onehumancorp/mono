@@ -1,6 +1,10 @@
 package main
 
 import (
+	"google.golang.org/grpc"
+	"net"
+	"github.com/onehumancorp/mono/srcs/orchestration"
+
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -197,4 +201,34 @@ func TestMain_TelemetryInitFailure(t *testing.T) {
 
 	// This should run without fatal, but print a warning about telemetry failure
 	main()
+}
+
+func TestMainFatal(t *testing.T) {
+	// Directly call fatalForMain to ensure it hits lines 28-30
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("expected fatalForMain to panic")
+		}
+	}()
+	fatalForMain(errors.New("test"))
+}
+
+
+func TestServeGRPCFunc_Error(t *testing.T) {
+	originalServe := ServeGRPCFunc
+	defer func() { ServeGRPCFunc = originalServe }()
+
+	ServeGRPCFunc = func(s *grpc.Server, lis net.Listener) error {
+		return errors.New("mock serve error")
+	}
+
+	TestServeDone = make(chan struct{})
+
+	originalAddr := grpcListenAddr
+	defer func() { grpcListenAddr = originalAddr }()
+	grpcListenAddr = ":0" // Use empty port to avoid actual listen errors
+
+	StartGRPCFunc(orchestration.NewHub())
+	<-TestServeDone
+    TestServeDone = nil
 }

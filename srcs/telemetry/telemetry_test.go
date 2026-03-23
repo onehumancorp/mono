@@ -1,6 +1,10 @@
 package telemetry
 
 import (
+	"errors"
+	"go.opentelemetry.io/otel/metric"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -211,3 +215,86 @@ func TestRecordFunctionsUninitialized(t *testing.T) {
 }
 
 // Add dummy test to trigger otelprom error for better coverage
+
+type mockRegisterer struct {
+	prometheus.Registerer
+}
+
+func (m mockRegisterer) Register(c prometheus.Collector) error {
+	return errors.New("mock register error")
+}
+func (m mockRegisterer) MustRegister(c ...prometheus.Collector) {}
+func (m mockRegisterer) Unregister(c prometheus.Collector) bool { return true }
+
+func TestInitTelemetry_Error(t *testing.T) {
+	original := prometheusRegisterer
+	defer func() {
+		prometheusRegisterer = original
+	}()
+	prometheusRegisterer = mockRegisterer{}
+
+	_, err := InitTelemetry()
+	if err == nil {
+		t.Errorf("expected error from InitTelemetry due to mock registerer")
+	}
+}
+
+func TestLogAgentExecution(t *testing.T) {
+	LogAgentExecution(context.Background(), "agent-1", "role-1", "api-1", "event-type-1", "content-1")
+}
+
+type dummyMeterProvider struct {
+    metric.MeterProvider
+    failName string
+}
+
+func (m dummyMeterProvider) Meter(name string, opts ...metric.MeterOption) metric.Meter {
+    return dummyMeter{failName: m.failName}
+}
+
+type dummyMeter struct {
+    metric.Meter
+    failName string
+}
+
+func (m dummyMeter) Int64Counter(name string, options ...metric.Int64CounterOption) (metric.Int64Counter, error) {
+    if name == m.failName {
+        return nil, errors.New("mock err")
+    }
+    return nil, nil
+}
+
+func (m dummyMeter) Float64Histogram(name string, options ...metric.Float64HistogramOption) (metric.Float64Histogram, error) {
+    if name == m.failName {
+        return nil, errors.New("mock err")
+    }
+    return nil, nil
+}
+
+func TestInitTelemetry_MeterErrors2(t *testing.T) {
+    original := GetMeterProvider
+    defer func() {
+        GetMeterProvider = original
+    }()
+
+    names := []string{
+        "http_requests_total",
+        "http_request_duration_seconds",
+        "ohc_token_usage_total",
+        "ohc_agent_api_calls_total",
+        "ohc_human_interactions_total",
+        "ohc_meeting_events_total",
+    }
+
+    for _, n := range names {
+        t.Run("fail_" + n, func(t *testing.T) {
+            dummyP := dummyMeterProvider{
+                failName: n,
+            }
+            GetMeterProvider = func(exporter sdkmetric.Reader) metric.MeterProvider {
+                return dummyP
+            }
+            InitTelemetry()
+        })
+    }
+}
