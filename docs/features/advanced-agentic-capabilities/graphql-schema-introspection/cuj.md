@@ -1,8 +1,30 @@
 # CUJ: GraphQL Schema Introspection
 
-**Author(s):** TPM Agent
-**Status:** In Review
-**Last Updated:** 2026-03-21
+**Persona:** CEO / Manager / Specialized Agent
+**Context:** Initiating or managing workflows that require GraphQL Schema Introspection within the Tool Discovery domain.
+**Success Metrics:** Sub-50ms execution, zero "Agent Amnesia" occurrences, and fully validated SPIFFE identities.
 
-## 1. Overview
-User journey for GraphQL Schema Introspection.
+## 1. User Journey Overview
+When a complex Epic is initiated, the system automatically provisions necessary sub-agents. During execution, the agents leverage GraphQL Schema Introspection to optimize their workflows, resolve ambiguities, and maintain state without exceeding token quotas.
+
+## 2. Detailed Step-by-Step Breakdown
+
+| Step | User Action / System Trigger | Resulting State | Verification |
+|------|------------------------------|-----------------|--------------|
+| 1 | Agent encounters requirement for GraphQL Schema Introspection | Feature module initialized | Log entry created in Postgres |
+| 2 | Component requests context or execution | Validation via SPIFFE | Valid SVID confirmed |
+| 3 | Core logic of GraphQL Schema Introspection processes task | Graph state updated | New Checkpoint created |
+| 4 | Task completes successfully | Semantic vector updated | CSI Snapshot synced |
+
+## 3. Edge Cases & Recovery
+### 3.1 Operation Timeout
+- **Detection**: The GraphQL Schema Introspection operation exceeds threshold latency.
+- **Recovery**: Halts operation, falls back to general reasoning, and flags for review.
+
+### 3.2 Resource Exhaustion
+- **Detection**: VRAM quota or context token limit approached.
+- **Recovery**: Triggers background distillation and checkpointing before proceeding.
+
+## 4. UI/UX Details
+- **Dashboard Visibility**: The CEO Dashboard clearly displays the status of GraphQL Schema Introspection operations within the active thread's visualization graph.
+- **Alerting**: Non-critical warnings are batched; critical failures instantly trigger a HITL Handoff.
