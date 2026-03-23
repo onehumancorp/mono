@@ -29,6 +29,7 @@ go_test(
     srcs = [
         "server_missing_test.go",
         "server_test.go",
+        "handlers_ops_test.go",
     ],
     embed = [":dashboard"],
     deps = [

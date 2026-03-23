@@ -1,6 +1,8 @@
 package orchestration
 
 import (
+	"errors"
+	"strings"
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -716,5 +718,201 @@ func TestHubServiceServer_Publish(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestHubPublish_ChannelFull(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "PM", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "SWE", OrganizationID: "org-1"})
+
+	// Subscribe to the receiver to get the channel
+	hub.Subscribe("receiver")
+
+	// Fill the channel (capacity is 100) using the unexported subs map
+	hub.mu.Lock()
+	subs := hub.subs["receiver"]
+	for i := 0; i < cap(subs[0]); i++ {
+		subs[0] <- struct{}{}
+	}
+	hub.mu.Unlock()
+
+	// This should trigger the `default:` branch in Publish
+	err := hub.Publish(Message{
+		ID:         "msg-1",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "overflow",
+		OccurredAt: time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("unexpected error publishing to full channel: %v", err)
+	}
+}
+
+func TestHubPublish_MeetingChannelFull(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "p1", Name: "Participant 1", Role: "PM", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "p2", Name: "Participant 2", Role: "SWE", OrganizationID: "org-1"})
+
+	hub.OpenMeetingWithAgenda("m1", "Test", []string{"p1", "p2"})
+
+	hub.Subscribe("p1")
+	hub.mu.Lock()
+	subs := hub.subs["p1"]
+	for i := 0; i < cap(subs[0]); i++ {
+		subs[0] <- struct{}{}
+	}
+	hub.mu.Unlock()
+
+	err := hub.Publish(Message{
+		ID:         "msg-2",
+		FromAgent:  "p2",
+		MeetingID:  "m1",
+		Type:       EventTask,
+		Content:    "overflow meeting",
+		OccurredAt: time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("unexpected error publishing meeting message to full channel: %v", err)
+	}
+}
+
+type failingStream struct {
+	grpc.ServerStream
+	ctx      context.Context
+	messages []*pb.Message
+	failOn   int
+	sent     int
+}
+
+func (m *failingStream) Context() context.Context {
+	return m.ctx
+}
+
+func (m *failingStream) Send(msg *pb.Message) error {
+	m.sent++
+	if m.sent == m.failOn {
+		return errors.New("simulated stream send error")
+	}
+	m.messages = append(m.messages, msg)
+	return nil
+}
+
+func TestHubServiceServer_StreamMessages_FailInitialSend(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	server := NewHubServiceServer(hub)
+
+	// Publish to inbox so initial sendNewMessages has something to send
+	_ = hub.Publish(Message{
+		ID:         "msg-1",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "initial",
+		OccurredAt: time.Now(),
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	mockStream := &failingStream{ctx: ctx, failOn: 1} // Fail immediately on first send
+
+	req := pb.StreamMessagesRequest_builder{
+		AgentId: "receiver",
+	}.Build()
+
+	err := server.StreamMessages(req, mockStream)
+	if err == nil || !strings.Contains(err.Error(), "simulated stream send error") {
+		t.Fatalf("expected stream send error, got %v", err)
+	}
+}
+
+func TestHubServiceServer_StreamMessages_FailLaterSend(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	server := NewHubServiceServer(hub)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	mockStream := &failingStream{ctx: ctx, failOn: 2} // Fail on second send
+
+	req := pb.StreamMessagesRequest_builder{
+		AgentId: "receiver",
+	}.Build()
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- server.StreamMessages(req, mockStream)
+	}()
+
+	time.Sleep(50 * time.Millisecond) // wait for sub to happen
+
+	// Publish first message (will succeed, count=1)
+	_ = hub.Publish(Message{
+		ID:         "msg-1",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "first",
+		OccurredAt: time.Now(),
+	})
+
+	time.Sleep(50 * time.Millisecond) // Wait for first send
+
+	// Publish second message (will fail, count=2)
+	_ = hub.Publish(Message{
+		ID:         "msg-2",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "second",
+		OccurredAt: time.Now(),
+	})
+
+	err := <-errCh
+	if err == nil || !strings.Contains(err.Error(), "simulated stream send error") {
+		t.Fatalf("expected stream send error on second send, got %v", err)
+	}
+}
+
+func TestMinimaxClient_Reason_InvalidJSON(t *testing.T) {
+	client := NewMinimaxClient("test-key")
+
+	originalURL := minimaxAPIURL
+	minimaxAPIURL = "http://\x7f unresolvable" // Invalid URL to trigger http.NewRequestWithContext error
+	defer func() { minimaxAPIURL = originalURL }()
+
+	_, err := client.Reason(context.Background(), "test")
+	if err == nil {
+		t.Fatalf("expected HTTP request creation error, got nil")
+	}
+}
+
+func TestMinimaxClient_Reason_HTTPClientError(t *testing.T) {
+	client := NewMinimaxClient("test-key")
+
+	// Create a test HTTP server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("server error"))
+	}))
+	defer server.Close()
+
+	originalURL := minimaxAPIURL
+	minimaxAPIURL = server.URL
+	defer func() { minimaxAPIURL = originalURL }()
+
+	_, err := client.Reason(context.Background(), "test prompt")
+	if err == nil {
+		t.Fatalf("expected error from internal server error, got nil")
+	}
+	if !strings.Contains(err.Error(), "minimax API error (status 500)") {
+		t.Fatalf("expected status 500 error, got %v", err)
 	}
 }
