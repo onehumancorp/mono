@@ -22,5 +22,6 @@ go_test(
     embed = [":telemetry"],
     deps = [
         "@com_github_prometheus_client_golang//prometheus",
+        "@io_opentelemetry_go_otel_metric//:metric",
     ],
 )

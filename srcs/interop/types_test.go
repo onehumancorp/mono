@@ -22,10 +22,10 @@ func TestLogCheckpoint_ExistingCheckpointsDifferentType(t *testing.T) {
     }
 }
 
-func TestVerifySPIFFE_InvalidIdentity(t *testing.T) {
-    err := VerifySPIFFE("invalid-identity")
-    if err == nil || err.Error() != "invalid SPIFFE identity format" {
-        t.Fatalf("expected invalid SPIFFE identity format, got %v", err)
+func TestValidateSPIFFEID_InvalidIdentity(t *testing.T) {
+    err := ValidateSPIFFEID("invalid-identity")
+    if err == nil || err.Error() != "invalid SPIFFE ID scheme: " {
+        t.Fatalf("invalid SPIFFE ID scheme: invalid-identity, got %v", err)
     }
 }
 

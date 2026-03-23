@@ -15,6 +15,9 @@ go_library(
 
 go_test(
     name = "interop_test",
-    srcs = ["swarm_test.go"],
+    srcs = [
+        "swarm_test.go",
+        "types_test.go",
+    ],
     embed = [":interop"],
 )

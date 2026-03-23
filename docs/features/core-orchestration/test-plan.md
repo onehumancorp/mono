@@ -17,7 +17,7 @@ A high-level summary of the testing strategy for the Core Orchestration Engine f
 | Test ID | Component | Description | Expected Result | Status |
 |---------|-----------|-------------|-----------------|--------|
 | UT-01 | Agent Config | Load `RoleArchetype` | Roles initialized with proper limits | Pending |
-| UT-02 | Context Bloat | Summarize transcript > 8000 tokens | Shorter summary returned | Pending |
+| UT-02 | Context Bloat | Summarize transcript > 15 messages | Shorter summary returned | Pending |
 
 ### 3.2 Integration Tests
 | Test ID | Components | Description | Expected Result | Status |
