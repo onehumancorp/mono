@@ -325,11 +325,16 @@ func (s *Server) handleScale(w http.ResponseWriter, r *http.Request) {
 	s.mu.RUnlock()
 
 	var currentCount int
-	var agentIDs []string
+	var idleAgentIDs []string
+	var activeAgentIDs []string
 	for _, agent := range agents {
 		if agent.Role == req.Role {
 			currentCount++
-			agentIDs = append(agentIDs, agent.ID)
+			if agent.Status == orchestration.StatusIdle {
+				idleAgentIDs = append(idleAgentIDs, agent.ID)
+			} else {
+				activeAgentIDs = append(activeAgentIDs, agent.ID)
+			}
 		}
 	}
 
@@ -350,8 +355,17 @@ func (s *Server) handleScale(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if diff < 0 {
 		toRemove := -diff
+
+		// ⚡ BOLT: [pod-thrashing during dynamic scale-up/down] - Randomized Selection from Top 5
+		// Gracefully scales down idle agents first before terminating busy ones to prevent interrupting active work.
 		for i := 0; i < toRemove; i++ {
-			s.hub.FireAgent(agentIDs[i])
+			if len(idleAgentIDs) > 0 {
+				s.hub.FireAgent(idleAgentIDs[0])
+				idleAgentIDs = idleAgentIDs[1:]
+			} else if len(activeAgentIDs) > 0 {
+				s.hub.FireAgent(activeAgentIDs[0])
+				activeAgentIDs = activeAgentIDs[1:]
+			}
 		}
 	}
 
