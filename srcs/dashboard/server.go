@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -866,25 +867,25 @@ type mcpInvokeRequest struct {
 }
 
 type chatToolParams struct {
-	IntegrationID string `json:"integrationId"`
-	Channel       string `json:"channel"`
-	FromAgent     string `json:"fromAgent"`
+	IntegrationID string `json:"integrationId,omitempty"`
+	Channel       string `json:"channel,omitempty"`
+	FromAgent     string `json:"fromAgent,omitempty"`
 	Content       string `json:"content"`
-	ThreadID      string `json:"threadId"`
+	ThreadID      string `json:"threadId,omitempty"`
 }
 
 type gitToolParams struct {
-	IntegrationID string `json:"integrationId"`
+	IntegrationID string `json:"integrationId,omitempty"`
 	Repository    string `json:"repository"`
 	Title         string `json:"title"`
 	Body          string `json:"body"`
 	SourceBranch  string `json:"sourceBranch"`
-	TargetBranch  string `json:"targetBranch"`
+	TargetBranch  string `json:"targetBranch,omitempty"`
 	CreatedBy     string `json:"createdBy"`
 }
 
 type issueToolParams struct {
-	IntegrationID string `json:"integrationId"`
+	IntegrationID string `json:"integrationId,omitempty"`
 	Project       string `json:"project"`
 	Title         string `json:"title"`
 	Description   string `json:"description"`
@@ -1022,7 +1023,9 @@ func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 	// ── Communication tools ───────────────────────────────────────────────────
 	case "telegram-mcp", "slack-mcp", "teams-mcp":
 		var p chatToolParams
-		if err := json.Unmarshal(req.Params, &p); err != nil {
+		dec := json.NewDecoder(bytes.NewReader(req.Params))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&p); err != nil {
 			return nil, errors.New("invalid chat tool parameters")
 		}
 
@@ -1067,7 +1070,9 @@ func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 	// ── Git tools ─────────────────────────────────────────────────────────────
 	case "git-mcp":
 		var p gitToolParams
-		if err := json.Unmarshal(req.Params, &p); err != nil {
+		dec := json.NewDecoder(bytes.NewReader(req.Params))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&p); err != nil {
 			return nil, errors.New("invalid git tool parameters")
 		}
 
@@ -1095,7 +1100,9 @@ func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 	// ── Issue tracker tools ───────────────────────────────────────────────────
 	case "jira-mcp", "linear-mcp":
 		var p issueToolParams
-		if err := json.Unmarshal(req.Params, &p); err != nil {
+		dec := json.NewDecoder(bytes.NewReader(req.Params))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&p); err != nil {
 			return nil, errors.New("invalid issue tool parameters")
 		}
 
