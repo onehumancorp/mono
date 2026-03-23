@@ -1,7 +1,7 @@
 # Design Doc: Hardware-Aware Agent Scheduling (GPU/VRAM Optimisation)
 
 **Author(s):** Antigravity
-**Status:** Roadmap / Proposed
+**Status:** Approved
 **Last Updated:** 2026-03-17
 
 ## 1. Overview

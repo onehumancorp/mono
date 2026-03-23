@@ -1,7 +1,7 @@
 # Design Doc: Virtual Meeting Rooms
 
 **Author(s):** Antigravity
-**Status:** In Review
+**Status:** Approved
 **Last Updated:** 2026-03-17
 
 ## Overview
