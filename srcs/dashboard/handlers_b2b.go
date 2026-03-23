@@ -26,6 +26,7 @@ func (s *Server) handleApprovalRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req approvalCreateRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -70,6 +71,7 @@ func (s *Server) handleApprovalDecide(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req approvalDecideRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -124,6 +126,7 @@ func (s *Server) handleHandoffs(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, list)
 	case http.MethodPost:
 		var req handoffCreateRequest
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 			return
@@ -162,6 +165,7 @@ func (s *Server) handleHandoffResolve(w http.ResponseWriter, r *http.Request) {
 		HandoffID string `json:"handoffId"`
 		Status    string `json:"status"` // acknowledged | resolved
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -216,6 +220,7 @@ func (s *Server) handleB2BHandshake(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req b2bHandshakeRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -249,6 +254,7 @@ func (s *Server) handleB2BRevoke(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		AgreementID string `json:"agreementId"`
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return

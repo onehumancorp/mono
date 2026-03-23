@@ -946,7 +946,7 @@ func TestHandleBudgetAlerts_NotifyAtPctHandling(t *testing.T) {
 	}
 }
 
-func TestHandleScale(t *testing.T) {
+func TestHandleScale_MissingRole(t *testing.T) {
 	app, _, _ := newTestServer(t)
 
 	tests := []struct {
@@ -993,7 +993,7 @@ func TestHandleScale(t *testing.T) {
 	}
 }
 
-func TestHandleScaleStream(t *testing.T) {
+func TestHandleScaleStream_ExpectedEvents(t *testing.T) {
 	app, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/scale/stream", nil)

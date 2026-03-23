@@ -17,6 +17,7 @@ func (s *Server) handleHireAgent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req hireRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -63,6 +64,7 @@ func (s *Server) handleFireAgent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req fireRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -95,6 +97,7 @@ func (s *Server) handleAgentProviderAuth(w http.ResponseWriter, r *http.Request)
 	}
 
 	var req providerAuthRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -152,6 +155,7 @@ func (s *Server) handleSkillImport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req skillImportRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 100<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -201,6 +205,7 @@ func (s *Server) handleSnapshotCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req snapshotCreateRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 100<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -259,6 +264,7 @@ func (s *Server) handleSnapshotRestore(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req snapshotRestoreRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 100<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return

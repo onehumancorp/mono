@@ -61,6 +61,7 @@ func (s *Server) handleChatTest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req chatTestRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -101,6 +102,7 @@ func (s *Server) handleChatSend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req chatSendRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return

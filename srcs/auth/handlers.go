@@ -52,6 +52,7 @@ func (h *Handlers) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req loginRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		jsonError(w, "invalid JSON", http.StatusBadRequest)
 		return
@@ -169,6 +170,7 @@ func (h *Handlers) HandleUsers(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 		var req createUserRequest
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			jsonError(w, "invalid JSON", http.StatusBadRequest)
 			return
@@ -226,6 +228,7 @@ func (h *Handlers) HandleUser(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPut:
 		var req updateUserRequest
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			jsonError(w, "invalid JSON", http.StatusBadRequest)
 			return
@@ -289,6 +292,7 @@ func (h *Handlers) HandleRoles(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var req createRoleRequest
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			jsonError(w, "invalid JSON", http.StatusBadRequest)
 			return

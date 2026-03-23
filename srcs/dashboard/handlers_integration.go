@@ -27,6 +27,7 @@ func (s *Server) handleIntegrationConnect(w http.ResponseWriter, r *http.Request
 		return
 	}
 	var req integrationConnectRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -55,6 +56,7 @@ func (s *Server) handleIntegrationDisconnect(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	var req integrationDisconnectRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -90,6 +92,7 @@ func (s *Server) handlePRCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req prCreateRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -108,6 +111,7 @@ func (s *Server) handlePRMerge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req prActionRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -130,6 +134,7 @@ func (s *Server) handlePRClose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req prActionRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -165,6 +170,7 @@ func (s *Server) handleIssueCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req issueCreateRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -183,6 +189,7 @@ func (s *Server) handleIssueUpdateStatus(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	var req issueStatusRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -205,6 +212,7 @@ func (s *Server) handleIssueAssign(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req issueAssignRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return

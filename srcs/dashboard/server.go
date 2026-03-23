@@ -545,6 +545,7 @@ func (s *Server) handleDevSeed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var payload seedRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
@@ -796,6 +797,7 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req mcpInvokeRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
