@@ -42,6 +42,7 @@ alias(
 alias(
     name = "test",
     actual = "//deploy:kind_e2e_test",
+    visibility = ["//visibility:public"],
 )
 
 # Alias to run hello-world agent easily
