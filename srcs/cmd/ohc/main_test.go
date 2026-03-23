@@ -198,3 +198,19 @@ func TestMain_TelemetryInitFailure(t *testing.T) {
 	// This should run without fatal, but print a warning about telemetry failure
 	main()
 }
+
+func TestNewDemoHandler(t *testing.T) {
+	_, hub := newDemoHandler(nowUTC().UTC())
+	if hub == nil {
+		t.Errorf("Expected hub to not be nil")
+	}
+}
+
+func TestRunSuccess(t *testing.T) {
+	err := run(nowUTC().UTC(), func(addr string, handler http.Handler) error {
+		return nil
+	})
+	if err != nil {
+		t.Errorf("Expected nil error, got %v", err)
+	}
+}
