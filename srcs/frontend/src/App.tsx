@@ -96,6 +96,7 @@ const ICONS: Record<string, string> = {
   integrations: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 7H7v6h6V7z"/><path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"/></svg>`,
   settings: `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>`,
   scaling: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg>`,
+  pipelines: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h8"/><path d="M3 22c0-2.209 1.791-4 4-4h8c2.209 0 4-1.791 4-4V6"/><path d="M15 6l4-4 4 4"/></svg>`,
   users: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>`,
 };
 
@@ -315,6 +316,16 @@ export function App() {
   const [salesReps, setSalesReps] = useState(2);
   const [sweAgents, setSweAgents] = useState(4);
   const [supportAgents, setSupportAgents] = useState(1);
+
+  const [pipelines, setPipelines] = useState<any[]>([]);
+
+  useEffect(() => {
+    const handleNewPipeline = (e: any) => {
+      setPipelines((prev) => [e.detail, ...prev]);
+    };
+    window.addEventListener("new-pipeline", handleNewPipeline);
+    return () => window.removeEventListener("new-pipeline", handleNewPipeline);
+  }, []);
   const [scalingLogs, setScalingLogs] = useState<{time: string, msg: string, type: string}[]>([]);
   const [isScalingActive, setIsScalingActive] = useState(false);
   const [agentActionLoading, setAgentActionLoading] = useState(false);
@@ -605,6 +616,7 @@ export function App() {
     { key: "integrations", label: "Integrations" },
     { key: "scaling", label: "Dynamic Scaling" },
     { key: "settings", label: "Settings" },
+    { key: "pipelines", label: "Pipelines" },
     { key: "users", label: "Users" },
   ];
 
@@ -2501,6 +2513,87 @@ export function App() {
                      <div className="trace-log-item" style={{color: "var(--text-secondary)"}}>
                         No recent scaling operations.
                      </div>
+                  )}
+                </div>
+              </article>
+            </div>
+          </>
+        )}
+
+        {activeNav === "pipelines" && (
+          <>
+            <div className="page-header">
+              <div>
+                <h2 className="page-heading">Automated Implementation Pipelines</h2>
+                <p className="page-sub">Kick off full-stack feature implementations automatically orchestrated by SDLC Agents</p>
+              </div>
+            </div>
+
+            <div className="content-grid two-col">
+              {/* Start New Pipeline */}
+              <article className="panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Start New Implementation</h2>
+                </header>
+                <div className="panel-body">
+                  <p className="settings-desc">Submit a feature implementation request to the SWE agents.</p>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    <label className="field">
+                      <span className="field-label">Feature Name</span>
+                      <input type="text" name="name" className="field-input" placeholder="e.g. Add dark mode" />
+                    </label>
+
+                    <label className="field">
+                      <span className="field-label">Branch Name</span>
+                      <input type="text" name="branch" className="field-input" placeholder="e.g. feature/dark-mode" />
+                    </label>
+
+                    <button type="button" className="btn btn-primary" onClick={() => {
+                      const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
+                      const branchInput = document.querySelector('input[name="branch"]') as HTMLInputElement;
+
+                      const req = {
+                        id: `pipe-${Date.now()}`,
+                        featureName: nameInput.value,
+                        targetBranch: branchInput.value,
+                        status: "PENDING",
+                        progress: 0,
+                        createdAt: new Date().toISOString()
+                      };
+                      // Mock add to list
+                      const event = new CustomEvent("new-pipeline", { detail: req });
+                      window.dispatchEvent(event);
+                    }}>
+                      Start Implementation
+                    </button>
+                  </div>
+                </div>
+              </article>
+
+              {/* Active PRs List */}
+              <article className="panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Active PRs List</h2>
+                  <span className="chip chip--green">{pipelines.length}</span>
+                </header>
+                <div className="panel-body">
+                  {pipelines.length === 0 ? (
+                    <p className="empty-state">No active implementations yet.</p>
+                  ) : (
+                    <ul className="user-list">
+                      {pipelines.map(pipe => (
+                        <li key={pipe.id} className="user-item">
+                          <div className="user-item__header">
+                            <span className="user-item__name">{pipe.featureName}</span>
+                            <span className="chip chip--sm chip--blue">{pipe.status}</span>
+                          </div>
+                          <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
+                            Branch: {pipe.targetBranch}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </div>
               </article>
