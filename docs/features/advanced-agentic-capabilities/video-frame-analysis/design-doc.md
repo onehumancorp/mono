@@ -1,0 +1,11 @@
+# Design Doc: Video Frame Analysis
+
+**Author(s):** TPM Agent
+**Status:** In Review
+**Last Updated:** 2026-03-21
+
+## 1. Overview
+Implementation of Video Frame Analysis to fulfill the Top 50 features mandate.
+
+## 2. Goals
+- Support Video Frame Analysis natively in OHC.
