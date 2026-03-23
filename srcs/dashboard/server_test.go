@@ -3688,3 +3688,76 @@ func TestHandleHireAgent_UnknownProviderRejected(t *testing.T) {
 		t.Errorf("expected 400 for unknown provider, got %d", resp.StatusCode)
 	}
 }
+
+func TestHandleMCPRegister_Errors(t *testing.T) {
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
+	defer server.Close()
+
+	t.Run("Method Not Allowed", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodGet, server.URL+"/api/mcp/tools/register", nil)
+		resp, _ := client.Do(req)
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusMethodNotAllowed {
+			t.Errorf("expected status %d, got %d", http.StatusMethodNotAllowed, resp.StatusCode)
+		}
+	})
+
+	t.Run("Invalid JSON", func(t *testing.T) {
+		req, _ := http.NewRequest(http.MethodPost, server.URL+"/api/mcp/tools/register", bytes.NewReader([]byte("invalid")))
+		resp, _ := client.Do(req)
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("expected status %d, got %d", http.StatusBadRequest, resp.StatusCode)
+		}
+	})
+
+	t.Run("Missing Tool ID and Name", func(t *testing.T) {
+		payload := map[string]interface{}{
+			"spiffeId": "spiffe://onehumancorp.io/agent/test",
+			"tool": map[string]interface{}{},
+		}
+		body, _ := json.Marshal(payload)
+		req, _ := http.NewRequest(http.MethodPost, server.URL+"/api/mcp/tools/register", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		resp, _ := client.Do(req)
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("expected status %d, got %d", http.StatusBadRequest, resp.StatusCode)
+		}
+	})
+
+	t.Run("Update Existing Tool", func(t *testing.T) {
+		// First register
+		payload := map[string]interface{}{
+			"spiffeId": "spiffe://onehumancorp.io/agent/test",
+			"tool": map[string]interface{}{
+				"id":          "dynamic-tool-update",
+				"name":        "Dynamic Tool",
+				"description": "A dynamically registered tool",
+				"category":    "custom",
+				"status":      "available",
+			},
+		}
+
+		body, _ := json.Marshal(payload)
+		req, _ := http.NewRequest(http.MethodPost, server.URL+"/api/mcp/tools/register", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		client.Do(req)
+
+		// Then update
+		payload["tool"].(map[string]interface{})["status"] = "busy"
+		body, _ = json.Marshal(payload)
+		req, _ = http.NewRequest(http.MethodPost, server.URL+"/api/mcp/tools/register", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		resp, _ := client.Do(req)
+		defer resp.Body.Close()
+
+		var result map[string]interface{}
+		json.NewDecoder(resp.Body).Decode(&result)
+
+		if result["status"] != "updated" {
+			t.Errorf("expected status 'updated', got %v", result["status"])
+		}
+	})
+}
