@@ -22,6 +22,8 @@ import {
   deleteUser,
   scaleAgents,
   fetchHandoffs,
+  resolveHandoff,
+  decideApproval,
 } from "./api";
 import type {
   AgentRuntime,
@@ -307,6 +309,7 @@ export function App() {
   const [sending, setSending] = useState(false);
   const [selectedMeetingID, setSelectedMeetingID] = useState("");
   const [resolvedApprovals, setResolvedApprovals] = useState<Record<string, "approved" | "rejected">>({});
+  const [approvalLoading, setApprovalLoading] = useState<Record<string, boolean>>({});
   const [notice, setNotice] = useState("");
   const [activeNav, setActiveNav] = useState<NavSection>("overview");
   const [showHireModal, setShowHireModal] = useState(false);
@@ -327,6 +330,7 @@ export function App() {
   const [agentChatContent, setAgentChatContent] = useState("");
   const [agentChatSending, setAgentChatSending] = useState(false);
   const [handoffList, setHandoffList] = useState<HandoffPackage[]>([]);
+  const [handoffLoading, setHandoffLoading] = useState<Record<string, boolean>>({});
 
   // ── Auth state ─────────────────────────────────────────────────────────────
   const [authToken, setAuthToken] = useState<string | null>(getStoredToken);
@@ -1428,42 +1432,58 @@ export function App() {
                                       <button
                                         type="button"
                                         className="btn btn-primary btn-sm approval-btn"
-                                        disabled={sending}
+                                        disabled={approvalLoading[msg.id]}
                                         onClick={() => {
-                                          const payload = {
-                                            ...form,
-                                            content: "Approved. Proceed with execution.",
-                                            fromAgent: ceoMember?.id || "CEO",
-                                            toAgent: msg.fromAgent,
-                                            meetingId: selectedMeeting.id,
-                                            messageType: "SpecApproved"
-                                          };
-                                          void submitMessage(payload).then(() => {
+                                          setApprovalLoading(prev => ({ ...prev, [msg.id]: true }));
+                                          void decideApproval(msg.id, "approve", ceoMember?.id || "CEO").then(() => {
+                                            const payload = {
+                                              ...form,
+                                              content: "Approved. Proceed with execution.",
+                                              fromAgent: ceoMember?.id || "CEO",
+                                              toAgent: msg.fromAgent,
+                                              meetingId: selectedMeeting.id,
+                                              messageType: "SpecApproved"
+                                            };
+                                            return submitMessage(payload);
+                                          }).then(() => {
                                             setResolvedApprovals(prev => ({ ...prev, [msg.id]: "approved" }));
-                                          }).catch(() => {});
+                                            setNotice("Approval successfully recorded.");
+                                          }).catch(e => {
+                                            setError(e instanceof Error ? e.message : "Failed to record approval");
+                                          }).finally(() => {
+                                            setApprovalLoading(prev => ({ ...prev, [msg.id]: false }));
+                                          });
                                         }}
                                       >
-                                        Approve
+                                        {approvalLoading[msg.id] ? "..." : "Approve"}
                                       </button>
                                       <button
                                         type="button"
                                         className="btn btn-danger btn-sm approval-btn"
-                                        disabled={sending}
+                                        disabled={approvalLoading[msg.id]}
                                         onClick={() => {
-                                          const payload = {
-                                            ...form,
-                                            content: "Rejected. Please review constraints and pivot.",
-                                            fromAgent: ceoMember?.id || "CEO",
-                                            toAgent: msg.fromAgent,
-                                            meetingId: selectedMeeting.id,
-                                            messageType: "direction"
-                                          };
-                                          void submitMessage(payload).then(() => {
+                                          setApprovalLoading(prev => ({ ...prev, [msg.id]: true }));
+                                          void decideApproval(msg.id, "reject", ceoMember?.id || "CEO").then(() => {
+                                            const payload = {
+                                              ...form,
+                                              content: "Rejected. Please review constraints and pivot.",
+                                              fromAgent: ceoMember?.id || "CEO",
+                                              toAgent: msg.fromAgent,
+                                              meetingId: selectedMeeting.id,
+                                              messageType: "direction"
+                                            };
+                                            return submitMessage(payload);
+                                          }).then(() => {
                                             setResolvedApprovals(prev => ({ ...prev, [msg.id]: "rejected" }));
-                                          }).catch(() => {});
+                                            setNotice("Rejection successfully recorded.");
+                                          }).catch(e => {
+                                            setError(e instanceof Error ? e.message : "Failed to record rejection");
+                                          }).finally(() => {
+                                            setApprovalLoading(prev => ({ ...prev, [msg.id]: false }));
+                                          });
                                         }}
                                       >
-                                        Reject
+                                        {approvalLoading[msg.id] ? "..." : "Reject"}
                                       </button>
                                     </div>
                                   )}
@@ -1577,8 +1597,44 @@ export function App() {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>Failed Attempts: {handoff.failedAttempts}</span>
                       <div style={{ display: "flex", gap: "0.5rem" }}>
-                        <button className="btn btn-ghost btn-sm" disabled={handoff.status !== "pending"}>Acknowledge</button>
-                        <button className="btn btn-primary btn-sm" disabled={handoff.status === "resolved"}>Resolve & Resume</button>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          disabled={handoff.status !== "pending" || handoffLoading[handoff.id]}
+                          onClick={() => {
+                            setHandoffLoading(prev => ({ ...prev, [handoff.id]: true }));
+                            void resolveHandoff(handoff.id, "acknowledged").then(() => {
+                              return fetchHandoffs();
+                            }).then(list => {
+                              setHandoffList(list);
+                              setNotice("Handoff acknowledged.");
+                            }).catch(err => {
+                              setError(err instanceof Error ? err.message : "Failed to acknowledge handoff");
+                            }).finally(() => {
+                              setHandoffLoading(prev => ({ ...prev, [handoff.id]: false }));
+                            });
+                          }}
+                        >
+                          {handoffLoading[handoff.id] && handoff.status === "pending" ? "..." : "Acknowledge"}
+                        </button>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          disabled={handoff.status === "resolved" || handoffLoading[handoff.id]}
+                          onClick={() => {
+                            setHandoffLoading(prev => ({ ...prev, [handoff.id]: true }));
+                            void resolveHandoff(handoff.id, "resolved").then(() => {
+                              return fetchHandoffs();
+                            }).then(list => {
+                              setHandoffList(list);
+                              setNotice("Handoff resolved and agent execution resumed.");
+                            }).catch(err => {
+                              setError(err instanceof Error ? err.message : "Failed to resolve handoff");
+                            }).finally(() => {
+                              setHandoffLoading(prev => ({ ...prev, [handoff.id]: false }));
+                            });
+                          }}
+                        >
+                          {handoffLoading[handoff.id] && handoff.status !== "resolved" ? "Resolving…" : "Resolve & Resume"}
+                        </button>
                       </div>
                     </div>
                   </article>

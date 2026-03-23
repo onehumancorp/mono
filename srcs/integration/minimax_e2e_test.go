@@ -111,6 +111,9 @@ func TestMinimaxAgentTaskE2E(t *testing.T) {
 		t.Fatalf("SWE→PM reply publish: %v", err)
 	}
 
+	// Wait a moment for background goroutines to finish (e.g. telemetry, summarization)
+	time.Sleep(100 * time.Millisecond)
+
 	// PM inbox should now contain the SWE's reply.
 	pmInbox := hub.Inbox("pm-e2e")
 	if len(pmInbox) == 0 {
@@ -217,6 +220,9 @@ func TestMinimaxAgentMeetingRoomE2E(t *testing.T) {
 			t.Fatalf("turn %d publish to meeting: %v", i+1, err)
 		}
 	}
+
+	// Wait a moment for background goroutines to finish (e.g. telemetry, summarization)
+	time.Sleep(100 * time.Millisecond)
 
 	// Verify the meeting transcript captured all three turns in order.
 	meeting, ok := hub.Meeting("sprint-e2e")

@@ -152,6 +152,52 @@ func (s *Server) handleHandoffs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *Server) handleHandoffResolve(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		HandoffID string `json:"handoffId"`
+		Status    string `json:"status"` // acknowledged | resolved
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.HandoffID == "" || req.Status == "" {
+		http.Error(w, "handoffId and status are required", http.StatusBadRequest)
+		return
+	}
+
+	if req.Status != "acknowledged" && req.Status != "resolved" {
+		http.Error(w, "status must be 'acknowledged' or 'resolved'", http.StatusBadRequest)
+		return
+	}
+
+	s.mu.Lock()
+	found := false
+	for i, h := range s.handoffs {
+		if h.ID == req.HandoffID {
+			s.handoffs[i].Status = req.Status
+			found = true
+			break
+		}
+	}
+	s.mu.Unlock()
+
+	if !found {
+		http.Error(w, "handoff not found", http.StatusNotFound)
+		return
+	}
+
+	s.mu.RLock()
+	list := append([]HandoffPackage(nil), s.handoffs...)
+	s.mu.RUnlock()
+	writeJSON(w, list)
+}
+
 func (s *Server) handleB2BAgreements(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:

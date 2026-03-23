@@ -439,6 +439,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/approvals/decide", server.handleApprovalDecide)
 	// Phase 2 – Warm Handoff
 	mux.HandleFunc("/api/handoffs", server.handleHandoffs)
+	mux.HandleFunc("/api/handoffs/resolve", server.handleHandoffResolve)
 	// Phase 2 – Unified Identity Management (SPIFFE/SPIRE)
 	mux.HandleFunc("/api/identities", server.handleIdentities)
 	// Phase 2 – Extensible Skill Import Framework
@@ -658,8 +659,10 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 		MeetingID:  "launch-readiness",
 		OccurredAt: now.Add(-2 * time.Minute),
 	})
+
+	msgID := "seed-4"
 	_ = hub.Publish(orchestration.Message{
-		ID:         "seed-4",
+		ID:         msgID,
 		FromAgent:  "pm-1",
 		ToAgent:    "CEO",
 		Type:       orchestration.EventApprovalNeeded,
