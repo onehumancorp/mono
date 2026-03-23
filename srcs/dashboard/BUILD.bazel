@@ -27,6 +27,7 @@ go_library(
 go_test(
     name = "dashboard_test",
     srcs = [
+        "handlers_ops_extra_test.go",
         "server_missing_test.go",
         "server_test.go",
     ],
