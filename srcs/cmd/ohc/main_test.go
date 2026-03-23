@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -197,4 +198,68 @@ func TestMain_TelemetryInitFailure(t *testing.T) {
 
 	// This should run without fatal, but print a warning about telemetry failure
 	main()
+}
+
+func TestRun_GRPCListenError(t *testing.T) {
+	originalListen := netListen
+	netListen = func(network, address string) (net.Listener, error) {
+		return nil, errors.New("mock listen error")
+	}
+	defer func() { netListen = originalListen }()
+
+	err := run(time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC), func(string, http.Handler) error {
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("expected run to succeed, got %v", err)
+	}
+
+	time.Sleep(10 * time.Millisecond)
+}
+
+type mockListener struct{}
+
+func (m *mockListener) Accept() (net.Conn, error) {
+	return nil, errors.New("mock accept error")
+}
+
+func (m *mockListener) Close() error {
+	return nil
+}
+
+func (m *mockListener) Addr() net.Addr {
+	return &net.TCPAddr{}
+}
+
+func TestRun_GRPCServeError(t *testing.T) {
+	originalListen := netListen
+	netListen = func(network, address string) (net.Listener, error) {
+		return &mockListener{}, nil
+	}
+	defer func() { netListen = originalListen }()
+
+	err := run(time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC), func(string, http.Handler) error {
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("expected run to succeed, got %v", err)
+	}
+
+	time.Sleep(10 * time.Millisecond)
+}
+
+func TestDefaultFatalForMain(t *testing.T) {
+	var exitCode int
+	originalExit := osExit
+	osExit = func(code int) {
+		exitCode = code
+	}
+	defer func() {
+		osExit = originalExit
+	}()
+
+	fatalForMain(errors.New("test error"))
+	if exitCode != 1 {
+		t.Errorf("expected exit code 1, got %d", exitCode)
+	}
 }

@@ -27,9 +27,11 @@ var (
 	listenForMain = http.ListenAndServe
 	fatalForMain  = func(err error) {
 		slog.Error("fatal error", "error", err)
-		os.Exit(1)
+		osExit(1)
 	}
 	initTelemetry = telemetry.InitTelemetry
+	netListen     = net.Listen
+	osExit        = os.Exit
 )
 
 func init() {
@@ -83,7 +85,7 @@ func run(now time.Time, listen listenFunc) error {
 
 	// Start gRPC server
 	go func() {
-		lis, err := net.Listen("tcp", ":9090")
+		lis, err := netListen("tcp", ":9090")
 		if err != nil {
 			slog.Error("failed to listen for gRPC", "error", err)
 			return

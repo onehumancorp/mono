@@ -7,4 +7,5 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
-);import './scaling.css';
+);
+import './scaling.css';

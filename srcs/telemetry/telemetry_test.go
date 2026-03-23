@@ -211,3 +211,30 @@ func TestRecordFunctionsUninitialized(t *testing.T) {
 }
 
 // Add dummy test to trigger otelprom error for better coverage
+
+type errorRegisterer struct {
+	*prometheus.Registry
+}
+
+func (e *errorRegisterer) Register(c prometheus.Collector) error {
+	return context.DeadlineExceeded // any error
+}
+
+func TestInitTelemetry_OtelPromError(t *testing.T) {
+	orig := prometheus.DefaultRegisterer
+	defer func() { prometheus.DefaultRegisterer = orig }()
+
+	// Provide a registerer that always fails to register collectors
+	prometheus.DefaultRegisterer = &errorRegisterer{Registry: prometheus.NewRegistry()}
+
+	_, err := InitTelemetry()
+	if err == nil {
+		t.Error("expected error from InitTelemetry when registerer fails")
+	}
+}
+
+func TestLogAgentExecution(t *testing.T) {
+	// Simple test to cover LogAgentExecution
+	ctx := context.Background()
+	LogAgentExecution(ctx, "agent1", "role", "api", "event", "content")
+}
