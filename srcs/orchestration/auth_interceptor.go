@@ -16,6 +16,14 @@ import (
 
 // ExtractSPIFFEID gets the SPIFFE ID from the context.
 // It extracts the ID exclusively from the mTLS peer certificate.
+// Summary: ExtractSPIFFEID gets the SPIFFE ID from the context. It extracts the ID exclusively from the mTLS peer certificate.
+// Intent: ExtractSPIFFEID gets the SPIFFE ID from the context. It extracts the ID exclusively from the mTLS peer certificate.
+// Params:
+//   - ctx: complex; Description
+//
+// Returns: string, error
+// Errors: Returns error on failure conditions.
+// Side Effects: None
 func ExtractSPIFFEID(ctx context.Context) (string, error) {
 	p, ok := peer.FromContext(ctx)
 	if !ok {
@@ -35,6 +43,12 @@ func ExtractSPIFFEID(ctx context.Context) (string, error) {
 }
 
 // SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
+// Summary: SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
+// Intent: SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
+// Params: None
+// Returns: value
+// Errors: None
+// Side Effects: None
 func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -108,6 +122,12 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 }
 
 // SPIFFEStreamInterceptor validates SPIFFE IDs for streaming gRPC calls.
+// Summary: SPIFFEStreamInterceptor validates SPIFFE IDs for streaming gRPC calls.
+// Intent: SPIFFEStreamInterceptor validates SPIFFE IDs for streaming gRPC calls.
+// Params: None
+// Returns: value
+// Errors: None
+// Side Effects: None
 func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
 	return func(
 		srv interface{},
@@ -172,6 +192,14 @@ type recvWrapper struct {
 	agentID  string
 }
 
+// Summary: RecvMsg functionality.
+// Intent: RecvMsg functionality.
+// Params:
+//   - m: complex; Description
+//
+// Returns: error
+// Errors: Returns error on failure conditions.
+// Side Effects: None
 func (w *recvWrapper) RecvMsg(m interface{}) error {
 	if err := w.ServerStream.RecvMsg(m); err != nil {
 		return err

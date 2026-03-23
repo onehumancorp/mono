@@ -169,15 +169,21 @@ func TestExecuteCommand(t *testing.T) {
 			wantErr:  true,
 		},
 		{
-			name:     "SemanticKernel execution",
-			adapter:  func() UniversalAdapter { a, _ := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01"); return a }(),
+			name: "SemanticKernel execution",
+			adapter: func() UniversalAdapter {
+				a, _ := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01")
+				return a
+			}(),
 			cmd:      "solve-problem",
 			expected: "SemanticKernel executed: solve-problem",
 			wantErr:  false,
 		},
 		{
-			name:     "SemanticKernel execution empty command",
-			adapter:  func() UniversalAdapter { a, _ := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01"); return a }(),
+			name: "SemanticKernel execution empty command",
+			adapter: func() UniversalAdapter {
+				a, _ := NewSemanticKernelAdapter("spiffe://ohc.os/agent/semantickernel-01")
+				return a
+			}(),
 			cmd:      "",
 			expected: "",
 			wantErr:  true,

@@ -159,6 +159,7 @@ type ClaudeProvider struct{ baseProvider }
 // Errors: None
 // Side Effects: None
 func (p *ClaudeProvider) Type() ProviderType { return ProviderTypeClaude }
+
 // Summary: Description functionality.
 // Intent: Description functionality.
 // Params: None
@@ -168,6 +169,7 @@ func (p *ClaudeProvider) Type() ProviderType { return ProviderTypeClaude }
 func (p *ClaudeProvider) Description() string {
 	return "Anthropic Claude Code — advanced coding and reasoning agent backed by Claude Sonnet/Opus"
 }
+
 // Summary: SupportedRoles functionality.
 // Intent: SupportedRoles functionality.
 // Params: None
@@ -177,6 +179,7 @@ func (p *ClaudeProvider) Description() string {
 func (p *ClaudeProvider) SupportedRoles() []string {
 	return []string{"SOFTWARE_ENGINEER", "SECURITY_ENGINEER", "QA_TESTER", "ENGINEERING_DIRECTOR"}
 }
+
 // Summary: Authenticate functionality.
 // Intent: Authenticate functionality.
 // Params: creds
@@ -190,6 +193,7 @@ func (p *ClaudeProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+
 // Summary: GetCredentials functionality.
 // Intent: GetCredentials functionality.
 // Params: None
@@ -197,13 +201,14 @@ func (p *ClaudeProvider) Authenticate(creds Credentials) error {
 // Errors: None
 // Side Effects: None
 func (p *ClaudeProvider) GetCredentials() Credentials { return p.load() }
+
 // Summary: IsAuthenticated functionality.
 // Intent: IsAuthenticated functionality.
 // Params: None
 // Returns: bool
 // Errors: None
 // Side Effects: None
-func (p *ClaudeProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
+func (p *ClaudeProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── Gemini (Google) ───────────────────────────────────────────────────────────
 
@@ -222,6 +227,7 @@ type GeminiProvider struct{ baseProvider }
 // Errors: None
 // Side Effects: None
 func (p *GeminiProvider) Type() ProviderType { return ProviderTypeGemini }
+
 // Summary: Description functionality.
 // Intent: Description functionality.
 // Params: None
@@ -231,6 +237,7 @@ func (p *GeminiProvider) Type() ProviderType { return ProviderTypeGemini }
 func (p *GeminiProvider) Description() string {
 	return "Google Gemini CLI — multimodal assistant agent backed by Gemini Pro/Ultra"
 }
+
 // Summary: SupportedRoles functionality.
 // Intent: SupportedRoles functionality.
 // Params: None
@@ -240,6 +247,7 @@ func (p *GeminiProvider) Description() string {
 func (p *GeminiProvider) SupportedRoles() []string {
 	return []string{"PRODUCT_MANAGER", "ANALYTICS_ENGINEER", "MARKETING_MANAGER", "CEO"}
 }
+
 // Summary: Authenticate functionality.
 // Intent: Authenticate functionality.
 // Params: creds
@@ -253,6 +261,7 @@ func (p *GeminiProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+
 // Summary: GetCredentials functionality.
 // Intent: GetCredentials functionality.
 // Params: None
@@ -260,13 +269,14 @@ func (p *GeminiProvider) Authenticate(creds Credentials) error {
 // Errors: None
 // Side Effects: None
 func (p *GeminiProvider) GetCredentials() Credentials { return p.load() }
+
 // Summary: IsAuthenticated functionality.
 // Intent: IsAuthenticated functionality.
 // Params: None
 // Returns: bool
 // Errors: None
 // Side Effects: None
-func (p *GeminiProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
+func (p *GeminiProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── OpenCode ──────────────────────────────────────────────────────────────────
 
@@ -285,6 +295,7 @@ type OpenCodeProvider struct{ baseProvider }
 // Errors: None
 // Side Effects: None
 func (p *OpenCodeProvider) Type() ProviderType { return ProviderTypeOpenCode }
+
 // Summary: Description functionality.
 // Intent: Description functionality.
 // Params: None
@@ -294,6 +305,7 @@ func (p *OpenCodeProvider) Type() ProviderType { return ProviderTypeOpenCode }
 func (p *OpenCodeProvider) Description() string {
 	return "OpenCode — open-source software-engineering agent with full terminal and file-system access"
 }
+
 // Summary: SupportedRoles functionality.
 // Intent: SupportedRoles functionality.
 // Params: None
@@ -303,6 +315,7 @@ func (p *OpenCodeProvider) Description() string {
 func (p *OpenCodeProvider) SupportedRoles() []string {
 	return []string{"SOFTWARE_ENGINEER", "ENGINEERING_DIRECTOR", "QA_TESTER"}
 }
+
 // Summary: Authenticate functionality.
 // Intent: Authenticate functionality.
 // Params: creds
@@ -316,6 +329,7 @@ func (p *OpenCodeProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+
 // Summary: GetCredentials functionality.
 // Intent: GetCredentials functionality.
 // Params: None
@@ -323,13 +337,14 @@ func (p *OpenCodeProvider) Authenticate(creds Credentials) error {
 // Errors: None
 // Side Effects: None
 func (p *OpenCodeProvider) GetCredentials() Credentials { return p.load() }
+
 // Summary: IsAuthenticated functionality.
 // Intent: IsAuthenticated functionality.
 // Params: None
 // Returns: bool
 // Errors: None
 // Side Effects: None
-func (p *OpenCodeProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
+func (p *OpenCodeProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── OpenClaw ──────────────────────────────────────────────────────────────────
 
@@ -348,6 +363,7 @@ type OpenClawProvider struct{ baseProvider }
 // Errors: None
 // Side Effects: None
 func (p *OpenClawProvider) Type() ProviderType { return ProviderTypeOpenClaw }
+
 // Summary: Description functionality.
 // Intent: Description functionality.
 // Params: None
@@ -357,6 +373,7 @@ func (p *OpenClawProvider) Type() ProviderType { return ProviderTypeOpenClaw }
 func (p *OpenClawProvider) Description() string {
 	return "OpenClaw — general-purpose assistant agent optimised for content strategy and growth tasks"
 }
+
 // Summary: SupportedRoles functionality.
 // Intent: SupportedRoles functionality.
 // Params: None
@@ -366,6 +383,7 @@ func (p *OpenClawProvider) Description() string {
 func (p *OpenClawProvider) SupportedRoles() []string {
 	return []string{"GROWTH_AGENT", "CONTENT_STRATEGIST", "MARKETING_MANAGER", "PRODUCT_MANAGER"}
 }
+
 // Summary: Authenticate functionality.
 // Intent: Authenticate functionality.
 // Params: creds
@@ -379,6 +397,7 @@ func (p *OpenClawProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+
 // Summary: GetCredentials functionality.
 // Intent: GetCredentials functionality.
 // Params: None
@@ -386,13 +405,14 @@ func (p *OpenClawProvider) Authenticate(creds Credentials) error {
 // Errors: None
 // Side Effects: None
 func (p *OpenClawProvider) GetCredentials() Credentials { return p.load() }
+
 // Summary: IsAuthenticated functionality.
 // Intent: IsAuthenticated functionality.
 // Params: None
 // Returns: bool
 // Errors: None
 // Side Effects: None
-func (p *OpenClawProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
+func (p *OpenClawProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── IronClaw ──────────────────────────────────────────────────────────────────
 
@@ -411,6 +431,7 @@ type IronClawProvider struct{ baseProvider }
 // Errors: None
 // Side Effects: None
 func (p *IronClawProvider) Type() ProviderType { return ProviderTypeIronClaw }
+
 // Summary: Description functionality.
 // Intent: Description functionality.
 // Params: None
@@ -420,6 +441,7 @@ func (p *IronClawProvider) Type() ProviderType { return ProviderTypeIronClaw }
 func (p *IronClawProvider) Description() string {
 	return "IronClaw — security and audit-focused agent with deep static-analysis capabilities"
 }
+
 // Summary: SupportedRoles functionality.
 // Intent: SupportedRoles functionality.
 // Params: None
@@ -429,6 +451,7 @@ func (p *IronClawProvider) Description() string {
 func (p *IronClawProvider) SupportedRoles() []string {
 	return []string{"SECURITY_ENGINEER", "AUDIT_MANAGER", "QA_TESTER"}
 }
+
 // Summary: Authenticate functionality.
 // Intent: Authenticate functionality.
 // Params: creds
@@ -442,6 +465,7 @@ func (p *IronClawProvider) Authenticate(creds Credentials) error {
 	p.store(creds)
 	return nil
 }
+
 // Summary: GetCredentials functionality.
 // Intent: GetCredentials functionality.
 // Params: None
@@ -449,13 +473,14 @@ func (p *IronClawProvider) Authenticate(creds Credentials) error {
 // Errors: None
 // Side Effects: None
 func (p *IronClawProvider) GetCredentials() Credentials { return p.load() }
+
 // Summary: IsAuthenticated functionality.
 // Intent: IsAuthenticated functionality.
 // Params: None
 // Returns: bool
 // Errors: None
 // Side Effects: None
-func (p *IronClawProvider) IsAuthenticated() bool       { return !p.load().IsEmpty() }
+func (p *IronClawProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── Builtin ───────────────────────────────────────────────────────────────────
 
@@ -474,6 +499,7 @@ type BuiltinProvider struct{}
 // Errors: None
 // Side Effects: None
 func (p *BuiltinProvider) Type() ProviderType { return ProviderTypeBuiltin }
+
 // Summary: Description functionality.
 // Intent: Description functionality.
 // Params: None
@@ -483,6 +509,7 @@ func (p *BuiltinProvider) Type() ProviderType { return ProviderTypeBuiltin }
 func (p *BuiltinProvider) Description() string {
 	return "Built-in — platform-native agent; no external credentials required"
 }
+
 // Summary: SupportedRoles functionality.
 // Intent: SupportedRoles functionality.
 // Params: None
@@ -498,6 +525,7 @@ func (p *BuiltinProvider) SupportedRoles() []string {
 		"AUDIT_MANAGER", "PAYROLL_MANAGER",
 	}
 }
+
 // Summary: Authenticate functionality.
 // Intent: Authenticate functionality.
 // Params: _
@@ -505,17 +533,19 @@ func (p *BuiltinProvider) SupportedRoles() []string {
 // Errors: Returns an error if applicable
 // Side Effects: None
 func (p *BuiltinProvider) Authenticate(_ Credentials) error { return nil }
+
 // Summary: GetCredentials functionality.
 // Intent: GetCredentials functionality.
 // Params: None
 // Returns: Credentials
 // Errors: None
 // Side Effects: None
-func (p *BuiltinProvider) GetCredentials() Credentials      { return Credentials{} }
+func (p *BuiltinProvider) GetCredentials() Credentials { return Credentials{} }
+
 // Summary: IsAuthenticated functionality.
 // Intent: IsAuthenticated functionality.
 // Params: None
 // Returns: bool
 // Errors: None
 // Side Effects: None
-func (p *BuiltinProvider) IsAuthenticated() bool            { return true }
+func (p *BuiltinProvider) IsAuthenticated() bool { return true }

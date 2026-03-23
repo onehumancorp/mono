@@ -17,21 +17,21 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleCEO                 Role = "CEO"
+	RoleCEO Role = "CEO"
 	// Summary: Defines the RoleProductManager type.
 	// Intent: Defines the RoleProductManager type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleProductManager      Role = "PRODUCT_MANAGER"
+	RoleProductManager Role = "PRODUCT_MANAGER"
 	// Summary: Defines the RoleSoftwareEngineer type.
 	// Intent: Defines the RoleSoftwareEngineer type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleSoftwareEngineer    Role = "SOFTWARE_ENGINEER"
+	RoleSoftwareEngineer Role = "SOFTWARE_ENGINEER"
 	// Summary: Defines the RoleEngineeringDirector type.
 	// Intent: Defines the RoleEngineeringDirector type.
 	// Params: None
@@ -45,28 +45,28 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleQATester            Role = "QA_TESTER"
+	RoleQATester Role = "QA_TESTER"
 	// Summary: Defines the RoleSecurityEngineer type.
 	// Intent: Defines the RoleSecurityEngineer type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleSecurityEngineer    Role = "SECURITY_ENGINEER"
+	RoleSecurityEngineer Role = "SECURITY_ENGINEER"
 	// Summary: Defines the RoleDesigner type.
 	// Intent: Defines the RoleDesigner type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleDesigner            Role = "DESIGNER"
+	RoleDesigner Role = "DESIGNER"
 	// Summary: Defines the RoleMarketingManager type.
 	// Intent: Defines the RoleMarketingManager type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleMarketingManager    Role = "MARKETING_MANAGER"
+	RoleMarketingManager Role = "MARKETING_MANAGER"
 
 	// Summary: Digital Marketing Agency roles.
 	// Intent: Digital Marketing Agency roles.
@@ -74,7 +74,7 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleGrowthAgent       Role = "GROWTH_AGENT"
+	RoleGrowthAgent Role = "GROWTH_AGENT"
 	// Summary: Defines the RoleContentStrategist type.
 	// Intent: Defines the RoleContentStrategist type.
 	// Params: None
@@ -88,14 +88,14 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleSEOSpecialist     Role = "SEO_SPECIALIST"
+	RoleSEOSpecialist Role = "SEO_SPECIALIST"
 	// Summary: Defines the RolePaidMediaManager type.
 	// Intent: Defines the RolePaidMediaManager type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RolePaidMediaManager  Role = "PAID_MEDIA_MANAGER"
+	RolePaidMediaManager Role = "PAID_MEDIA_MANAGER"
 	// Summary: Defines the RoleAnalyticsEngineer type.
 	// Intent: Defines the RoleAnalyticsEngineer type.
 	// Params: None
@@ -110,28 +110,28 @@ const (
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleCFO            Role = "CFO"
+	RoleCFO Role = "CFO"
 	// Summary: Defines the RoleBookkeeper type.
 	// Intent: Defines the RoleBookkeeper type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleBookkeeper     Role = "BOOKKEEPER"
+	RoleBookkeeper Role = "BOOKKEEPER"
 	// Summary: Defines the RoleTaxSpecialist type.
 	// Intent: Defines the RoleTaxSpecialist type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleTaxSpecialist  Role = "TAX_SPECIALIST"
+	RoleTaxSpecialist Role = "TAX_SPECIALIST"
 	// Summary: Defines the RoleAuditManager type.
 	// Intent: Defines the RoleAuditManager type.
 	// Params: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
-	RoleAuditManager   Role = "AUDIT_MANAGER"
+	RoleAuditManager Role = "AUDIT_MANAGER"
 	// Summary: Defines the RolePayrollManager type.
 	// Intent: Defines the RolePayrollManager type.
 	// Params: None

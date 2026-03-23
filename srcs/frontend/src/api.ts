@@ -38,7 +38,6 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
   }
   return (await response.json()) as T;
 }
-
 /**
  * Summary: Fetches the current organization's hierarchical and structural state.
  * Intent: Fetches the current organization's hierarchical and structural state.
@@ -50,7 +49,6 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
 export function fetchOrganization(): Promise<Organization> {
   return authedGetJSON<Organization>("/api/org");
 }
-
 /**
  * Summary: Fetches all active virtual meeting rooms and their transcripts.
  * Intent: Fetches all active virtual meeting rooms and their transcripts.
@@ -137,7 +135,6 @@ function normalizeDashboard(response: Record<string, unknown>): DashboardSnapsho
     updatedAt: String(response.updatedAt ?? new Date().toISOString()),
   };
 }
-
 /**
  * Summary: Fetches the accumulated API token costs and usage metrics for the organization.
  * Intent: Fetches the accumulated API token costs and usage metrics for the organization.
@@ -150,7 +147,6 @@ export async function fetchCosts(): Promise<CostSummary> {
   const response = await authedGetJSON<Record<string, unknown>>("/api/costs");
   return normalizeCosts(response);
 }
-
 /**
  * Summary: Fetches a complete, normalized snapshot of the organization's current orchestration state.
  * Intent: Fetches a complete, normalized snapshot of the organization's current orchestration state.
@@ -163,7 +159,6 @@ export async function fetchDashboard(): Promise<DashboardSnapshot> {
   const response = await authedGetJSON<Record<string, unknown>>("/api/dashboard");
   return normalizeDashboard(response);
 }
-
 /**
  * Summary: Dispatches a message or task from one agent to another within a specific meeting.
  * Intent: Dispatches a message or task from one agent to another within a specific meeting.
@@ -212,7 +207,6 @@ export async function sendMessage(form: {
   const raw = await response.json() as Record<string, unknown>;
   return normalizeDashboard(raw);
 }
-
 /**
  * Summary: Instantiates a new agent and assigns it to the organizational workforce.
  * Intent: Instantiates a new agent and assigns it to the organizational workforce.
@@ -224,7 +218,6 @@ export async function sendMessage(form: {
 export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
   return authedPostJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
 }
-
 /**
  * Summary: Terminates an agent's process and removes it from the orchestration hub.
  * Intent: Terminates an agent's process and removes it from the orchestration hub.
@@ -236,7 +229,6 @@ export function hireAgent(name: string, role: string): Promise<DashboardSnapshot
 export function fireAgent(agentId: string): Promise<DashboardSnapshot> {
   return authedPostJSON<DashboardSnapshot>("/api/agents/fire", { agentId });
 }
-
 /**
  * Summary: Retrieves available organizational domain templates (e.g., Software Company).
  * Intent: Retrieves available organizational domain templates (e.g., Software Company).
@@ -248,7 +240,6 @@ export function fireAgent(agentId: string): Promise<DashboardSnapshot> {
 export function fetchDomains(): Promise<DomainInfo[]> {
   return getJSON<DomainInfo[]>("/api/domains");
 }
-
 /**
  * Summary: Retrieves the catalog of active tools registered in the MCP gateway.
  * Intent: Retrieves the catalog of active tools registered in the MCP gateway.
@@ -260,7 +251,6 @@ export function fetchDomains(): Promise<DomainInfo[]> {
 export function fetchMCPTools(): Promise<MCPTool[]> {
   return getJSON<MCPTool[]>("/api/mcp/tools");
 }
-
 /**
  * Summary: Overrides current state with a predefined scenario for demonstration purposes.
  * Intent: Overrides current state with a predefined scenario for demonstration purposes.
@@ -273,7 +263,6 @@ export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
   return postJSON<DashboardSnapshot>("/api/dev/seed", { scenario });
 }
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
-
 /**
  * Summary: Retrieves all pending and resolved confidence gating approval requests.
  * Intent: Retrieves all pending and resolved confidence gating approval requests.
@@ -285,7 +274,6 @@ export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
 export function fetchApprovals(): Promise<ApprovalRequest[]> {
   return getJSON<ApprovalRequest[]>("/api/approvals");
 }
-
 /**
  * Summary: Submits a new request for human manager sign-off on a high-risk action.
  * Intent: Submits a new request for human manager sign-off on a high-risk action.
@@ -303,7 +291,6 @@ export function requestApproval(body: {
 }): Promise<ApprovalRequest> {
   return postJSON<ApprovalRequest>("/api/approvals/request", body);
 }
-
 /**
  * Summary: Submits the human manager's decision (approve/reject) for an approval request.
  * Intent: Submits the human manager's decision (approve/reject) for an approval request.
@@ -321,7 +308,6 @@ export function decideApproval(
 }
 
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
-
 /**
  * Summary: Retrieves all warm handoff escalations across the organization.
  * Intent: Retrieves all warm handoff escalations across the organization.
@@ -333,7 +319,6 @@ export function decideApproval(
 export function fetchHandoffs(): Promise<HandoffPackage[]> {
   return getJSON<HandoffPackage[]>("/api/handoffs");
 }
-
 /**
  * Summary: Escalates a complex task from an autonomous agent to a human manager.
  * Intent: Escalates a complex task from an autonomous agent to a human manager.
@@ -353,7 +338,6 @@ export function createHandoff(body: {
 }
 
 // ── Identity Management ───────────────────────────────────────────────────────
-
 /**
  * Summary: Retrieves the SPIFFE SVID certificates issued to the current workforce.
  * Intent: Retrieves the SPIFFE SVID certificates issued to the current workforce.
@@ -367,7 +351,6 @@ export function fetchIdentities(): Promise<AgentIdentity[]> {
 }
 
 // ── Skill Packs ───────────────────────────────────────────────────────────────
-
 /**
  * Summary: Retrieves all imported skill packs available for agent instantiation.
  * Intent: Retrieves all imported skill packs available for agent instantiation.
@@ -379,7 +362,6 @@ export function fetchIdentities(): Promise<AgentIdentity[]> {
 export function fetchSkillPacks(): Promise<SkillPack[]> {
   return getJSON<SkillPack[]>("/api/skills");
 }
-
 /**
  * Summary: Imports a new specialized skill pack into the organization's domain.
  * Intent: Imports a new specialized skill pack into the organization's domain.
@@ -399,7 +381,6 @@ export function importSkillPack(body: {
 }
 
 // ── Snapshots ─────────────────────────────────────────────────────────────────
-
 /**
  * Summary: Retrieves all point-in-time recovery snapshots for the organization.
  * Intent: Retrieves all point-in-time recovery snapshots for the organization.
@@ -411,7 +392,6 @@ export function importSkillPack(body: {
 export function fetchSnapshots(): Promise<OrgSnapshot[]> {
   return getJSON<OrgSnapshot[]>("/api/snapshots");
 }
-
 /**
  * Summary: Captures a point-in-time snapshot of the entire organization's memory and state.
  * Intent: Captures a point-in-time snapshot of the entire organization's memory and state.
@@ -423,7 +403,6 @@ export function fetchSnapshots(): Promise<OrgSnapshot[]> {
 export function createSnapshot(label?: string): Promise<OrgSnapshot> {
   return postJSON<OrgSnapshot>("/api/snapshots/create", { label });
 }
-
 /**
  * Summary: Restores the organization to a specific point-in-time snapshot.
  * Intent: Restores the organization to a specific point-in-time snapshot.
@@ -437,7 +416,6 @@ export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> 
 }
 
 // ── Marketplace ───────────────────────────────────────────────────────────────
-
 /**
  * Summary: Retrieves the catalog of community-published agents and tools.
  * Intent: Retrieves the catalog of community-published agents and tools.
@@ -451,7 +429,6 @@ export function fetchMarketplace(): Promise<MarketplaceItem[]> {
 }
 
 // ── Real-time Analytics ───────────────────────────────────────────────────────
-
 /**
  * Summary: Fetches real-time operational and health metrics for the organization.
  * Intent: Fetches real-time operational and health metrics for the organization.
@@ -472,7 +449,6 @@ import type {
   Issue,
   PullRequest,
 } from "./types";
-
 /**
  * Summary: Retrieves external service connections, optionally filtered by category.
  * Intent: Retrieves external service connections, optionally filtered by category.
@@ -485,7 +461,6 @@ export function fetchIntegrations(category?: string): Promise<Integration[]> {
   const q = category ? `?category=${category}` : "";
   return getJSON<Integration[]>(`/api/integrations${q}`);
 }
-
 /**
  * Summary: Connects and authenticates a specific external integration.
  * Intent: Connects and authenticates a specific external integration.
@@ -513,7 +488,6 @@ export function connectIntegration(
     apiToken: config?.apiToken,
   });
 }
-
 /**
  * Summary: Disconnects an active external integration.
  * Intent: Disconnects an active external integration.
@@ -525,7 +499,6 @@ export function connectIntegration(
 export function disconnectIntegration(integrationId: string): Promise<Integration> {
   return postJSON<Integration>("/api/integrations/disconnect", { integrationId });
 }
-
 /**
  * Summary: Sends a test message to validate credentials before saving them.
  * Intent: Sends a test message to validate credentials before saving them.
@@ -543,7 +516,6 @@ export function testChatIntegration(
     ...config,
   });
 }
-
 /**
  * Summary: Fetches recorded chat messages from the integration registry.
  * Intent: Fetches recorded chat messages from the integration registry.
@@ -556,7 +528,6 @@ export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return getJSON<ChatMessage[]>(`/api/integrations/chat/messages${q}`);
 }
-
 /**
  * Summary: Dispatches a message to an external chat platform.
  * Intent: Dispatches a message to an external chat platform.
@@ -574,7 +545,6 @@ export function sendChatMessage(body: {
 }): Promise<ChatMessage> {
   return postJSON<ChatMessage>("/api/integrations/chat/send", body);
 }
-
 /**
  * Summary: Fetches pull requests opened via the git integrations.
  * Intent: Fetches pull requests opened via the git integrations.
@@ -587,7 +557,6 @@ export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return getJSON<PullRequest[]>(`/api/integrations/git/prs${q}`);
 }
-
 /**
  * Summary: Opens a pull request/merge request on a connected git platform.
  * Intent: Opens a pull request/merge request on a connected git platform.
@@ -607,7 +576,6 @@ export function createPullRequest(body: {
 }): Promise<PullRequest> {
   return postJSON<PullRequest>("/api/integrations/git/pr/create", body);
 }
-
 /**
  * Summary: Merges an open pull request on a connected git platform.
  * Intent: Merges an open pull request on a connected git platform.
@@ -619,7 +587,6 @@ export function createPullRequest(body: {
 export function mergePullRequest(prId: string): Promise<PullRequest> {
   return postJSON<PullRequest>("/api/integrations/git/pr/merge", { prId });
 }
-
 /**
  * Summary: Closes an open pull request on a connected git platform without merging.
  * Intent: Closes an open pull request on a connected git platform without merging.
@@ -631,7 +598,6 @@ export function mergePullRequest(prId: string): Promise<PullRequest> {
 export function closePullRequest(prId: string): Promise<PullRequest> {
   return postJSON<PullRequest>("/api/integrations/git/pr/close", { prId });
 }
-
 /**
  * Summary: Fetches tickets from connected issue trackers.
  * Intent: Fetches tickets from connected issue trackers.
@@ -644,7 +610,6 @@ export function fetchIssues(integrationId?: string): Promise<Issue[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return getJSON<Issue[]>(`/api/integrations/issues${q}`);
 }
-
 /**
  * Summary: Creates a ticket in a connected issue tracker.
  * Intent: Creates a ticket in a connected issue tracker.
@@ -664,7 +629,6 @@ export function createIssue(body: {
 }): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/create", body);
 }
-
 /**
  * Summary: Updates the status phase of an existing ticket.
  * Intent: Updates the status phase of an existing ticket.
@@ -676,7 +640,6 @@ export function createIssue(body: {
 export function updateIssueStatus(issueId: string, status: string): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/status", { issueId, status });
 }
-
 /**
  * Summary: Assigns ownership of a ticket to a specific agent or human manager.
  * Intent: Assigns ownership of a ticket to a specific agent or human manager.
@@ -688,7 +651,6 @@ export function updateIssueStatus(issueId: string, status: string): Promise<Issu
 export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
 }
-
 /**
  * Summary: Invokes an MCP tool with the given action and parameters. Communication tools route to the underlying connected integration. Git/issue tools create PRs or tickets in the connected platform.
  * Intent: Invokes an MCP tool with the given action and parameters. Communication tools route to the underlying connected integration. Git/issue tools create PRs or tickets in the connected platform.
@@ -704,7 +666,6 @@ export function invokeMCPTool(
 ): Promise<Record<string, unknown>> {
   return postJSON<Record<string, unknown>>("/api/mcp/tools/invoke", { toolId, action, params });
 }
-
 /**
  * Summary: Fetches the user's or organization's global settings and preferences.
  * Intent: Fetches the user's or organization's global settings and preferences.
@@ -716,7 +677,6 @@ export function invokeMCPTool(
 export function fetchSettings(): Promise<Settings> {
   return getJSON<Settings>("/api/settings");
 }
-
 /**
  * Summary: Saves and updates the global settings and preferences.
  * Intent: Saves and updates the global settings and preferences.
@@ -732,7 +692,6 @@ export function saveSettings(settings: Settings): Promise<Settings> {
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 const TOKEN_KEY = "ohc_token";
-
 /**
  * Summary: Retrieves the currently stored authentication JWT token from local storage.
  * Intent: Retrieves the currently stored authentication JWT token from local storage.
@@ -744,7 +703,6 @@ const TOKEN_KEY = "ohc_token";
 export function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
-
 /**
  * Summary: Persists an authentication JWT token in local storage.
  * Intent: Persists an authentication JWT token in local storage.
@@ -756,7 +714,6 @@ export function getStoredToken(): string | null {
 export function setStoredToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
 }
-
 /**
  * Summary: Removes the stored authentication JWT token from local storage.
  * Intent: Removes the stored authentication JWT token from local storage.
@@ -818,7 +775,6 @@ async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
   }
   return (await response.json()) as T;
 }
-
 /**
  * Summary: Authenticates a user and retrieves a JWT token.
  * Intent: Authenticates a user and retrieves a JWT token.
@@ -841,7 +797,6 @@ export async function login(username: string, password: string): Promise<LoginRe
   setStoredToken(result.token);
   return result;
 }
-
 /**
  * Summary: Invalidates the current session and clears the stored authentication token.
  * Intent: Invalidates the current session and clears the stored authentication token.
@@ -857,7 +812,6 @@ export async function logout(): Promise<void> {
     clearStoredToken();
   }
 }
-
 /**
  * Summary: Retrieves the public profile information of the currently authenticated user.
  * Intent: Retrieves the public profile information of the currently authenticated user.
@@ -869,7 +823,6 @@ export async function logout(): Promise<void> {
 export function fetchMe(): Promise<UserPublic> {
   return authedGetJSON<UserPublic>("/api/auth/me");
 }
-
 /**
  * Summary: Retrieves a list of all registered users in the system (requires Admin role).
  * Intent: Retrieves a list of all registered users in the system (requires Admin role).
@@ -881,7 +834,6 @@ export function fetchMe(): Promise<UserPublic> {
 export function fetchUsers(): Promise<UserPublic[]> {
   return authedGetJSON<UserPublic[]>("/api/users");
 }
-
 /**
  * Summary: Creates a new user account within the system (requires Admin role).
  * Intent: Creates a new user account within the system (requires Admin role).
@@ -898,7 +850,6 @@ export function createUser(body: {
 }): Promise<UserPublic> {
   return authedPostJSON<UserPublic>("/api/users", body);
 }
-
 /**
  * Summary: Deletes an existing user account from the system (requires Admin role).
  * Intent: Deletes an existing user account from the system (requires Admin role).
@@ -914,7 +865,6 @@ export async function deleteUser(id: string): Promise<void> {
     headers: { Authorization: token ? `Bearer ${token}` : "" },
   });
 }
-
 /**
  * Summary: Retrieves the list of available operational roles and their associated permissions.
  * Intent: Retrieves the list of available operational roles and their associated permissions.
@@ -926,7 +876,6 @@ export async function deleteUser(id: string): Promise<void> {
 export function fetchRoles(): Promise<Role[]> {
   return authedGetJSON<Role[]>("/api/roles");
 }
-
 /**
  * Summary: Creates a new custom role with an optional set of permissions.
  * Intent: Creates a new custom role with an optional set of permissions.
@@ -938,8 +887,6 @@ export function fetchRoles(): Promise<Role[]> {
 export function createRole(body: { name: string; permissions?: string[] }): Promise<Role> {
   return authedPostJSON<Role>("/api/roles", body);
 }
-
-
 /**
  * Summary: Scales the number of agents for a specific role dynamically.
  * Intent: Scales the number of agents for a specific role dynamically.
