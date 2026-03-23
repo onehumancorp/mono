@@ -286,6 +286,59 @@ describe("App – navigation tabs", () => {
     expect(screen.getByText("Review launch blockers")).toBeInTheDocument();
   });
 
+  it("handles high-volume meetings using virtualization to prevent DOM bloat", async () => {
+    // Generate a massive payload to test virtualization
+    const massiveTranscript = Array.from({ length: 100 }).map((_, i) => ({
+      id: `msg-huge-${i}`,
+      fromAgent: "pm-1",
+      toAgent: "swe-1",
+      type: "task",
+      content: `Massive message content ${i}`,
+      occurredAt: new Date().toISOString(),
+    }));
+
+    global.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (url.includes("/api/dashboard")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ...dashboardPayload,
+            meetings: [
+              {
+                id: "massive-meeting",
+                participants: ["pm-1", "swe-1"],
+                transcript: massiveTranscript,
+              },
+            ],
+          }),
+        };
+      }
+      return { ok: true, status: 200, json: async () => ({}) };
+    });
+
+    render(<App />);
+
+    const btn = await screen.findByRole("button", { name: "Meetings" }, { timeout: 10000 });
+    fireEvent.click(btn);
+
+    // Select the massive-meeting room using the dropdown in the Meetings tab
+    const selects = await screen.findAllByRole("combobox");
+    // Find the one for meetings (usually the first one if it's the only one visible)
+    fireEvent.change(selects[0], { target: { value: "massive-meeting" } });
+
+    // We expect the first message to be "Massive message content 0"
+    await screen.findByText("Massive message content 0", {}, { timeout: 10000 });
+
+    // Total DOM nodes with class "transcript-item" should be substantially less than 10,000 (usually < 100)
+    const items = screen.getAllByRole("listitem").filter((item) => item.className.includes("transcript-item"));
+    expect(items.length).toBeLessThan(1000);
+    expect(items.length).toBeGreaterThan(0);
+
+    // First message should be rendered because window starts at 0
+    expect(screen.getByText("Massive message content 0")).toBeInTheDocument();
+  });
+
   it("shows 'No messages yet' when meeting transcript is empty", async () => {
     const emptyTranscript = {
       ...dashboardPayload,
