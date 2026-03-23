@@ -47,3 +47,10 @@ A high-level summary of the testing strategy for the Advanced Agentic Capabiliti
 - **Execution**: Run via `bazelisk test //...` under the Bazel sandbox.
 - **Mocks**: External MCP endpoints and LLM reasoning engines are mocked for deterministic testing.
 - **Validation**: Strict enforcement of >95% test coverage.
+
+### 3.4 Handoff UI Tests
+| Test ID | Component | Description | Expected Result | Status |
+|---------|-----------|-------------|-----------------|--------|
+| HITL-01 | Hub -> DB | Verify Handoff package creation | Handoff state saved as PENDING | Pending |
+| HITL-02 | Webhook | Validate Slack/Mattermost hook | Valid payload sent | Pending |
+| HITL-03 | Approval Gate | Verify cryptographically signed token | Task resumes only on valid token | Pending |

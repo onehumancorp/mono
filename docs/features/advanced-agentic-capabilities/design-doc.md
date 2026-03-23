@@ -60,3 +60,9 @@ Traditional static prompting chains fail at handling cyclic workflows (looping, 
 ## 5. Alternatives Considered
 - **In-Memory Context Arrays**: Relying entirely on the LLM's growing context window. Rejected due to unacceptable token burn rates, latency spikes, and eventual context collapse.
 - **Hardcoded Tool Chains**: Defining specific tools per agent role in static configuration. Rejected as it severely limits flexibility and extensibility when importing new Skill Blueprints.
+
+### 3.6 Human-in-the-Loop (HITL) Handoff UI
+Orchestrators struggle to seamlessly hand off critical tasks to human operators without losing context. OHC implements a native K8s-backed "Warm Handoff" UI, directly integrating visual ground truth (screenshots) and SPIFFE-gated confidence approvals.
+- **Handoff Generation**: When an agent encounters an ambiguous state, a predefined high-risk operation, or a cyclic hallucination, it pauses its execution graph.
+- **Visual Ground Truth**: The system captures and bundles the agent's recent context, intent, and visual state (e.g., screenshots, UI diffs) into a structured Handoff package.
+- **Approval Gating**: Human managers review the package in the CEO Dashboard and provide cryptographically signed approval tokens to resume or abort the execution thread.

@@ -52,3 +52,9 @@ A high-level summary of the testing strategy for the Hybrid Identity Management 
 - **Expired SVIDs**: A test deliberately halts the `spire-agent` sidecar, allowing an agent's SVID to expire. It verifies that subsequent mTLS gRPC calls fail closed and the agent pod undergoes a controlled restart to re-attest.
 - **Revocation Race Conditions**: When an agent is "Fired", a test fires off concurrent API requests using the agent's SVID. It verifies that the `ohc-operator` updates the trust bundle within the maximum 5-second revocation window, blocking the unauthorized requests.
 - **IDOR Prevention**: The integration suite tests cross-cluster B2B rooms by attempting to forge an `AgentID` payload inside a valid SVID from a different trust domain. The Hub must aggressively reject the mismatch.
+
+### 3.4 B2B SPIFFE Federation Tests
+| Test ID | Component | Description | Expected Result | Status |
+|---------|-----------|-------------|-----------------|--------|
+| B2B-01 | Federation Handshake | Initiate trust agreement | Handshake successful | Pending |
+| B2B-02 | Federation Revoked | Fail closed if trust is revoked | Agent communication halts | Pending |
