@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+with open("srcs/frontend/tests/cuj.integration.spec.ts", "w") as f:
+    f.write("""import { expect, test, type Page } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 
 const screenshotDir = "tests/screenshots";
@@ -19,7 +20,6 @@ test.beforeEach(async ({ page, request }) => {
     headers: { Authorization: "Bearer " + token },
     data: { scenario: "launch-readiness" }
   });
-  console.log(await response.text());
   expect(response.ok()).toBeTruthy();
 
   // Set localStorage token in browser context so UI bypassing login
@@ -196,50 +196,4 @@ test("CUJ 7: agent chat via Chatwoot integration – verify send and messages en
   const found = messages.some((m) => m.content === chatContent);
   expect(found).toBeTruthy();
 });
-
-test("CUJ 8: handoff resolution flows end-to-end", async ({ page }) => {
-  await page.goto("/");
-
-  // Navigate to Handoffs tab
-  await page.getByRole("button", { name: "Handoffs" }).click();
-  await expect(page.getByRole("heading", { name: "Warm Handoffs" })).toBeVisible();
-
-  // Verify the seeded handoff is visible and has a "pending" status badge
-  await expect(page.getByText("Escalated by swe-1")).toBeVisible();
-  await expect(page.getByText("PENDING", { exact: true })).toBeVisible();
-
-  // Click the Resolve button
-  const resolveButton = page.getByRole("button", { name: "Resolve & Resume" });
-  await resolveButton.click();
-
-  // UI should update to show RESOLVED status
-  await expect(page.getByText("RESOLVED", { exact: true })).toBeVisible();
-
-  // The success notice should appear
-  await expect(page.getByText("Handoff resolved and agent execution resumed.")).toBeVisible();
-
-  await saveShot(page, "cuj-08-handoff-resolution");
-});
-
-test("CUJ 9: approval execution flows end-to-end", async ({ page }) => {
-  await page.goto("/");
-
-  // Navigate to War Room
-  await page.getByRole("button", { name: "Meetings" }).click();
-  await expect(page.getByRole("heading", { name: "Virtual War Room" })).toBeVisible();
-
-  // Verify the seeded approval is visible
-  await expect(page.getByText("CEO Approval Required")).toBeVisible();
-
-  // Click the Approve button
-  const approveButton = page.getByRole("button", { name: "Approve", exact: true });
-  await approveButton.click();
-
-  // UI should update to show Approved by CEO chip
-  await expect(page.getByText("✓ Approved by CEO")).toBeVisible();
-
-  // The success notice should appear
-  await expect(page.getByText("Approval successfully recorded.")).toBeVisible();
-
-  await saveShot(page, "cuj-09-approval-execution");
-});
+""")

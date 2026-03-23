@@ -45,6 +45,9 @@ export GOPATH="${tmp}/.gopath"
 sed -i 's|go run \.\./cmd/ohc|go run '"${tmp}"'/srcs/cmd/ohc|g' playwright.config.ts
 
 # Run Playwright tests.
+export ADMIN_USERNAME="admin"
+export ADMIN_PASSWORD="adminpass123"
+export ADMIN_EMAIL="admin@local.com"
 npx playwright test 2>&1
 
 echo "frontend e2e tests passed"
