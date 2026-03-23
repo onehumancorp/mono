@@ -28,6 +28,7 @@ type State struct {
 func LogCheckpoint(state *State, identity string) {
 	if state.Data == nil {
 		state.Data = make(map[string]interface{})
+		_ = state.Data
 	}
 
 	checkpointsRaw, exists := state.Data["checkpoints"]
