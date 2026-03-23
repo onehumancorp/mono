@@ -14,6 +14,7 @@ import (
 	"github.com/onehumancorp/mono/srcs/billing"
 	"github.com/onehumancorp/mono/srcs/domain"
 	"github.com/onehumancorp/mono/srcs/integrations"
+	"github.com/onehumancorp/mono/srcs/interop"
 	"github.com/onehumancorp/mono/srcs/orchestration"
 	"github.com/onehumancorp/mono/srcs/telemetry"
 )
@@ -43,6 +44,7 @@ type Server struct {
 	authHandlers          *auth.Handlers
 	settings              Settings
 	agentProviderRegistry *agents.Registry
+	dynamicMCPTools       []MCPTool
 }
 
 // Summary: Defines the Settings type.
@@ -334,7 +336,7 @@ var availableDomains = []DomainInfo{
 	{ID: "accounting_firm", Name: "Accounting Firm", Description: "Financial services firm: CEO, CFO, Bookkeepers, Tax, Audit, Payroll."},
 }
 
-var mcpTools = []MCPTool{
+var defaultMcpTools = []MCPTool{
 	{ID: "git-mcp", Name: "Git", Description: "Source control operations: clone, commit, pull-request, review via GitHub or Gitea.", Category: "code", Status: "available"},
 	{ID: "jira-mcp", Name: "Jira / Plane", Description: "Task and issue tracking: create tickets, update status, list sprint items.", Category: "project_management", Status: "available"},
 	{ID: "linear-mcp", Name: "Linear", Description: "Modern issue tracking: manage issues, cycles, and roadmaps for high-velocity teams.", Category: "project_management", Status: "available"},
@@ -396,6 +398,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 		authStore:             store,
 		authHandlers:          auth.NewHandlers(store),
 		agentProviderRegistry: agents.DefaultRegistry(),
+		dynamicMCPTools:       append([]MCPTool(nil), defaultMcpTools...),
 	}
 	// Load Minimax API key from environment on startup.
 	if key := os.Getenv("MINIMAX_API_KEY"); key != "" {
@@ -430,6 +433,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/agents/providers/auth", server.handleAgentProviderAuth)
 	mux.HandleFunc("/api/domains", server.handleDomains)
 	mux.HandleFunc("/api/mcp/tools", server.handleMCPTools)
+	mux.HandleFunc("/api/mcp/tools/register", server.handleMCPRegister)
 	mux.HandleFunc("/api/mcp/tools/invoke", server.handleMCPInvoke)
 	mux.HandleFunc("/api/dev/seed", server.handleDevSeed)
 	mux.HandleFunc("/api/settings", server.handleSettings)
@@ -581,8 +585,53 @@ type providerAuthRequest struct {
 // agent provider.  Credentials are stored in memory and forwarded to any
 // subsequently hired agent of that provider type.
 
+type mcpRegisterRequest struct {
+	Tool     MCPTool `json:"tool"`
+	SPIFFEID string  `json:"spiffeId"`
+}
+
+func (s *Server) handleMCPRegister(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req mcpRegisterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+
+	if req.Tool.ID == "" || req.Tool.Name == "" {
+		http.Error(w, "tool ID and name are required", http.StatusBadRequest)
+		return
+	}
+
+	if err := interop.ValidateSPIFFEID(req.SPIFFEID); err != nil {
+		http.Error(w, "invalid SPIFFE ID: "+err.Error(), http.StatusForbidden)
+		return
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Check if tool already exists
+	for i, t := range s.dynamicMCPTools {
+		if t.ID == req.Tool.ID {
+			s.dynamicMCPTools[i] = req.Tool
+			writeJSON(w, map[string]interface{}{"status": "updated", "tool": req.Tool})
+			return
+		}
+	}
+
+	s.dynamicMCPTools = append(s.dynamicMCPTools, req.Tool)
+	writeJSON(w, map[string]interface{}{"status": "registered", "tool": req.Tool})
+}
+
 func (s *Server) handleMCPTools(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, mcpTools)
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	writeJSON(w, s.dynamicMCPTools)
 }
 
 func (s *Server) snapshot() dashboardSnapshot {

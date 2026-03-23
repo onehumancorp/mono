@@ -19,6 +19,7 @@ go_library(
         "//srcs/billing",
         "//srcs/domain",
         "//srcs/integrations",
+        "//srcs/interop",
         "//srcs/orchestration",
         "//srcs/telemetry",
     ],
