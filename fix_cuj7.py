@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+with open("srcs/frontend/tests/cuj.integration.spec.ts", "w") as f:
+    f.write("""import { expect, test, type Page } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 
 const screenshotDir = "tests/screenshots";
@@ -19,7 +20,6 @@ test.beforeEach(async ({ page, request }) => {
     headers: { Authorization: "Bearer " + token },
     data: { scenario: "launch-readiness" }
   });
-  console.log(await response.text());
   expect(response.ok()).toBeTruthy();
 
   // Set localStorage token in browser context so UI bypassing login
@@ -196,3 +196,4 @@ test("CUJ 7: agent chat via Chatwoot integration – verify send and messages en
   const found = messages.some((m) => m.content === chatContent);
   expect(found).toBeTruthy();
 });
+""")

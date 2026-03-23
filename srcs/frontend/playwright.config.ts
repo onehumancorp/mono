@@ -5,7 +5,7 @@ export default defineConfig({
   timeout: 30_000,
   webServer: [
     {
-      command: "go run ../cmd/ohc",
+      command: "ADMIN_PASSWORD=adminpass123 go run ../cmd/ohc",
       port: 8080,
       reuseExistingServer: true,
       timeout: 120_000,

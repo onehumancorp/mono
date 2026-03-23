@@ -1,0 +1,93 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - img [ref=e7]
+      - generic [ref=e10]:
+        - generic [ref=e11]: One Human Corp
+        - generic [ref=e12]: AI Enterprise OS
+    - navigation "Main navigation" [ref=e13]:
+      - generic [ref=e14]: Platform
+      - button "Overview" [ref=e15] [cursor=pointer]:
+        - img [ref=e17]
+        - generic [ref=e22]: Overview
+      - button "Meetings 4" [ref=e23] [cursor=pointer]:
+        - img [ref=e25]
+        - generic [ref=e27]: Meetings
+        - generic [ref=e28]: "4"
+      - button "Agents" [ref=e29] [cursor=pointer]:
+        - img [ref=e31]
+        - generic [ref=e34]: Agents
+      - button "Handoffs" [ref=e35] [cursor=pointer]:
+        - img [ref=e37]
+        - generic [ref=e39]: Handoffs
+      - button "Cost" [ref=e40] [cursor=pointer]:
+        - img [ref=e42]
+        - generic [ref=e44]: Cost
+      - button "Playbooks" [ref=e45] [cursor=pointer]:
+        - img [ref=e47]
+        - generic [ref=e49]: Playbooks
+      - button "Integrations" [ref=e50] [cursor=pointer]:
+        - img [ref=e52]
+        - generic [ref=e55]: Integrations
+      - button "Dynamic Scaling" [ref=e56] [cursor=pointer]:
+        - img [ref=e58]
+        - generic [ref=e62]: Dynamic Scaling
+      - button "Settings" [ref=e63] [cursor=pointer]:
+        - img [ref=e65]
+        - generic [ref=e67]: Settings
+      - button "Users" [ref=e68] [cursor=pointer]:
+        - img [ref=e70]
+        - generic [ref=e72]: Users
+    - generic [ref=e73]:
+      - button "Sign out" [ref=e74] [cursor=pointer]
+      - generic [ref=e75]:
+        - generic [ref=e76]: CEO
+        - generic [ref=e77]:
+          - generic [ref=e78]: Human CEO
+          - generic [ref=e79]: Human CEO
+      - generic [ref=e82]: Live
+  - banner [ref=e83]:
+    - heading "One Human Corp Dashboard" [level=1] [ref=e85]
+    - generic [ref=e86]:
+      - generic [ref=e87]: Updated 08:04 AM
+      - button "Refresh" [ref=e88] [cursor=pointer]
+  - main [ref=e89]:
+    - generic [ref=e91]:
+      - button "Back to agents" [ref=e92] [cursor=pointer]: ← Back
+      - generic [ref=e93]:
+        - heading "Human CEO" [level=2] [ref=e94]
+        - paragraph [ref=e95]: CEO
+      - generic [ref=e96]: IN_MEETING
+    - generic [ref=e98]:
+      - button "Config" [ref=e99] [cursor=pointer]
+      - button "Metrics" [ref=e100] [cursor=pointer]
+      - button "Activity" [ref=e101] [cursor=pointer]
+    - article [ref=e102]:
+      - heading "Role Profile — CEO" [level=2] [ref=e104]
+      - generic [ref=e105]:
+        - generic [ref=e106]:
+          - generic [ref=e107]: Base Prompt
+          - generic [ref=e108]: Set company direction, approve tradeoffs, and keep the organization aligned with the CEO's goals.
+        - generic [ref=e109]:
+          - generic [ref=e110]: Capabilities
+          - generic [ref=e111]:
+            - generic [ref=e112]: Approve company priorities
+            - generic [ref=e113]: Review cross-functional progress
+            - generic [ref=e114]: Escalate blockers to the human CEO
+        - generic [ref=e115]:
+          - generic [ref=e116]: Context Inputs
+          - generic [ref=e117]:
+            - generic [ref=e118]: organization health
+            - generic [ref=e119]: meeting summaries
+            - generic [ref=e120]: budget burn
+    - article [ref=e121]:
+      - heading "Chat with Human CEO" [level=2] [ref=e123]
+      - generic [ref=e124]:
+        - generic [ref=e125]:
+          - textbox "Send a message to Human CEO…" [ref=e126]: CUJ-6 agent chat 1774253100606
+          - button "Send" [ref=e127] [cursor=pointer]
+        - alert [ref=e128]: sender agent is not registered
+```
