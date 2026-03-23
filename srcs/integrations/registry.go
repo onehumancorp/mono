@@ -714,11 +714,11 @@ func (r *Registry) SendChatMessage(integrationID, channel, fromAgent, content, t
 					chatID = creds.ChatID
 				}
 				// Best-effort: log but do not fail the in-memory record.
-				_ = sendTelegramMessage(creds.BotToken, chatID, text)
+				_ = sendTelegramMessage(context.Background(), creds.BotToken, chatID, text)
 			}
 		case IntegrationTypeDiscord:
 			if creds.WebhookURL != "" {
-				_ = sendDiscordWebhook(creds.WebhookURL, fromAgent, content)
+				_ = sendDiscordWebhook(context.Background(), creds.WebhookURL, fromAgent, content)
 			}
 		}
 	}
@@ -763,7 +763,7 @@ func (r *Registry) TestConnection(id string, creds IntegrationCredentials) error
 		if active.ChatID == "" {
 			return errors.New("chat ID is required")
 		}
-		return sendTelegramMessage(active.BotToken, active.ChatID,
+		return sendTelegramMessage(context.Background(), active.BotToken, active.ChatID,
 			"✅ Test message from One Human Corp — Telegram integration confirmed!")
 	case IntegrationTypeDiscord:
 		if active.WebhookURL == "" {
@@ -772,7 +772,7 @@ func (r *Registry) TestConnection(id string, creds IntegrationCredentials) error
 		if err := validateURL(active.WebhookURL); err != nil {
 			return err
 		}
-		return sendDiscordWebhook(active.WebhookURL, "One Human Corp",
+		return sendDiscordWebhook(context.Background(), active.WebhookURL, "One Human Corp",
 			"✅ Test message — Discord integration confirmed!")
 	default:
 		// No live endpoint to test; accept unconditionally.
@@ -1096,20 +1096,17 @@ func generateID(prefix string, now time.Time) string {
 var TelegramAPIBase = "https://api.telegram.org"
 
 // sendTelegramMessage posts a text message to a Telegram chat via the Bot API.
-func sendTelegramMessage(botToken, chatID, text string) error {
+func sendTelegramMessage(ctx context.Context, botToken, chatID, text string) error {
 	if err := validateURL(TelegramAPIBase); err != nil {
 		return err
 	}
 
 	apiURL := TelegramAPIBase + "/bot" + botToken + "/sendMessage"
-	payload, err := json.Marshal(map[string]string{
+	payload, _ := json.Marshal(map[string]string{
 		"chat_id": chatID,
 		"text":    text,
 	})
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, apiURL, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}
@@ -1135,19 +1132,16 @@ func sendTelegramMessage(botToken, chatID, text string) error {
 }
 
 // sendDiscordWebhook posts a message to a Discord channel via an inbound webhook.
-func sendDiscordWebhook(webhookURL, username, content string) error {
+func sendDiscordWebhook(ctx context.Context, webhookURL, username, content string) error {
 	if err := validateURL(webhookURL); err != nil {
 		return err
 	}
 
-	payload, err := json.Marshal(map[string]string{
+	payload, _ := json.Marshal(map[string]string{
 		"username": username,
 		"content":  content,
 	})
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, webhookURL, bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhookURL, bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("create request: %w", err)
 	}
