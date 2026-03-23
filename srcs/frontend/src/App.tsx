@@ -1228,8 +1228,15 @@ export function App() {
                         <li key={msg.id} className="transcript-item">
                           <div className="transcript-header">
                             <span className="transcript-from">{msg.fromAgent}</span>
-                            <span className="transcript-arrow" aria-hidden="true">→</span>
-                            <span className="transcript-to">{msg.toAgent}</span>
+                            {msg.toAgent && (
+                              <>
+                                <span className="transcript-arrow" aria-hidden="true">→</span>
+                                <span className="transcript-to">{msg.toAgent}</span>
+                                {msg.type === "task" && (
+                                  <span className="chip chip--sm" style={{ marginLeft: "4px" }}>Delegated to {msg.toAgent}</span>
+                                )}
+                              </>
+                            )}
                             <span className="event-chip">{msg.type}</span>
                             <span className="transcript-time">{formatTime(msg.occurredAt)}</span>
                           </div>
@@ -1522,6 +1529,9 @@ export function App() {
                                   <>
                                     <span className="transcript-arrow" aria-hidden="true">→</span>
                                     <span className="transcript-to">{msg.toAgent}</span>
+                                    {msg.type === "task" && (
+                                      <span className="chip chip--sm" style={{ marginLeft: "4px" }}>Delegated to {msg.toAgent}</span>
+                                    )}
                                   </>
                                 )}
                                 <span className="event-chip" style={{ marginLeft: "4px" }}>{msg.type}</span>
@@ -1900,6 +1910,9 @@ export function App() {
                                 <>
                                   <span className="transcript-arrow" aria-hidden="true">→</span>
                                   <span className="transcript-to">{msg.toAgent}</span>
+                                    {msg.type === "task" && (
+                                      <span className="chip chip--sm" style={{ marginLeft: "4px" }}>Delegated to {msg.toAgent}</span>
+                                    )}
                                 </>
                               )}
                               <span className="event-chip" style={{ marginLeft: "4px" }}>{msg.type}</span>
