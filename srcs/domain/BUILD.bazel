@@ -4,17 +4,20 @@ go_library(
     name = "domain",
     srcs = [
         "b2b.go",
+        "blueprint.go",
         "compute.go",
         "organization.go",
     ],
     importpath = "github.com/onehumancorp/mono/srcs/domain",
     visibility = ["//visibility:public"],
+    deps = ["@in_gopkg_yaml_v3//:yaml_v3"],
 )
 
 go_test(
     name = "domain_test",
     srcs = [
         "b2b_test.go",
+        "blueprint_test.go",
         "compute_test.go",
         "organization_test.go",
     ],

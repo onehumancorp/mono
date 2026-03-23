@@ -359,7 +359,7 @@ func TestHandleHealthzReadyz(t *testing.T) {
 	}
 }
 
-func TestHandleScale(t *testing.T) {
+func TestHandleScale1(t *testing.T) {
 	tests := []struct {
 		name       string
 		method     string
@@ -420,7 +420,7 @@ func TestHandleScale(t *testing.T) {
 	}
 }
 
-func TestHandleScaleStream(t *testing.T) {
+func TestHandleScaleStream1(t *testing.T) {
 	app, server, _ := newTestServer(t)
 	defer server.Close()
 

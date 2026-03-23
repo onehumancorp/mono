@@ -12,6 +12,9 @@ go_library(
 
 go_test(
     name = "agents_test",
-    srcs = ["agents_test.go"],
+    srcs = [
+        "agents_test.go",
+        "provider_test.go",
+    ],
     embed = [":agents"],
 )
