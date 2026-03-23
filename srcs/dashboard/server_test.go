@@ -3444,3 +3444,133 @@ func TestHandleHireAgent_UnknownProviderRejected(t *testing.T) {
 		t.Errorf("expected 400 for unknown provider, got %d", resp.StatusCode)
 	}
 }
+
+func TestHandlePipelinesPost(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Test MethodNotAllowed
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/pipelines", nil)
+	rec := httptest.NewRecorder()
+	app.handlePipelines(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	// Test invalid JSON
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/pipelines", strings.NewReader("bad"))
+	rec = httptest.NewRecorder()
+	app.handlePipelines(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Test missing name
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/pipelines", strings.NewReader(`{}`))
+	rec = httptest.NewRecorder()
+	app.handlePipelines(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for missing name, got %d", rec.Code)
+	}
+}
+
+func TestHandlePipelinePromote(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/pipelines/promote", nil)
+	rec := httptest.NewRecorder()
+	app.handlePipelinePromote(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/pipelines/promote", strings.NewReader("bad"))
+	rec = httptest.NewRecorder()
+	app.handlePipelinePromote(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/pipelines/promote", strings.NewReader(`{}`))
+	rec = httptest.NewRecorder()
+	app.handlePipelinePromote(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for missing id, got %d", rec.Code)
+	}
+}
+
+func TestHandlePipelineStatus(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/pipelines/status", nil)
+	rec := httptest.NewRecorder()
+	app.handlePipelineStatus(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/pipelines/status", strings.NewReader("bad"))
+	rec = httptest.NewRecorder()
+	app.handlePipelineStatus(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/pipelines/status", strings.NewReader(`{}`))
+	rec = httptest.NewRecorder()
+	app.handlePipelineStatus(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for missing id/status, got %d", rec.Code)
+	}
+
+	app.pipelines = []Pipeline{{ID: "p1"}}
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/pipelines/status", strings.NewReader(`{"pipelineId": "p1", "status": "STAGING", "stagingUrl": "http://test"}`))
+	rec = httptest.NewRecorder()
+	app.handlePipelineStatus(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+
+	if app.pipelines[0].StagingURL != "http://test" {
+		t.Errorf("expected stagingUrl to be http://test")
+	}
+}
+
+func TestHandleScale(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/scale", nil)
+	rec := httptest.NewRecorder()
+	app.handleScale(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/scale", strings.NewReader("not-json"))
+	rec = httptest.NewRecorder()
+	app.handleScale(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for bad json, got %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/scale", strings.NewReader(`{"count": 2}`))
+	rec = httptest.NewRecorder()
+	app.handleScale(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for missing role, got %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/scale", strings.NewReader(`{"role": "swe", "count": 2}`))
+	rec = httptest.NewRecorder()
+	app.handleScale(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+}
+
+func TestHandleScaleStream(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/scale/stream", nil)
+	rec := httptest.NewRecorder()
+	app.handleScaleStream(rec, req)
+}

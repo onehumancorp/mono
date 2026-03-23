@@ -2,6 +2,7 @@ package orchestration
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -716,5 +717,145 @@ func TestHubServiceServer_Publish(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestHubServiceServer_DelegateTask_Error(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{
+		ID:   "specialist",
+		Name: "Specialist",
+	})
+	server := NewHubServiceServer(hub)
+
+	ctx := context.Background()
+
+	task := pb.Message_builder{
+		Id:        "msg-1",
+		FromAgent: "delegate",
+		ToAgent:   "specialist",
+		Type:      "task",
+		Content:   "Please review this code",
+	}.Build()
+
+	req := pb.DelegateTaskRequest_builder{
+		FromAgentId: "missing-delegate",
+		ToAgentId:   "specialist",
+		Task:        task,
+	}.Build()
+
+	_, err := server.DelegateTask(ctx, req)
+	if err == nil {
+		t.Fatalf("expected DelegateTask to return error for missing delegate")
+	}
+}
+
+type mockStream struct {
+	pb.HubService_StreamMessagesServer
+	ctx     context.Context
+	sendErr error
+}
+
+func (m *mockStream) Context() context.Context {
+	return m.ctx
+}
+
+func (m *mockStream) Send(*pb.Message) error {
+	return m.sendErr
+}
+
+func TestHubServiceServer_StreamMessages_SendError(t *testing.T) {
+	hub := NewHub()
+	server := NewHubServiceServer(hub)
+
+	agentID := "test-agent"
+	hub.RegisterAgent(Agent{ID: agentID})
+
+	// Publish a message so sendNewMessages has something to process
+	hub.Publish(Message{FromAgent: agentID, ToAgent: agentID, Type: "test"})
+
+	req := pb.StreamMessagesRequest_builder{AgentId: agentID}.Build()
+	mock := &mockStream{
+		ctx:     context.Background(),
+		sendErr: errors.New("mock send error"),
+	}
+
+	err := server.StreamMessages(req, mock)
+	if err == nil || err.Error() != "mock send error" {
+		t.Errorf("expected mock send error, got %v", err)
+	}
+}
+
+func TestHubServiceServer_StreamMessages_ChError(t *testing.T) {
+	hub := NewHub()
+	server := NewHubServiceServer(hub)
+
+	agentID := "test-agent"
+	hub.RegisterAgent(Agent{ID: agentID})
+
+	req := pb.StreamMessagesRequest_builder{AgentId: agentID}.Build()
+	mock := &mockStream{
+		ctx:     context.Background(),
+		sendErr: errors.New("mock send error 2"),
+	}
+
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		hub.Publish(Message{FromAgent: agentID, ToAgent: agentID, Type: "test"})
+	}()
+
+	err := server.StreamMessages(req, mock)
+	if err == nil || err.Error() != "mock send error 2" {
+		t.Errorf("expected mock send error 2, got %v", err)
+	}
+}
+
+func TestPublishSubChannelFull(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "agent1"})
+
+	_, _ = hub.Subscribe("agent1")
+
+	msg := Message{
+		FromAgent: "agent1",
+		ToAgent:   "agent1",
+		Type:      "task",
+	}
+
+	err := hub.Publish(msg)
+	if err != nil {
+		t.Fatalf("unexpected error publishing first message: %v", err)
+	}
+
+	// This should hit the 'default' case in the select block
+	err = hub.Publish(msg)
+	if err != nil {
+		t.Fatalf("unexpected error publishing with full channel: %v", err)
+	}
+}
+
+func TestPublishMeetingSubChannelFull(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "agent1"})
+
+	_, _ = hub.Subscribe("agent1")
+
+	hub.OpenMeeting("meet1", []string{"agent1"})
+
+	msg := Message{
+		FromAgent: "agent1",
+		MeetingID: "meet1",
+		Type:      "task",
+	}
+
+	err := hub.Publish(msg)
+	if err != nil {
+		t.Fatalf("unexpected error publishing first message: %v", err)
+	}
+
+	// This should hit the 'default' case in the select block for meetings
+	err = hub.Publish(msg)
+	if err != nil {
+		t.Fatalf("unexpected error publishing with full meeting channel: %v", err)
 	}
 }
