@@ -34,6 +34,21 @@ func ExtractSPIFFEID(ctx context.Context) (string, error) {
 	return "", fmt.Errorf("no SPIFFE ID found in peer certificate")
 }
 
+// countSegments explicitly counts the total number of segments, even those exceeding the expected length,
+// to accurately enforce strict length constraints and prevent path-based spoofing attacks (e.g. %2F).
+func countSegments(s string) int {
+	segments := 1
+	for i := 0; i < len(s); i++ {
+		if s[i] == '/' {
+			segments++
+		} else if i+2 < len(s) && s[i] == '%' && s[i+1] == '2' && (s[i+2] == 'f' || s[i+2] == 'F') {
+			segments++
+			i += 2
+		}
+	}
+	return segments
+}
+
 // SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
 func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 	return func(
@@ -72,7 +87,7 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 
 		if domain == "onehumancorp.io" {
 			// format: onehumancorp.io/{orgID}/{agentID}
-			slashCount := strings.Count(rest, "/")
+			slashCount := countSegments(rest) - 1
 			if slashCount != 1 {
 				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain onehumancorp.io: %s", spiffeID)
 			}
@@ -80,7 +95,7 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			agentID = rest[lastSlash+1:]
 		} else if domain == "ohc.local" {
 			// format: ohc.local/org/{orgID}/agent/{agentID}
-			slashCount := strings.Count(rest, "/")
+			slashCount := countSegments(rest) - 1
 			if slashCount != 3 || !strings.HasPrefix(rest, "org/") {
 				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.local: %s", spiffeID)
 			}
@@ -92,7 +107,7 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			agentID = rest[lastSlash+1:]
 		} else if domain == "ohc.os" {
 			// format: ohc.os/agent/{agentID}
-			slashCount := strings.Count(rest, "/")
+			slashCount := countSegments(rest) - 1
 			if slashCount != 1 || !strings.HasPrefix(rest, "agent/") {
 				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.os: %s", spiffeID)
 			}
@@ -100,7 +115,7 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			agentID = rest[lastSlash+1:]
 		} else if domain == "ohc.global" || strings.HasSuffix(domain, ".ohc.global") {
 			// format: {region}.ohc.global/org/{orgID}/agent/{agentID}
-			slashCount := strings.Count(rest, "/")
+			slashCount := countSegments(rest) - 1
 			if slashCount != 3 || !strings.HasPrefix(rest, "org/") {
 				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain %s: %s", domain, spiffeID)
 			}
@@ -164,7 +179,7 @@ func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
 
 		if domain == "onehumancorp.io" {
 			// format: onehumancorp.io/{orgID}/{agentID}
-			slashCount := strings.Count(rest, "/")
+			slashCount := countSegments(rest) - 1
 			if slashCount != 1 {
 				return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain onehumancorp.io: %s", spiffeID)
 			}
@@ -172,7 +187,7 @@ func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
 			agentID = rest[lastSlash+1:]
 		} else if domain == "ohc.local" {
 			// format: ohc.local/org/{orgID}/agent/{agentID}
-			slashCount := strings.Count(rest, "/")
+			slashCount := countSegments(rest) - 1
 			if slashCount != 3 || !strings.HasPrefix(rest, "org/") {
 				return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.local: %s", spiffeID)
 			}
@@ -184,7 +199,7 @@ func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
 			agentID = rest[lastSlash+1:]
 		} else if domain == "ohc.os" {
 			// format: ohc.os/agent/{agentID}
-			slashCount := strings.Count(rest, "/")
+			slashCount := countSegments(rest) - 1
 			if slashCount != 1 || !strings.HasPrefix(rest, "agent/") {
 				return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.os: %s", spiffeID)
 			}
@@ -192,7 +207,7 @@ func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
 			agentID = rest[lastSlash+1:]
 		} else if domain == "ohc.global" || strings.HasSuffix(domain, ".ohc.global") {
 			// format: {region}.ohc.global/org/{orgID}/agent/{agentID}
-			slashCount := strings.Count(rest, "/")
+			slashCount := countSegments(rest) - 1
 			if slashCount != 3 || !strings.HasPrefix(rest, "org/") {
 				return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain %s: %s", domain, spiffeID)
 			}
