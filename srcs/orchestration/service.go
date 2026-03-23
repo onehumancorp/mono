@@ -711,6 +711,11 @@ func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*
 // ⚡ BOLT: [Configurable endpoint] - Randomized Selection from Top 5
 var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
 
+// SetMinimaxAPIURLForTesting allows tests to override the Minimax API endpoint.
+func SetMinimaxAPIURLForTesting(url string) {
+	minimaxAPIURL = url
+}
+
 // Summary: MinimaxClient handles interaction with the Minimax Model 2.7.
 // Intent: MinimaxClient handles interaction with the Minimax Model 2.7.
 // Params: None

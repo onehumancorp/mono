@@ -32,17 +32,19 @@ fi
 cd "${tmp}/frontend"
 
 # Install Node dependencies.
+export npm_config_cache="${tmp}/npm_cache"
+
 npm install --prefer-offline --no-audit --no-fund 2>&1 | tail -5
 
 # Install Playwright browsers (Chromium only for speed).
-npx playwright install --with-deps chromium 2>&1 | tail -20
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npx playwright install chromium 2>&1 | tail -20
 
 # Set the Go working directory so `go run ../cmd/ohc` resolves correctly.
 export GOPATH="${tmp}/.gopath"
 
 # Override webServer commands to point at the copied source tree.
 # We patch playwright.config.ts in-place.
-sed -i 's|go run \.\./cmd/ohc|go run '"${tmp}"'/srcs/cmd/ohc|g' playwright.config.ts
+sed -i 's|go run \.\./cmd/ohc|'"${root}"'/srcs/cmd/ohc/ohc_/ohc|g' playwright.config.ts
 
 # Run Playwright tests.
 npx playwright test 2>&1

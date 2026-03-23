@@ -12,7 +12,10 @@ package integration
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -37,10 +40,28 @@ func minimaxAPIKey() string {
 //     the round-trip from task dispatch → Minimax reasoning → acknowledgment
 //     works end-to-end.
 func TestMinimaxAgentTaskE2E(t *testing.T) {
+	// Satisfy 'Zero Secrets' by mocking the API key for local testing.
+	t.Setenv("MINIMAX_API_KEY", "dummy-key-for-test")
 	key := minimaxAPIKey()
-	if key == "" {
-		t.Skip("MINIMAX_API_KEY not set; skipping live Minimax E2E test")
-	}
+
+	// Spin up a mock Minimax API server
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := map[string]any{
+			"choices": []map[string]any{
+				{
+					"message": map[string]any{
+						"content": "I will implement a simple HTTP health-check endpoint.",
+					},
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer ts.Close()
+
+	// Direct MinimaxClient to our test server
+	orchestration.SetMinimaxAPIURLForTesting(ts.URL)
+	defer orchestration.SetMinimaxAPIURLForTesting("https://api.minimax.io/v1/chat/completions")
 
 	hub := orchestration.NewHub()
 	hub.SetMinimaxAPIKey(key)
@@ -133,10 +154,28 @@ func TestMinimaxAgentTaskE2E(t *testing.T) {
 // After the three-turn exchange the test asserts that the meeting transcript
 // contains exactly three messages in the correct order.
 func TestMinimaxAgentMeetingRoomE2E(t *testing.T) {
+	// Satisfy 'Zero Secrets' by mocking the API key for local testing.
+	t.Setenv("MINIMAX_API_KEY", "dummy-key-for-test")
 	key := minimaxAPIKey()
-	if key == "" {
-		t.Skip("MINIMAX_API_KEY not set; skipping live Minimax meeting-room E2E test")
-	}
+
+	// Spin up a mock Minimax API server
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := map[string]any{
+			"choices": []map[string]any{
+				{
+					"message": map[string]any{
+						"content": "This is a mock response turn from the AI.",
+					},
+				},
+			},
+		}
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer ts.Close()
+
+	// Direct MinimaxClient to our test server
+	orchestration.SetMinimaxAPIURLForTesting(ts.URL)
+	defer orchestration.SetMinimaxAPIURLForTesting("https://api.minimax.io/v1/chat/completions")
 
 	hub := orchestration.NewHub()
 	hub.SetMinimaxAPIKey(key)
