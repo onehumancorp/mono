@@ -446,6 +446,31 @@ func TestHandleHireAgentRejectsMissingFields(t *testing.T) {
 	}
 }
 
+// "UT-01 | Role Validation | Hire invalid agent role | Request rejected with 400"
+func TestHandleHireAgentRejectsInvalidRole(t *testing.T) {
+	app, server, token := newTestServer(t)
+	client := authedClient(token)
+	defer server.Close()
+
+	body := bytes.NewBufferString(`{"name":"Bad Agent","role":"HACKER"}`)
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/agents/hire", body)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("POST /api/agents/hire returned error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid role, got %d", resp.StatusCode)
+	}
+	_ = app
+}
+
 func TestHandleFireAgentRemovesFromHub(t *testing.T) {
 	app, server, token := newTestServer(t)
 	client := authedClient(token)

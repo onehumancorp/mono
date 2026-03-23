@@ -26,6 +26,21 @@ func (s *Server) handleHireAgent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.mu.RLock()
+	roleValid := false
+	for _, profile := range s.org.RoleProfiles {
+		if string(profile.Role) == req.Role {
+			roleValid = true
+			break
+		}
+	}
+	s.mu.RUnlock()
+
+	if !roleValid {
+		http.Error(w, "invalid role: "+req.Role, http.StatusBadRequest)
+		return
+	}
+
 	// Resolve provider type: default to "builtin" when unspecified.
 	providerType := req.ProviderType
 	if providerType == "" {
