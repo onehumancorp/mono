@@ -17,14 +17,7 @@ import (
 
 func TestHandleScaleOpsExtra(t *testing.T) {
 	org := domain.Organization{ID: "test"}
-	hub := orchestration.NewHub()
 	tracker := billing.NewTracker(nil)
-
-	s := &Server{
-		org:     org,
-		hub:     hub,
-		tracker: tracker,
-	}
 
 	tests := []struct {
 		name           string
@@ -55,6 +48,12 @@ func TestHandleScaleOpsExtra(t *testing.T) {
 			body:           ScaleRequest{Role: "worker", Count: 5},
 			expectedStatus: http.StatusOK,
 		},
+		{
+			name:           "Scale Down",
+			method:         http.MethodPost,
+			body:           ScaleRequest{Role: "worker", Count: 2},
+			expectedStatus: http.StatusOK,
+		},
 	}
 
 	for _, tt := range tests {
@@ -68,10 +67,23 @@ func TestHandleScaleOpsExtra(t *testing.T) {
 				}
 			}
 
+			// Local hub specifically for this test case
+			localHub := orchestration.NewHub()
+			if tt.name == "Scale Down" {
+				localHub.RegisterAgent(orchestration.Agent{ID: "worker-active", Role: "worker", Status: orchestration.StatusActive})
+				localHub.RegisterAgent(orchestration.Agent{ID: "worker-idle-1", Role: "worker", Status: orchestration.StatusIdle})
+				localHub.RegisterAgent(orchestration.Agent{ID: "worker-idle-2", Role: "worker", Status: orchestration.StatusIdle})
+			}
+			localServer := &Server{
+				org:     org,
+				hub:     localHub,
+				tracker: tracker,
+			}
+
 			req := httptest.NewRequest(tt.method, "/api/v1/scale", bytes.NewReader(body))
 			w := httptest.NewRecorder()
 
-			s.handleScale(w, req)
+			localServer.handleScale(w, req)
 
 			if w.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)

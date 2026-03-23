@@ -584,30 +584,24 @@ func TestHandleMCPInvokeMissingToolID(t *testing.T) {
 func TestHandleMCPInvokeUnknownTool(t *testing.T) {
 	app, _, _ := newTestServer(t)
 
-	// Since we fall back to default case which acknowledges unknown tools, it should return 200
+	// Since we added strict validation, unknown tools should return 404
 	reqBody := `{"toolId":"unknown-tool","params":{}}`
 	req := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/invoke", strings.NewReader(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	app.handleMCPInvoke(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", rec.Code)
-	}
-
-	var result map[string]any
-	if err := json.NewDecoder(rec.Body).Decode(&result); err != nil {
-		t.Fatalf("decode mcp invoke response: %v", err)
-	}
-	if result["status"] != "invoked" {
-		t.Errorf("expected status 'invoked', got %v", result)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rec.Code)
 	}
 }
 
 func TestHandleMCPInvokeWithNilParams(t *testing.T) {
 	app, _, _ := newTestServer(t)
+	// Add a dummy tool to bypass the unknown tool check for testing nil params specifically
+	app.dynamicMCPTools = append(app.dynamicMCPTools, MCPTool{ID: "dummy-tool"})
 
-	reqBody := `{"toolId":"unknown-tool"}`
+	reqBody := `{"toolId":"dummy-tool"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/invoke", strings.NewReader(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()

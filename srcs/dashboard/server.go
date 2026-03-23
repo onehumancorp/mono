@@ -1123,6 +1123,20 @@ func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 
 	// ── Unimplemented tools — return a structured acknowledgement ─────────────
 	default:
+		s.mu.RLock()
+		found := false
+		for _, t := range s.dynamicMCPTools {
+			if t.ID == req.ToolID {
+				found = true
+				break
+			}
+		}
+		s.mu.RUnlock()
+
+		if !found {
+			return nil, fmt.Errorf("unknown tool: %s", req.ToolID)
+		}
+
 		return map[string]any{
 			"toolId":  req.ToolID,
 			"status":  "invoked",
