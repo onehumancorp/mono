@@ -1,0 +1,84 @@
+<<<<<<< SEARCH
+func TestHandleScale(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// Wrong method
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/scale", nil)
+	rec := httptest.NewRecorder()
+	app.handleScale(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405, got %d", rec.Code)
+	}
+
+	// Invalid JSON
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/scale", strings.NewReader("invalid json"))
+	rec = httptest.NewRecorder()
+	app.handleScale(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Missing role
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/scale", strings.NewReader(`{"count": 5}`))
+	rec = httptest.NewRecorder()
+	app.handleScale(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d", rec.Code)
+	}
+
+	// Valid request
+	req = httptest.NewRequest(http.MethodPost, "/api/v1/scale", strings.NewReader(`{"role": "worker", "count": 5}`))
+	rec = httptest.NewRecorder()
+	app.handleScale(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+}
+=======
+func TestHandleScale(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	tests := []struct {
+		name       string
+		method     string
+		body       string
+		wantStatus int
+	}{
+		{
+			name:       "Wrong method",
+			method:     http.MethodGet,
+			body:       "",
+			wantStatus: http.StatusMethodNotAllowed,
+		},
+		{
+			name:       "Invalid JSON",
+			method:     http.MethodPost,
+			body:       "invalid json",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "Missing role",
+			method:     http.MethodPost,
+			body:       `{"count": 5}`,
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "Valid request",
+			method:     http.MethodPost,
+			body:       `{"role": "worker", "count": 5}`,
+			wantStatus: http.StatusOK,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, "/api/v1/scale", strings.NewReader(tc.body))
+			rec := httptest.NewRecorder()
+			app.handleScale(rec, req)
+			if rec.Code != tc.wantStatus {
+				t.Errorf("expected %d, got %d", tc.wantStatus, rec.Code)
+			}
+		})
+	}
+}
+>>>>>>> REPLACE

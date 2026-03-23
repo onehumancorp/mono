@@ -945,3 +945,85 @@ func TestHandleBudgetAlerts_NotifyAtPctHandling(t *testing.T) {
 		})
 	}
 }
+
+func TestHandleScale(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	tests := []struct {
+		name       string
+		method     string
+		body       string
+		wantStatus int
+	}{
+		{
+			name:       "Wrong method",
+			method:     http.MethodGet,
+			body:       "",
+			wantStatus: http.StatusMethodNotAllowed,
+		},
+		{
+			name:       "Invalid JSON",
+			method:     http.MethodPost,
+			body:       "invalid json",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "Missing role",
+			method:     http.MethodPost,
+			body:       `{"count": 5}`,
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "Valid request",
+			method:     http.MethodPost,
+			body:       `{"role": "worker", "count": 5}`,
+			wantStatus: http.StatusOK,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, "/api/v1/scale", strings.NewReader(tc.body))
+			rec := httptest.NewRecorder()
+			app.handleScale(rec, req)
+			if rec.Code != tc.wantStatus {
+				t.Errorf("expected %d, got %d", tc.wantStatus, rec.Code)
+			}
+		})
+	}
+}
+
+func TestHandleScaleStream(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/scale/stream", nil)
+	rec := httptest.NewRecorder()
+
+	app.handleScaleStream(rec, req)
+
+	// Check headers
+	if ct := rec.Header().Get("Content-Type"); ct != "text/event-stream" {
+		t.Errorf("expected Content-Type text/event-stream, got %s", ct)
+	}
+	if cc := rec.Header().Get("Cache-Control"); cc != "no-cache" {
+		t.Errorf("expected Cache-Control no-cache, got %s", cc)
+	}
+	if conn := rec.Header().Get("Connection"); conn != "keep-alive" {
+		t.Errorf("expected Connection keep-alive, got %s", conn)
+	}
+
+	body := rec.Body.String()
+
+	// Check that expected events are flushed
+	expectedEvents := []string{
+		`"event":"K8s Operator: Reconciling TeamMember resource."`,
+		`"event":"K8s Operator: Spinning up new pods..."`,
+		`"event":"AgentHired"`,
+	}
+
+	for _, expected := range expectedEvents {
+		if !strings.Contains(body, expected) {
+			t.Errorf("expected stream body to contain %s, got: %s", expected, body)
+		}
+	}
+}
