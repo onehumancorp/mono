@@ -2,6 +2,7 @@ package orchestration
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -336,6 +337,9 @@ func (m *mockStreamMessagesServer) Context() context.Context {
 
 func (m *mockStreamMessagesServer) Send(msg *pb.Message) error {
 	m.messages = append(m.messages, msg)
+	if msg.GetContent() == "trigger_send_error" {
+		return errors.New("simulated send error")
+	}
 	return nil
 }
 
@@ -383,6 +387,92 @@ func TestHubServiceServer_StreamMessages(t *testing.T) {
 	}
 	if mockStream.messages[0].GetContent() != "Hello Streaming" {
 		t.Fatalf("expected 'Hello Streaming', got %q", mockStream.messages[0].GetContent())
+	}
+}
+
+func TestHubServiceServer_StreamMessages_SendError(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	server := NewHubServiceServer(hub)
+
+	// Publish a message that triggers a send error
+	_ = hub.Publish(Message{
+		ID:         "msg-err",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "trigger_send_error",
+		OccurredAt: time.Now(),
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	mockStream := &mockStreamMessagesServer{ctx: ctx}
+
+	req := pb.StreamMessagesRequest_builder{
+		AgentId: "receiver",
+	}.Build()
+
+	err := server.StreamMessages(req, mockStream)
+	if err == nil || err.Error() != "simulated send error" {
+		t.Fatalf("expected simulated send error, got: %v", err)
+	}
+}
+
+func TestHubServiceServer_StreamMessages_ContextDone(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	server := NewHubServiceServer(hub)
+
+	// Context is cancelled before StreamMessages handles the infinite loop
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	mockStream := &mockStreamMessagesServer{ctx: ctx}
+	req := pb.StreamMessagesRequest_builder{
+		AgentId: "receiver",
+	}.Build()
+
+	err := server.StreamMessages(req, mockStream)
+	if err != context.Canceled {
+		t.Fatalf("expected context.Canceled error, got: %v", err)
+	}
+}
+
+func TestHubServiceServer_StreamMessages_SendErrorOnWait(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	server := NewHubServiceServer(hub)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	mockStream := &mockStreamMessagesServer{ctx: ctx}
+	req := pb.StreamMessagesRequest_builder{
+		AgentId: "receiver",
+	}.Build()
+
+	// Wait for the stream to start, then publish the error message
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- server.StreamMessages(req, mockStream)
+	}()
+
+	time.Sleep(50 * time.Millisecond)
+	_ = hub.Publish(Message{
+		ID:         "msg-err",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "trigger_send_error",
+		OccurredAt: time.Now(),
+	})
+
+	err := <-errCh
+	if err == nil || err.Error() != "simulated send error" {
+		t.Fatalf("expected simulated send error, got: %v", err)
 	}
 }
 
@@ -649,6 +739,156 @@ func TestHubServiceServer_DelegateTask(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestHub_Publish_UnbufferedChannel(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+
+	// Force the subscriber channel to be "full" to hit the default branch
+	_, cancel := hub.Subscribe("receiver")
+	defer cancel()
+
+	// Also subscribe to meeting participants
+	meeting := hub.OpenMeeting("m1", []string{"receiver"})
+	if meeting.ID == "" {
+		t.Fatalf("failed to open meeting")
+	}
+
+	// Create an extra receiver to verify select loop for multiple participants
+	// actually hits the default path too.
+	hub.RegisterAgent(Agent{ID: "receiver2", Name: "Receiver2", Role: "R2", OrganizationID: "O1"})
+	_, cancel2 := hub.Subscribe("receiver2")
+	defer cancel2()
+	meeting2 := hub.OpenMeeting("m2", []string{"receiver2"})
+	if meeting2.ID == "" {
+		t.Fatalf("failed to open meeting")
+	}
+
+	// Pre-fill both channels
+	_ = hub.Publish(Message{
+		ID: "m2-1", FromAgent: "sender", ToAgent: "receiver2", Type: EventTask, Content: "fill", OccurredAt: time.Now(),
+	})
+
+
+	// Fill the channel or just let Publish run twice without draining it
+	_ = hub.Publish(Message{
+		ID:         "msg-1",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "fill channel",
+		OccurredAt: time.Now(),
+	})
+
+	// Create another meeting receiver to test hitting default branch when publishing to a meeting
+	hub.RegisterAgent(Agent{ID: "receiver3", Name: "Receiver3", Role: "R3", OrganizationID: "O1"})
+	_, cancel3 := hub.Subscribe("receiver3")
+	defer cancel3()
+	meeting3 := hub.OpenMeeting("m3", []string{"receiver3"})
+	if meeting3.ID == "" {
+		t.Fatalf("failed to open meeting")
+	}
+
+	// This one will fill the unbuffered channel for receiver3 in context of meeting message
+	_ = hub.Publish(Message{
+		ID:         "msg-m3-fill",
+		FromAgent:  "sender",
+		ToAgent:    "receiver3",
+		Type:       EventTask,
+		MeetingID:  "m3",
+		Content:    "fill meeting channel",
+		OccurredAt: time.Now(),
+	})
+
+	// This second publish to meeting3 will hit the default path on line 416
+	// We need to make sure we don't send to "receiver3" as ToAgent, but instead rely on the
+	// meeting broadcast logic where ToAgent is empty, so we test line 415/416 for participants.
+	// Oh, I see, line 415 is `case subs[i] <- struct{}{}:` inside `h.subs[participant]`.
+	// For that we just need to subscribe a second time maybe?
+	_, cancel4 := hub.Subscribe("receiver3")
+	defer cancel4()
+
+	_ = hub.Publish(Message{
+		ID:         "msg-m3-fill-2",
+		FromAgent:  "sender",
+		ToAgent:    "", // broadcast to meeting
+		Type:       EventTask,
+		MeetingID:  "m3",
+		Content:    "hit meeting channel default",
+		OccurredAt: time.Now(),
+	})
+
+	// This publish will hit the select default case since we haven't read from 'ch'
+	err := hub.Publish(Message{
+		ID:         "msg-2",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "hit default case",
+		OccurredAt: time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("expected no error from Publish, got: %v", err)
+	}
+
+	// Also hit the default case for Meeting broadcasts
+	// meeting was defined above
+
+	err = hub.Publish(Message{
+		ID:         "msg-3",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		MeetingID:  "m1",
+		Content:    "hit meeting default case",
+		OccurredAt: time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("expected no error from Publish to meeting, got: %v", err)
+	}
+
+	err = hub.Publish(Message{
+		ID:         "msg-4",
+		FromAgent:  "sender",
+		ToAgent:    "receiver2",
+		Type:       EventTask,
+		MeetingID:  "m2",
+		Content:    "hit meeting default case 2",
+		OccurredAt: time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("expected no error from Publish to meeting, got: %v", err)
+	}
+}
+
+func TestMinimaxClient_Reason_NewRequestWithContext_Error(t *testing.T) {
+	client := NewMinimaxClient("valid-key")
+
+	originalURL := minimaxAPIURL
+	// Use an invalid control character in the URL to make http.NewRequestWithContext fail
+	minimaxAPIURL = "http://\x00invalid-url"
+	defer func() { minimaxAPIURL = originalURL }()
+
+	_, err := client.Reason(context.Background(), "some prompt")
+	if err == nil {
+		t.Fatalf("expected error from http.NewRequestWithContext with invalid URL")
+	}
+}
+
+func TestMinimaxClient_Reason_ClientDo_Error(t *testing.T) {
+	client := NewMinimaxClient("valid-key")
+
+	originalURL := minimaxAPIURL
+	// Use a validly parseable URL that fails at the network level
+	minimaxAPIURL = "http://127.0.0.1:0"
+	defer func() { minimaxAPIURL = originalURL }()
+
+	_, err := client.Reason(context.Background(), "test prompt")
+	if err == nil {
+		t.Fatalf("expected error from http.Client.Do with network-level failure")
 	}
 }
 
