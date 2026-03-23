@@ -772,7 +772,6 @@ func TestHub_Publish_UnbufferedChannel(t *testing.T) {
 		ID: "m2-1", FromAgent: "sender", ToAgent: "receiver2", Type: EventTask, Content: "fill", OccurredAt: time.Now(),
 	})
 
-
 	// Fill the channel or just let Publish run twice without draining it
 	_ = hub.Publish(Message{
 		ID:         "msg-1",
@@ -954,6 +953,78 @@ func TestHubServiceServer_Publish(t *testing.T) {
 				if !resp.GetSuccess() {
 					t.Fatalf("expected Publish to return success")
 				}
+			}
+		})
+	}
+}
+
+func TestHub_Publish_Summarization(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"choices":[{"message":{"content":"Mocked summary context"}}]}`))
+	}))
+	defer server.Close()
+
+	originalURL := minimaxAPIURL
+	minimaxAPIURL = server.URL
+	defer func() { minimaxAPIURL = originalURL }()
+
+	tests := []struct {
+		name        string
+		apiKey      string
+		msgCount    int
+		wantSummary bool
+	}{
+		{
+			name:        "Summarize over 15 messages",
+			apiKey:      "mock-key",
+			msgCount:    16,
+			wantSummary: true,
+		},
+		{
+			name:        "Do not summarize if 15 or less messages",
+			apiKey:      "mock-key",
+			msgCount:    15,
+			wantSummary: false,
+		},
+		{
+			name:        "Do not summarize if no API key",
+			apiKey:      "",
+			msgCount:    16,
+			wantSummary: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hub := NewHub()
+			hub.minimaxAPIKey = tt.apiKey
+			hub.RegisterAgent(Agent{ID: "sender", Role: "R1", OrganizationID: "O1"})
+			meeting := hub.OpenMeeting("m1", []string{"sender"})
+
+			for i := 0; i < tt.msgCount; i++ {
+				hub.Publish(Message{FromAgent: "sender", MeetingID: meeting.ID, Content: "test message"})
+			}
+
+			var hasSummary bool
+			var m MeetingRoom
+			var ok bool
+
+			// Deterministic polling instead of blind sleep
+			for attempt := 0; attempt < 10; attempt++ {
+				m, ok = hub.Meeting("m1")
+				if !ok {
+					t.Fatalf("failed to get meeting m1")
+				}
+
+				hasSummary = len(m.Transcript) > 0 && m.Transcript[0].FromAgent == "SYSTEM_SUMMARIZER"
+				if hasSummary == tt.wantSummary {
+					break
+				}
+				time.Sleep(20 * time.Millisecond)
+			}
+			if hasSummary != tt.wantSummary {
+				t.Errorf("got summary = %v, want %v", hasSummary, tt.wantSummary)
 			}
 		})
 	}
