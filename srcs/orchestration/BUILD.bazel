@@ -7,7 +7,6 @@ go_library(
     srcs = [
         "auth_interceptor.go",
         "service.go",
-        "service_extra_test.go",
     ],
     importpath = "github.com/onehumancorp/mono/srcs/orchestration",
     visibility = ["//visibility:public"],
@@ -28,6 +27,7 @@ go_test(
         "auth_interceptor_test.go",
         "benchmark_test.go",
         "minimax_client_test.go",
+        "service_extra_test.go",
         "service_grpc_test.go",
         "service_test.go",
     ],
