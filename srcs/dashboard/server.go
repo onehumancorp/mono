@@ -3,9 +3,11 @@ package dashboard
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -45,6 +47,13 @@ type Server struct {
 	settings              Settings
 	agentProviderRegistry *agents.Registry
 	dynamicMCPTools       []MCPTool
+	rateLimitStates       map[string]*RateLimitState
+}
+
+type RateLimitState struct {
+	Failures    int
+	LastFailure time.Time
+	Backoff     time.Duration
 }
 
 // Summary: Defines the Settings type.
@@ -408,6 +417,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 		authHandlers:          auth.NewHandlers(store),
 		agentProviderRegistry: agents.DefaultRegistry(),
 		dynamicMCPTools:       append([]MCPTool(nil), defaultMcpTools...),
+		rateLimitStates:       make(map[string]*RateLimitState),
 	}
 	// Load Minimax API key from environment on startup.
 	if key := os.Getenv("MINIMAX_API_KEY"); key != "" {
@@ -848,9 +858,11 @@ type chatTestRequest struct {
 // ── MCP tool invocation ───────────────────────────────────────────────────────
 
 type mcpInvokeRequest struct {
-	ToolID string          `json:"toolId"`
-	Action string          `json:"action"`
-	Params json.RawMessage `json:"params"`
+	ToolID   string          `json:"toolId"`
+	Action   string          `json:"action"`
+	Params   json.RawMessage `json:"params"`
+	AgentID  string          `json:"agentId,omitempty"`
+	SPIFFEID string          `json:"spiffeId,omitempty"`
 }
 
 type chatToolParams struct {
@@ -904,11 +916,96 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 		req.Params = []byte("{}")
 	}
 
+	// Check if the agent is rate-limited for this tool
+	rateLimitKey := req.AgentID + ":" + req.ToolID
+	s.mu.Lock()
+	if s.rateLimitStates == nil {
+		s.rateLimitStates = make(map[string]*RateLimitState)
+	}
+	state, exists := s.rateLimitStates[rateLimitKey]
+	if !exists {
+		state = &RateLimitState{Backoff: 1 * time.Second}
+		s.rateLimitStates[rateLimitKey] = state
+	}
+	s.mu.Unlock()
+
+	s.mu.RLock()
+	if state.Failures >= 3 {
+		s.mu.RUnlock()
+		http.Error(w, "Max retries exceeded. Hard failure.", http.StatusTooManyRequests)
+		return
+	}
+	if time.Since(state.LastFailure) < state.Backoff && state.Failures > 0 {
+		s.mu.RUnlock()
+		http.Error(w, "Rate limited. Please backoff.", http.StatusTooManyRequests)
+		return
+	}
+	s.mu.RUnlock()
+
 	result, err := s.invokeMCPTool(req)
+
+	s.mu.Lock()
+	if err != nil {
+		// e.g. "Rate limited" or "429" or missing tool handling
+		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "rate limited") {
+			state.Failures++
+			state.LastFailure = time.Now()
+			state.Backoff = time.Duration(1<<state.Failures) * time.Second // Exponential backoff
+
+			// Record failure event
+			if req.AgentID != "" {
+				msg := orchestration.Message{
+					ID:         "rl-" + time.Now().UTC().Format("20060102150405.999999999"),
+					FromAgent:  "SYSTEM",
+					ToAgent:    req.AgentID,
+					Type:       "ToolExecutionRateLimiting",
+					Content:    fmt.Sprintf(`{"toolId": "%s", "status": "failed", "reason": "rate_limited", "backoff": "%s", "failures": %d}`, req.ToolID, state.Backoff.String(), state.Failures),
+					OccurredAt: time.Now().UTC(),
+				}
+				_ = s.hub.Publish(msg)
+			}
+
+			s.mu.Unlock()
+			if state.Failures >= 3 {
+				http.Error(w, "Max retries exceeded. Hard failure.", http.StatusTooManyRequests)
+			} else {
+				http.Error(w, "Rate limited. Please backoff.", http.StatusTooManyRequests)
+			}
+			return
+		} else if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "unknown tool") || strings.Contains(err.Error(), "invalid JSON-RPC") {
+			if req.AgentID != "" {
+				if agent, ok := s.hub.Agent(req.AgentID); ok {
+					agent.Status = orchestration.StatusWaitingForTools
+					s.hub.RegisterAgent(agent)
+				}
+			}
+			s.mu.Unlock()
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+	} else {
+		// Reset on success
+		delete(s.rateLimitStates, rateLimitKey) // Prevent unbounded memory leak
+
+		if req.AgentID != "" {
+			msg := orchestration.Message{
+				ID:         "rl-succ-" + time.Now().UTC().Format("20060102150405.999999999"),
+				FromAgent:  "SYSTEM",
+				ToAgent:    req.AgentID,
+				Type:       "ToolExecutionRateLimiting",
+				Content:    fmt.Sprintf(`{"toolId": "%s", "status": "success"}`, req.ToolID),
+				OccurredAt: time.Now().UTC(),
+			}
+			_ = s.hub.Publish(msg)
+		}
+	}
+	s.mu.Unlock()
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	writeJSON(w, result)
 }
 

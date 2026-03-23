@@ -57,6 +57,13 @@ const (
 	// Errors: None
 	// Side Effects: None
 	StatusBlocked Status = "BLOCKED"
+	// Summary: Defines the StatusWaitingForTools type.
+	// Intent: Defines the StatusWaitingForTools type.
+	// Params: None
+	// Returns: None
+	// Errors: None
+	// Side Effects: None
+	StatusWaitingForTools Status = "WAITING_FOR_TOOLS"
 )
 
 // Event type constants for the asynchronous pub/sub agent interaction protocol.
