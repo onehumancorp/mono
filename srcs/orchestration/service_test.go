@@ -2,8 +2,10 @@ package orchestration
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -716,5 +718,89 @@ func TestHubServiceServer_Publish(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+type mockStream struct {
+	pb.HubService_StreamMessagesServer
+	ctx       context.Context
+	sendFunc  func(*pb.Message) error
+	sendCount int
+}
+
+func (m *mockStream) Send(msg *pb.Message) error {
+	m.sendCount++
+	if m.sendFunc != nil {
+		return m.sendFunc(msg)
+	}
+	return nil
+}
+
+func (m *mockStream) Context() context.Context {
+	return m.ctx
+}
+
+func TestHubServiceServer_StreamMessages_Drain(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "listener", Name: "Listener", Role: "R", OrganizationID: "O"})
+	server := NewHubServiceServer(hub)
+
+	hub.Publish(Message{
+		ID:        "msg-1",
+		FromAgent: "listener",
+		ToAgent:   "listener",
+		Type:      EventTask,
+		Content:   "Pre-existing",
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	stream := &mockStream{
+		ctx: ctx,
+		sendFunc: func(msg *pb.Message) error {
+			if msg.GetId() == "msg-1" {
+				cancel()
+			}
+			return nil
+		},
+	}
+
+	req := pb.StreamMessagesRequest_builder{AgentId: "listener"}.Build()
+	err := server.StreamMessages(req, stream)
+	if err != context.Canceled && err != nil {
+		t.Fatalf("expected context canceled or nil, got: %v", err)
+	}
+
+	if stream.sendCount != 1 {
+		t.Fatalf("expected 1 message sent to stream, got %d", stream.sendCount)
+	}
+}
+
+func TestHubServiceServer_StreamMessages_SendError(t *testing.T) {
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "listener", Name: "Listener", Role: "R", OrganizationID: "O"})
+	server := NewHubServiceServer(hub)
+
+	hub.Publish(Message{
+		ID:        "msg-err",
+		FromAgent: "listener",
+		ToAgent:   "listener",
+		Type:      EventTask,
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stream := &mockStream{
+		ctx: ctx,
+		sendFunc: func(msg *pb.Message) error {
+			return fmt.Errorf("stream closed prematurely")
+		},
+	}
+
+	req := pb.StreamMessagesRequest_builder{AgentId: "listener"}.Build()
+	err := server.StreamMessages(req, stream)
+	if err == nil || !strings.Contains(err.Error(), "stream closed prematurely") {
+		t.Fatalf("expected send error to be returned, got: %v", err)
 	}
 }
