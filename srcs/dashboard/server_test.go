@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net"
@@ -3322,6 +3323,77 @@ func TestHandleAgentProviderAuth_MissingProviderType(t *testing.T) {
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("expected 400, got %d", resp.StatusCode)
+	}
+}
+
+func TestHandleScale(t *testing.T) {
+	_, server, token := newTestServer(t)
+
+	tests := []struct {
+		name         string
+		method       string
+		body         string
+		expectedCode int
+	}{
+		{"Valid Request", "POST", `{"role":"SWE","count":5}`, http.StatusOK},
+		{"Method Not Allowed", "GET", "", http.StatusMethodNotAllowed},
+		{"Invalid JSON", "POST", `{bad json}`, http.StatusBadRequest},
+		{"Missing Role", "POST", `{"count":5}`, http.StatusBadRequest},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req, _ := http.NewRequest(tt.method, server.URL+"/api/v1/scale", strings.NewReader(tt.body))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			client := &http.Client{Timeout: 5 * time.Second}
+			resp, err := client.Do(req)
+			if err != nil {
+				t.Fatalf("failed to make request: %v", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != tt.expectedCode {
+				t.Errorf("expected status %v, got %v", tt.expectedCode, resp.StatusCode)
+			}
+		})
+	}
+}
+
+func TestHandleScaleStream(t *testing.T) {
+	_, server, token := newTestServer(t)
+
+	req, _ := http.NewRequest("GET", server.URL+"/api/v1/scale/stream", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	// Set a reasonable timeout so we have time to read the first flush
+	ctx, cancel := context.WithTimeout(req.Context(), 2*time.Second)
+	defer cancel()
+	req = req.WithContext(ctx)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("failed to make request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if contentType := resp.Header.Get("Content-Type"); contentType != "text/event-stream" {
+		t.Errorf("expected Content-Type text/event-stream, got %s", contentType)
+	}
+
+	// Read just enough to verify the first event, then cancel to terminate the stream early
+	buf := make([]byte, 256)
+	n, err := resp.Body.Read(buf)
+	if err != nil && err != io.EOF {
+		t.Fatalf("failed to read from stream: %v", err)
+	}
+	cancel() // terminate stream
+
+	body := string(buf[:n])
+	if !strings.Contains(body, "K8s Operator") {
+		t.Errorf("expected body to contain K8s Operator, got %s", body)
 	}
 }
 
