@@ -514,6 +514,96 @@ func TestHandleDomainsReturnsAvailableDomains(t *testing.T) {
 	}
 }
 
+func TestHandleMCPRegister(t *testing.T) {
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
+	defer server.Close()
+
+	t.Run("IT-02 | Hub -> MCP Gateway | Dynamic tool registration | SPIFFE SVID validated", func(t *testing.T) {
+		payload := map[string]interface{}{
+			"spiffeId": "spiffe://onehumancorp.io/agent/test",
+			"tool": map[string]interface{}{
+				"id":          "dynamic-tool-1",
+				"name":        "Dynamic Tool",
+				"description": "A dynamically registered tool",
+				"category":    "custom",
+				"status":      "available",
+			},
+		}
+
+		body, _ := json.Marshal(payload)
+		req, _ := http.NewRequest(http.MethodPost, server.URL+"/api/mcp/tools/register", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("failed to make request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("expected status %d, got %d", http.StatusOK, resp.StatusCode)
+		}
+
+		var result map[string]interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+
+		if result["status"] != "registered" {
+			t.Errorf("expected status 'registered', got %v", result["status"])
+		}
+
+		// Verify it appears in the tools list
+		reqList, _ := http.NewRequest(http.MethodGet, server.URL+"/api/mcp/tools", nil)
+		respList, err := client.Do(reqList)
+		if err != nil {
+			t.Fatalf("failed to fetch tools: %v", err)
+		}
+		defer respList.Body.Close()
+
+		var tools []map[string]interface{}
+		if err := json.NewDecoder(respList.Body).Decode(&tools); err != nil {
+			t.Fatalf("failed to decode tools: %v", err)
+		}
+
+		found := false
+		for _, tool := range tools {
+			if tool["id"] == "dynamic-tool-1" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("expected dynamic tool to be registered and listed")
+		}
+	})
+
+	t.Run("IT-02 | Rejects invalid SPIFFE ID", func(t *testing.T) {
+		payload := map[string]interface{}{
+			"spiffeId": "spiffe://untrusted.com/agent/test",
+			"tool": map[string]interface{}{
+				"id":   "dynamic-tool-2",
+				"name": "Dynamic Tool 2",
+			},
+		}
+
+		body, _ := json.Marshal(payload)
+		req, _ := http.NewRequest(http.MethodPost, server.URL+"/api/mcp/tools/register", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("failed to make request: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusForbidden {
+			t.Errorf("expected status %d, got %d", http.StatusForbidden, resp.StatusCode)
+		}
+	})
+}
+
 func TestHandleMCPToolsReturnsTools(t *testing.T) {
 	_, server, token := newTestServer(t)
 	client := authedClient(token)
