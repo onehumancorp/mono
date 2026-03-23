@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "b2b.go",
         "compute.go",
+        "federation.go",
         "organization.go",
     ],
     importpath = "github.com/onehumancorp/mono/srcs/domain",
@@ -16,6 +17,7 @@ go_test(
     srcs = [
         "b2b_test.go",
         "compute_test.go",
+        "federation_test.go",
         "organization_test.go",
     ],
     embed = [":domain"],
