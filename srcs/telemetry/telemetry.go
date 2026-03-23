@@ -44,50 +44,7 @@ func InitTelemetry() (func(), error) {
 
 	meter = provider.Meter("github.com/onehumancorp/mono/ohc")
 
-	requestCounter, err = meter.Int64Counter(
-		"http_requests_total",
-		metric.WithDescription("Total number of HTTP requests"),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	latencyHistogram, err = meter.Float64Histogram(
-		"http_request_duration_seconds",
-		metric.WithDescription("HTTP request latency in seconds"),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	tokenUsageCounter, err = meter.Int64Counter(
-		"ohc_token_usage_total",
-		metric.WithDescription("Total tokens used by agents"),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	agentApiCallsCounter, err = meter.Int64Counter(
-		"ohc_agent_api_calls_total",
-		metric.WithDescription("Total API calls made by or for agents"),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	humanInteractionsCounter, err = meter.Int64Counter(
-		"ohc_human_interactions_total",
-		metric.WithDescription("Total human-agent interactions"),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	meetingEventsCounter, err = meter.Int64Counter(
-		"ohc_meeting_events_total",
-		metric.WithDescription("Total meeting room events"),
-	)
+	err = InitWithMeter(meter)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +52,71 @@ func InitTelemetry() (func(), error) {
 	return func() {
 		_ = provider.Shutdown(context.Background())
 	}, nil
+}
+
+// InitWithMeter initializes metrics using the provided meter
+// We take any interface that implements the needed method to allow easy mocking
+type mockableMeter interface {
+	Int64Counter(name string, options ...metric.Int64CounterOption) (metric.Int64Counter, error)
+	Float64Histogram(name string, options ...metric.Float64HistogramOption) (metric.Float64Histogram, error)
+}
+
+func InitWithMeter(m mockableMeter) error {
+	var err error
+	var errs []error
+	requestCounter, err = m.Int64Counter(
+		"http_requests_total",
+		metric.WithDescription("Total number of HTTP requests"),
+	)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	latencyHistogram, err = m.Float64Histogram(
+		"http_request_duration_seconds",
+		metric.WithDescription("HTTP request latency in seconds"),
+	)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	tokenUsageCounter, err = m.Int64Counter(
+		"ohc_token_usage_total",
+		metric.WithDescription("Total tokens used by agents"),
+	)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	agentApiCallsCounter, err = m.Int64Counter(
+		"ohc_agent_api_calls_total",
+		metric.WithDescription("Total API calls made by or for agents"),
+	)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	humanInteractionsCounter, err = m.Int64Counter(
+		"ohc_human_interactions_total",
+		metric.WithDescription("Total human-agent interactions"),
+	)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	meetingEventsCounter, err = m.Int64Counter(
+		"ohc_meeting_events_total",
+		metric.WithDescription("Total meeting room events"),
+	)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	if len(errs) > 0 {
+		return errs[0]
+	}
+
+	return nil
 }
 
 // Middleware injects telemetry instrumentation into an HTTP handler chain.
