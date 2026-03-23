@@ -8,9 +8,20 @@ async function saveShot(page: Page, name: string): Promise<void> {
   await page.screenshot({ path: `${screenshotDir}/${name}.png`, fullPage: true });
 }
 
-test.beforeEach(async ({ request }) => {
+test.beforeEach(async ({ request, page, context }) => {
+  // Perform login to ensure the app functions and doesn't get stuck on auth guard
+  const loginResponse = await request.post("http://127.0.0.1:8080/api/auth/login", {
+    data: { username: "admin", password: "admin" },
+  });
+  expect(loginResponse.ok()).toBeTruthy();
+  const { token } = await loginResponse.json();
+  await context.addInitScript((val) => {
+    window.localStorage.setItem("ohc_token", val);
+  }, token);
+
   const response = await request.post("http://127.0.0.1:8080/api/dev/seed", {
     data: { scenario: "launch-readiness" },
+    headers: { Authorization: `Bearer ${token}` }
   });
   expect(response.ok()).toBeTruthy();
 });
@@ -38,20 +49,30 @@ test("CUJ 2: sending message updates UI and backend transcript", async ({ page, 
 
   await expect(page.getByText(message)).toBeVisible();
 
-  const meetingsResponse = await request.get("http://127.0.0.1:8080/api/meetings");
-  expect(meetingsResponse.ok()).toBeTruthy();
-  const meetings = (await meetingsResponse.json()) as Array<{ id: string; transcript?: Array<{ content: string }> }>;
-  const hasMessage = meetings.some((meeting) =>
-    (meeting.transcript ?? []).some((entry) => entry.content === message)
-  );
-  expect(hasMessage).toBeTruthy();
+  const token = await page.evaluate(() => window.localStorage.getItem("ohc_token"));
+
+  await expect(async () => {
+    // Wait until the dashboard API returns the meetings with the injected message
+    const dashResponse = await request.get("http://127.0.0.1:8080/api/dashboard", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    expect(dashResponse.ok()).toBeTruthy();
+    const dashData = await dashResponse.json();
+    const meetings = dashData.meetings as Array<{ id: string; transcript?: Array<{ content: string }> }>;
+    const hasMessage = meetings.some((meeting) =>
+      (meeting.transcript ?? []).some((entry) => entry.content === message)
+    );
+    expect(hasMessage).toBeTruthy();
+  }).toPass({ timeout: 10_000 });
 
   await saveShot(page, "cuj-02-frontend-send-message");
 });
 
-test("CUJ 3: backend /app route remains reachable for bundled frontend", async ({ page }) => {
-  await page.goto("http://127.0.0.1:8080/app");
-  await expect(page.getByRole("heading", { name: "React Frontend Route" })).toBeVisible();
+test("CUJ 3: backend / route remains reachable for bundled frontend", async ({ page }) => {
+  await page.goto("http://127.0.0.1:8080/");
+  await expect(page.getByRole("heading", { name: "One Human Corp Dashboard" })).toBeVisible();
 
   await saveShot(page, "cuj-03-backend-app-route");
 });

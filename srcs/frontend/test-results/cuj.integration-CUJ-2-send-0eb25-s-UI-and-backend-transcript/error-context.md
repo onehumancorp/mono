@@ -1,0 +1,144 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - img [ref=e7]
+      - generic [ref=e10]:
+        - generic [ref=e11]: One Human Corp
+        - generic [ref=e12]: AI Enterprise OS
+    - navigation "Main navigation" [ref=e13]:
+      - generic [ref=e14]: Platform
+      - button "Overview" [ref=e15] [cursor=pointer]:
+        - img [ref=e17]
+        - generic [ref=e22]: Overview
+      - button "Meetings 4" [ref=e23] [cursor=pointer]:
+        - img [ref=e25]
+        - generic [ref=e27]: Meetings
+        - generic [ref=e28]: "4"
+      - button "Agents" [ref=e29] [cursor=pointer]:
+        - img [ref=e31]
+        - generic [ref=e34]: Agents
+      - button "Handoffs" [ref=e35] [cursor=pointer]:
+        - img [ref=e37]
+        - generic [ref=e39]: Handoffs
+      - button "Cost" [ref=e40] [cursor=pointer]:
+        - img [ref=e42]
+        - generic [ref=e44]: Cost
+      - button "Playbooks" [ref=e45] [cursor=pointer]:
+        - img [ref=e47]
+        - generic [ref=e49]: Playbooks
+      - button "Integrations" [ref=e50] [cursor=pointer]:
+        - img [ref=e52]
+        - generic [ref=e55]: Integrations
+      - button "Dynamic Scaling" [ref=e56] [cursor=pointer]:
+        - img [ref=e58]
+        - generic [ref=e62]: Dynamic Scaling
+      - button "Settings" [ref=e63] [cursor=pointer]:
+        - img [ref=e65]
+        - generic [ref=e67]: Settings
+      - button "Users" [ref=e68] [cursor=pointer]:
+        - img [ref=e70]
+        - generic [ref=e72]: Users
+    - generic [ref=e73]:
+      - button "Sign out" [ref=e74] [cursor=pointer]
+      - generic [ref=e75]:
+        - generic [ref=e76]: CEO
+        - generic [ref=e77]:
+          - generic [ref=e78]: Human CEO
+          - generic [ref=e79]: Human CEO
+      - generic [ref=e82]: Live
+  - banner [ref=e83]:
+    - heading "One Human Corp Dashboard" [level=1] [ref=e85]
+    - generic [ref=e86]:
+      - generic [ref=e87]: Updated 10:27 AM
+      - button "Refresh" [ref=e88] [cursor=pointer]
+  - main [ref=e89]:
+    - generic [ref=e90]:
+      - generic [ref=e91]:
+        - heading "Virtual War Room" [level=2] [ref=e92]
+        - paragraph [ref=e93]: Real-time agent collaboration, context tracking, and hybrid handoffs
+      - combobox [ref=e95] [cursor=pointer]:
+        - option "launch-readiness" [selected]
+    - generic [ref=e96]:
+      - generic [ref=e97]:
+        - heading "launch-readiness" [level=3] [ref=e98]
+        - paragraph [ref=e99]: Review launch blockers, sign-off on reliability checklist, assign post-launch owners.
+      - generic [ref=e100]:
+        - complementary [ref=e101]:
+          - generic [ref=e102]:
+            - heading "Participants" [level=4] [ref=e103]
+            - generic [ref=e104]:
+              - generic [ref=e105]:
+                - generic [ref=e106]: P
+                - generic [ref=e108]: pm-1
+              - generic [ref=e109]:
+                - generic [ref=e110]: S
+                - generic [ref=e112]: swe-1
+              - generic [ref=e113]:
+                - generic [ref=e114]: U
+                - generic [ref=e116]: ux-1
+              - generic [ref=e117]:
+                - generic [ref=e118]: Q
+                - generic [ref=e120]: qa-1
+              - generic [ref=e121]:
+                - generic [ref=e122]: S
+                - generic [ref=e124]: sec-1
+              - generic [ref=e125]:
+                - generic [ref=e126]: C
+                - generic [ref=e128]: CEO
+        - generic [ref=e129]:
+          - generic [ref=e130]:
+            - generic [ref=e131]:
+              - generic [ref=e132]:
+                - img [ref=e133]
+                - text: Context Efficiency Active
+              - generic [ref=e135]: Agents in this room are fed a summarized rolling context window to prevent context bloat and minimize token burn.
+            - list [ref=e136]:
+              - listitem [ref=e137]:
+                - generic [ref=e138]:
+                  - generic [ref=e139]: pm-1
+                  - generic [ref=e140]: →
+                  - generic [ref=e141]: swe-1
+                  - generic [ref=e142]: task
+                  - generic [ref=e143]: 10:21 AM
+                - paragraph [ref=e145]: Ship the reliability checklist before launch.
+              - listitem [ref=e146]:
+                - generic [ref=e147]:
+                  - generic [ref=e148]: swe-1
+                  - generic [ref=e149]: →
+                  - generic [ref=e150]: pm-1
+                  - generic [ref=e151]: status
+                  - generic [ref=e152]: 10:23 AM
+                - paragraph [ref=e154]: Checklist is 90% complete. Waiting on design assets for the final error states.
+              - listitem [ref=e155]:
+                - generic [ref=e156]:
+                  - generic [ref=e157]: ux-1
+                  - generic [ref=e158]: →
+                  - generic [ref=e159]: pm-1
+                  - generic [ref=e160]: status
+                  - generic [ref=e161]: 10:25 AM
+                - paragraph [ref=e163]: Design QA pass completed with no blockers. Assets pushed to main.
+              - listitem [ref=e164]:
+                - generic [ref=e165]:
+                  - generic [ref=e166]: pm-1
+                  - generic [ref=e167]: →
+                  - generic [ref=e168]: CEO
+                  - generic [ref=e169]: ApprovalNeeded
+                  - generic [ref=e170]: 10:26 AM
+                - generic [ref=e171]:
+                  - generic [ref=e172]:
+                    - img [ref=e173]
+                    - generic [ref=e175]:
+                      - heading "CEO Approval Required" [level=4] [ref=e176]
+                      - paragraph [ref=e177]: All pre-launch checks passed. Requesting final CEO approval to deploy to production.
+                  - generic [ref=e178]:
+                    - button "Approve" [ref=e179] [cursor=pointer]
+                    - button "Reject" [ref=e180] [cursor=pointer]
+          - generic [ref=e181]:
+            - generic [ref=e182]:
+              - textbox "Inject direction or approve actions as CEO..." [ref=e183]: Playwright seeded message 1774261649028
+              - button "Send" [ref=e184] [cursor=pointer]
+            - alert [ref=e185]: The sending agent is no longer active. Please check the Agent Network to hire or assign a valid agent.
+```

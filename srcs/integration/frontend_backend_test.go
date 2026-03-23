@@ -415,7 +415,17 @@ func TestTelegramIntegration_SendMessage(t *testing.T) {
 // ── Discord integration test ──────────────────────────────────────────────────
 
 func TestDiscordIntegration_SendMessage(t *testing.T) {
-	t.Skip("Skipping TestDiscordIntegration_SendMessage because httptest.Server uses 127.0.0.1 which is blocked by SSRF protections.")
+	// Bypass SSRF check in frontend tests for 127.0.0.1 by providing a mock lookupIP
+	origAllow := integrations.AllowLocalIPsForTesting
+	integrations.AllowLocalIPsForTesting = true
+	defer func() { integrations.AllowLocalIPsForTesting = origAllow }()
+
+	origLookupIP := integrations.LookupIPFunc
+	integrations.LookupIPFunc = func(host string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("127.0.0.1")}, nil
+	}
+	defer func() { integrations.LookupIPFunc = origLookupIP }()
+
 	// Mock Discord webhook.
 	var capturedDiscord map[string]any
 	discordSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

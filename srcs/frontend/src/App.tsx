@@ -474,7 +474,20 @@ export function App() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await submitMessage(form).catch(() => {});
+    const payload = { ...form };
+
+    // Auto-fill fromAgent/toAgent if we are in a selected meeting context and they are missing/wrong
+    if (selectedMeetingID) {
+      const selectedMeeting = snapshot?.meetings.find(m => m.id === selectedMeetingID);
+      if (selectedMeeting) {
+        payload.meetingId = selectedMeeting.id;
+        payload.fromAgent = ceoMember?.id || "CEO";
+        payload.toAgent = selectedMeeting.participants.find(p => p !== (ceoMember?.id || "CEO")) || "all";
+        payload.messageType = "direction";
+      }
+    }
+
+    await submitMessage(payload).catch(() => {});
   }
 
   async function handleHire(name: string, role: string) {
@@ -1506,14 +1519,17 @@ export function App() {
                           className="textarea"
                           placeholder="Inject direction or approve actions as CEO..."
                           value={form.content}
-                          onChange={(e) => setForm({
-                            ...form,
-                            content: e.target.value,
-                            fromAgent: ceoMember?.id || "CEO",
-                            toAgent: selectedMeeting.participants.find(p => p !== (ceoMember?.id || "CEO")) || "all",
-                            meetingId: selectedMeeting.id,
-                            messageType: "direction"
-                          })}
+                          onChange={(e) => {
+                            const newToAgent = selectedMeeting.participants.find(p => p !== (ceoMember?.id || "CEO")) || "all";
+                            setForm({
+                              ...form,
+                              content: e.target.value,
+                              fromAgent: ceoMember?.id || "CEO",
+                              toAgent: newToAgent,
+                              meetingId: selectedMeeting.id,
+                              messageType: "direction"
+                            });
+                          }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {
                               e.preventDefault();
