@@ -132,23 +132,36 @@ func NewOrchestrator(hub *orchestration.Hub) *Orchestrator {
 //
 // Side Effects: None.
 func ParseSpecApproved(content string) (SpecApprovedEvent, error) {
-	// Simple mock parsing. Expecting "branch=feat-123,details=..."
-	parts := strings.Split(content, ",")
-	if len(parts) == 0 {
+	// ⚡ BOLT: [context window parsing/summarization overhead] - Randomized Selection from Top 5
+	// Extracted zero-allocation string manipulations to parse spec approved payloads strictly without triggering O(N) memory allocations via strings.Split
+
+	if len(content) == 0 {
 		return SpecApprovedEvent{}, errors.New("invalid spec approved content")
 	}
 
 	var event SpecApprovedEvent
-	for _, part := range parts {
-		kv := strings.SplitN(part, "=", 2)
-		if len(kv) != 2 {
-			continue
+	start := 0
+	for start < len(content) {
+		end := strings.IndexByte(content[start:], ',')
+		if end == -1 {
+			end = len(content)
+		} else {
+			end += start
 		}
-		if kv[0] == "branch" {
-			event.Branch = kv[1]
-		} else if kv[0] == "details" {
-			event.Details = kv[1]
+
+		part := content[start:end]
+		eqIdx := strings.IndexByte(part, '=')
+		if eqIdx != -1 {
+			key := part[:eqIdx]
+			val := part[eqIdx+1:]
+			if key == "branch" {
+				event.Branch = val
+			} else if key == "details" {
+				event.Details = val
+			}
 		}
+
+		start = end + 1
 	}
 
 	if event.Branch == "" {
@@ -243,20 +256,34 @@ func (o *Orchestrator) HandlePRCreated(msg orchestration.Message) error {
 //
 // Side Effects: Mutates pipeline state, publishes an ApprovalNeeded event on success, or a TestsFailed event on failure.
 func (o *Orchestrator) HandleTestResults(msg orchestration.Message) error {
-	// message Type should be EventTestsPassed or EventTestsFailed
-	// Content contains branch name
-	parts := strings.Split(msg.Content, ",")
+	// ⚡ BOLT: [context window parsing/summarization overhead] - Randomized Selection from Top 5
+	// Extracted zero-allocation string manipulations to parse test result payloads strictly without triggering O(N) memory allocations via strings.Split
+
 	var branch, logs string
-	for _, part := range parts {
-		kv := strings.SplitN(part, "=", 2)
-		if len(kv) == 2 {
-			if kv[0] == "branch" {
-				branch = kv[1]
-			} else if kv[0] == "logs" {
-				logs = kv[1]
+	start := 0
+	for start < len(msg.Content) {
+		end := strings.IndexByte(msg.Content[start:], ',')
+		if end == -1 {
+			end = len(msg.Content)
+		} else {
+			end += start
+		}
+
+		part := msg.Content[start:end]
+		eqIdx := strings.IndexByte(part, '=')
+		if eqIdx != -1 {
+			key := part[:eqIdx]
+			val := part[eqIdx+1:]
+			if key == "branch" {
+				branch = val
+			} else if key == "logs" {
+				logs = val
 			}
 		}
+
+		start = end + 1
 	}
+
 	if branch == "" {
 		// Fallback for simple content
 		branch = msg.Content
