@@ -567,6 +567,101 @@ func TestHandleFireAgentRejectsMissingAgentID(t *testing.T) {
 	}
 }
 
+func TestHandleDelegateTaskMethodNotAllowed(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/agents/delegate", nil)
+	rec := httptest.NewRecorder()
+	app.handleDelegateTask(rec, req)
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405 for GET on delegate, got %d", rec.Code)
+	}
+}
+
+func TestHandleDelegateTaskInvalidJSON(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/agents/delegate", strings.NewReader("not-json"))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.handleDelegateTask(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid json, got %d", rec.Code)
+	}
+}
+
+func TestHandleDelegateTaskMissingFields(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/agents/delegate", bytes.NewBufferString(`{"fromAgentId":"pm-1"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.handleDelegateTask(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for missing fields, got %d", rec.Code)
+	}
+}
+
+func TestHandleDelegateTaskFailsWithInvalidAgents(t *testing.T) {
+	_, server, token := newTestServer(t)
+	client := authedClient(token)
+	defer server.Close()
+
+	body := bytes.NewBufferString(`{"fromAgentId":"missing-1","toAgentId":"swe-1","content":"Do work"}`)
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/agents/delegate", body)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("POST /api/agents/delegate returned error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400 from invalid agents delegate, got %d", resp.StatusCode)
+	}
+}
+
+func TestHandleDelegateTaskSuccess(t *testing.T) {
+	app, server, token := newTestServer(t)
+	client := authedClient(token)
+	defer server.Close()
+
+	// pm-1 and swe-1 are seeded
+	body := bytes.NewBufferString(`{"fromAgentId":"pm-1","toAgentId":"swe-1","content":"Do work","meetingId":""}`)
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/api/agents/delegate", body)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("POST /api/agents/delegate returned error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 from successful delegate, got %d", resp.StatusCode)
+	}
+
+	var snap dashboardSnapshot
+	if err := json.NewDecoder(resp.Body).Decode(&snap); err != nil {
+		t.Fatalf("decode snap: %v", err)
+	}
+
+	inbox := app.hub.Inbox("swe-1")
+	if len(inbox) != 1 {
+		t.Fatalf("expected 1 task in swe-1 inbox, got %d", len(inbox))
+	}
+	if inbox[0].Content != "Do work" || inbox[0].FromAgent != "pm-1" || inbox[0].ToAgent != "swe-1" {
+		t.Fatalf("task was not delegated correctly: %+v", inbox[0])
+	}
+}
+
 func TestHandleDomainsReturnsAvailableDomains(t *testing.T) {
 	_, server, token := newTestServer(t)
 	client := authedClient(token)

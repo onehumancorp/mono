@@ -99,6 +99,44 @@ func (s *Server) handleFireAgent(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, snapshot)
 }
 
+func (s *Server) handleDelegateTask(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req delegateRequest
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
+		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+	if req.FromAgentID == "" || req.ToAgentID == "" || req.Content == "" {
+		http.Error(w, "fromAgentId, toAgentId, and content are required", http.StatusBadRequest)
+		return
+	}
+
+	message := orchestration.Message{
+		ID:         "web-" + time.Now().UTC().Format("20060102150405.000000000"),
+		Type:       orchestration.EventTask,
+		Content:    req.Content,
+		MeetingID:  req.MeetingID,
+		OccurredAt: time.Now().UTC(),
+	}
+
+	if err := s.hub.DelegateTask(req.FromAgentID, req.ToAgentID, message); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	s.mu.RLock()
+	snapshot := s.snapshotLocked()
+	s.mu.RUnlock()
+
+	writeJSON(w, snapshot)
+}
+
 func (s *Server) handleAgentProviders(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)

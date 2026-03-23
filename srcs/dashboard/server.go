@@ -90,6 +90,14 @@ type fireRequest struct {
 	AgentID string `json:"agentId"`
 }
 
+// delegateRequest carries parameters for delegating a task.
+type delegateRequest struct {
+	FromAgentID string `json:"fromAgentId"`
+	ToAgentID   string `json:"toAgentId"`
+	MeetingID   string `json:"meetingId,omitempty"`
+	Content     string `json:"content"`
+}
+
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 
 // Summary: ApprovalStatus represents the lifecycle state of a guardian-gate request.
@@ -429,6 +437,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/messages", server.handleSendMessage)
 	mux.HandleFunc("/api/agents/hire", server.handleHireAgent)
 	mux.HandleFunc("/api/agents/fire", server.handleFireAgent)
+	mux.HandleFunc("/api/agents/delegate", server.handleDelegateTask)
 	// Agent provider management
 	mux.HandleFunc("/api/agents/providers", server.handleAgentProviders)
 	mux.HandleFunc("/api/agents/providers/auth", server.handleAgentProviderAuth)
