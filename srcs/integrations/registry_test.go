@@ -1,6 +1,8 @@
 package integrations
 
 import (
+	"errors"
+
 	"context"
 	"net"
 	"net/http"
@@ -883,7 +885,7 @@ func TestSendTelegramMessage(t *testing.T) {
 	TelegramAPIBase = server.URL
 	defer func() { TelegramAPIBase = oldBase }()
 
-	err := sendTelegramMessage("<token>", "12345", "test message")
+	err := sendTelegramMessage(context.Background(), "<token>", "12345", "test message")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -899,7 +901,7 @@ func TestSendDiscordWebhookError(t *testing.T) {
 	AllowLocalIPsForTesting = true
 	defer func() { AllowLocalIPsForTesting = oldAllow }()
 
-	err := sendDiscordWebhook(server.URL, "bot", "test message")
+	err := sendDiscordWebhook(context.Background(), server.URL, "bot", "test message")
 	if err == nil {
 		t.Fatalf("expected error, got nil")
 	}
@@ -925,7 +927,7 @@ func TestSendTelegramMessageError(t *testing.T) {
 	TelegramAPIBase = server.URL
 	defer func() { TelegramAPIBase = oldBase }()
 
-	err := sendTelegramMessage("<token>", "12345", "test message")
+	err := sendTelegramMessage(context.Background(), "<token>", "12345", "test message")
 	if err == nil {
 		t.Fatalf("expected error, got nil")
 	}
@@ -942,7 +944,7 @@ func TestSendDiscordWebhook(t *testing.T) {
 	AllowLocalIPsForTesting = true
 	defer func() { AllowLocalIPsForTesting = oldAllow }()
 
-	err := sendDiscordWebhook(server.URL, "bot", "test message")
+	err := sendDiscordWebhook(context.Background(), server.URL, "bot", "test message")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1276,7 +1278,7 @@ func TestSendTelegramMessageErrors(t *testing.T) {
 
 	// 1. NewRequest error (bad URL)
 	TelegramAPIBase = "http://127.0.0.1\x7f/path"
-	err := sendTelegramMessage("tok", "chat", "msg")
+	err := sendTelegramMessage(context.Background(), "tok", "chat", "msg")
 	if err == nil || !strings.Contains(err.Error(), "invalid URL format") {
 		t.Errorf("expected validation error, got %v", err)
 	}
@@ -1285,7 +1287,7 @@ func TestSendTelegramMessageErrors(t *testing.T) {
 	closedServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}))
 	closedServer.Close()
 	TelegramAPIBase = closedServer.URL
-	err = sendTelegramMessage("tok", "chat", "msg")
+	err = sendTelegramMessage(context.Background(), "tok", "chat", "msg")
 	if err == nil || !strings.Contains(err.Error(), "telegram API") {
 		t.Errorf("expected HTTP Post error, got %v", err)
 	}
@@ -1297,7 +1299,7 @@ func TestSendTelegramMessageErrors(t *testing.T) {
 	defer serverDecodeError.Close()
 	TelegramAPIBase = serverDecodeError.URL
 
-	err = sendTelegramMessage("tok", "chat", "msg")
+	err = sendTelegramMessage(context.Background(), "tok", "chat", "msg")
 	if err == nil || !strings.Contains(err.Error(), "telegram decode") {
 		t.Errorf("expected decode error, got %v", err)
 	}
@@ -1309,7 +1311,7 @@ func TestSendTelegramMessageErrors(t *testing.T) {
 	defer serverAPIError.Close()
 	TelegramAPIBase = serverAPIError.URL
 
-	err = sendTelegramMessage("tok", "chat", "msg")
+	err = sendTelegramMessage(context.Background(), "tok", "chat", "msg")
 	if err == nil || !strings.Contains(err.Error(), "some error") {
 		t.Errorf("expected API error, got %v", err)
 	}
@@ -1326,13 +1328,13 @@ func TestSendDiscordWebhookErrors(t *testing.T) {
 	AllowLocalIPsForTesting = true
 	defer func() { AllowLocalIPsForTesting = oldAllow }()
 
-	err := sendDiscordWebhook(serverStatusError.URL, "user", "msg")
+	err := sendDiscordWebhook(context.Background(), serverStatusError.URL, "user", "msg")
 	if err == nil || !strings.Contains(err.Error(), "discord API returned status 500") {
 		t.Errorf("expected API error, got %v", err)
 	}
 
 	// 2. NewRequest failure (bad URL parsing for NewRequestWithContext)
-	err = sendDiscordWebhook("http://127.0.0.1\x7f/path", "user", "msg")
+	err = sendDiscordWebhook(context.Background(), "http://127.0.0.1\x7f/path", "user", "msg")
 	if err == nil || !strings.Contains(err.Error(), "invalid URL format") { // caught by validateURL first
 		t.Errorf("expected validation error, got %v", err)
 	}
@@ -1351,7 +1353,7 @@ func TestSendDiscordWebhookErrors(t *testing.T) {
 	// 3. Client Do error
 	// A closed server will cause Do to fail
 	serverStatusError.Close()
-	err = sendDiscordWebhook(serverStatusError.URL, "user", "msg")
+	err = sendDiscordWebhook(context.Background(), serverStatusError.URL, "user", "msg")
 	if err == nil || !strings.Contains(err.Error(), "discord API:") {
 		t.Errorf("expected API connection error, got %v", err)
 	}
@@ -1404,7 +1406,7 @@ func TestTelegramAPIBaseSSRF(t *testing.T) {
 			}
 
 			TelegramAPIBase = tt.url
-			err := sendTelegramMessage("tok", "chat", "msg")
+			err := sendTelegramMessage(context.Background(), "tok", "chat", "msg")
 			if (err != nil) != tt.wantErr {
 				t.Errorf("sendTelegramMessage() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -1412,4 +1414,66 @@ func TestTelegramAPIBaseSSRF(t *testing.T) {
 	}
 
 	AllowLocalIPsForTesting = oldAllow
+}
+
+func TestSendTelegramMessage_NewRequestError(t *testing.T) {
+	originalBase := TelegramAPIBase
+	TelegramAPIBase = "http://example.com"
+	defer func() { TelegramAPIBase = originalBase }()
+
+	err := sendTelegramMessage(context.Background(), "token\x00", "chat", "msg")
+	if err == nil {
+		t.Fatal("expected error from http.NewRequestWithContext, got nil")
+	}
+	if !strings.Contains(err.Error(), "create request") {
+		t.Fatalf("expected 'create request' error, got: %v", err)
+	}
+}
+
+func TestSendDiscordWebhook_NewRequestError(t *testing.T) {
+	err := sendDiscordWebhook(nil, "http://example.com/webhook", "user", "msg")
+	if err == nil {
+		t.Fatal("expected error from http.NewRequestWithContext, got nil")
+	}
+	if !strings.Contains(err.Error(), "create request") {
+		t.Fatalf("expected 'create request' error, got: %v", err)
+	}
+}
+
+type errorTripper struct{}
+
+func (e *errorTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	return nil, errors.New("simulated network error")
+}
+
+func TestSendTelegramMessage_DoError(t *testing.T) {
+	originalBase := TelegramAPIBase
+	TelegramAPIBase = "http://example.com"
+	defer func() { TelegramAPIBase = originalBase }()
+
+	originalClient := safeClient
+	safeClient = &http.Client{Transport: &errorTripper{}}
+	defer func() { safeClient = originalClient }()
+
+	err := sendTelegramMessage(context.Background(), "token", "chat", "msg")
+	if err == nil {
+		t.Fatal("expected error from safeClient.Do, got nil")
+	}
+	if !strings.Contains(err.Error(), "telegram API") {
+		t.Fatalf("expected 'telegram API' error, got: %v", err)
+	}
+}
+
+func TestSendDiscordWebhook_DoError(t *testing.T) {
+	originalClient := safeClient
+	safeClient = &http.Client{Transport: &errorTripper{}}
+	defer func() { safeClient = originalClient }()
+
+	err := sendDiscordWebhook(context.Background(), "http://example.com/webhook", "user", "msg")
+	if err == nil {
+		t.Fatal("expected error from safeClient.Do, got nil")
+	}
+	if !strings.Contains(err.Error(), "discord API") {
+		t.Fatalf("expected 'discord API' error, got: %v", err)
+	}
 }
