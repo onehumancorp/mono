@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Virtuoso } from "react-virtuoso";
 import {
   connectIntegration,
   disconnectIntegration,
@@ -29,6 +30,7 @@ import type {
   AgentRuntime,
   DashboardSnapshot,
   DomainInfo,
+  HandoffPackage,
   Integration,
   MCPTool,
   MeetingRoom,
@@ -1404,122 +1406,130 @@ export function App() {
                         </div>
                       </div>
 
-                      <ul className="transcript">
-                        {selectedMeeting.transcript.length === 0 && (
-                          <li className="empty-state">No messages yet.</li>
-                        )}
-                        {selectedMeeting.transcript.map((msg) => {
-                          const isHuman = snapshot?.organization.members.some(m => m.id === msg.fromAgent && m.isHuman) || msg.fromAgent === "CEO";
+                      <div className="transcript-container" style={{ flex: 1, minHeight: 400, display: "flex", flexDirection: "column" }}>
+                        {selectedMeeting.transcript.length === 0 ? (
+                          <div className="empty-state">No messages yet.</div>
+                        ) : (
+                          <Virtuoso
+                            className="transcript"
+                            style={{ height: 400, width: '100%' }}
+                            initialItemCount={selectedMeeting.transcript.length}
+                            totalCount={selectedMeeting.transcript.length}
+                            data={selectedMeeting.transcript}
+                            itemContent={(_, msg) => {
+                              const isHuman = snapshot?.organization.members.some(m => m.id === msg.fromAgent && m.isHuman) || msg.fromAgent === "CEO";
 
-                          if (msg.type === "ApprovalNeeded" && msg.toAgent === "CEO") {
-                            return (
-                              <li key={msg.id} className="transcript-item transcript-item--agent">
-                                <div className="transcript-header">
-                                  <span className="transcript-from">{msg.fromAgent}</span>
-                                  <span className="transcript-arrow" aria-hidden="true">→</span>
-                                  <span className="transcript-to">{msg.toAgent}</span>
-                                  <span className="event-chip event-chip--critical" style={{ marginLeft: "4px" }}>{msg.type}</span>
-                                  <span className="transcript-time">{formatTime(msg.occurredAt)}</span>
-                                </div>
-                                <div className="approval-card">
-                                  <div className="approval-card__content">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="approval-icon"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    <div>
-                                      <h4 className="approval-card__title">CEO Approval Required</h4>
-                                      <p className="approval-card__desc">{msg.content}</p>
+                              if (msg.type === "ApprovalNeeded" && msg.toAgent === "CEO") {
+                                return (
+                                  <div className="transcript-item transcript-item--agent" style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <div className="transcript-header">
+                                      <span className="transcript-from">{msg.fromAgent}</span>
+                                      <span className="transcript-arrow" aria-hidden="true">→</span>
+                                      <span className="transcript-to">{msg.toAgent}</span>
+                                      <span className="event-chip event-chip--critical" style={{ marginLeft: "4px" }}>{msg.type}</span>
+                                      <span className="transcript-time">{formatTime(msg.occurredAt)}</span>
+                                    </div>
+                                    <div className="approval-card">
+                                      <div className="approval-card__content">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="approval-icon"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                        <div>
+                                          <h4 className="approval-card__title">CEO Approval Required</h4>
+                                          <p className="approval-card__desc">{msg.content}</p>
+                                        </div>
+                                      </div>
+                                      {resolvedApprovals[msg.id] ? (
+                                        <div className="approval-card__actions" style={{ justifyContent: "center", padding: "0.5rem" }}>
+                                          <span className={`chip ${resolvedApprovals[msg.id] === "approved" ? "chip--green" : "status-badge--blocked"}`}>
+                                            {resolvedApprovals[msg.id] === "approved" ? "✓ Approved by CEO" : "✕ Rejected by CEO"}
+                                          </span>
+                                        </div>
+                                      ) : (
+                                        <div className="approval-card__actions">
+                                          <button
+                                            type="button"
+                                            className="btn btn-primary btn-sm approval-btn"
+                                            disabled={approvalLoading[msg.id]}
+                                            onClick={() => {
+                                              setApprovalLoading(prev => ({ ...prev, [msg.id]: true }));
+                                              void decideApproval(msg.id, "approve", ceoMember?.id || "CEO").then(() => {
+                                                const payload = {
+                                                  ...form,
+                                                  content: "Approved. Proceed with execution.",
+                                                  fromAgent: ceoMember?.id || "CEO",
+                                                  toAgent: msg.fromAgent,
+                                                  meetingId: selectedMeeting.id,
+                                                  messageType: "SpecApproved"
+                                                };
+                                                return submitMessage(payload);
+                                              }).then(() => {
+                                                setResolvedApprovals(prev => ({ ...prev, [msg.id]: "approved" }));
+                                                setNotice("Approval successfully recorded.");
+                                              }).catch(e => {
+                                                setError(e instanceof Error ? e.message : "Failed to record approval");
+                                              }).finally(() => {
+                                                setApprovalLoading(prev => ({ ...prev, [msg.id]: false }));
+                                              });
+                                            }}
+                                          >
+                                            {approvalLoading[msg.id] ? "..." : "Approve"}
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="btn btn-danger btn-sm approval-btn"
+                                            disabled={approvalLoading[msg.id]}
+                                            onClick={() => {
+                                              setApprovalLoading(prev => ({ ...prev, [msg.id]: true }));
+                                              void decideApproval(msg.id, "reject", ceoMember?.id || "CEO").then(() => {
+                                                const payload = {
+                                                  ...form,
+                                                  content: "Rejected. Please review constraints and pivot.",
+                                                  fromAgent: ceoMember?.id || "CEO",
+                                                  toAgent: msg.fromAgent,
+                                                  meetingId: selectedMeeting.id,
+                                                  messageType: "direction"
+                                                };
+                                                return submitMessage(payload);
+                                              }).then(() => {
+                                                setResolvedApprovals(prev => ({ ...prev, [msg.id]: "rejected" }));
+                                                setNotice("Rejection successfully recorded.");
+                                              }).catch(e => {
+                                                setError(e instanceof Error ? e.message : "Failed to record rejection");
+                                              }).finally(() => {
+                                                setApprovalLoading(prev => ({ ...prev, [msg.id]: false }));
+                                              });
+                                            }}
+                                          >
+                                            {approvalLoading[msg.id] ? "..." : "Reject"}
+                                          </button>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
-                                  {resolvedApprovals[msg.id] ? (
-                                    <div className="approval-card__actions" style={{ justifyContent: "center", padding: "0.5rem" }}>
-                                      <span className={`chip ${resolvedApprovals[msg.id] === "approved" ? "chip--green" : "status-badge--blocked"}`}>
-                                        {resolvedApprovals[msg.id] === "approved" ? "✓ Approved by CEO" : "✕ Rejected by CEO"}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <div className="approval-card__actions">
-                                      <button
-                                        type="button"
-                                        className="btn btn-primary btn-sm approval-btn"
-                                        disabled={approvalLoading[msg.id]}
-                                        onClick={() => {
-                                          setApprovalLoading(prev => ({ ...prev, [msg.id]: true }));
-                                          void decideApproval(msg.id, "approve", ceoMember?.id || "CEO").then(() => {
-                                            const payload = {
-                                              ...form,
-                                              content: "Approved. Proceed with execution.",
-                                              fromAgent: ceoMember?.id || "CEO",
-                                              toAgent: msg.fromAgent,
-                                              meetingId: selectedMeeting.id,
-                                              messageType: "SpecApproved"
-                                            };
-                                            return submitMessage(payload);
-                                          }).then(() => {
-                                            setResolvedApprovals(prev => ({ ...prev, [msg.id]: "approved" }));
-                                            setNotice("Approval successfully recorded.");
-                                          }).catch(e => {
-                                            setError(e instanceof Error ? e.message : "Failed to record approval");
-                                          }).finally(() => {
-                                            setApprovalLoading(prev => ({ ...prev, [msg.id]: false }));
-                                          });
-                                        }}
-                                      >
-                                        {approvalLoading[msg.id] ? "..." : "Approve"}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className="btn btn-danger btn-sm approval-btn"
-                                        disabled={approvalLoading[msg.id]}
-                                        onClick={() => {
-                                          setApprovalLoading(prev => ({ ...prev, [msg.id]: true }));
-                                          void decideApproval(msg.id, "reject", ceoMember?.id || "CEO").then(() => {
-                                            const payload = {
-                                              ...form,
-                                              content: "Rejected. Please review constraints and pivot.",
-                                              fromAgent: ceoMember?.id || "CEO",
-                                              toAgent: msg.fromAgent,
-                                              meetingId: selectedMeeting.id,
-                                              messageType: "direction"
-                                            };
-                                            return submitMessage(payload);
-                                          }).then(() => {
-                                            setResolvedApprovals(prev => ({ ...prev, [msg.id]: "rejected" }));
-                                            setNotice("Rejection successfully recorded.");
-                                          }).catch(e => {
-                                            setError(e instanceof Error ? e.message : "Failed to record rejection");
-                                          }).finally(() => {
-                                            setApprovalLoading(prev => ({ ...prev, [msg.id]: false }));
-                                          });
-                                        }}
-                                      >
-                                        {approvalLoading[msg.id] ? "..." : "Reject"}
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              </li>
-                            );
-                          }
+                                );
+                              }
 
-                          return (
-                            <li key={msg.id} className={`transcript-item ${isHuman ? "transcript-item--human" : "transcript-item--agent"}`}>
-                              <div className="transcript-header">
-                                <span className="transcript-from">{msg.fromAgent}</span>
-                                {msg.toAgent && (
-                                  <>
-                                    <span className="transcript-arrow" aria-hidden="true">→</span>
-                                    <span className="transcript-to">{msg.toAgent}</span>
-                                  </>
-                                )}
-                                <span className="event-chip" style={{ marginLeft: "4px" }}>{msg.type}</span>
-                                <span className="transcript-time">{formatTime(msg.occurredAt)}</span>
-                              </div>
-                              <div className="transcript-bubble">
-                                <p className="transcript-body">{msg.content}</p>
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
+                              return (
+                                <div className={`transcript-item ${isHuman ? "transcript-item--human" : "transcript-item--agent"}`} style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <div className="transcript-header">
+                                    <span className="transcript-from">{msg.fromAgent}</span>
+                                    {msg.toAgent && (
+                                      <>
+                                        <span className="transcript-arrow" aria-hidden="true">→</span>
+                                        <span className="transcript-to">{msg.toAgent}</span>
+                                      </>
+                                    )}
+                                    <span className="event-chip" style={{ marginLeft: "4px" }}>{msg.type}</span>
+                                    <span className="transcript-time">{formatTime(msg.occurredAt)}</span>
+                                  </div>
+                                  <div className="transcript-bubble">
+                                    <p className="transcript-body">{msg.content}</p>
+                                  </div>
+                                </div>
+                              );
+                            }}
+                          />
+                        )}
+                      </div>
                     </div>
 
                     <div className="war-room-input-area">

@@ -2676,7 +2676,7 @@ describe("App – War Room Approval Cards", () => {
       }),
     );
 
-    render(<App />);
+    const { baseElement } = render(<App />);
 
     // Switch to Meetings tab where the war room is
     await waitFor(() => {
@@ -2686,7 +2686,7 @@ describe("App – War Room Approval Cards", () => {
 
     // Wait for data load and component rendering
     await waitFor(() => {
-      expect(screen.getByText("CEO Approval Required")).toBeInTheDocument();
+      expect(baseElement.textContent).toContain("CEO Approval Required");
     });
 
     const approveBtn = screen.getByRole("button", { name: "Approve" });
@@ -2750,7 +2750,7 @@ describe("App – War Room Approval Cards", () => {
       }),
     );
 
-    render(<App />);
+    const { baseElement } = render(<App />);
 
     await waitFor(() => {
       expect(screen.getByText("Meetings")).toBeInTheDocument();
@@ -2758,7 +2758,7 @@ describe("App – War Room Approval Cards", () => {
     fireEvent.click(screen.getByText("Meetings"));
 
     await waitFor(() => {
-      expect(screen.getByText("CEO Approval Required")).toBeInTheDocument();
+      expect(baseElement.textContent).toContain("CEO Approval Required");
     });
 
     const rejectBtn = screen.getByRole("button", { name: "Reject" });
@@ -3254,7 +3254,11 @@ describe("App – agent chat detail view", () => {
     // No message API call
     await waitFor(() => {
       const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
-        ([url, init]: [string, RequestInit?]) => url === "/api/messages" && init?.method === "POST"
+        (args: any[]) => {
+          const url = args[0] as string;
+          const init = args[1] as RequestInit | undefined;
+          return url === "/api/messages" && init?.method === "POST";
+        }
       );
       expect(calls).toHaveLength(0);
     });
