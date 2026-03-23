@@ -359,6 +359,115 @@ func TestHandleHealthzReadyz(t *testing.T) {
 	}
 }
 
+func TestHandleScale(t *testing.T) {
+	tests := []struct {
+		name       string
+		method     string
+		body       string
+		wantStatus int
+		wantBody   string
+	}{
+		{
+			name:       "Wrong method",
+			method:     http.MethodGet,
+			body:       `{}`,
+			wantStatus: http.StatusMethodNotAllowed,
+			wantBody:   "method not allowed\n",
+		},
+		{
+			name:       "Invalid JSON body",
+			method:     http.MethodPost,
+			body:       `{invalid json`,
+			wantStatus: http.StatusBadRequest,
+			wantBody:   "invalid JSON payload\n",
+		},
+		{
+			name:       "Missing role",
+			method:     http.MethodPost,
+			body:       `{"count": 2}`,
+			wantStatus: http.StatusBadRequest,
+			wantBody:   "role is required\n",
+		},
+		{
+			name:       "Valid request",
+			method:     http.MethodPost,
+			body:       `{"role": "agent-1", "count": 2}`,
+			wantStatus: http.StatusOK,
+			wantBody:   `{"count":2,"role":"agent-1","status":"success"}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			app, server, _ := newTestServer(t)
+			defer server.Close()
+
+			req := httptest.NewRequest(tt.method, "/api/v1/scale", strings.NewReader(tt.body))
+			rec := httptest.NewRecorder()
+			app.handleScale(rec, req)
+
+			if rec.Code != tt.wantStatus {
+				t.Errorf("expected status %d, got %d", tt.wantStatus, rec.Code)
+			}
+
+			if tt.wantBody != "" {
+				body := rec.Body.String()
+				if !strings.Contains(body, tt.wantBody) {
+					t.Errorf("expected body to contain %q, got %q", tt.wantBody, body)
+				}
+			}
+		})
+	}
+}
+
+func TestHandleScaleStream(t *testing.T) {
+	app, server, _ := newTestServer(t)
+	defer server.Close()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/scale/stream", nil)
+	rec := httptest.NewRecorder()
+
+	done := make(chan struct{})
+	go func() {
+		app.handleScaleStream(rec, req)
+		close(done)
+	}()
+
+	<-done
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	contentType := rec.Header().Get("Content-Type")
+	if contentType != "text/event-stream" {
+		t.Errorf("expected Content-Type text/event-stream, got %q", contentType)
+	}
+
+	cacheControl := rec.Header().Get("Cache-Control")
+	if cacheControl != "no-cache" {
+		t.Errorf("expected Cache-Control no-cache, got %q", cacheControl)
+	}
+
+	connection := rec.Header().Get("Connection")
+	if connection != "keep-alive" {
+		t.Errorf("expected Connection keep-alive, got %q", connection)
+	}
+
+	body := rec.Body.String()
+	expectedEvents := []string{
+		"data: {\"event\":\"K8s Operator: Reconciling TeamMember resource.\",\"status\":\"INFO\"}\n\n",
+		"data: {\"event\":\"K8s Operator: Spinning up new pods...\",\"status\":\"INFO\"}\n\n",
+		"data: {\"event\":\"AgentHired\",\"status\":\"Ready\"}\n\n",
+	}
+
+	for _, event := range expectedEvents {
+		if !strings.Contains(body, event) {
+			t.Errorf("expected body to contain %q, got:\n%s", event, body)
+		}
+	}
+}
+
 // ── Additional coverage: handleChatTest ──────────────────────────────────────
 
 func TestHandleChatTestMethodNotAllowed(t *testing.T) {
