@@ -223,3 +223,30 @@ func (s *Server) handleB2BRevoke(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Error(w, "agreement not found", http.StatusNotFound)
 }
+
+func (s *Server) handleHandoffStream(w http.ResponseWriter, r *http.Request) {
+	// Set headers for SSE
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	rc := http.NewResponseController(w)
+
+	// Simulated events
+	events := []string{
+		`{"state":"allocating","target":"swe","message":"Pending Allocation"}`,
+		`{"state":"transferring","target":"swe","message":"Transferring Context"}`,
+		`{"state":"acquiring","target":"swe","message":"Acquiring Lock"}`,
+		`{"state":"spinning_up","target":"swe","message":"Pod Spun Up"}`,
+		`{"state":"success","target":"swe","message":"Transferred"}`,
+	}
+
+	for _, event := range events {
+		data := []byte("data: " + event + "\n\n")
+		w.Write(data)
+		if err := rc.Flush(); err != nil {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+}

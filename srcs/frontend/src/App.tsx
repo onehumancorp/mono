@@ -327,6 +327,9 @@ export function App() {
   const [agentChatContent, setAgentChatContent] = useState("");
   const [agentChatSending, setAgentChatSending] = useState(false);
   const [handoffList, setHandoffList] = useState<HandoffPackage[]>([]);
+  const [handoffLogs, setHandoffLogs] = useState<{time: string, msg: string, state: string, target?: string}[]>([]);
+  const [isHandoffActive, setIsHandoffActive] = useState(false);
+  const [activeHandoffTarget, setActiveHandoffTarget] = useState<string | null>(null);
 
   // ── Auth state ─────────────────────────────────────────────────────────────
   const [authToken, setAuthToken] = useState<string | null>(getStoredToken);
@@ -1538,16 +1541,106 @@ export function App() {
         {/* ────────────────── Handoffs ────────────────── */}
         {activeNav === "handoffs" && (
           <>
-            <div className="page-header">
+            <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
               <div>
-                <h2 className="page-heading">Warm Handoffs</h2>
-                <p className="page-sub">Review tasks escalated from autonomous agents to human managers</p>
+                <h2 className="page-heading">Cross-Cluster Handoffs</h2>
+                <p className="page-sub">Seamless bridging of neural execution across federated K8s clusters</p>
               </div>
+              <button
+                className="btn btn-primary"
+                disabled={isHandoffActive}
+                onClick={() => {
+                  if (isHandoffActive) return;
+                  setIsHandoffActive(true);
+                  setHandoffLogs([]);
+                  setActiveHandoffTarget(null);
+
+                  const token = getStoredToken();
+                  const url = token ? `/api/v1/handoff/stream?token=${encodeURIComponent(token)}` : "/api/v1/handoff/stream";
+
+                  const eventSource = new EventSource(url);
+                  eventSource.onmessage = (event) => {
+                    try {
+                      const data = JSON.parse(event.data);
+                      setHandoffLogs(prev => [...prev, {
+                        time: new Date().toISOString().substring(11, 19) + "Z",
+                        msg: data.message,
+                        state: data.state,
+                        target: data.target
+                      }]);
+                      if (data.target) {
+                        setActiveHandoffTarget(data.target);
+                      }
+                      if (data.state === "success") {
+                        eventSource.close();
+                        setIsHandoffActive(false);
+                      }
+                    } catch (e) {
+                      // ignore parse errors
+                    }
+                  };
+                  eventSource.onerror = () => {
+                    eventSource.close();
+                    setIsHandoffActive(false);
+                  };
+                }}
+              >
+                {isHandoffActive ? "Initiating Handoff..." : "Simulate Handoff Tool"}
+              </button>
             </div>
 
+            <div className="content-grid two-col" style={{ marginBottom: "2rem" }}>
+              <article className="scaling-panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Active Execution Graph</h2>
+                </header>
+                <div className="panel-body">
+                  <div className="handoff-diagram-container">
+                    <div className={`agent-node ${isHandoffActive || handoffLogs.length > 0 ? "" : "active"}`}>
+                      <h4 style={{ margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>Customer Support</h4>
+                      <span className="chip chip--sm chip--blue">Cluster A</span>
+                    </div>
+
+                    <div className={`handoff-path ${isHandoffActive || activeHandoffTarget ? "active" : ""}`}>
+                      <div className="handoff-glow-line" style={{ transform: activeHandoffTarget === "swe" && !isHandoffActive ? "translateX(0)" : undefined }}></div>
+                    </div>
+
+                    <div className={`agent-node ${activeHandoffTarget === "swe" && !isHandoffActive ? "active" : ""}`}>
+                      <h4 style={{ margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>Software Engineer</h4>
+                      <span className="chip chip--sm chip--blue">Cluster B</span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <article className="scaling-panel">
+                <header className="panel-head">
+                  <h2 className="panel-title">Handoff Trace Telemetry</h2>
+                  <span className="chip chip--sm chip--green">Live SSE</span>
+                </header>
+                <div className="panel-body" style={{ maxHeight: "200px", overflowY: "auto", background: "var(--bg-primary)", padding: "1rem", borderRadius: "4px" }}>
+                  {handoffLogs.length === 0 && !isHandoffActive && (
+                    <p className="empty-state" style={{ margin: 0 }}>Waiting for handoff trigger...</p>
+                  )}
+                  {handoffLogs.map((log, i) => (
+                    <div key={i} className="trace-log-item">
+                      <span style={{ color: "var(--text-secondary)", marginRight: "0.5rem" }}>[{log.time}]</span>
+                      <strong className={log.state === "success" ? "badge-success" : "badge-info"}>{log.state.toUpperCase()}</strong> {log.msg}
+                    </div>
+                  ))}
+                  {isHandoffActive && (
+                    <div className="trace-log-item loading">
+                      Awaiting target cluster allocation...
+                    </div>
+                  )}
+                </div>
+              </article>
+            </div>
+
+            <h3 style={{ marginBottom: "1rem", color: "var(--text-primary)" }}>Pending Human Approvals</h3>
             <div className="handoff-list" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {handoffList.length === 0 ? (
-                <p className="empty-state">No pending handoffs found.</p>
+                <p className="empty-state">No pending manual handoffs found.</p>
               ) : (
                 handoffList.map((handoff) => (
                   <article key={handoff.id} className="panel" style={{ padding: "1rem" }}>

@@ -3296,8 +3296,8 @@ describe("App – handoffs tab", () => {
     render(<App />);
     await screen.findByText("One Human Corp Dashboard");
     fireEvent.click(screen.getByRole("button", { name: /handoffs/i }));
-    await screen.findByText("Warm Handoffs");
-    await screen.findByText("No pending handoffs found.");
+    await screen.findByText("Cross-Cluster Handoffs");
+    await screen.findByText("No pending manual handoffs found.");
   });
 
   it("shows handoff cards when handoffs exist", async () => {
@@ -3321,7 +3321,7 @@ describe("App – handoffs tab", () => {
     render(<App />);
     await screen.findByText("One Human Corp Dashboard");
     fireEvent.click(screen.getByRole("button", { name: /handoffs/i }));
-    await screen.findByText("Warm Handoffs");
+    await screen.findByText("Cross-Cluster Handoffs");
     await screen.findByText("Escalated by swe-1");
     expect(screen.getByText("Needs architecture review")).toBeInTheDocument();
     expect(screen.getByText(/Failed Attempts: 1/)).toBeInTheDocument();

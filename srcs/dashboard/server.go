@@ -439,6 +439,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/approvals/decide", server.handleApprovalDecide)
 	// Phase 2 – Warm Handoff
 	mux.HandleFunc("/api/handoffs", server.handleHandoffs)
+	mux.HandleFunc("/api/v1/handoff/stream", server.handleHandoffStream)
 	// Phase 2 – Unified Identity Management (SPIFFE/SPIRE)
 	mux.HandleFunc("/api/identities", server.handleIdentities)
 	// Phase 2 – Extensible Skill Import Framework
