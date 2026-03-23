@@ -308,6 +308,27 @@ func TestSPIFFEAuthInterceptor_OHCLocalDomain(t *testing.T) {
 			expectedErr: true,
 			errCode:     codes.PermissionDenied,
 		},
+		{
+			name:        "Sloppy Contains Bug check",
+			spiffeID:    "spiffe://ohc.local/org/agent/foo/bar",
+			reqAgentID:  "bar",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name:        "Wrong structure length",
+			spiffeID:    "spiffe://ohc.local/org/org-1/agent",
+			reqAgentID:  "agent",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name:        "Mismatched segments ohc.local",
+			spiffeID:    "spiffe://ohc.local/org/org-1/agent-x/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
 	}
 
 	for _, tc := range tests {

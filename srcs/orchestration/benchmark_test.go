@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -111,6 +112,27 @@ func BenchmarkInbox(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = hub.Inbox("agent1")
+	}
+}
+
+func BenchmarkExtractAgentIDFromSPIFFE_Old(b *testing.B) {
+	// Represents the old O(N) allocation code
+	spiffeID := "spiffe://onehumancorp.io/org-123/agent-456"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		trimmed := strings.TrimPrefix(spiffeID, "spiffe://")
+		parts := strings.Split(trimmed, "/")
+		if len(parts) >= 3 {
+			_ = parts[2]
+		}
+	}
+}
+
+func BenchmarkExtractAgentIDFromSPIFFE_New(b *testing.B) {
+	spiffeID := "spiffe://onehumancorp.io/org-123/agent-456"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = extractAgentIDFromSPIFFE(spiffeID)
 	}
 }
 

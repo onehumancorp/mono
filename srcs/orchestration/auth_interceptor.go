@@ -14,6 +14,73 @@ import (
 	pb "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration"
 )
 
+// extractAgentIDFromSPIFFE parses the agent identity directly without allocating
+// new string slices.
+// ⚡ BOLT: [Zero-allocation SPIFFE ID extraction instead of O(N) strings.Split] - Randomized Selection from Top 5
+func extractAgentIDFromSPIFFE(spiffeID string) (string, error) {
+	if !strings.HasPrefix(spiffeID, "spiffe://") {
+		return "", fmt.Errorf("invalid SPIFFE ID format: %s", spiffeID)
+	}
+
+	trimmed := spiffeID[9:] // len("spiffe://")
+
+	// Count slashes to determine the format and extract the agent ID
+	slashes := 0
+	lastSlashIdx := -1
+	for i := 0; i < len(trimmed); i++ {
+		if trimmed[i] == '/' {
+			slashes++
+			lastSlashIdx = i
+		}
+	}
+
+	if slashes < 2 {
+		return "", fmt.Errorf("SPIFFE ID lacks required path segments for agent identity: %s", spiffeID)
+	}
+
+	firstSlashIdx := strings.IndexByte(trimmed, '/')
+	domain := trimmed[:firstSlashIdx]
+
+	switch domain {
+	case "onehumancorp.io":
+		// format: onehumancorp.io/{orgID}/{agentID} (2 slashes)
+		if slashes != 2 {
+			return "", fmt.Errorf("invalid SPIFFE ID path structure for domain onehumancorp.io: %s", spiffeID)
+		}
+		return trimmed[lastSlashIdx+1:], nil
+
+	case "ohc.local":
+		// format: ohc.local/org/{orgID}/agent/{agentID} (4 slashes)
+		if slashes != 4 {
+			return "", fmt.Errorf("invalid SPIFFE ID path structure for domain ohc.local: %s", spiffeID)
+		}
+		// find indices
+		secondSlashIdx := strings.IndexByte(trimmed[firstSlashIdx+1:], '/') + firstSlashIdx + 1
+		thirdSlashIdx := strings.IndexByte(trimmed[secondSlashIdx+1:], '/') + secondSlashIdx + 1
+
+		if trimmed[firstSlashIdx+1:secondSlashIdx] != "org" {
+			return "", fmt.Errorf("invalid SPIFFE ID path structure for domain ohc.local: %s", spiffeID)
+		}
+		if trimmed[thirdSlashIdx+1:lastSlashIdx] != "agent" {
+			return "", fmt.Errorf("invalid SPIFFE ID path structure for domain ohc.local: %s", spiffeID)
+		}
+		return trimmed[lastSlashIdx+1:], nil
+
+	case "ohc.os":
+		// format: ohc.os/agent/{agentID} (2 slashes)
+		if slashes != 2 {
+			return "", fmt.Errorf("invalid SPIFFE ID path structure for domain ohc.os: %s", spiffeID)
+		}
+		if !strings.HasPrefix(trimmed[firstSlashIdx+1:], "agent/") {
+			return "", fmt.Errorf("invalid SPIFFE ID path structure for domain ohc.os: %s", spiffeID)
+		}
+		return trimmed[lastSlashIdx+1:], nil
+
+	default:
+		return "", fmt.Errorf("unsupported SPIFFE trust domain in ID: %s", spiffeID)
+	}
+}
+
 // ExtractSPIFFEID gets the SPIFFE ID from the context.
 // It extracts the ID exclusively from the mTLS peer certificate.
 func ExtractSPIFFEID(ctx context.Context) (string, error) {
@@ -47,47 +114,9 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			return nil, status.Errorf(codes.Unauthenticated, "unauthenticated: %v", err)
 		}
 
-		if !strings.HasPrefix(spiffeID, "spiffe://") {
-			return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID format: %s", spiffeID)
-		}
-
-		// Authorization: ensure the caller matches the requested agent ID.
-		// Expected formats:
-		// ohc.local/org/{orgID}/agent/{agentID}
-		// onehumancorp.io/{orgID}/{agentID} (from dashboard UI logic)
-		// ohc.os/agent/{agentID} (from interop adapters)
-
-		// Parse the SPIFFE ID strictly to avoid spoofing attacks.
-		trimmed := strings.TrimPrefix(spiffeID, "spiffe://")
-		parts := strings.Split(trimmed, "/")
-		if len(parts) < 3 {
-			return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID lacks required path segments for agent identity: %s", spiffeID)
-		}
-
-		var agentID string
-		domain := parts[0]
-
-		switch domain {
-		case "onehumancorp.io":
-			// format: onehumancorp.io/{orgID}/{agentID}
-			if len(parts) != 3 {
-				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain onehumancorp.io: %s", spiffeID)
-			}
-			agentID = parts[2]
-		case "ohc.local":
-			// format: ohc.local/org/{orgID}/agent/{agentID}
-			if len(parts) != 5 || parts[1] != "org" || parts[3] != "agent" {
-				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.local: %s", spiffeID)
-			}
-			agentID = parts[4]
-		case "ohc.os":
-			// format: ohc.os/agent/{agentID}
-			if len(parts) != 3 || parts[1] != "agent" {
-				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.os: %s", spiffeID)
-			}
-			agentID = parts[2]
-		default:
-			return nil, status.Errorf(codes.PermissionDenied, "unsupported SPIFFE trust domain in ID: %s", spiffeID)
+		agentID, err := extractAgentIDFromSPIFFE(spiffeID)
+		if err != nil {
+			return nil, status.Errorf(codes.PermissionDenied, "%v", err)
 		}
 
 		switch v := req.(type) {
@@ -121,41 +150,9 @@ func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
 			return status.Errorf(codes.Unauthenticated, "unauthenticated: %v", err)
 		}
 
-		if !strings.HasPrefix(spiffeID, "spiffe://") {
-			return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID format: %s", spiffeID)
-		}
-
-		// Parse the SPIFFE ID strictly to avoid spoofing attacks.
-		trimmed := strings.TrimPrefix(spiffeID, "spiffe://")
-		parts := strings.Split(trimmed, "/")
-		if len(parts) < 3 {
-			return status.Errorf(codes.PermissionDenied, "SPIFFE ID lacks required path segments for agent identity: %s", spiffeID)
-		}
-
-		var agentID string
-		domain := parts[0]
-
-		switch domain {
-		case "onehumancorp.io":
-			// format: onehumancorp.io/{orgID}/{agentID}
-			if len(parts) != 3 {
-				return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain onehumancorp.io: %s", spiffeID)
-			}
-			agentID = parts[2]
-		case "ohc.local":
-			// format: ohc.local/org/{orgID}/agent/{agentID}
-			if len(parts) != 5 || parts[1] != "org" || parts[3] != "agent" {
-				return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.local: %s", spiffeID)
-			}
-			agentID = parts[4]
-		case "ohc.os":
-			// format: ohc.os/agent/{agentID}
-			if len(parts) != 3 || parts[1] != "agent" {
-				return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.os: %s", spiffeID)
-			}
-			agentID = parts[2]
-		default:
-			return status.Errorf(codes.PermissionDenied, "unsupported SPIFFE trust domain in ID: %s", spiffeID)
+		agentID, err := extractAgentIDFromSPIFFE(spiffeID)
+		if err != nil {
+			return status.Errorf(codes.PermissionDenied, "%v", err)
 		}
 
 		// Since StreamMessagesRequest is not directly accessible in the interceptor args,
