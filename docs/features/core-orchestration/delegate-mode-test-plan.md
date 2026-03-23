@@ -14,9 +14,9 @@ A high-level summary of the testing strategy for the Agent Delegate Mode feature
 ### 3.1 Unit Tests
 | Test ID | Component | Description | Expected Result | Status |
 |---------|-----------|-------------|-----------------|--------|
-| UT-01 | `Hub` | `DelegateTask` with valid agents | Message routed to target inbox | Pending |
-| UT-02 | `Hub` | `DelegateTask` with invalid source | Returns "sender agent is not registered" | Pending |
-| UT-03 | `Hub` | `DelegateTask` with invalid target | Returns "recipient agent is not registered" | Pending |
+| UT-01 | `Hub` | `DelegateTask` with valid agents | Message routed to target inbox | Passed |
+| UT-02 | `Hub` | `DelegateTask` with invalid source | Returns "sender agent is not registered" | Passed |
+| UT-03 | `Hub` | `DelegateTask` with invalid target | Returns "recipient agent is not registered" | Passed |
 
 ## 4. Edge Cases & Error Handling
 - Verification that delegating a task to an unregistered agent returns the appropriate error.

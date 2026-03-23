@@ -143,10 +143,16 @@ func TestDelegateTask_AgentNotFound(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error delegating to missing specialist, got nil")
 	}
+	if err.Error() != "recipient agent is not registered" {
+		t.Fatalf("expected error 'recipient agent is not registered', got %q", err.Error())
+	}
 
 	err = hub.DelegateTask("missing-delegate", "delegate", task)
 	if err == nil {
 		t.Fatalf("expected error from missing delegating agent, got nil")
+	}
+	if err.Error() != "sender agent is not registered" {
+		t.Fatalf("expected error 'sender agent is not registered', got %q", err.Error())
 	}
 }
 

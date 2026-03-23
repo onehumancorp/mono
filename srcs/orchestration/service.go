@@ -199,6 +199,17 @@ type Message struct {
 //
 // Returns: An error if either the delegating agent or the specialist agent does not exist.
 func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
+	h.mu.RLock()
+	if _, ok := h.agents[fromAgentID]; !ok {
+		h.mu.RUnlock()
+		return errors.New("sender agent is not registered")
+	}
+	if _, ok := h.agents[toAgentID]; !ok {
+		h.mu.RUnlock()
+		return errors.New("recipient agent is not registered")
+	}
+	h.mu.RUnlock()
+
 	task.FromAgent = fromAgentID
 	task.ToAgent = toAgentID
 	return h.Publish(task)
