@@ -6,6 +6,7 @@ go_library(
         "b2b.go",
         "compute.go",
         "organization.go",
+        "sre.go",
     ],
     importpath = "github.com/onehumancorp/mono/srcs/domain",
     visibility = ["//visibility:public"],
@@ -17,6 +18,7 @@ go_test(
         "b2b_test.go",
         "compute_test.go",
         "organization_test.go",
+        "sre_test.go",
     ],
     embed = [":domain"],
 )
