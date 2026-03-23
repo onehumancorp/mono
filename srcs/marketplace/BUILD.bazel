@@ -1,0 +1,14 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "marketplace",
+    srcs = ["importer.go"],
+    importpath = "github.com/onehumancorp/mono/srcs/marketplace",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "marketplace_test",
+    srcs = ["importer_test.go"],
+    embed = [":marketplace"],
+)

@@ -447,7 +447,11 @@ export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> 
  * Side Effects: None
  */
 export function fetchMarketplace(): Promise<MarketplaceItem[]> {
-  return getJSON<MarketplaceItem[]>("/api/marketplace");
+  return authedGetJSON<MarketplaceItem[]>("/api/marketplace");
+}
+
+export function importMarketplaceBlueprint(marketplaceUrl: string, blueprintId: string): Promise<any> {
+  return authedPostJSON<any>("/api/marketplace/import", { marketplaceUrl, blueprintId });
 }
 
 // ── Real-time Analytics ───────────────────────────────────────────────────────
