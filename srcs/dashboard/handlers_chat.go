@@ -41,6 +41,37 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// Check for concurrent approval locks
+	if message.Type == "SpecApproved" || message.Type == "direction" {
+		for _, m := range s.hub.Meetings() {
+			if m.ID == message.MeetingID {
+				// Find the most recent ApprovalNeeded from the target agent to the sender
+				var lastApprovalNeededIndex int = -1
+				for i := len(m.Transcript) - 1; i >= 0; i-- {
+					t := m.Transcript[i]
+					if t.Type == "ApprovalNeeded" && t.FromAgent == message.ToAgent && t.ToAgent == message.FromAgent {
+						lastApprovalNeededIndex = i
+						break
+					}
+				}
+
+				if lastApprovalNeededIndex != -1 {
+					// Check if this specific ApprovalNeeded has already been resolved by a subsequent message
+					for i := lastApprovalNeededIndex + 1; i < len(m.Transcript); i++ {
+						t := m.Transcript[i]
+						if t.FromAgent == message.FromAgent && t.ToAgent == message.ToAgent {
+							if t.Type == "SpecApproved" || (t.Type == "direction" && strings.Contains(t.Content, "Rejected")) {
+								http.Error(w, "State Changed: This action has already been approved or rejected by another user.", http.StatusConflict)
+								return
+							}
+						}
+					}
+				}
+				break
+			}
+		}
+	}
+
 	if err := s.hub.Publish(message); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

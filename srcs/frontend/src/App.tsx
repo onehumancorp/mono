@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState, useRef } from "react";
 import {
   connectIntegration,
   disconnectIntegration,
@@ -35,6 +35,7 @@ import type {
   OrganizationMember,
   Settings,
   UserPublic,
+  HandoffPackage,
 } from "./types";
 
 type LoadState = "idle" | "loading" | "ready" | "error";
@@ -339,6 +340,13 @@ export function App() {
   const [handoffList, setHandoffList] = useState<HandoffPackage[]>([]);
   const [handoffLoading, setHandoffLoading] = useState<Record<string, boolean>>({});
 
+  // ── Virtualization State ───────────────────────────────────────────────────
+  // We simplify virtualization to just slicing the transcript array, since full absolute positioning
+  // breaks on variable-height components like the complex Approval cards. We limit the rendered
+  // items to the most recent 150 items to prevent DOM bloat while keeping standard layout flow.
+  const MAX_VISIBLE_MESSAGES = 150;
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   // ── Auth state ─────────────────────────────────────────────────────────────
   const [authToken, setAuthToken] = useState<string | null>(getStoredToken);
   const [loginUsername, setLoginUsername] = useState("");
@@ -469,7 +477,9 @@ export function App() {
       setForm((f) => ({ ...f, content: "" }));
     } catch (e) {
       let errMsg = e instanceof Error ? e.message : "Failed to send message";
-      if (errMsg.includes("sender agent is not registered")) {
+      if (errMsg.includes("State Changed")) {
+        errMsg = "State Changed: This action has already been approved or rejected by another user.";
+      } else if (errMsg.includes("sender agent is not registered")) {
         errMsg = "The sending agent is no longer active. Please check the Agent Network to hire or assign a valid agent.";
       } else if (errMsg.includes("recipient agent is not registered")) {
         errMsg = "The recipient agent could not be found. They may have been removed. Please verify the Org Chart.";
@@ -1392,7 +1402,7 @@ export function App() {
                   </aside>
 
                   <section className="war-room-main">
-                    <div className="war-room-transcript-wrap">
+                    <div className="war-room-transcript-wrap" ref={scrollContainerRef}>
                       <div className="context-summary-panel">
                         <div className="context-summary-title">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -1407,7 +1417,12 @@ export function App() {
                         {selectedMeeting.transcript.length === 0 && (
                           <li className="empty-state">No messages yet.</li>
                         )}
-                        {selectedMeeting.transcript.map((msg) => {
+                        {selectedMeeting.transcript.length > MAX_VISIBLE_MESSAGES && (
+                          <li className="transcript-item transcript-item--agent" style={{ opacity: 0.5, textAlign: "center" }}>
+                            <p className="transcript-body">... earlier messages hidden for performance ...</p>
+                          </li>
+                        )}
+                        {selectedMeeting.transcript.slice(-MAX_VISIBLE_MESSAGES).map((msg) => {
                           const isHuman = snapshot?.organization.members.some(m => m.id === msg.fromAgent && m.isHuman) || msg.fromAgent === "CEO";
 
                           if (msg.type === "ApprovalNeeded" && msg.toAgent === "CEO") {

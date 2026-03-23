@@ -358,6 +358,63 @@ func TestHandleSendMessageRejectsParseError(t *testing.T) {
 	}
 }
 
+func TestHandleSendMessageRejectsConcurrentApprovals(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	app.mu.Lock()
+	app.hub.OpenMeetingWithAgenda("test-meeting", "Test", []string{"pm-1", "CEO"})
+	_ = app.hub.Publish(orchestration.Message{
+		ID:        "msg-1",
+		FromAgent: "pm-1",
+		ToAgent:   "CEO",
+		Type:      "ApprovalNeeded",
+		Content:   "Please approve.",
+		MeetingID: "test-meeting",
+	})
+	_ = app.hub.Publish(orchestration.Message{
+		ID:        "msg-2",
+		FromAgent: "CEO",
+		ToAgent:   "pm-1",
+		Type:      "SpecApproved",
+		Content:   "Approved.",
+		MeetingID: "test-meeting",
+	})
+	app.mu.Unlock()
+
+	form := url.Values{
+		"fromAgent":   {"CEO"},
+		"toAgent":     {"pm-1"},
+		"meetingId":   {"test-meeting"},
+		"messageType": {"SpecApproved"},
+		"content":     {"Approved again."},
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/messages", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	rec := httptest.NewRecorder()
+	app.handleSendMessage(rec, req)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("expected 409 Conflict for concurrent approval, got %d", rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "State Changed") {
+		t.Fatalf("expected 'State Changed' error message, got %s", rec.Body.String())
+	}
+
+	formReject := url.Values{
+		"fromAgent":   {"CEO"},
+		"toAgent":     {"pm-1"},
+		"meetingId":   {"test-meeting"},
+		"messageType": {"direction"},
+		"content":     {"Rejected."},
+	}
+	reqReject := httptest.NewRequest(http.MethodPost, "/api/messages", strings.NewReader(formReject.Encode()))
+	reqReject.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	recReject := httptest.NewRecorder()
+	app.handleSendMessage(recReject, reqReject)
+	if recReject.Code != http.StatusConflict {
+		t.Fatalf("expected 409 Conflict when rejecting an already-approved action, got %d", recReject.Code)
+	}
+}
+
 func TestWriteJSONSetsContentTypeAndBody(t *testing.T) {
 	rec := httptest.NewRecorder()
 	writeJSON(rec, map[string]string{"status": "ok"})
