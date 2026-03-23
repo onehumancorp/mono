@@ -29,6 +29,9 @@ spec:
             capabilities:
               drop:
                 - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           resources:
             requests:
               cpu: "50m"
@@ -53,3 +56,6 @@ spec:
               port: {{ .Values.frontend.service.port }}
             initialDelaySeconds: 3
             periodSeconds: 5
+      volumes:
+        - name: tmp
+          emptyDir: {}
