@@ -20,7 +20,7 @@
       - button "Agents" [ref=e29] [cursor=pointer]:
         - img [ref=e31]
         - generic [ref=e34]: Agents
-      - button "Handoffs" [ref=e35] [cursor=pointer]:
+      - button "Handoffs" [active] [ref=e35] [cursor=pointer]:
         - img [ref=e37]
         - generic [ref=e39]: Handoffs
       - button "Cost" [ref=e40] [cursor=pointer]:
@@ -56,33 +56,28 @@
       - button "Refresh" [ref=e88] [cursor=pointer]
   - main [ref=e89]:
     - generic [ref=e91]:
-      - button "Back to agents" [ref=e92] [cursor=pointer]: ← Back
-      - generic [ref=e93]:
-        - heading "Human CEO" [level=2] [ref=e94]
-        - paragraph [ref=e95]: CEO
-      - generic [ref=e96]: IN_MEETING
-    - generic [ref=e98]:
-      - button "Config" [ref=e99] [cursor=pointer]
-      - button "Metrics" [ref=e100] [cursor=pointer]
-      - button "Activity" [ref=e101] [cursor=pointer]
-    - article [ref=e102]:
-      - generic [ref=e103]:
-        - heading "Activity" [level=2] [ref=e104]
-        - generic [ref=e105]: 1 messages
-      - list [ref=e107]:
-        - listitem [ref=e108]:
+      - heading "Warm Handoffs" [level=2] [ref=e92]
+      - paragraph [ref=e93]: Review tasks escalated from autonomous agents to human managers
+    - article [ref=e95]:
+      - generic [ref=e96]:
+        - generic [ref=e97]:
+          - generic [ref=e98]:
+            - generic [ref=e99]: SE
+            - generic [ref=e100]:
+              - heading "Escalated by swe-1" [level=3] [ref=e101]
+              - paragraph [ref=e102]: "Target Role: CEO"
+          - generic [ref=e103]: PENDING
+        - generic [ref=e105]:
+          - generic [ref=e106]:
+            - heading "Intent" [level=4] [ref=e107]
+            - paragraph [ref=e108]: Test Handoff Intent
           - generic [ref=e109]:
-            - generic [ref=e110]: pm-1
-            - generic [ref=e111]: →
-            - generic [ref=e112]: CEO
-            - generic [ref=e113]: ApprovalNeeded
-            - generic [ref=e114]: 06:39 PM
-          - paragraph [ref=e116]: All pre-launch checks passed. Requesting final CEO approval to deploy to production.
-    - article [ref=e117]:
-      - heading "Chat with Human CEO" [level=2] [ref=e119]
-      - generic [ref=e120]:
-        - generic [ref=e121]:
-          - textbox "Send a message to Human CEO…" [ref=e122]: CUJ-6 agent chat 1774377628724
-          - button "Send" [ref=e123] [cursor=pointer]
-        - alert [ref=e124]: sender agent is not registered
+            - heading "Current State" [level=4] [ref=e110]
+            - generic [ref=e111]: BLOCKED
+        - generic [ref=e113]: "Failed Attempts: 1"
+      - generic [ref=e115]:
+        - generic [ref=e117]:
+          - generic: Slide to Approve
+          - img [ref=e119]
+        - button "Reject" [ref=e122] [cursor=pointer]
 ```

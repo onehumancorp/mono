@@ -13,10 +13,10 @@
       - button "Overview" [ref=e15] [cursor=pointer]:
         - img [ref=e17]
         - generic [ref=e22]: Overview
-      - button "Meetings 4" [ref=e23] [cursor=pointer]:
+      - button "Meetings 5" [active] [ref=e23] [cursor=pointer]:
         - img [ref=e25]
         - generic [ref=e27]: Meetings
-        - generic [ref=e28]: "4"
+        - generic [ref=e28]: "5"
       - button "Agents" [ref=e29] [cursor=pointer]:
         - img [ref=e31]
         - generic [ref=e34]: Agents
@@ -52,7 +52,7 @@
   - banner [ref=e83]:
     - heading "One Human Corp Dashboard" [level=1] [ref=e85]
     - generic [ref=e86]:
-      - generic [ref=e87]: Updated 06:39 PM
+      - generic [ref=e87]: Updated 06:41 PM
       - button "Refresh" [ref=e88] [cursor=pointer]
   - main [ref=e89]:
     - generic [ref=e90]:
@@ -103,7 +103,7 @@
                   - generic [ref=e141]: swe-1
                   - generic [ref=e142]: Delegated to swe-1
                   - generic [ref=e143]: task
-                  - generic [ref=e144]: 06:33 PM
+                  - generic [ref=e144]: 06:34 PM
                 - paragraph [ref=e146]: Ship the reliability checklist before launch.
               - listitem [ref=e147]:
                 - generic [ref=e148]:
@@ -111,7 +111,7 @@
                   - generic [ref=e150]: →
                   - generic [ref=e151]: pm-1
                   - generic [ref=e152]: status
-                  - generic [ref=e153]: 06:35 PM
+                  - generic [ref=e153]: 06:36 PM
                 - paragraph [ref=e155]: Checklist is 90% complete. Waiting on design assets for the final error states.
               - listitem [ref=e156]:
                 - generic [ref=e157]:
@@ -119,7 +119,7 @@
                   - generic [ref=e159]: →
                   - generic [ref=e160]: pm-1
                   - generic [ref=e161]: status
-                  - generic [ref=e162]: 06:37 PM
+                  - generic [ref=e162]: 06:38 PM
                 - paragraph [ref=e164]: Design QA pass completed with no blockers. Assets pushed to main.
               - listitem [ref=e165]:
                 - generic [ref=e166]:
@@ -127,7 +127,7 @@
                   - generic [ref=e168]: →
                   - generic [ref=e169]: CEO
                   - generic [ref=e170]: ApprovalNeeded
-                  - generic [ref=e171]: 06:38 PM
+                  - generic [ref=e171]: 06:39 PM
                 - generic [ref=e172]:
                   - generic [ref=e173]:
                     - img [ref=e174]
@@ -139,9 +139,25 @@
                       - generic: Slide to Approve
                       - img [ref=e184]
                     - button "Reject" [ref=e187] [cursor=pointer]
-          - generic [ref=e188]:
-            - generic [ref=e189]:
-              - textbox "Inject direction or approve actions as CEO..." [ref=e190]: Playwright seeded message 1774377591496
-              - button "Send" [ref=e191] [cursor=pointer]
-            - alert [ref=e192]: "Agent Missing: The sender has been terminated or reassigned. Please hire a replacement in the Agent Network."
+              - listitem [ref=e188]:
+                - generic [ref=e189]:
+                  - generic [ref=e190]: pm-1
+                  - generic [ref=e191]: →
+                  - generic [ref=e192]: CEO
+                  - generic [ref=e193]: ApprovalNeeded
+                  - generic [ref=e194]: 06:41 PM
+                - generic [ref=e195]:
+                  - generic [ref=e196]:
+                    - img [ref=e197]
+                    - generic [ref=e199]:
+                      - heading "CEO Approval Required" [level=4] [ref=e200]
+                      - paragraph [ref=e201]: All pre-launch checks passed. Requesting final CEO approval to deploy to production.
+                  - generic [ref=e203]:
+                    - generic [ref=e205]:
+                      - generic: Slide to Approve
+                      - img [ref=e207]
+                    - button "Reject" [ref=e210] [cursor=pointer]
+          - generic [ref=e212]:
+            - textbox "Inject direction or approve actions as CEO..." [ref=e213]: Review launch blockers and owner assignments
+            - button "Send" [ref=e214] [cursor=pointer]
 ```

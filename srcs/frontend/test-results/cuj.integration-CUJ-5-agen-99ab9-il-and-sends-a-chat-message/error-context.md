@@ -52,7 +52,7 @@
   - banner [ref=e83]:
     - heading "One Human Corp Dashboard" [level=1] [ref=e85]
     - generic [ref=e86]:
-      - generic [ref=e87]: Updated 08:04 AM
+      - generic [ref=e87]: Updated 06:40 PM
       - button "Refresh" [ref=e88] [cursor=pointer]
   - main [ref=e89]:
     - generic [ref=e91]:
@@ -66,28 +66,23 @@
       - button "Metrics" [ref=e100] [cursor=pointer]
       - button "Activity" [ref=e101] [cursor=pointer]
     - article [ref=e102]:
-      - heading "Role Profile — CEO" [level=2] [ref=e104]
-      - generic [ref=e105]:
-        - generic [ref=e106]:
-          - generic [ref=e107]: Base Prompt
-          - generic [ref=e108]: Set company direction, approve tradeoffs, and keep the organization aligned with the CEO's goals.
-        - generic [ref=e109]:
-          - generic [ref=e110]: Capabilities
-          - generic [ref=e111]:
-            - generic [ref=e112]: Approve company priorities
-            - generic [ref=e113]: Review cross-functional progress
-            - generic [ref=e114]: Escalate blockers to the human CEO
-        - generic [ref=e115]:
-          - generic [ref=e116]: Context Inputs
-          - generic [ref=e117]:
-            - generic [ref=e118]: organization health
-            - generic [ref=e119]: meeting summaries
-            - generic [ref=e120]: budget burn
-    - article [ref=e121]:
-      - heading "Chat with Human CEO" [level=2] [ref=e123]
-      - generic [ref=e124]:
-        - generic [ref=e125]:
-          - textbox "Send a message to Human CEO…" [ref=e126]: E2E chat test 1774253091864
-          - button "Send" [ref=e127] [cursor=pointer]
-        - alert [ref=e128]: sender agent is not registered
+      - generic [ref=e103]:
+        - heading "Activity" [level=2] [ref=e104]
+        - generic [ref=e105]: 1 messages
+      - list [ref=e107]:
+        - listitem [ref=e108]:
+          - generic [ref=e109]:
+            - generic [ref=e110]: pm-1
+            - generic [ref=e111]: →
+            - generic [ref=e112]: CEO
+            - generic [ref=e113]: ApprovalNeeded
+            - generic [ref=e114]: 06:39 PM
+          - paragraph [ref=e116]: All pre-launch checks passed. Requesting final CEO approval to deploy to production.
+    - article [ref=e117]:
+      - heading "Chat with Human CEO" [level=2] [ref=e119]
+      - generic [ref=e120]:
+        - generic [ref=e121]:
+          - textbox "Send a message to Human CEO…" [ref=e122]: E2E chat test 1774377614981
+          - button "Send" [ref=e123] [cursor=pointer]
+        - alert [ref=e124]: sender agent is not registered
 ```
