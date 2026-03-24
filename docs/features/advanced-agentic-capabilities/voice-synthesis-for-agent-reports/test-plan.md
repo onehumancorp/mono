@@ -1,12 +1,12 @@
-# Test Plan: Voice Synthesis for Agent Reports
+# Test Plan: Voice Synthesis For Agent Reports
 
 ## 1. Testing Strategy
-Validate the end-to-end functionality, security boundaries, and performance constraints of the Voice Synthesis for Agent Reports feature using hermetic, table-driven tests.
+Validate the end-to-end functionality, security boundaries, and performance constraints of the Voice Synthesis For Agent Reports feature using hermetic, table-driven tests. Ensure we use the Database Seeder pattern to establish deterministic starting states.
 
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the Voice Synthesis for Agent Reports functionality.
+- **Action:** Simulate an agent invoking the Voice Synthesis For Agent Reports functionality.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation

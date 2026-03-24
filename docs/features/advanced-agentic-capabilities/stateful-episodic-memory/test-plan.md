@@ -1,7 +1,7 @@
 # Test Plan: Stateful Episodic Memory
 
 ## 1. Testing Strategy
-Validate the end-to-end functionality, security boundaries, and performance constraints of the Stateful Episodic Memory feature using hermetic, table-driven tests.
+Validate the end-to-end functionality, security boundaries, and performance constraints of the Stateful Episodic Memory feature using hermetic, table-driven tests. Ensure we use the Database Seeder pattern to establish deterministic starting states.
 
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow

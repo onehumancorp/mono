@@ -1,11 +1,11 @@
-# Design Document: Cross-Session Context Persistence
+# Design Document: Cross Session Context Persistence
 
 ## 1. Executive Summary
-**Objective:** Architect and implement Cross-Session Context Persistence to empower autonomous agents and human operators.
+**Objective:** Architect and implement Cross Session Context Persistence to empower autonomous agents and human operators.
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide cross-session context persistence capabilities seamlessly across all active Swarm Agents.
+Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide Cross Session Context Persistence capabilities seamlessly across all active Swarm Agents. It utilizes LangGraph Checkpointing backed by our native Kubernetes CSI Snapshotting.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.
@@ -26,3 +26,4 @@ message CrossSessionContextPersistenceEvent {
 - Ensure strict JSON validation via `dec.DisallowUnknownFields()` when decoding related payloads.
 - Maintain minimal memory overhead by avoiding O(N) string manipulations in hot paths.
 - All K8s pods associated with this feature will enforce least privilege (e.g., `runAsNonRoot: true`, `readOnlyRootFilesystem: true`).
+- Implement bounded memory growth by explicitly deleting map entries upon successful execution.

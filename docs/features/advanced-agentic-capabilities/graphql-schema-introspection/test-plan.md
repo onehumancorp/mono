@@ -1,12 +1,12 @@
 # Test Plan: GraphQL Schema Introspection
 
 ## 1. Testing Strategy
-Validate the end-to-end functionality, security boundaries, and performance constraints of the GraphQL Schema Introspection feature using hermetic, table-driven tests.
+Validate the end-to-end functionality, security boundaries, and performance constraints of the GraphQL Schema Introspection feature using hermetic, table-driven tests. Ensure we use the Database Seeder pattern to establish deterministic starting states.
 
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the GraphQL Schema Introspection functionality.
+- **Action:** Point the gateway at a mock GraphQL server, verify the schema is correctly translated into tool specifications in the registry.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation
