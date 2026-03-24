@@ -20,9 +20,19 @@ import (
 
 // AllowLocalIPsForTesting can be set to true by tests to allow resolving to localhost/127.0.0.1.
 // DO NOT use in production.
+//
+// Parameters: None
+// Returns: None
+// Errors: None
+// Side Effects: None. Constant or variable declaration.
 var AllowLocalIPsForTesting = false
 
 // LookupIPFunc can be overridden in tests to simulate DNS responses.
+//
+// Parameters: None
+// Returns: None
+// Errors: None
+// Side Effects: None. Constant or variable declaration.
 var LookupIPFunc = net.LookupIP
 
 // cgnatRange defines the RFC 6598 Shared Address Space (100.64.0.0/10)
@@ -120,8 +130,7 @@ func initSafeHTTPClient() *http.Client {
 
 var safeClient = initSafeHTTPClient()
 
-// Summary: OIDCConfig holds configuration for an external OIDC identity provider such as Keycloak or any compliant OAuth2/OIDC provider. Set OIDC_ISSUER_URL and OIDC_CLIENT_ID environment variables to enable.
-// Intent: OIDCConfig holds configuration for an external OIDC identity provider such as Keycloak or any compliant OAuth2/OIDC provider. Set OIDC_ISSUER_URL and OIDC_CLIENT_ID environment variables to enable.
+// OIDCConfig holds configuration for an external OIDC identity provider such as Keycloak or any compliant OAuth2/OIDC provider. Set OIDC_ISSUER_URL and OIDC_CLIENT_ID environment variables to enable.
 // Params: None
 // Returns: None
 // Errors: None
@@ -253,8 +262,7 @@ func rsaPublicKey(k jwk) (*rsa.PublicKey, error) {
 	}, nil
 }
 
-// Summary: ValidateOIDCToken validates an RS256 JWT issued by the configured OIDC provider, verifying the signature against the provider's JWKS.
-// Intent: ValidateOIDCToken validates an RS256 JWT issued by the configured OIDC provider, verifying the signature against the provider's JWKS.
+// ValidateOIDCToken validates an RS256 JWT issued by the configured OIDC provider, verifying the signature against the provider's JWKS.
 // Params: tokenStr, cfg
 // Returns: (*Claims, error)
 // Errors: Returns an error if applicable

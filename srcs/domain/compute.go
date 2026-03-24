@@ -5,8 +5,7 @@ import (
 	"strings"
 )
 
-// Summary: ComputeProfile defines the hardware requirements for an agent role.
-// Intent: ComputeProfile defines the hardware requirements for an agent role.
+// ComputeProfile defines the hardware requirements for an agent role.
 // Params: None
 // Returns: None
 // Errors: None
@@ -18,8 +17,7 @@ type ComputeProfile struct {
 	Priority     int    `json:"scheduling_priority"`
 }
 
-// Summary: AffinityScoreResult holds the result of the affinity scoring engine.
-// Intent: AffinityScoreResult holds the result of the affinity scoring engine.
+// AffinityScoreResult holds the result of the affinity scoring engine.
 // Params: None
 // Returns: None
 // Errors: None
@@ -29,16 +27,14 @@ type AffinityScoreResult struct {
 	Reason string
 }
 
-// Summary: AffinityEngine calculates hardware placement scores.
-// Intent: AffinityEngine calculates hardware placement scores.
+// AffinityEngine calculates hardware placement scores.
 // Params: None
 // Returns: None
 // Errors: None
 // Side Effects: None
 type AffinityEngine struct{}
 
-// Summary: CalculateScore determines the placement score and hardware requirements based on the agent's profile and task details. This implements UT-01 from the test plan.
-// Intent: CalculateScore determines the placement score and hardware requirements based on the agent's profile and task details. This implements UT-01 from the test plan.
+// CalculateScore determines the placement score and hardware requirements based on the agent's profile and task details. This implements UT-01 from the test plan.
 // Params: profile, isVIP, localWeightsCached
 // Returns: AffinityScoreResult
 // Errors: None
@@ -81,16 +77,14 @@ func (ae *AffinityEngine) CalculateScore(profile ComputeProfile, isVIP bool, loc
 	}
 }
 
-// Summary: QuotaManager enforces hardware budget limits.
-// Intent: QuotaManager enforces hardware budget limits.
+// QuotaManager enforces hardware budget limits.
 // Params: None
 // Returns: None
 // Errors: None
 // Side Effects: None
 type QuotaManager struct{}
 
-// Summary: CheckQuota validates if the requested VRAM fits within the available quota limit. This implements UT-02 from the test plan.
-// Intent: CheckQuota validates if the requested VRAM fits within the available quota limit. This implements UT-02 from the test plan.
+// CheckQuota validates if the requested VRAM fits within the available quota limit. This implements UT-02 from the test plan.
 // Params: profile, availableVRAM
 // Returns: error
 // Errors: Returns an error if applicable

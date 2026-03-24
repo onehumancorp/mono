@@ -22,8 +22,7 @@ import (
 	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
-// Summary: Server encapsulates the HTTP handlers and state for the One Human Corp dashboard.  Constraints: Must be instantiated with a valid domain.Organization, orchestration.Hub, and billing.Tracker.
-// Intent: Server encapsulates the HTTP handlers and state for the One Human Corp dashboard.  Constraints: Must be instantiated with a valid domain.Organization, orchestration.Hub, and billing.Tracker.
+// Server encapsulates the HTTP handlers and state for the One Human Corp dashboard.  Constraints: Must be instantiated with a valid domain.Organization, orchestration.Hub, and billing.Tracker.
 // Params: None
 // Returns: None
 // Errors: None
@@ -51,14 +50,19 @@ type Server struct {
 	rateLimitStates       map[string]*RateLimitState
 }
 
+// RateLimitState represents a domain entity.
+//
+// Parameters: None
+// Returns: None
+// Errors: None
+// Side Effects: None. Struct defines memory layout only.
 type RateLimitState struct {
 	Failures    int
 	LastFailure time.Time
 	Backoff     time.Duration
 }
 
-// Summary: Defines the Settings type.
-// Intent: Defines the Settings type.
+// Settings Defines the Settings type.
 // Params: None
 // Returns: None
 // Errors: None
@@ -110,8 +114,7 @@ type delegateRequest struct {
 
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 
-// Summary: ApprovalStatus represents the lifecycle state of a guardian-gate request.
-// Intent: ApprovalStatus represents the lifecycle state of a guardian-gate request.
+// ApprovalStatus represents the lifecycle state of a guardian-gate request.
 // Params: None
 // Returns: None
 // Errors: None
@@ -142,8 +145,7 @@ const (
 	ApprovalStatusRejected ApprovalStatus = "REJECTED"
 )
 
-// Summary: ApprovalRequest is created by the Guardian Agent when a high-risk action requires explicit human sign-off.
-// Intent: ApprovalRequest is created by the Guardian Agent when a high-risk action requires explicit human sign-off.
+// ApprovalRequest is created by the Guardian Agent when a high-risk action requires explicit human sign-off.
 // Params: None
 // Returns: None
 // Errors: None
@@ -177,8 +179,7 @@ type approvalDecideRequest struct {
 
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
 
-// Summary: HandoffPackage carries the structured context an agent sends to a human manager when escalating a task it cannot complete autonomously.
-// Intent: HandoffPackage carries the structured context an agent sends to a human manager when escalating a task it cannot complete autonomously.
+// HandoffPackage carries the structured context an agent sends to a human manager when escalating a task it cannot complete autonomously.
 // Params: None
 // Returns: None
 // Errors: None
@@ -204,8 +205,7 @@ type handoffCreateRequest struct {
 
 // ── Agent Identity (SPIFFE/SPIRE abstraction) ─────────────────────────────────
 
-// Summary: AgentIdentity represents the SPIFFE SVID certificate issued to an agent workload.
-// Intent: AgentIdentity represents the SPIFFE SVID certificate issued to an agent workload.
+// AgentIdentity represents the SPIFFE SVID certificate issued to an agent workload.
 // Params: None
 // Returns: None
 // Errors: None
@@ -220,8 +220,7 @@ type AgentIdentity struct {
 
 // ── Extensible Skill Import Framework ────────────────────────────────────────
 
-// Summary: SkillPackRole pairs a role name with its override base prompt.
-// Intent: SkillPackRole pairs a role name with its override base prompt.
+// SkillPackRole pairs a role name with its override base prompt.
 // Params: None
 // Returns: None
 // Errors: None
@@ -231,8 +230,7 @@ type SkillPackRole struct {
 	BasePrompt string `json:"basePrompt"`
 }
 
-// Summary: SkillPack is an importable module that extends or overrides agent capabilities.
-// Intent: SkillPack is an importable module that extends or overrides agent capabilities.
+// SkillPack is an importable module that extends or overrides agent capabilities.
 // Params: None
 // Returns: None
 // Errors: None
@@ -259,8 +257,7 @@ type skillImportRequest struct {
 
 // ── Org Snapshot & Recovery ───────────────────────────────────────────────────
 
-// Summary: OrgSnapshot is a point-in-time metadata record of an organization's state.
-// Intent: OrgSnapshot is a point-in-time metadata record of an organization's state.
+// OrgSnapshot is a point-in-time metadata record of an organization's state.
 // Params: None
 // Returns: None
 // Errors: None
@@ -287,8 +284,7 @@ type snapshotRestoreRequest struct {
 
 // ── Marketplace ───────────────────────────────────────────────────────────────
 
-// Summary: MarketplaceItem describes a community-published asset.
-// Intent: MarketplaceItem describes a community-published asset.
+// MarketplaceItem describes a community-published asset.
 // Params: None
 // Returns: None
 // Errors: None
@@ -306,8 +302,7 @@ type MarketplaceItem struct {
 
 // ── Real-time Analytics ───────────────────────────────────────────────────────
 
-// Summary: AnalyticsSummary surfaces operational health metrics.
-// Intent: AnalyticsSummary surfaces operational health metrics.
+// AnalyticsSummary surfaces operational health metrics.
 // Params: None
 // Returns: None
 // Errors: None
@@ -323,8 +318,7 @@ type AnalyticsSummary struct {
 	TokenVelocity       int64   `json:"tokenVelocity"`
 }
 
-// Summary: MCPTool represents a registered tool in the MCP gateway.
-// Intent: MCPTool represents a registered tool in the MCP gateway.
+// MCPTool represents a registered tool in the MCP gateway.
 // Params: None
 // Returns: None
 // Errors: None
@@ -337,8 +331,7 @@ type MCPTool struct {
 	Status      string `json:"status"`
 }
 
-// Summary: DomainInfo describes a supported organizational domain template.
-// Intent: DomainInfo describes a supported organizational domain template.
+// DomainInfo describes a supported organizational domain template.
 // Params: None
 // Returns: None
 // Errors: None
@@ -386,13 +379,14 @@ var statusOrder = []orchestration.Status{
 }
 
 // NewServer initializes a new Dashboard HTTP handler that routes all API and frontend requests.
-//
 // Parameters:
 //   - org: domain.Organization; The base organizational structure.
 //   - hub: *orchestration.Hub; The agent communication and meeting room registry.
 //   - tracker: *billing.Tracker; The cost and token tracking engine.
-//
 // Returns: An http.Handler that serves the dashboard REST APIs and static React frontend.
+//
+// Errors: None
+// Side Effects: Handles HTTP request lifecycle and writes to the HTTP response stream.
 func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker, authStore ...*auth.Store) http.Handler {
 	var store *auth.Store
 	if len(authStore) > 0 && authStore[0] != nil {
@@ -1378,8 +1372,7 @@ type issueAssignRequest struct {
 
 // ── B2B Collaboration ─────────────────────────────────────────────────────────
 
-// Summary: TrustAgreementStatus represents the lifecycle of a B2B trust agreement.
-// Intent: TrustAgreementStatus represents the lifecycle of a B2B trust agreement.
+// TrustAgreementStatus represents the lifecycle of a B2B trust agreement.
 // Params: None
 // Returns: None
 // Errors: None
@@ -1410,8 +1403,7 @@ const (
 	TrustStatusRevoked TrustAgreementStatus = "REVOKED"
 )
 
-// Summary: TrustAgreement is a federated trust relationship between two OHC organisations. It enables cross-org agent collaboration using SPIFFE-federated JWTs.
-// Intent: TrustAgreement is a federated trust relationship between two OHC organisations. It enables cross-org agent collaboration using SPIFFE-federated JWTs.
+// TrustAgreement is a federated trust relationship between two OHC organisations. It enables cross-org agent collaboration using SPIFFE-federated JWTs.
 // Params: None
 // Returns: None
 // Errors: None
@@ -1433,8 +1425,7 @@ type b2bHandshakeRequest struct {
 
 // ── Autonomous SRE / Incident Management ─────────────────────────────────────
 
-// Summary: IncidentSeverity classifies the urgency of an operational incident.
-// Intent: IncidentSeverity classifies the urgency of an operational incident.
+// IncidentSeverity classifies the urgency of an operational incident.
 // Params: None
 // Returns: None
 // Errors: None
@@ -1465,8 +1456,7 @@ const (
 	SeverityP2 IncidentSeverity = "P2"
 )
 
-// Summary: IncidentStatus reflects the investigation lifecycle state.
-// Intent: IncidentStatus reflects the investigation lifecycle state.
+// IncidentStatus reflects the investigation lifecycle state.
 // Params: None
 // Returns: None
 // Errors: None
@@ -1497,8 +1487,7 @@ const (
 	IncidentStatusResolved IncidentStatus = "RESOLVED"
 )
 
-// Summary: Incident represents an operational event requiring SRE attention.
-// Intent: Incident represents an operational event requiring SRE attention.
+// Incident represents an operational event requiring SRE attention.
 // Params: None
 // Returns: None
 // Errors: None
@@ -1529,8 +1518,7 @@ type incidentStatusRequest struct {
 
 // ── Compute Optimization / Hardware-Aware Scheduling ─────────────────────────
 
-// Summary: ComputeProfile defines the hardware requirements for a given agent role.
-// Intent: ComputeProfile defines the hardware requirements for a given agent role.
+// ComputeProfile defines the hardware requirements for a given agent role.
 // Params: None
 // Returns: None
 // Errors: None
@@ -1550,8 +1538,7 @@ type computeProfileRequest struct {
 	SchedulingPriority int    `json:"schedulingPriority"`
 }
 
-// Summary: ClusterStatus reflects the health of a remote Kubernetes cluster region.
-// Intent: ClusterStatus reflects the health of a remote Kubernetes cluster region.
+// ClusterStatus reflects the health of a remote Kubernetes cluster region.
 // Params: None
 // Returns: None
 // Errors: None
@@ -1569,8 +1556,7 @@ type ClusterStatus struct {
 // defaultBudgetAlertNotifyPct is the default notification threshold (80 %).
 const defaultBudgetAlertNotifyPct = 0.8
 
-// Summary: BudgetAlert defines a spending threshold with notification behaviour.
-// Intent: BudgetAlert defines a spending threshold with notification behaviour.
+// BudgetAlert defines a spending threshold with notification behaviour.
 // Params: None
 // Returns: None
 // Errors: None
@@ -1592,8 +1578,7 @@ type budgetAlertRequest struct {
 
 // ── Automated SDLC / Pipelines ────────────────────────────────────────────────
 
-// Summary: PipelineStatus reflects the lifecycle of an autonomous CI/CD pipeline.
-// Intent: PipelineStatus reflects the lifecycle of an autonomous CI/CD pipeline.
+// PipelineStatus reflects the lifecycle of an autonomous CI/CD pipeline.
 // Params: None
 // Returns: None
 // Errors: None
@@ -1645,8 +1630,7 @@ const (
 	PipelineStatusFailed PipelineStatus = "FAILED"
 )
 
-// Summary: Pipeline represents an autonomous implementation pipeline from spec to production.
-// Intent: Pipeline represents an autonomous implementation pipeline from spec to production.
+// Pipeline represents an autonomous implementation pipeline from spec to production.
 // Params: None
 // Returns: None
 // Errors: None

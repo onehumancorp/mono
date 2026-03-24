@@ -5,8 +5,7 @@ import (
 	"fmt"
 )
 
-// Summary: SemanticKernelAdapter implements UniversalAdapter for Semantic Kernel.
-// Intent: SemanticKernelAdapter implements UniversalAdapter for Semantic Kernel.
+// SemanticKernelAdapter implements UniversalAdapter for Semantic Kernel.
 // Params: None
 // Returns: None
 // Errors: None
@@ -15,8 +14,7 @@ type SemanticKernelAdapter struct {
 	Identity string
 }
 
-// Summary: NewSemanticKernelAdapter creates a new SemanticKernelAdapter.
-// Intent: NewSemanticKernelAdapter creates a new SemanticKernelAdapter.
+// NewSemanticKernelAdapter creates a new SemanticKernelAdapter.
 // Params: identity
 // Returns: *SemanticKernelAdapter, error
 // Errors: Returns error if identity is invalid
@@ -30,8 +28,7 @@ func NewSemanticKernelAdapter(identity string) (*SemanticKernelAdapter, error) {
 	}, nil
 }
 
-// Summary: SyncState synchronizes Semantic Kernel state.
-// Intent: SyncState synchronizes Semantic Kernel state.
+// SyncState synchronizes Semantic Kernel state.
 // Params: ctx, state
 // Returns: error
 // Errors: Returns an error if state is nil
@@ -53,8 +50,7 @@ func (a *SemanticKernelAdapter) SyncState(ctx context.Context, state *State) err
 	return nil
 }
 
-// Summary: ExecuteCommand functionality for Semantic Kernel.
-// Intent: ExecuteCommand functionality for Semantic Kernel.
+// ExecuteCommand functionality for Semantic Kernel.
 // Params: ctx, cmd
 // Returns: string, error
 // Errors: Returns an error if cmd is empty

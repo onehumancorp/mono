@@ -10,8 +10,7 @@ import (
 	"strings"
 )
 
-// Summary: Defines the Server type.
-// Intent: Defines the Server type.
+// Server Defines the Server type.
 // Params: None
 // Returns: None
 // Errors: None
@@ -21,8 +20,7 @@ type Server struct {
 	proxy     *httputil.ReverseProxy
 }
 
-// Summary: New functionality.
-// Intent: New functionality.
+// New functionality.
 // Params: None
 // Returns: (*Server, error)
 // Errors: Returns an error if applicable
@@ -49,8 +47,7 @@ func New() (*Server, error) {
 	}, nil
 }
 
-// Summary: Handler functionality.
-// Intent: Handler functionality.
+// Handler functionality.
 // Params: None
 // Returns: http.Handler
 // Errors: None

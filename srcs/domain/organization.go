@@ -2,8 +2,7 @@ package domain
 
 import "time"
 
-// Summary: Role represents a designated job title or operational function within the AI workforce.
-// Intent: Role represents a designated job title or operational function within the AI workforce.
+// Role represents a designated job title or operational function within the AI workforce.
 // Params: None
 // Returns: None
 // Errors: None
@@ -141,8 +140,7 @@ const (
 	RolePayrollManager Role = "PAYROLL_MANAGER"
 )
 
-// Summary: Member defines an individual contributor within the organisation.  Constraints: An agent member must have isHuman set to false. The CEO must be a human.
-// Intent: Member defines an individual contributor within the organisation.  Constraints: An agent member must have isHuman set to false. The CEO must be a human.
+// Member defines an individual contributor within the organisation.  Constraints: An agent member must have isHuman set to false. The CEO must be a human.
 // Params: None
 // Returns: None
 // Errors: None
@@ -155,8 +153,7 @@ type Member struct {
 	IsHuman   bool   `json:"isHuman"`
 }
 
-// Summary: RoleProfile stores the playbook, prompt, and capabilities that instruct an AI on how to perform a Role.
-// Intent: RoleProfile stores the playbook, prompt, and capabilities that instruct an AI on how to perform a Role.
+// RoleProfile stores the playbook, prompt, and capabilities that instruct an AI on how to perform a Role.
 // Params: None
 // Returns: None
 // Errors: None
@@ -168,8 +165,7 @@ type RoleProfile struct {
 	ContextInputs []string `json:"contextInputs"`
 }
 
-// Summary: Organization aggregates the hierarchy, workforce details, and role playbooks for a domain.
-// Intent: Organization aggregates the hierarchy, workforce details, and role playbooks for a domain.
+// Organization aggregates the hierarchy, workforce details, and role playbooks for a domain.
 // Params: None
 // Returns: None
 // Errors: None
@@ -185,14 +181,15 @@ type Organization struct {
 }
 
 // NewSoftwareCompany constructs a pre-configured engineering organisation with standard tech roles.
-//
 // Parameters:
 //   - id: string; Unique identifier for the organization.
 //   - name: string; The display name for the company.
 //   - ceoName: string; The human CEO's name.
 //   - now: time.Time; The organization's creation timestamp.
-//
 // Returns: A fully populated software company Organization ready for the orchestration Hub.
+//
+// Errors: None
+// Side Effects: Allocates memory and initializes internal state.
 func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	directorID := id + "-director-eng"
@@ -221,11 +218,12 @@ func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 }
 
 // MemberByID retrieves a specific team member from the organisation by ID.
-//
 // Parameters:
 //   - id: string; The unique identifier of the member.
-//
 // Returns: The Member and a boolean indicating if the member was found.
+//
+// Errors: None
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (o Organization) MemberByID(id string) (Member, bool) {
 	for _, member := range o.Members {
 		if member.ID == id {
@@ -237,11 +235,12 @@ func (o Organization) MemberByID(id string) (Member, bool) {
 }
 
 // MembersByManager fetches all direct reports for a given manager ID.
-//
 // Parameters:
 //   - managerID: string; The unique identifier of the manager.
-//
 // Returns: A slice of Member objects representing the direct reports.
+//
+// Errors: None
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (o Organization) MembersByManager(managerID string) []Member {
 	var members []Member
 	for _, member := range o.Members {
@@ -254,11 +253,12 @@ func (o Organization) MembersByManager(managerID string) []Member {
 }
 
 // RoleProfile retrieves the execution playbook for a specific role within this organisation.
-//
 // Parameters:
 //   - role: Role; The role archetype to lookup.
-//
 // Returns: The RoleProfile and a boolean indicating if the playbook exists.
+//
+// Errors: None
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (o Organization) RoleProfile(role Role) (RoleProfile, bool) {
 	for _, profile := range o.RoleProfiles {
 		if profile.Role == role {
@@ -387,14 +387,15 @@ func defaultSoftwareCompanyRoleProfiles() []RoleProfile {
 }
 
 // NewDigitalMarketingAgency constructs a pre-configured marketing organisation with standard growth roles.
-//
 // Parameters:
 //   - id: string; Unique identifier for the organization.
 //   - name: string; The display name for the agency.
 //   - ceoName: string; The human CEO's name.
 //   - now: time.Time; The organization's creation timestamp.
-//
 // Returns: A fully populated marketing agency Organization.
+//
+// Errors: None
+// Side Effects: Allocates memory and initializes internal state.
 func NewDigitalMarketingAgency(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	marketingDirectorID := id + "-director-mkt"
@@ -475,14 +476,15 @@ func defaultDigitalMarketingRoleProfiles() []RoleProfile {
 }
 
 // NewAccountingFirm constructs a pre-configured financial services organisation with audit and tax roles.
-//
 // Parameters:
 //   - id: string; Unique identifier for the organization.
 //   - name: string; The display name for the firm.
 //   - ceoName: string; The human CEO's name.
 //   - now: time.Time; The organization's creation timestamp.
-//
 // Returns: A fully populated accounting firm Organization.
+//
+// Errors: None
+// Side Effects: Allocates memory and initializes internal state.
 func NewAccountingFirm(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	cfoID := id + "-cfo"

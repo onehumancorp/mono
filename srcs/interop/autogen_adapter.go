@@ -5,8 +5,7 @@ import (
 	"fmt"
 )
 
-// Summary: AutoGenAdapter implements UniversalAdapter for AutoGen.
-// Intent: AutoGenAdapter implements UniversalAdapter for AutoGen.
+// AutoGenAdapter implements UniversalAdapter for AutoGen.
 // Params: None
 // Returns: None
 // Errors: None
@@ -15,8 +14,7 @@ type AutoGenAdapter struct {
 	Identity string
 }
 
-// Summary: NewAutoGenAdapter creates a new AutoGenAdapter.
-// Intent: NewAutoGenAdapter creates a new AutoGenAdapter.
+// NewAutoGenAdapter creates a new AutoGenAdapter.
 // Params: identity
 // Returns: *AutoGenAdapter, error
 // Errors: Returns error if identity is invalid
@@ -30,8 +28,7 @@ func NewAutoGenAdapter(identity string) (*AutoGenAdapter, error) {
 	}, nil
 }
 
-// Summary: SyncState functionality.
-// Intent: SyncState functionality.
+// SyncState functionality.
 // Params: ctx, state
 // Returns: error
 // Errors: Returns an error if applicable
@@ -52,8 +49,7 @@ func (a *AutoGenAdapter) SyncState(ctx context.Context, state *State) error {
 	return nil
 }
 
-// Summary: ExecuteCommand functionality.
-// Intent: ExecuteCommand functionality.
+// ExecuteCommand functionality.
 // Params: ctx, cmd
 // Returns: (string, error)
 // Errors: Returns an error if applicable

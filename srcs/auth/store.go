@@ -46,8 +46,7 @@ var rolePermissions = map[string][]string{
 	RoleViewer:   {"read"},
 }
 
-// Summary: User represents a human user account.
-// Intent: User represents a human user account.
+// User represents a human user account.
 // Params: None
 // Returns: None
 // Errors: None
@@ -64,8 +63,7 @@ type User struct {
 	OIDCSubject  string    `json:"oidcSubject,omitempty"`
 }
 
-// Summary: UserPublic is a safe subset of User with no sensitive fields.
-// Intent: UserPublic is a safe subset of User with no sensitive fields.
+// UserPublic is a safe subset of User with no sensitive fields.
 // Params: None
 // Returns: None
 // Errors: None
@@ -81,8 +79,7 @@ type UserPublic struct {
 	OIDCSubject string    `json:"oidcSubject,omitempty"`
 }
 
-// Summary: PublicView returns a UserPublic with no sensitive fields.
-// Intent: PublicView returns a UserPublic with no sensitive fields.
+// PublicView returns a UserPublic with no sensitive fields.
 // Params: None
 // Returns: UserPublic
 // Errors: None
@@ -100,8 +97,7 @@ func (u *User) PublicView() UserPublic {
 	}
 }
 
-// Summary: Role represents a named permission group.
-// Intent: Role represents a named permission group.
+// Role represents a named permission group.
 // Params: None
 // Returns: None
 // Errors: None
@@ -113,8 +109,7 @@ type Role struct {
 	CreatedAt   time.Time `json:"createdAt"`
 }
 
-// Summary: Store is an in-memory user/role store that can be backed by Redis/DB in future. All exported methods are goroutine-safe.
-// Intent: Store is an in-memory user/role store that can be backed by Redis/DB in future. All exported methods are goroutine-safe.
+// Store is an in-memory user/role store that can be backed by Redis/DB in future. All exported methods are goroutine-safe.
 // Params: None
 // Returns: None
 // Errors: None
@@ -131,8 +126,7 @@ type Store struct {
 	oidcCfg OIDCConfig
 }
 
-// Summary: NewStore creates a Store seeded with default roles and an admin user. Admin credentials are read from ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_EMAIL environment variables (defaults: admin / admin / admin@localhost).
-// Intent: NewStore creates a Store seeded with default roles and an admin user. Admin credentials are read from ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_EMAIL environment variables (defaults: admin / admin / admin@localhost).
+// NewStore creates a Store seeded with default roles and an admin user. Admin credentials are read from ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_EMAIL environment variables (defaults: admin / admin / admin@localhost).
 // Params: None
 // Returns: *Store
 // Errors: None
@@ -196,8 +190,7 @@ func NewStore() *Store {
 	return s
 }
 
-// Summary: CreateUser creates a new user with the given credentials and roles.
-// Intent: CreateUser creates a new user with the given credentials and roles.
+// CreateUser creates a new user with the given credentials and roles.
 // Params: username, email, password, roles
 // Returns: (*User, error)
 // Errors: Returns an error if applicable
@@ -241,8 +234,7 @@ func (s *Store) CreateUser(username, email, password string, roles []string) (*U
 	return u, nil
 }
 
-// Summary: Authenticate validates username+password and returns the matching user.
-// Intent: Authenticate validates username+password and returns the matching user.
+// Authenticate validates username+password and returns the matching user.
 // Params: username, password
 // Returns: (*User, error)
 // Errors: Returns an error if applicable
@@ -263,8 +255,7 @@ func (s *Store) Authenticate(username, password string) (*User, error) {
 	return u, nil
 }
 
-// Summary: GetUser returns a user by ID.
-// Intent: GetUser returns a user by ID.
+// GetUser returns a user by ID.
 // Params: id
 // Returns: (*User, bool)
 // Errors: None
@@ -276,8 +267,7 @@ func (s *Store) GetUser(id string) (*User, bool) {
 	return u, ok
 }
 
-// Summary: ListUsers returns all users.
-// Intent: ListUsers returns all users.
+// ListUsers returns all users.
 // Params: None
 // Returns: []*User
 // Errors: None
@@ -292,8 +282,7 @@ func (s *Store) ListUsers() []*User {
 	return out
 }
 
-// Summary: UpdateUser mutates mutable fields on the user identified by id.
-// Intent: UpdateUser mutates mutable fields on the user identified by id.
+// UpdateUser mutates mutable fields on the user identified by id.
 // Params: id, emailPtr, roles, activePtr
 // Returns: (*User, error)
 // Errors: Returns an error if applicable
@@ -324,8 +313,7 @@ func (s *Store) UpdateUser(id string, emailPtr *string, roles []string, activePt
 	return u, nil
 }
 
-// Summary: DeleteUser removes a user by ID.
-// Intent: DeleteUser removes a user by ID.
+// DeleteUser removes a user by ID.
 // Params: id
 // Returns: error
 // Errors: Returns an error if applicable
@@ -346,8 +334,7 @@ func (s *Store) DeleteUser(id string) error {
 	return nil
 }
 
-// Summary: ListRoles returns all roles.
-// Intent: ListRoles returns all roles.
+// ListRoles returns all roles.
 // Params: None
 // Returns: []*Role
 // Errors: None
@@ -362,8 +349,7 @@ func (s *Store) ListRoles() []*Role {
 	return out
 }
 
-// Summary: CreateRole adds a new named role with the given permissions.
-// Intent: CreateRole adds a new named role with the given permissions.
+// CreateRole adds a new named role with the given permissions.
 // Params: name, permissions
 // Returns: (*Role, error)
 // Errors: Returns an error if applicable
@@ -387,8 +373,7 @@ func (s *Store) CreateRole(name string, permissions []string) (*Role, error) {
 	return r, nil
 }
 
-// Summary: RevokeToken records a JTI as revoked until its associated expiry.
-// Intent: RevokeToken records a JTI as revoked until its associated expiry.
+// RevokeToken records a JTI as revoked until its associated expiry.
 // Params: jti, exp
 // Returns: None
 // Errors: None
@@ -406,8 +391,7 @@ func (s *Store) RevokeToken(jti string, exp time.Time) {
 	}
 }
 
-// Summary: IsRevoked reports whether a JTI has been revoked.
-// Intent: IsRevoked reports whether a JTI has been revoked.
+// IsRevoked reports whether a JTI has been revoked.
 // Params: jti
 // Returns: bool
 // Errors: None
@@ -419,24 +403,21 @@ func (s *Store) IsRevoked(jti string) bool {
 	return ok
 }
 
-// Summary: Secret returns the HS256 signing secret.
-// Intent: Secret returns the HS256 signing secret.
+// Secret returns the HS256 signing secret.
 // Params: None
 // Returns: []byte
 // Errors: None
 // Side Effects: None
 func (s *Store) Secret() []byte { return s.secret }
 
-// Summary: OIDCCfg returns the OIDC configuration.
-// Intent: OIDCCfg returns the OIDC configuration.
+// OIDCCfg returns the OIDC configuration.
 // Params: None
 // Returns: OIDCConfig
 // Errors: None
 // Side Effects: None
 func (s *Store) OIDCCfg() OIDCConfig { return s.oidcCfg }
 
-// Summary: GetOrCreateOIDCUser returns an existing user that matches the OIDC subject, or creates a new viewer-role user from the OIDC claims.
-// Intent: GetOrCreateOIDCUser returns an existing user that matches the OIDC subject, or creates a new viewer-role user from the OIDC claims.
+// GetOrCreateOIDCUser returns an existing user that matches the OIDC subject, or creates a new viewer-role user from the OIDC claims.
 // Params: sub, email, preferredUsername
 // Returns: *User
 // Errors: None

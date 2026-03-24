@@ -5,8 +5,7 @@ import (
 	"fmt"
 )
 
-// Summary: OpenClawAdapter implements UniversalAdapter for OpenClaw.
-// Intent: OpenClawAdapter implements UniversalAdapter for OpenClaw.
+// OpenClawAdapter implements UniversalAdapter for OpenClaw.
 // Params: None
 // Returns: None
 // Errors: None
@@ -15,8 +14,7 @@ type OpenClawAdapter struct {
 	Identity string
 }
 
-// Summary: NewOpenClawAdapter creates a new OpenClawAdapter.
-// Intent: NewOpenClawAdapter creates a new OpenClawAdapter.
+// NewOpenClawAdapter creates a new OpenClawAdapter.
 // Params: identity
 // Returns: *OpenClawAdapter, error
 // Errors: Returns error if identity is invalid
@@ -30,8 +28,7 @@ func NewOpenClawAdapter(identity string) (*OpenClawAdapter, error) {
 	}, nil
 }
 
-// Summary: SyncState functionality.
-// Intent: SyncState functionality.
+// SyncState functionality.
 // Params: ctx, state
 // Returns: error
 // Errors: Returns an error if applicable
@@ -53,8 +50,7 @@ func (a *OpenClawAdapter) SyncState(ctx context.Context, state *State) error {
 	return nil
 }
 
-// Summary: ExecuteCommand functionality.
-// Intent: ExecuteCommand functionality.
+// ExecuteCommand functionality.
 // Params: ctx, cmd
 // Returns: (string, error)
 // Errors: Returns an error if applicable

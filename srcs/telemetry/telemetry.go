@@ -27,12 +27,11 @@ var (
 )
 
 // InitTelemetry configures and starts the OpenTelemetry metrics provider with a Prometheus exporter.
-//
 // Returns: A shutdown function to clean up resources, and an error if initialization fails.
-//
 // Errors: Fails if the Prometheus exporter cannot be created or registered.
-//
 // Side Effects: Modifies global OpenTelemetry state and registers metrics with the default Prometheus registerer.
+//
+// Parameters: None
 func InitTelemetry() (func(), error) {
 	exporter, err := otelprom.New(otelprom.WithRegisterer(prometheus.DefaultRegisterer))
 	if err != nil {
@@ -61,6 +60,12 @@ type mockableMeter interface {
 	Float64Histogram(name string, options ...metric.Float64HistogramOption) (metric.Float64Histogram, error)
 }
 
+// InitWithMeter executes the component operation.
+//
+// Parameters: m (mockableMeter)
+// Returns: error
+// Errors: Returns a standard Go error if preconditions fail or validation errors occur
+// Side Effects: Allocates memory and initializes internal state.
 func InitWithMeter(m mockableMeter) error {
 	var err error
 	var errs []error
@@ -120,13 +125,12 @@ func InitWithMeter(m mockableMeter) error {
 }
 
 // Middleware injects telemetry instrumentation into an HTTP handler chain.
-//
 // Parameters:
 //   - next: http.Handler; The next HTTP handler in the request pipeline.
-//
 // Returns: An http.Handler that wraps the provided handler with latency and request counting metrics.
-//
 // Side Effects: Records HTTP request duration and count. May log request details based on the Verbosity level.
+//
+// Errors: None
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -149,8 +153,7 @@ func Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// Summary: Verbosity controls the detail level of standard output logging for the telemetry module.  Constraints: Defaults to 1. Set to 2 or higher for verbose request logging.
-// Intent: Verbosity controls the detail level of standard output logging for the telemetry module.  Constraints: Defaults to 1. Set to 2 or higher for verbose request logging.
+// Verbosity controls the detail level of standard output logging for the telemetry module.  Constraints: Defaults to 1. Set to 2 or higher for verbose request logging.
 // Params: None
 // Returns: None
 // Errors: None
@@ -158,16 +161,16 @@ func Middleware(next http.Handler) http.Handler {
 var Verbosity = 1 // Default level
 
 // MetricsHandler provides an HTTP handler that exposes the collected Prometheus metrics.
-//
 // Returns: An http.Handler that serves the /metrics endpoint.
-//
 // Side Effects: None. Read-only exposure of registered Prometheus metrics.
+//
+// Parameters: None
+// Errors: None
 func MetricsHandler() http.Handler {
 	return promhttp.Handler()
 }
 
 // RecordTokenUsage increments the global counter for LLM tokens consumed by the workforce.
-//
 // Parameters:
 //   - ctx: context.Context; The context of the active trace or request.
 //   - agentID: string; The identifier of the agent consuming the tokens.
@@ -175,10 +178,10 @@ func MetricsHandler() http.Handler {
 //   - model: string; The specific AI model being inferred (e.g., gpt-4o).
 //   - tokenType: string; The type of tokens (e.g., prompt or completion).
 //   - count: int64; The number of tokens consumed.
-//
 // Returns: Nothing.
-//
 // Side Effects: Updates the ohc_token_usage_total Prometheus metric.
+//
+// Errors: None
 func RecordTokenUsage(ctx context.Context, agentID, role, model, tokenType string, count int64) {
 	if tokenUsageCounter == nil {
 		return
@@ -192,16 +195,15 @@ func RecordTokenUsage(ctx context.Context, agentID, role, model, tokenType strin
 }
 
 // RecordAgentApiCall increments the global counter for external tool or API invocations made by agents.
-//
 // Parameters:
 //   - ctx: context.Context; The context of the active trace or request.
 //   - agentID: string; The identifier of the agent making the call.
 //   - role: string; The role of the agent.
 //   - api: string; The name or route of the invoked API/tool.
-//
 // Returns: Nothing.
-//
 // Side Effects: Updates the ohc_agent_api_calls_total Prometheus metric.
+//
+// Errors: None
 func RecordAgentApiCall(ctx context.Context, agentID, role, api string) {
 	if agentApiCallsCounter == nil {
 		return
@@ -214,14 +216,13 @@ func RecordAgentApiCall(ctx context.Context, agentID, role, api string) {
 }
 
 // RecordHumanInteraction increments the global counter for events involving direct human oversight.
-//
 // Parameters:
 //   - ctx: context.Context; The context of the active trace or request.
 //   - interactionType: string; The category of interaction (e.g., approval, handoff).
-//
 // Returns: Nothing.
-//
 // Side Effects: Updates the ohc_human_interactions_total Prometheus metric.
+//
+// Errors: None
 func RecordHumanInteraction(ctx context.Context, interactionType string) {
 	if humanInteractionsCounter == nil {
 		return
@@ -232,14 +233,13 @@ func RecordHumanInteraction(ctx context.Context, interactionType string) {
 }
 
 // RecordMeetingEvent increments the global counter for collaborative meeting room actions.
-//
 // Parameters:
 //   - ctx: context.Context; The context of the active trace or request.
 //   - eventType: string; The nature of the meeting event (e.g., start, message, end).
-//
 // Returns: Nothing.
-//
 // Side Effects: Updates the ohc_meeting_events_total Prometheus metric.
+//
+// Errors: None
 func RecordMeetingEvent(ctx context.Context, eventType string) {
 	if meetingEventsCounter == nil {
 		return
@@ -250,7 +250,6 @@ func RecordMeetingEvent(ctx context.Context, eventType string) {
 }
 
 // LogAgentExecution provides structured JSON logging for agent execution traces.
-//
 // Parameters:
 //   - ctx: context.Context; The context of the active trace or request.
 //   - agentID: string; The identifier of the agent.
@@ -258,10 +257,10 @@ func RecordMeetingEvent(ctx context.Context, eventType string) {
 //   - api: string; The API or tool being executed.
 //   - eventType: string; The specific type of the event (e.g. task, status).
 //   - content: string; The content or message payload associated with the execution.
-//
 // Returns: Nothing.
-//
 // Side Effects: Emits a structured log via slog.
+//
+// Errors: None
 func LogAgentExecution(ctx context.Context, agentID, role, api, eventType, content string) {
 	slog.InfoContext(ctx, "agent execution trace",
 		"component", "telemetry",

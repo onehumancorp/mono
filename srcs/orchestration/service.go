@@ -20,8 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Summary: Status indicates the current operational phase of an AI agent within the workforce.
-// Intent: Status indicates the current operational phase of an AI agent within the workforce.
+// Status indicates the current operational phase of an AI agent within the workforce.
 // Params: None
 // Returns: None
 // Errors: None
@@ -161,8 +160,7 @@ const (
 	EventApprovalNeeded = "ApprovalNeeded"
 )
 
-// Summary: Agent represents an active, instantiated worker within the AI organisation.
-// Intent: Agent represents an active, instantiated worker within the AI organisation.
+// Agent represents an active, instantiated worker within the AI organisation.
 // Params: None
 // Returns: None
 // Errors: None
@@ -180,8 +178,7 @@ type Agent struct {
 	Region       string `json:"region,omitempty"`
 }
 
-// Summary: Message encapsulates a discrete event, command, or context update passed between agents or rooms.
-// Intent: Message encapsulates a discrete event, command, or context update passed between agents or rooms.
+// Message encapsulates a discrete event, command, or context update passed between agents or rooms.
 // Params: None
 // Returns: None
 // Errors: None
@@ -199,13 +196,14 @@ type Message struct {
 // DelegateTask allows an agent in Delegate Mode to act as a routing proxy.
 // It inspects an incoming task, updates the sender and recipient fields,
 // and forwards the task to the best-fit specialist agent from the registry.
-//
 // Parameters:
 //   - fromAgentID: string; The unique identifier of the delegating agent.
 //   - toAgentID: string; The unique identifier of the specialist agent.
 //   - task: Message; The task payload to be delegated.
-//
 // Returns: An error if either the delegating agent or the specialist agent does not exist.
+//
+// Errors: Returns a standard Go error if preconditions fail or validation errors occur
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
 	h.mu.RLock()
 	if _, ok := h.agents[fromAgentID]; !ok {
@@ -223,8 +221,7 @@ func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
 	return h.Publish(task)
 }
 
-// Summary: MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
-// Intent: MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
+// MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
 // Params: None
 // Returns: None
 // Errors: None
@@ -236,8 +233,7 @@ type MeetingRoom struct {
 	Transcript   []Message `json:"transcript"`
 }
 
-// Summary: Hub acts as the thread-safe central message broker and runtime state manager for the AI workforce.  Constraints: Must be accessed via its exported methods to preserve data race safety.
-// Intent: Hub acts as the thread-safe central message broker and runtime state manager for the AI workforce.  Constraints: Must be accessed via its exported methods to preserve data race safety.
+// Hub acts as the thread-safe central message broker and runtime state manager for the AI workforce.  Constraints: Must be accessed via its exported methods to preserve data race safety.
 // Params: None
 // Returns: None
 // Errors: None
@@ -252,8 +248,11 @@ type Hub struct {
 }
 
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
-//
 // Returns: An instantiated *Hub ready to register agents and route events.
+//
+// Parameters: None
+// Errors: None
+// Side Effects: Allocates memory and initializes internal state.
 func NewHub() *Hub {
 	return &Hub{
 		agents:   map[string]Agent{},
@@ -263,8 +262,7 @@ func NewHub() *Hub {
 	}
 }
 
-// Summary: RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.  Parameters:   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
-// Intent: RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.  Parameters:   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
+// RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.  Parameters:   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
 // Params: agent
 // Returns: None
 // Errors: None
@@ -280,8 +278,7 @@ func (h *Hub) RegisterAgent(agent Agent) {
 	h.agents[agent.ID] = agent
 }
 
-// Summary: SetMinimaxAPIKey functionality.
-// Intent: SetMinimaxAPIKey functionality.
+// SetMinimaxAPIKey functionality.
 // Params: key
 // Returns: None
 // Errors: None
@@ -292,8 +289,7 @@ func (h *Hub) SetMinimaxAPIKey(key string) {
 	h.minimaxAPIKey = key
 }
 
-// Summary: MinimaxAPIKey functionality.
-// Intent: MinimaxAPIKey functionality.
+// MinimaxAPIKey functionality.
 // Params: None
 // Returns: string
 // Errors: None
@@ -305,11 +301,12 @@ func (h *Hub) MinimaxAPIKey() string {
 }
 
 // Agent retrieves the runtime state of a specific worker by ID.
-//
 // Parameters:
 //   - id: string; The unique identifier of the agent.
-//
 // Returns: The matching Agent object and a boolean indicating if it exists in the registry.
+//
+// Errors: None
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (h *Hub) Agent(id string) (Agent, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -319,12 +316,13 @@ func (h *Hub) Agent(id string) (Agent, bool) {
 }
 
 // OpenMeeting instantiates a new collaborative context window and marks all participants as InMeeting.
-//
 // Parameters:
 //   - id: string; Unique identifier for the room.
 //   - participants: []string; A list of agent IDs to be enrolled in the discussion.
-//
 // Returns: The instantiated MeetingRoom.
+//
+// Errors: None
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -342,13 +340,14 @@ func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 }
 
 // OpenMeetingWithAgenda creates a meeting room with an explicit agenda descriptor.
-//
 // Parameters:
 //   - id: string; Unique identifier for the room.
 //   - agenda: string; The primary objective guiding the agents' conversation.
 //   - participants: []string; A list of agent IDs to be enrolled in the discussion.
-//
 // Returns: The instantiated MeetingRoom.
+//
+// Errors: None
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -365,8 +364,7 @@ func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) Me
 	return meeting
 }
 
-// Summary: FireAgent removes an agent from the hub and clears their inbox.  Parameters:   - id: string; The unique identifier of the agent to terminate.
-// Intent: FireAgent removes an agent from the hub and clears their inbox.  Parameters:   - id: string; The unique identifier of the agent to terminate.
+// FireAgent removes an agent from the hub and clears their inbox.  Parameters:   - id: string; The unique identifier of the agent to terminate.
 // Params: id
 // Returns: None
 // Errors: None
@@ -380,11 +378,12 @@ func (h *Hub) FireAgent(id string) {
 }
 
 // Publish validates and routes a message to a direct recipient, a meeting room, or both.
-//
 // Parameters:
 //   - message: Message; The event payload containing routing headers and content.
-//
 // Returns: An error if the sender or recipient agents do not exist, or if the target meeting is unrecognised.
+//
+// Errors: Returns a standard Go error if preconditions fail or validation errors occur
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (h *Hub) Publish(message Message) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -498,11 +497,8 @@ func (h *Hub) Publish(message Message) error {
 }
 
 // Subscribe returns a channel that receives real-time messages for the given agent.
-// Summary: Subscribe returns a channel that receives real-time messages for the given agent.
-// Intent: Subscribe returns a channel that receives real-time messages for the given agent.
 // Params:
 //   - agentID: string; Description
-//
 // Returns: value, value
 // Errors: None
 // Side Effects: None
@@ -531,11 +527,12 @@ func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 }
 
 // Inbox retrieves all undelivered or direct messages routed exclusively to a single agent.
-//
 // Parameters:
 //   - agentID: string; The unique identifier of the worker.
-//
 // Returns: A slice of direct Message objects.
+//
+// Errors: None
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (h *Hub) Inbox(agentID string) []Message {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -550,11 +547,12 @@ func (h *Hub) Inbox(agentID string) []Message {
 }
 
 // Meeting retrieves the current state and transcript of a specified virtual meeting room.
-//
 // Parameters:
 //   - id: string; The unique identifier of the room.
-//
 // Returns: The matching MeetingRoom object and a boolean indicating if it exists.
+//
+// Errors: None
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -565,8 +563,11 @@ func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 }
 
 // Meetings fetches a point-in-time snapshot of all active meeting rooms.
-//
 // Returns: A slice containing all MeetingRoom objects.
+//
+// Parameters: None
+// Errors: None
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (h *Hub) Meetings() []MeetingRoom {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -581,8 +582,11 @@ func (h *Hub) Meetings() []MeetingRoom {
 }
 
 // Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID.
-//
 // Returns: A slice of all active Agent objects in the orchestration Hub.
+//
+// Parameters: None
+// Errors: None
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (h *Hub) Agents() []Agent {
 	h.mu.RLock()
 	agents := make([]Agent, 0, len(h.agents))
@@ -599,8 +603,7 @@ func (h *Hub) Agents() []Agent {
 	return agents
 }
 
-// Summary: HubServiceServer implements the gRPC HubService defined in hub.proto.
-// Intent: HubServiceServer implements the gRPC HubService defined in hub.proto.
+// RegisterHubService HubServiceServer implements the gRPC HubService defined in hub.proto.
 // Params: s, hub
 // Returns: None
 // Errors: None
@@ -609,8 +612,7 @@ func RegisterHubService(s *grpc.Server, hub *Hub) {
 	pb.RegisterHubServiceServer(s, &HubServiceServer{hub: hub})
 }
 
-// Summary: Defines the HubServiceServer type.
-// Intent: Defines the HubServiceServer type.
+// HubServiceServer Defines the HubServiceServer type.
 // Params: None
 // Returns: None
 // Errors: None
@@ -620,8 +622,7 @@ type HubServiceServer struct {
 	hub *Hub
 }
 
-// Summary: NewHubServiceServer functionality.
-// Intent: NewHubServiceServer functionality.
+// NewHubServiceServer functionality.
 // Params: hub
 // Returns: *HubServiceServer
 // Errors: None
@@ -630,8 +631,7 @@ func NewHubServiceServer(hub *Hub) *HubServiceServer {
 	return &HubServiceServer{hub: hub}
 }
 
-// Summary: RegisterAgent functionality.
-// Intent: RegisterAgent functionality.
+// RegisterAgent functionality.
 // Params: ctx, req
 // Returns: (*pb.RegisterAgentResponse, error)
 // Errors: Returns an error if applicable
@@ -650,8 +650,7 @@ func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAg
 	return pb.RegisterAgentResponse_builder{Success: true}.Build(), nil
 }
 
-// Summary: OpenMeeting functionality.
-// Intent: OpenMeeting functionality.
+// OpenMeeting functionality.
 // Params: ctx, req
 // Returns: (*pb.MeetingRoom, error)
 // Errors: Returns an error if applicable
@@ -665,8 +664,7 @@ func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingR
 	}.Build(), nil
 }
 
-// Summary: Publish functionality.
-// Intent: Publish functionality.
+// Publish functionality.
 // Params: ctx, req
 // Returns: (*pb.PublishMessageResponse, error)
 // Errors: Returns an error if applicable
@@ -688,8 +686,7 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 	return pb.PublishMessageResponse_builder{Success: true}.Build(), nil
 }
 
-// Summary: DelegateTask functionality.
-// Intent: DelegateTask functionality.
+// DelegateTask functionality.
 // Params: ctx, req
 // Returns: (*pb.DelegateTaskResponse, error)
 // Errors: Returns an error if applicable
@@ -714,8 +711,7 @@ func (s *HubServiceServer) DelegateTask(ctx context.Context, req *pb.DelegateTas
 	return pb.DelegateTaskResponse_builder{Success: true}.Build(), nil
 }
 
-// Summary: StreamMessages functionality.
-// Intent: StreamMessages functionality.
+// StreamMessages functionality.
 // Params: req, stream
 // Returns: error
 // Errors: Returns an error if applicable
@@ -764,8 +760,7 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 	}
 }
 
-// Summary: Reason functionality.
-// Intent: Reason functionality.
+// Reason functionality.
 // Params: ctx, req
 // Returns: (*pb.ReasonResponse, error)
 // Errors: Returns an error if applicable
@@ -783,8 +778,7 @@ func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*
 // ⚡ BOLT: [Configurable endpoint] - Randomized Selection from Top 5
 var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
 
-// Summary: MinimaxClient handles interaction with the Minimax Model 2.7.
-// Intent: MinimaxClient handles interaction with the Minimax Model 2.7.
+// MinimaxClient handles interaction with the Minimax Model 2.7.
 // Params: None
 // Returns: None
 // Errors: None
@@ -793,8 +787,7 @@ type MinimaxClient struct {
 	APIKey string
 }
 
-// Summary: NewMinimaxClient functionality.
-// Intent: NewMinimaxClient functionality.
+// NewMinimaxClient functionality.
 // Params: apiKey
 // Returns: *MinimaxClient
 // Errors: None
@@ -813,8 +806,7 @@ var sharedHTTPClient = &http.Client{
 	Timeout: 30 * time.Second,
 }
 
-// Summary: Reason functionality.
-// Intent: Reason functionality.
+// Reason functionality.
 // Params: ctx, prompt
 // Returns: (string, error)
 // Errors: Returns an error if applicable

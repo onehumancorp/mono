@@ -10,6 +10,11 @@ import (
 )
 
 // RoleDefinition defines a single agent role within a Skill Blueprint.
+//
+// Parameters: None
+// Returns: None
+// Errors: None
+// Side Effects: None. Struct defines memory layout only.
 type RoleDefinition struct {
 	ID        string   `yaml:"id" json:"id"`
 	Title     string   `yaml:"title" json:"title"`
@@ -19,6 +24,11 @@ type RoleDefinition struct {
 }
 
 // SkillBlueprint represents a domain-specific organizational structure imported by the CEO.
+//
+// Parameters: None
+// Returns: None
+// Errors: None
+// Side Effects: None. Struct defines memory layout only.
 type SkillBlueprint struct {
 	Domain string           `yaml:"domain" json:"domain"`
 	Roles  []RoleDefinition `yaml:"roles" json:"roles"`
@@ -26,6 +36,11 @@ type SkillBlueprint struct {
 
 // ParseBlueprint parses a JSON or YAML byte slice into a SkillBlueprint.
 // It also validates required fields and checks for cyclic reporting structures (DAG).
+//
+// Parameters: data ([]byte), isYAML (bool)
+// Returns: *SkillBlueprint, error
+// Errors: Returns a standard Go error if preconditions fail or validation errors occur
+// Side Effects: Executes entirely in memory with no side effects beyond local scope variables (read-only).
 func ParseBlueprint(data []byte, isYAML bool) (*SkillBlueprint, error) {
 	var bp SkillBlueprint
 	var err error
@@ -48,6 +63,11 @@ func ParseBlueprint(data []byte, isYAML bool) (*SkillBlueprint, error) {
 }
 
 // Validate checks for missing required fields and ensures the organizational hierarchy is a Directed Acyclic Graph (DAG).
+//
+// Parameters: None
+// Returns: error
+// Errors: Returns a standard Go error if preconditions fail or validation errors occur
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (b *SkillBlueprint) Validate() error {
 	if strings.TrimSpace(b.Domain) == "" {
 		return errors.New("domain is required")
@@ -116,6 +136,11 @@ func (b *SkillBlueprint) Validate() error {
 }
 
 // NamespaceRoles prepends a namespace to all role IDs and their reports_to fields to prevent conflicts.
+//
+// Parameters: namespace (string)
+// Returns: None
+// Errors: None
+// Side Effects: Executes within local scope; may involve context-dependent side effects based on implementation.
 func (b *SkillBlueprint) NamespaceRoles(namespace string) {
 	prefix := namespace + "/"
 	for i, role := range b.Roles {
