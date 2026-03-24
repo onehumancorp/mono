@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "checkpointer",
+    srcs = ["checkpointer.go"],
+    importpath = "github.com/onehumancorp/mono/srcs/checkpointer",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "checkpointer_test",
+    srcs = ["checkpointer_test.go"],
+    embed = [":checkpointer"],
+    deps = ["@org_modernc_sqlite//:sqlite"],
+)
