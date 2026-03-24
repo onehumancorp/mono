@@ -248,6 +248,36 @@ func (b ReasonResponse_builder) Build() *ReasonResponse {
 	return &ReasonResponse{content: b.Content}
 }
 
+// ─── SubTask ─────────────────────────────────────────────────────────────────
+
+type SubTask struct {
+	taskId         string
+	targetRole     string
+	instruction    string
+	parentThreadId string
+}
+
+func (s *SubTask) GetTaskId() string         { return s.taskId }
+func (s *SubTask) GetTargetRole() string     { return s.targetRole }
+func (s *SubTask) GetInstruction() string    { return s.instruction }
+func (s *SubTask) GetParentThreadId() string { return s.parentThreadId }
+
+type SubTask_builder struct {
+	TaskId         string
+	TargetRole     string
+	Instruction    string
+	ParentThreadId string
+}
+
+func (b SubTask_builder) Build() *SubTask {
+	return &SubTask{
+		taskId:         b.TaskId,
+		targetRole:     b.TargetRole,
+		instruction:    b.Instruction,
+		parentThreadId: b.ParentThreadId,
+	}
+}
+
 // ─── gRPC service ────────────────────────────────────────────────────────────
 
 // HubServiceServer is the server API for HubService service.
@@ -258,6 +288,7 @@ type HubServiceServer interface {
 	DelegateTask(context.Context, *DelegateTaskRequest) (*DelegateTaskResponse, error)
 	StreamMessages(*StreamMessagesRequest, HubService_StreamMessagesServer) error
 	Reason(context.Context, *ReasonRequest) (*ReasonResponse, error)
+	DelegateSubTask(context.Context, *SubTask) (*DelegateTaskResponse, error)
 	mustEmbedUnimplementedHubServiceServer()
 }
 
@@ -281,6 +312,9 @@ func (UnimplementedHubServiceServer) StreamMessages(*StreamMessagesRequest, HubS
 }
 func (UnimplementedHubServiceServer) Reason(context.Context, *ReasonRequest) (*ReasonResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reason not implemented")
+}
+func (UnimplementedHubServiceServer) DelegateSubTask(context.Context, *SubTask) (*DelegateTaskResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DelegateSubTask not implemented")
 }
 func (UnimplementedHubServiceServer) mustEmbedUnimplementedHubServiceServer() {}
 
@@ -325,6 +359,10 @@ var HubService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Reason",
 			Handler:    _HubService_Reason_Handler,
 		},
+		{
+			MethodName: "DelegateSubTask",
+			Handler:    _HubService_DelegateSubTask_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -347,6 +385,21 @@ func _HubService_RegisterAgent_Handler(srv interface{}, ctx context.Context, dec
 	info := &grpc.UnaryServerInfo{Server: srv, FullMethod: "/ohc.orchestration.HubService/RegisterAgent"}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(HubServiceServer).RegisterAgent(ctx, req.(*RegisterAgentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HubService_DelegateSubTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubTask)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HubServiceServer).DelegateSubTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{Server: srv, FullMethod: "/ohc.orchestration.HubService/DelegateSubTask"}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HubServiceServer).DelegateSubTask(ctx, req.(*SubTask))
 	}
 	return interceptor(ctx, in, info, handler)
 }
