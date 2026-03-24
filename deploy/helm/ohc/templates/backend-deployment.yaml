@@ -28,7 +28,7 @@ spec:
             runAsUser: 1000
             capabilities:
               drop:
-                - ALL
+                - "ALL"
           resources:
             requests:
               cpu: "100m"

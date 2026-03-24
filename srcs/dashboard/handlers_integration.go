@@ -27,7 +27,7 @@ func (s *Server) handleIntegrationConnect(w http.ResponseWriter, r *http.Request
 		return
 	}
 	var req integrationConnectRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -55,7 +55,7 @@ func (s *Server) handleIntegrationDisconnect(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	var req integrationDisconnectRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -90,7 +90,7 @@ func (s *Server) handlePRCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req prCreateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -108,7 +108,7 @@ func (s *Server) handlePRMerge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req prActionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -130,7 +130,7 @@ func (s *Server) handlePRClose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req prActionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -165,7 +165,7 @@ func (s *Server) handleIssueCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req issueCreateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -183,7 +183,7 @@ func (s *Server) handleIssueUpdateStatus(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	var req issueStatusRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -205,7 +205,7 @@ func (s *Server) handleIssueAssign(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req issueAssignRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}

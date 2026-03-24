@@ -17,7 +17,7 @@ func (s *Server) handleHireAgent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req hireRequest
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
@@ -74,7 +74,7 @@ func (s *Server) handleFireAgent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req fireRequest
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
@@ -100,7 +100,7 @@ func (s *Server) handleDelegateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req delegateRequest
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
@@ -146,7 +146,7 @@ func (s *Server) handleAgentProviderAuth(w http.ResponseWriter, r *http.Request)
 	}
 
 	var req providerAuthRequest
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
@@ -205,7 +205,7 @@ func (s *Server) handleSkillImport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req skillImportRequest
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 100<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
@@ -256,7 +256,7 @@ func (s *Server) handleSnapshotCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req snapshotCreateRequest
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 100<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
@@ -316,7 +316,7 @@ func (s *Server) handleSnapshotRestore(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req snapshotRestoreRequest
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 100<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)

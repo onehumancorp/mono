@@ -19,7 +19,7 @@ func (s *Server) handleIncidents(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, incidents)
 	case http.MethodPost:
 		var req incidentCreateRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 			return
 		}
@@ -52,7 +52,7 @@ func (s *Server) handleIncidentStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req incidentStatusRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -89,7 +89,7 @@ func (s *Server) handleComputeProfiles(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, profiles)
 	case http.MethodPost:
 		var req computeProfileRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 			return
 		}
@@ -156,7 +156,7 @@ func (s *Server) handleBudgetAlerts(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, alerts)
 	case http.MethodPost:
 		var req budgetAlertRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 			return
 		}
@@ -199,7 +199,7 @@ func (s *Server) handlePipelines(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, pipelines)
 	case http.MethodPost:
 		var req pipelineCreateRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 			return
 		}
@@ -232,7 +232,7 @@ func (s *Server) handlePipelinePromote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req pipelinePromoteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -268,7 +268,7 @@ func (s *Server) handlePipelineStatus(w http.ResponseWriter, r *http.Request) {
 		Status     string `json:"status"`
 		StagingURL string `json:"stagingUrl,omitempty"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -309,7 +309,7 @@ func (s *Server) handleScale(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req ScaleRequest
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
