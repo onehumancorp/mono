@@ -76,6 +76,12 @@ message ReasonResponse {
   string content = 1;
 }
 
+message TokenEfficientContextSummarizationEvent {
+  string event_id = 1;
+  string agent_id = 2;
+  bytes payload = 3;
+}
+
 service HubService {
   rpc RegisterAgent(RegisterAgentRequest) returns (RegisterAgentResponse);
   rpc OpenMeeting(OpenMeetingRequest) returns (MeetingRoom);
