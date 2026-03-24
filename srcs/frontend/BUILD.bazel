@@ -63,6 +63,8 @@ sh_test(
     data = [
         ":all_srcs",
         "//srcs/cmd/ohc",
+        "//:go.mod",
+        "//:go.sum",
     ],
     tags = [
         "no-remote-exec",
@@ -81,6 +83,8 @@ sh_test(
     data = [
         ":all_srcs",
         "//srcs/cmd/ohc",
+        "//:go.mod",
+        "//:go.sum",
     ],
     tags = [
         "no-remote-exec",
@@ -95,6 +99,8 @@ sh_test(
     data = [
         ":all_srcs",
         "//srcs/cmd/ohc",
+        "//:go.mod",
+        "//:go.sum",
     ],
     tags = [
         "no-remote-exec",
@@ -109,6 +115,8 @@ sh_test(
     data = [
         ":all_srcs",
         "//srcs/cmd/ohc",
+        "//:go.mod",
+        "//:go.sum",
     ],
     tags = [
         "no-remote-exec",
@@ -124,6 +132,8 @@ sh_test(
     data = [
         ":all_srcs",
         "//srcs/cmd/ohc",
+        "//:go.mod",
+        "//:go.sum",
     ],
     tags = [
         "manual",
