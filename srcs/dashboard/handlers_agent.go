@@ -29,13 +29,7 @@ func (s *Server) handleHireAgent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.mu.RLock()
-	roleValid := false
-	for _, profile := range s.org.RoleProfiles {
-		if string(profile.Role) == req.Role {
-			roleValid = true
-			break
-		}
-	}
+	_, roleValid := s.roleProfileCache[req.Role]
 	s.mu.RUnlock()
 
 	if !roleValid {
