@@ -78,6 +78,9 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 		// ohc.os/agent/{agentID} (from interop adapters)
 
 		trimmed := spiffeID[len("spiffe://"):]
+		if strings.Contains(trimmed, "..") || strings.Contains(trimmed, "//") {
+			return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID format: %s", spiffeID)
+		}
 		firstSlash := strings.IndexByte(trimmed, '/')
 		if firstSlash == -1 {
 			return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID lacks required path segments for agent identity: %s", spiffeID)
@@ -142,6 +145,11 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			if agentID != reqFromAgent {
 				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot publish as agent %s", spiffeID, reqFromAgent)
 			}
+		case *pb.DelegateTaskRequest:
+			reqFromAgent := v.GetFromAgentId()
+			if agentID != reqFromAgent {
+				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot delegate task as agent %s", spiffeID, reqFromAgent)
+			}
 		}
 
 		return handler(ctx, req)
@@ -179,6 +187,9 @@ func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
 		// Extracted zero-allocation string manipulations to parse SPIFFE IDs strictly without triggering O(N) memory allocations via strings.Split
 
 		trimmed := spiffeID[len("spiffe://"):]
+		if strings.Contains(trimmed, "..") || strings.Contains(trimmed, "//") {
+			return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID format: %s", spiffeID)
+		}
 		firstSlash := strings.IndexByte(trimmed, '/')
 		if firstSlash == -1 {
 			return status.Errorf(codes.PermissionDenied, "SPIFFE ID lacks required path segments for agent identity: %s", spiffeID)

@@ -458,11 +458,15 @@ var // Summary: AllowLocalIPsForTesting can be set to true in tests to bypass SS
 // Side Effects: None
 AllowLocalIPsForTesting = false
 
+// cgnatRange defines the RFC 6598 Shared Address Space (100.64.0.0/10)
+// often used in Kubernetes and cloud environments for pod networking.
+var _, cgnatRange, _ = net.ParseCIDR("100.64.0.0/10")
+
 func isBlockedIP(ip net.IP) bool {
 	if AllowLocalIPsForTesting {
 		return false
 	}
-	return ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast()
+	return ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || cgnatRange.Contains(ip)
 }
 
 // validateURL checks if a given URL string is safe from SSRF attacks.
