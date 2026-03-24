@@ -784,8 +784,11 @@ describe("App – navigation tabs", () => {
     // "Software Company" appears in domain list + org info domain field; use getAllByText
     await waitFor(() => expect(screen.getAllByText("Software Company").length).toBeGreaterThan(0));
     await screen.findByText("Git MCP");
-    expect(fetchMock).toHaveBeenCalledWith("/api/domains");
-    expect(fetchMock).toHaveBeenCalledWith("/api/mcp/tools");
+
+    // Check that fetch was called for the endpoints, ignoring exact args due to authed headers
+    const calls = fetchMock.mock.calls;
+    expect(calls.some((call: any[]) => call[0] === "/api/domains")).toBe(true);
+    expect(calls.some((call: any[]) => call[0] === "/api/mcp/tools")).toBe(true);
   });
 
   it("loads scenario and shows success notice", async () => {

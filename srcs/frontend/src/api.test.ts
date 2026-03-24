@@ -311,7 +311,7 @@ describe("api – new endpoints", () => {
   });
 
   it("fetchDomains throws on non-OK response", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 500, text: async () => "", json: async () => ({}) })));
     await expect(fetchDomains()).rejects.toThrow("500");
   });
 
@@ -322,7 +322,7 @@ describe("api – new endpoints", () => {
   });
 
   it("fetchMCPTools throws on non-OK response", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 503, json: async () => ({}) })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 503, text: async () => "", json: async () => ({}) })));
     await expect(fetchMCPTools()).rejects.toThrow("503");
   });
 

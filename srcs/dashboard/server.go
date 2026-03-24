@@ -695,38 +695,56 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 		FromAgent:  "pm-1",
 		ToAgent:    "swe-1",
 		Type:       orchestration.EventTask,
-		Content:    "Ship the reliability checklist before launch.",
+		Content:    "Initiating final launch readiness check. Are all systems go for production deployment?",
 		MeetingID:  "launch-readiness",
-		OccurredAt: now.Add(-6 * time.Minute),
+		OccurredAt: now.Add(-15 * time.Minute),
 	})
 	_ = hub.Publish(orchestration.Message{
 		ID:         "seed-2",
 		FromAgent:  "swe-1",
 		ToAgent:    "pm-1",
 		Type:       orchestration.EventStatus,
-		Content:    "Checklist is 90% complete. Waiting on design assets for the final error states.",
+		Content:    "Code freeze is active. Running final integration test suite across all microservices.",
 		MeetingID:  "launch-readiness",
-		OccurredAt: now.Add(-4 * time.Minute),
+		OccurredAt: now.Add(-12 * time.Minute),
 	})
 	_ = hub.Publish(orchestration.Message{
 		ID:         "seed-3",
-		FromAgent:  "ux-1",
-		ToAgent:    "pm-1",
-		Type:       orchestration.EventStatus,
-		Content:    "Design QA pass completed with no blockers. Assets pushed to main.",
+		FromAgent:  "sec-1",
+		ToAgent:    "swe-1",
+		Type:       orchestration.EventBlockerRaised,
+		Content:    "CRITICAL VULNERABILITY DETECTED: Static analysis caught hardcoded AWS credentials in `src/config/aws.yml`. Deploy halted immediately.",
 		MeetingID:  "launch-readiness",
-		OccurredAt: now.Add(-2 * time.Minute),
+		OccurredAt: now.Add(-8 * time.Minute),
+	})
+	_ = hub.Publish(orchestration.Message{
+		ID:         "seed-4",
+		FromAgent:  "swe-1",
+		ToAgent:    "sec-1",
+		Type:       orchestration.EventBlockerCleared,
+		Content:    "Hotfix applied. Hardcoded credentials removed and replaced with dynamic IAM roles via Vault integration. Running regression tests.",
+		MeetingID:  "launch-readiness",
+		OccurredAt: now.Add(-3 * time.Minute),
+	})
+	_ = hub.Publish(orchestration.Message{
+		ID:         "seed-5",
+		FromAgent:  "qa-1",
+		ToAgent:    "pm-1",
+		Type:       orchestration.EventTestsPassed,
+		Content:    "Regression tests confirm hotfix resolves the vulnerability without breaking functionality. Test coverage remains at 98.4%.",
+		MeetingID:  "launch-readiness",
+		OccurredAt: now.Add(-1 * time.Minute),
 	})
 
-	msgID := "seed-4"
+	msgID := "seed-6"
 	_ = hub.Publish(orchestration.Message{
 		ID:         msgID,
 		FromAgent:  "pm-1",
 		ToAgent:    "CEO",
 		Type:       orchestration.EventApprovalNeeded,
-		Content:    "All pre-launch checks passed. Requesting final CEO approval to deploy to production.",
+		Content:    "Security blocker resolved and validated by QA. Awaiting final authorization to unfreeze CI/CD pipelines and push release v1.4.0 to production.",
 		MeetingID:  "launch-readiness",
-		OccurredAt: now.Add(-1 * time.Minute),
+		OccurredAt: now.Add(-30 * time.Second),
 	})
 
 	tracker := billing.NewTracker(billing.DefaultCatalog)

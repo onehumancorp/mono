@@ -18,25 +18,67 @@ import type {
   UserPublic,
 } from "./types";
 
-async function getJSON<T>(path: string): Promise<T> {
-  const response = await fetch(path);
-  if (!response.ok) {
-    throw new Error(`Request failed for ${path}: ${response.status}`);
-  }
-  return (await response.json()) as T;
+// Forward declarations for auth functions to use them in getJSON/postJSON
+export function getStoredToken(): string | null {
+  return localStorage.getItem("ohc_token");
 }
 
-async function postJSON<T>(path: string, body: unknown): Promise<T> {
+export function setStoredToken(token: string): void {
+  localStorage.setItem("ohc_token", token);
+}
+
+export function clearStoredToken(): void {
+  localStorage.removeItem("ohc_token");
+}
+
+// Ensure tests and legacy calls still work with authedGetJSON/authedPostJSON
+export async function authedGetJSON<T>(path: string): Promise<T> {
+  const token = getStoredToken();
   const response = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(body),
+    headers: {
+      Authorization: token ? `Bearer ${token}` : "",
+      Accept: "application/json",
+    },
   });
   if (!response.ok) {
+    if (response.status === 401) {
+      clearStoredToken();
+      throw new Error("Unauthorized");
+    }
     const text = await response.text().catch(() => "");
     throw new Error(text || `Request failed for ${path}: ${response.status}`);
   }
   return (await response.json()) as T;
+}
+
+export async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
+  const token = getStoredToken();
+  const response = await fetch(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: token ? `Bearer ${token}` : "",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearStoredToken();
+      throw new Error("Unauthorized");
+    }
+    const text = await response.text().catch(() => "");
+    throw new Error(text || `Request failed for ${path}: ${response.status}`);
+  }
+  return (await response.json()) as T;
+}
+
+async function getJSON<T>(path: string): Promise<T> {
+  return authedGetJSON<T>(path);
+}
+
+async function postJSON<T>(path: string, body: unknown): Promise<T> {
+  return authedPostJSON<T>(path, body);
 }
 /**
  * Summary: Fetches the current organization's hierarchical and structural state.
@@ -683,86 +725,6 @@ export function saveSettings(settings: Settings): Promise<Settings> {
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 const TOKEN_KEY = "ohc_token";
-/**
- * Summary: Retrieves the currently stored authentication JWT token from local storage.
- * Parameters: None
- * Returns: string | null
- * Errors: May throw an error
- * Side Effects: None
- */
-export function getStoredToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
-}
-/**
- * Summary: Persists an authentication JWT token in local storage.
- * Parameters: token
- * Returns: void
- * Errors: May throw an error
- * Side Effects: None
- */
-export function setStoredToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token);
-}
-/**
- * Summary: Removes the stored authentication JWT token from local storage.
- * Parameters: None
- * Returns: void
- * Errors: May throw an error
- * Side Effects: None
- */
-export function clearStoredToken(): void {
-  localStorage.removeItem(TOKEN_KEY);
-}
-
-async function authedGetJSON<T>(path: string): Promise<T> {
-  const token = getStoredToken();
-  const response = await fetch(path, {
-    headers: {
-      Authorization: token ? `Bearer ${token}` : "",
-      Accept: "application/json",
-    },
-  });
-  if (!response.ok) {
-    if (response.status === 401) {
-      clearStoredToken();
-      throw new Error("Unauthorized");
-    }
-    const text = await response.text().catch(() => "");
-    let errorMessage = text;
-    try {
-      const parsed = JSON.parse(text);
-      if (parsed.error) {
-        errorMessage = parsed.error;
-      }
-    } catch {
-      // Not JSON, use raw text
-    }
-    throw new Error(errorMessage || `Request failed for ${path}: ${response.status}`);
-  }
-  return (await response.json()) as T;
-}
-
-async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
-  const token = getStoredToken();
-  const response = await fetch(path, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: token ? `Bearer ${token}` : "",
-    },
-    body: JSON.stringify(body),
-  });
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    if (response.status === 401) {
-      clearStoredToken();
-      throw new Error("Unauthorized");
-    }
-    throw new Error(text || `Request failed for ${path}: ${response.status}`);
-  }
-  return (await response.json()) as T;
-}
 /**
  * Summary: Authenticates a user and retrieves a JWT token.
  * Parameters: username, password

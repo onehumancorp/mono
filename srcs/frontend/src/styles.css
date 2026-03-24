@@ -882,11 +882,16 @@ body {
   border-radius: 4px;
 }
 
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .transcript-item {
   display: flex;
   flex-direction: column;
   max-width: 85%;
-  animation: fadeUp 150ms ease both;
+  animation: slideUpFade 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 .transcript-item--human {
@@ -950,31 +955,33 @@ body {
 }
 
 .transcript-bubble {
-  padding: 0.85rem 1.1rem;
+  padding: 0.85rem 1.15rem;
   border-radius: var(--r-xl);
-  font-size: 13.5px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--text-primary);
   position: relative;
   word-break: break-word;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease;
 }
 
 .transcript-item--agent .transcript-bubble {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-bottom-left-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
 .transcript-item--human .transcript-bubble {
-  background: linear-gradient(135deg, #007AFF, #0056B3);
-  border: 1px solid rgba(0, 122, 255, 0.4);
+  background: linear-gradient(135deg, rgba(47, 129, 247, 0.25) 0%, rgba(47, 129, 247, 0.1) 100%);
+  border: 1px solid rgba(47, 129, 247, 0.4);
   border-bottom-right-radius: 6px;
-  color: #fff;
-  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.25);
+  box-shadow: 0 8px 24px rgba(47, 129, 247, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .transcript-body {
@@ -986,20 +993,29 @@ body {
   display: flex;
   flex-direction: column;
   height: calc(100vh - var(--header-h) - 4rem);
-  background: rgba(18, 22, 31, 0.65);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 15, 18, 0.75);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--r-2xl);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.12);
   overflow: hidden;
+  position: relative;
+}
+
+.war-room-panel::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  z-index: 10;
 }
 
 .war-room-header {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(8px);
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .war-room-title {
@@ -1035,10 +1051,11 @@ body {
 }
 
 .war-room-sidebar {
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(0, 0, 0, 0.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
+  box-shadow: inset -1px 0 0 rgba(0,0,0,0.2);
 }
 
 .war-room-sidebar-section {
@@ -1102,9 +1119,10 @@ body {
 }
 
 .war-room-input-area {
-  padding: 1rem 1.5rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1.25rem 2rem;
+  background: rgba(10, 10, 12, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.3);
 }
 
 .war-room-composer {
@@ -1167,20 +1185,30 @@ body {
 .approval-card {
   display: flex;
   flex-direction: column;
-  background: rgba(26, 30, 36, 0.7);
-  border: 1px solid rgba(255, 69, 58, 0.5);
+  background: rgba(30, 20, 20, 0.85);
+  border: 1px solid rgba(255, 69, 58, 0.6);
   border-radius: var(--r-xl);
-  box-shadow: 0 12px 32px rgba(255, 69, 58, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 16px 40px rgba(255, 69, 58, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
   overflow: hidden;
-  margin-top: 0.5rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-top: 0.75rem;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.approval-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,69,58,0.8), transparent);
+  z-index: 10;
 }
 
 .approval-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(255, 69, 58, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 24px 48px rgba(255, 69, 58, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2);
 }
 
 .approval-card__content {
