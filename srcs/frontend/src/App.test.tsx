@@ -2970,11 +2970,11 @@ describe("App - Dynamic Scaling", () => {
     // Simulate SSE
     await act(async () => {
       if (_onmessage) {
-        _onmessage({ data: JSON.stringify({ event: "K8s Operator: Reconciling...", status: "INFO" }) });
+        _onmessage({ data: JSON.stringify({ event: "AI Workforce Manager: Reconciling Team Member resource.", status: "INFO" }) });
       }
     });
 
-    expect(screen.getByText("K8s Operator: Reconciling...")).toBeInTheDocument();
+    expect(screen.getByText("AI Workforce Manager: Reconciling Team Member resource.")).toBeInTheDocument();
 
     await act(async () => {
       if (_onmessage) {
