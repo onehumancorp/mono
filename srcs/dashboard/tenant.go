@@ -88,36 +88,47 @@ func (r *TenantRegistry) handler(orgID string) http.Handler {
 // If the claims are missing (public routes) or the organisation is not yet
 // provisioned, appropriate responses are returned.
 func (r *TenantRegistry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// Public routes (health checks, login) don't need a tenant.
 	claims := auth.ClaimsFromContext(req.Context())
-	if claims == nil || claims.OrganizationID == "" {
-		// Fall back to the first registered tenant for unauthenticated /
-		// pre-auth routes (login, healthz, readyz, metrics).
-		r.mu.RLock()
-		var fallback http.Handler
-		for _, h := range r.tenants {
-			fallback = h
-			break
-		}
-		r.mu.RUnlock()
-		if fallback != nil {
-			fallback.ServeHTTP(w, req)
+
+	if claims != nil && claims.OrganizationID != "" {
+		// Authenticated request with a known org — route to tenant.
+		h := r.handler(claims.OrganizationID)
+		if h == nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(w).Encode(map[string]string{
+				"error": "organisation not found: " + claims.OrganizationID,
+			})
 			return
 		}
-		http.Error(w, `{"error":"no tenants registered"}`, http.StatusServiceUnavailable)
+		h.ServeHTTP(w, req)
 		return
 	}
 
-	h := r.handler(claims.OrganizationID)
-	if h == nil {
+	if claims != nil && claims.OrganizationID == "" {
+		// Authenticated but no org assigned — this is a configuration error.
+		// Return 403 to prevent accidental tenant leakage.
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		_ = json.NewEncoder(w).Encode(map[string]string{
-			"error": "organisation not found: " + claims.OrganizationID,
-		})
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(`{"error":"no organization assigned to this account"}`))
 		return
 	}
-	h.ServeHTTP(w, req)
+
+	// Unauthenticated request — fall back to the first registered tenant so
+	// that public routes (login, healthz, readyz, metrics, /api/auth/login)
+	// are served correctly before the caller has a token.
+	r.mu.RLock()
+	var fallback http.Handler
+	for _, h := range r.tenants {
+		fallback = h
+		break
+	}
+	r.mu.RUnlock()
+	if fallback != nil {
+		fallback.ServeHTTP(w, req)
+		return
+	}
+	http.Error(w, `{"error":"no tenants registered"}`, http.StatusServiceUnavailable)
 }
 
 // ProvisionOrg is a convenience function that provisions a tenant from an

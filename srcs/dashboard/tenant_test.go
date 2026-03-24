@@ -134,3 +134,23 @@ func TestTenantRegistry_HandleOrgRegister(t *testing.T) {
 	}
 }
 
+func TestTenantRegistry_AuthenticatedWithoutOrgGetsForbidden(t *testing.T) {
+	reg := newTestRegistry()
+	tok := adminToken(t)
+
+	// A request with a valid JWT but an empty org ID must get 403 — not
+	// fall through to a random tenant.
+	ctx := context.WithValue(context.Background(), auth.ClaimsContextKeyForTest, &auth.Claims{
+		Subject:        "admin-1",
+		OrganizationID: "", // intentionally blank
+		Roles:          []string{auth.RoleAdmin},
+	})
+	req := httptest.NewRequest(http.MethodGet, "/api/dashboard", nil).WithContext(ctx)
+	req.Header.Set("Authorization", "Bearer "+tok)
+	rr := httptest.NewRecorder()
+	reg.ServeHTTP(rr, req)
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("authenticated but no org: want 403, got %d (body=%s)", rr.Code, rr.Body.String())
+	}
+}
+
