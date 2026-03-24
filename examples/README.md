@@ -5,10 +5,14 @@
 
 ---
 
-## 🚀 The "Hello World" Agent
-Experience the platform in seconds. The `hello-world-agent` is designed to run perfectly out-of-the-box with **zero configuration** and **no external API keys** required. It leverages the `builtin` model for immediate feedback.
+## Identity
+The `examples` module provides pre-configured, high-quality agent examples for the One Human Corp platform. It serves as a template and testing ground for new agent behaviors.
 
-### Quick Start
+## Architecture
+These examples demonstrate the **Zero-Lock** paradigm. Production agents rely on `SPIFFE/SPIRE` for identity and Kubernetes Secrets for configuration injection. The `hello-world-agent` specifically highlights how a generic provider interface is consumed by the application layer.
+
+## Quick Start
+Experience the platform in seconds. The `hello-world-agent` is designed to run perfectly out-of-the-box with **zero configuration** and **no external API keys** required. It leverages the `builtin` model for immediate feedback.
 
 Run the compiled Go agent directly using our intuitive Bazel aliases:
 ```bash
@@ -29,8 +33,7 @@ spec:
   prompt: "You are a friendly Hello World agent..."
 ```
 
-## 🛠️ Developer Workflow
-
+## Developer Workflow
 The examples directory serves as a template and testing ground for new agent behaviors.
 
 - **Build all examples:**
@@ -42,5 +45,5 @@ The examples directory serves as a template and testing ground for new agent beh
   bazelisk test //examples/...
   ```
 
-## 🔐 Architecture & Secrets
-These examples demonstrate the **Zero-Lock** paradigm. Production agents rely on `SPIFFE/SPIRE` for identity and Kubernetes Secrets for configuration injection. The `hello-world-agent` specifically highlights how a generic provider interface is consumed by the application layer.
+## Configuration
+No external API keys or complex configuration are required for the basic examples. Production variants may use Kubernetes Secrets for configuration injection.
