@@ -38,6 +38,7 @@ use_repo(
     "io_opentelemetry_go_otel_sdk_metric",
     "org_golang_google_grpc",
     "org_golang_x_crypto",
+    "org_modernc_sqlite",
 )
 
 platforms_host = use_extension("@platforms//host:extension.bzl", "host_platform")
