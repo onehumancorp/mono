@@ -1,24 +1,28 @@
-# CUJ: Just In Time Tool Synthesis
+# CUJ: Just-In-Time Tool Synthesis
 
-**Author(s):** TPM Agent
-**Status:** In Review
-**Last Updated:** 2026-03-23
+**Persona:** Autonomous Agent / Human Manager
+**Context:** Leveraging Just-In-Time Tool Synthesis during standard operational workflows or cross-team collaboration.
+**Success Metrics:** Task completion latency under 50ms, zero unauthorized access, and complete observability via the event log.
 
-## 1. Overview
-User journey for Just In Time Tool Synthesis. This feature enables the system to handle the complexity of Just In Time Tool Synthesis smoothly without human intervention.
+## 1. User Journey Overview
+When an AI agent or human operator needs to execute a task involving Just-In-Time Tool Synthesis, the system seamlessly provisions the necessary context, authenticates the request via SPIFFE, and processes the operation without breaking the established Zero-Lock toolchain or risking context bloat.
 
-## 2. User Personas
-- **Human CEO:** Wants to monitor the feature and only step in when necessary.
-- **AI Agent:** Will primarily execute tasks leveraging Just In Time Tool Synthesis.
+## 2. Detailed Step-by-Step Breakdown
+| Step | Action | System Trigger | Resulting State |
+|------|--------|----------------|-----------------|
+| 1 | Action initiated by Agent/User | API call to Orchestration Hub | Request queued |
+| 2 | SPIFFE Authentication | Gateway verifies `AuthRole` | Request authorized |
+| 3 | Core Processing | The Just-In-Time Tool Synthesis logic is executed | Operation completed |
+| 4 | Audit & Telemetry | Result appended to `events.jsonl` | Metric logged |
 
-## 3. Scenarios
-### 3.1 Happy Path
-1. Agent triggers Just In Time Tool Synthesis.
-2. The Orchestration Hub validates the request.
-3. The process completes successfully.
-4. Results are persisted to the Event Log.
+## 3. Edge Cases & Error Recovery
+### 3.1 Scenario: Resource Exhaustion or Context Bloat
+- **Detection**: The payload exceeds token limits or memory bounds.
+- **Auto-Recovery**: The system immediately triggers context summarization or rate limiting, scaling back operations safely.
+### 3.2 Scenario: Authentication Failure
+- **Detection**: Invalid or expired SVID presented during the operation.
+- **Resolution**: Request is dropped instantly, and a security alert is forwarded to the CEO Dashboard.
 
-### 3.2 Error Path
-1. Agent triggers Just In Time Tool Synthesis but encounters a missing dependency.
-2. The Hub flags the process and pauses execution.
-3. Human Manager is alerted via UI for resolution.
+## 4. Security & Privacy
+- Operations require explicit, short-lived SVID authentication.
+- All actions are subject to strict Human-in-the-Loop gating for high-risk executions.

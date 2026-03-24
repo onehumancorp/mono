@@ -1,26 +1,28 @@
 # Design Document: Task Dependency Graphing
 
-**Author(s):** TPM Agent
-**Status:** Approved
-**Last Updated:** 2026-03-23
+## 1. Executive Summary
+**Objective:** Architect and implement Task Dependency Graphing to empower autonomous agents and human operators.
+**Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
-## 1. Overview
-This design document describes the technical implementation of Task Dependency Graphing.
+## 2. Architecture & Components
+Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide task dependency graphing capabilities seamlessly across all active Swarm Agents.
 
-## 2. Architecture
-The Task Dependency Graphing feature integrates directly into the core Orchestration Hub.
-- **Frontend:** Exposes monitoring metrics to the Human CEO.
-- **Backend:** Manages state transitions and database persistence.
-- **Agents:** Utilize MCP tooling to interface with external APIs.
+## 3. Data Flow
+1. **Trigger:** The feature is invoked via Agent intent or a K8s event.
+2. **Processing:** The Orchestration Hub routes the payload, verifying SPIFFE/SPIRE constraints.
+3. **Execution:** The action is securely completed with all operations logged immutably.
+4. **Result:** The system state is updated and the event is written to `events.jsonl`.
 
-## 3. Data Model
-Events related to Task Dependency Graphing will be stored in the append-only event log with the following schema updates:
-- `event_type`: ``
-- `payload`: JSON representation of the action.
+## 4. API & Data Models
+```protobuf
+message TaskDependencyGraphingEvent {
+  string event_id = 1;
+  string agent_id = 2;
+  bytes payload = 3;
+}
+```
 
-## 4. Edge Cases
-- **Network Failure:** The system will retry with exponential backoff up to 3 times before failing gracefully.
-- **Missing Tools:** If required MCP tools are missing, the agent will enter a `WAITING_FOR_TOOLS` state.
-
-## 5. Security & Privacy
-All requests will be authenticated via SPIFFE/SPIRE certificates. Payloads will be sanitized to prevent injection attacks.
+## 5. Implementation Details
+- Ensure strict JSON validation via `dec.DisallowUnknownFields()` when decoding related payloads.
+- Maintain minimal memory overhead by avoiding O(N) string manipulations in hot paths.
+- All K8s pods associated with this feature will enforce least privilege (e.g., `runAsNonRoot: true`, `readOnlyRootFilesystem: true`).
