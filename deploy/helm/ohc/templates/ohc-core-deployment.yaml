@@ -1,0 +1,51 @@
+{{- if .Values.ohcCore.enabled }}
+# OHC Core — Rust micro-service (settings · agent scheduler · meeting rooms · chat)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-ohc-core
+  labels:
+    app: {{ .Release.Name }}-ohc-core
+    app.kubernetes.io/part-of: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.ohcCore.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-ohc-core
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-ohc-core
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: ohc-core
+          image: {{ .Values.ohcCore.image }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .Values.ohcCore.service.port }}
+          env:
+            - name: LISTEN_ADDR
+              value: "0.0.0.0:{{ .Values.ohcCore.service.port }}"
+            - name: RUST_LOG
+              value: "info"
+          resources:
+            {{- toYaml .Values.ohcCore.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.ohcCore.service.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.ohcCore.service.port }}
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+{{- end }}

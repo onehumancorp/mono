@@ -43,8 +43,21 @@ srcs/frontend/dist/
 /frontend
 coverage_html/
 
-# Desktop (Tauri) app artifacts
-desktop/node_modules/
-desktop/dist/
-desktop/src-tauri/target/
-desktop/src-tauri/gen/
+# Desktop (Tauri) app artifacts (moved to srcs/desktop/)
+srcs/desktop/node_modules/
+srcs/desktop/dist/
+srcs/desktop/src-tauri/target/
+srcs/desktop/src-tauri/gen/
+
+# Rust core build artifacts
+srcs/core/target/
+
+# Flutter app artifacts
+srcs/app/.dart_tool/
+srcs/app/.flutter-plugins
+srcs/app/.flutter-plugins-dependencies
+srcs/app/build/
+srcs/app/android/.gradle/
+srcs/app/ios/Pods/
+srcs/app/ios/.symlinks/
+srcs/app/macos/Pods/

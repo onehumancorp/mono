@@ -1,6 +1,31 @@
 version: "3.9"
 
+# One Human Corp — Docker Compose
+#
+# Single-docker deployment: high-performance mode.
+#   The `ohc-core` service runs the Rust core library (settings, agent
+#   scheduling, meeting rooms, chat integration) for maximum performance.
+#
+# Cloud-native (k8s) deployment: see deploy/helm/ for multi-tenant Helm charts.
+
 services:
+  # ─── Rust Core (settings · agent scheduler · meeting rooms · chat) ────────
+  ohc-core:
+    build:
+      context: ..
+      dockerfile: deploy/docker/ohc-core/Dockerfile
+    environment:
+      LISTEN_ADDR: "0.0.0.0:18789"
+      DATABASE_URL: postgres://ohc:ohc@postgres:5432/ohc?sslmode=disable
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "18789:18789"
+
   backend:
     image: onehumancorp/mono-backend:bazel
     environment:
@@ -11,7 +36,14 @@ services:
       CHATWOOT_ADMIN_PASSWORD: changeme
       CHATWOOT_ENABLED: "true"
       MANIMAX_API_KEY: ${MANIMAX_API_KEY}
+      # Multi-tenant mode is disabled by default in single-docker deployment.
+      # Set to "true" to enable the TenantRegistry for k8s-style multi-tenancy.
+      OHC_MULTITENANT: ${OHC_MULTITENANT:-false}
+      # Rust core sidecar address.
+      OHC_CORE_URL: http://ohc-core:18789
     depends_on:
+      ohc-core:
+        condition: service_started
       redis:
         condition: service_healthy
       postgres:

@@ -67,6 +67,12 @@ spec:
                   name: {{ .Release.Name }}-chatwoot-secret
                   key: adminPassword
             {{- end }}
+            - name: OHC_MULTITENANT
+              value: "{{ .Values.multiTenant.enabled }}"
+            {{- if .Values.ohcCore.enabled }}
+            - name: OHC_CORE_URL
+              value: "http://{{ .Release.Name }}-ohc-core:{{ .Values.ohcCore.service.port }}"
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /healthz

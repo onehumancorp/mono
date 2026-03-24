@@ -25,13 +25,14 @@ type jwtHeader struct {
 // Errors: None
 // Side Effects: None
 type Claims struct {
-	Subject  string   `json:"sub"`
-	Username string   `json:"username"`
-	Email    string   `json:"email"`
-	Roles    []string `json:"roles"`
-	IssuedAt int64    `json:"iat"`
-	Expires  int64    `json:"exp"`
-	TokenID  string   `json:"jti"`
+	Subject        string   `json:"sub"`
+	Username       string   `json:"username"`
+	Email          string   `json:"email"`
+	Roles          []string `json:"roles"`
+	OrganizationID string   `json:"organization_id,omitempty"`
+	IssuedAt       int64    `json:"iat"`
+	Expires        int64    `json:"exp"`
+	TokenID        string   `json:"jti"`
 }
 
 // HasRole checks whether the token's claims include authorization for a specific role.
@@ -64,13 +65,14 @@ func (c *Claims) HasRole(role string) bool {
 func (s *Store) IssueToken(u *User) (string, error) {
 	now := time.Now().UTC()
 	claims := Claims{
-		Subject:  u.ID,
-		Username: u.Username,
-		Email:    u.Email,
-		Roles:    append([]string(nil), u.Roles...),
-		IssuedAt: now.Unix(),
-		Expires:  now.Add(tokenTTL).Unix(),
-		TokenID:  generateID(),
+		Subject:        u.ID,
+		Username:       u.Username,
+		Email:          u.Email,
+		Roles:          append([]string(nil), u.Roles...),
+		OrganizationID: u.OrganizationID,
+		IssuedAt:       now.Unix(),
+		Expires:        now.Add(tokenTTL).Unix(),
+		TokenID:        generateID(),
 	}
 	return signHS256(claims, s.secret)
 }
