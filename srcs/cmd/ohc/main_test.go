@@ -214,3 +214,42 @@ func TestRunSuccess(t *testing.T) {
 		t.Errorf("Expected nil error, got %v", err)
 	}
 }
+
+func TestGetEnvOrDefault(t *testing.T) {
+	t.Setenv("MOCK_PORT", "1234")
+	if getEnvOrDefault("MOCK_PORT", ":8080") != ":1234" {
+		t.Error("expected :1234")
+	}
+	if getEnvOrDefault("NON_EXISTENT_PORT", ":8080") != ":8080" {
+		t.Error("expected :8080")
+	}
+	t.Setenv("EMPTY_PORT", "")
+	if getEnvOrDefault("EMPTY_PORT", ":8080") != ":8080" {
+		t.Error("expected :8080 for empty env var")
+	}
+}
+
+func TestRunGrpcFailure(t *testing.T) {
+	// Let's set the GRPC_PORT to something invalid to test failure
+	t.Setenv("GRPC_PORT", "-1")
+	err := run(time.Now(), func(listenAddr string, handler http.Handler) error {
+		return nil
+	})
+	if err != nil {
+		t.Error("expected no run error, grpc failure should just log")
+	}
+}
+
+
+func TestNewDemoHandlerChatwootSuccess(t *testing.T) {
+	t.Setenv("CHATWOOT_ENABLED", "true")
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{}`)) // fake success
+	}))
+	defer srv.Close()
+	t.Setenv("CHATWOOT_URL", srv.URL)
+	t.Setenv("CHATWOOT_API_ACCESS_TOKEN", "fake_token")
+	newDemoHandler(time.Now())
+	time.Sleep(100 * time.Millisecond) // wait for goroutine
+}

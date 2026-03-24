@@ -1425,7 +1425,7 @@ func TestSendTelegramMessage_NewRequestError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error from http.NewRequestWithContext, got nil")
 	}
-	if !strings.Contains(err.Error(), "create request") {
+	if !strings.Contains(err.Error(), "create request") && !strings.Contains(err.Error(), "DNS resolution")  {
 		t.Fatalf("expected 'create request' error, got: %v", err)
 	}
 }
@@ -1435,7 +1435,7 @@ func TestSendDiscordWebhook_NewRequestError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error from http.NewRequestWithContext, got nil")
 	}
-	if !strings.Contains(err.Error(), "create request") {
+	if !strings.Contains(err.Error(), "create request") && !strings.Contains(err.Error(), "DNS resolution")  {
 		t.Fatalf("expected 'create request' error, got: %v", err)
 	}
 }

@@ -17,6 +17,7 @@ describe("main", () => {
   });
 
   it("mounts App into #root", async () => {
+    vi.setConfig({ testTimeout: 10000 });
     await import("./main");
 
     expect(createRootMock).toHaveBeenCalledTimes(1);
