@@ -886,12 +886,6 @@ type issueToolParams struct {
 	Priority      string `json:"priority"`
 }
 
-type tokenEfficientContextSummarizationParams struct {
-	EventID string          `json:"event_id"`
-	AgentID string          `json:"agent_id"`
-	Payload json.RawMessage `json:"payload"`
-}
-
 func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -1126,40 +1120,6 @@ func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 			return nil, err
 		}
 		return map[string]any{"issue": issue}, nil
-
-	case "token-efficient-context-summarization":
-		var p tokenEfficientContextSummarizationParams
-		dec := json.NewDecoder(bytes.NewReader(req.Params))
-		dec.DisallowUnknownFields()
-		if err := dec.Decode(&p); err != nil {
-			return nil, errors.New("invalid token-efficient context summarization parameters")
-		}
-
-		f, err := os.OpenFile("events.jsonl", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err == nil {
-			event := map[string]any{
-				"timestamp": time.Now().UTC().Format(time.RFC3339),
-				"agent_id":  p.AgentID,
-				"action":    "token-efficient-context-summarization",
-				"payload":   p.Payload,
-			}
-			jsonBytes, _ := json.Marshal(event)
-			f.Write(append(jsonBytes, '\n'))
-			f.Close()
-		}
-
-		// Clean up the map tracker memory to ensure bounded growth
-		s.mu.Lock()
-		rateLimitKey := req.AgentID + ":" + req.ToolID
-		delete(s.rateLimitStates, rateLimitKey)
-		s.mu.Unlock()
-
-		return map[string]any{
-			"status":  "summarized",
-			"eventId": p.EventID,
-			"agentId": p.AgentID,
-			"message": "Token-efficient context summarization completed successfully.",
-		}, nil
 
 	// ── Unimplemented tools — return a structured acknowledgement ─────────────
 	default:

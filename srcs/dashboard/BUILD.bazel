@@ -29,7 +29,6 @@ go_test(
     name = "dashboard_test",
     srcs = [
         "handlers_b2b_extra_test.go",
-        "handlers_mcp_extra_test.go",
         "handlers_mcp_test.go",
         "handlers_ops_extra_test.go",
         "handlers_ops_test.go",
