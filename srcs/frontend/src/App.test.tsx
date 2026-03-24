@@ -960,7 +960,7 @@ describe("App – navigation tabs", () => {
     });
 
     await screen.findByText("Dynamic Scaling", { selector: 'h2' });
-    expect(screen.getByText("Role Capacities")).toBeInTheDocument();
+    expect(screen.getByText("Scale Agents")).toBeInTheDocument();
     expect(screen.getByText("Real-Time Trace Logs")).toBeInTheDocument();
   });
 
@@ -2942,6 +2942,23 @@ describe("App - Dynamic Scaling", () => {
 
     expect(screen.getByText(/Scale AI agents dynamically/i)).toBeInTheDocument();
 
+    await act(async () => {
+      fireEvent.click(screen.getByText("Software Engineer"));
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Next: Set Capacity →"));
+    });
+
+    const capacityInput = screen.getByLabelText(/Target Active Agents/i);
+    await act(async () => {
+      fireEvent.change(capacityInput, { target: { value: "5" } });
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Next: Review →"));
+    });
+
     const applyButton = screen.getByText("Apply Scaling Changes");
     await act(async () => {
       fireEvent.click(applyButton);
@@ -2990,6 +3007,19 @@ describe("App - Dynamic Scaling", () => {
     await act(async () => {
       fireEvent.click(screen.getByText("Dynamic Scaling"));
     });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Software Engineer"));
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Next: Set Capacity →"));
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Next: Review →"));
+    });
+
     await act(async () => {
       fireEvent.click(screen.getByText("Apply Scaling Changes"));
     });
@@ -3038,6 +3068,18 @@ describe("App - Dynamic Scaling", () => {
       fireEvent.click(screen.getByText("Dynamic Scaling"));
     });
 
+    await act(async () => {
+      fireEvent.click(screen.getByText("Software Engineer"));
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Next: Set Capacity →"));
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Next: Review →"));
+    });
+
     // Create an unhandled rejection guard, or simply wait for notice
     await act(async () => {
       fireEvent.click(screen.getByText("Apply Scaling Changes"));
@@ -3055,7 +3097,7 @@ describe("App - Dynamic Scaling", () => {
     });
   });
 
-  it("updates slider values", async () => {
+  it("updates capacity values", async () => {
     render(<App />);
     await screen.findByText("One Human Corp Dashboard");
 
@@ -3063,13 +3105,17 @@ describe("App - Dynamic Scaling", () => {
       fireEvent.click(screen.getByText("Dynamic Scaling"));
     });
 
-    const sliders = screen.getAllByRole("slider");
-    expect(sliders.length).toBe(3);
+    await act(async () => {
+      fireEvent.click(screen.getByText("Software Engineer"));
+    });
 
     await act(async () => {
-      fireEvent.change(sliders[0], { target: { value: "5" } });
-      fireEvent.change(sliders[1], { target: { value: "8" } });
-      fireEvent.change(sliders[2], { target: { value: "10" } });
+      fireEvent.click(screen.getByText("Next: Set Capacity →"));
+    });
+
+    const capacityInput = screen.getByLabelText(/Target Active Agents/i);
+    await act(async () => {
+      fireEvent.change(capacityInput, { target: { value: "5" } });
     });
   });
 });

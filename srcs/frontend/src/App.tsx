@@ -406,6 +406,10 @@ export function App() {
   const [sweAgents, setSweAgents] = useState(4);
   const [supportAgents, setSupportAgents] = useState(1);
 
+  const [scalingStep, setScalingStep] = useState(1);
+  const [scalingRole, setScalingRole] = useState("");
+  const [scalingCount, setScalingCount] = useState(1);
+
   useEffect(() => {
     if (snapshot) {
       setSalesReps(snapshot.agents.filter(a => a.role === "sales_rep").length);
@@ -2588,90 +2592,108 @@ export function App() {
             <div className="content-grid two-col">
               <article className="scaling-panel">
                 <header className="panel-head">
-                  <h2 className="panel-title">Role Capacities</h2>
+                  <h2 className="panel-title">Scale Agents</h2>
                 </header>
                 <div className="panel-body">
-                  <div style={{ marginBottom: "1.5rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                      <strong>Sales Representative</strong>
-                      <span><span style={{color: "var(--accent-hire)"}}>{salesReps}</span> / 10 active</span>
-                    </div>
-                    <input type="range" min="0" max="10" value={salesReps} onChange={(e) => setSalesReps(parseInt(e.target.value))} className="scaling-slider"
-                           style={{ accentColor: "var(--accent-hire)" }} />
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                      <span>Cost: $500/mo per agent</span>
-                      <span>Total: ${salesReps * 500}/mo</span>
-                    </div>
+                  <div className="wizard-steps" style={{ marginBottom: "1.5rem" }}>
+                    {["Select Role", "Capacity", "Confirm"].map((label, i) => (
+                      <div key={label} className={`wizard-step ${scalingStep > i + 1 ? "wizard-step--done" : scalingStep === i + 1 ? "wizard-step--active" : ""}`}>
+                        <span className="wizard-step__num">{scalingStep > i + 1 ? "✓" : i + 1}</span>
+                        <span className="wizard-step__label">{label}</span>
+                      </div>
+                    ))}
                   </div>
 
-                  <div style={{ marginBottom: "1.5rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                      <strong>Software Engineer</strong>
-                      <span><span style={{color: "var(--accent-hire)"}}>{sweAgents}</span> / 15 active</span>
+                  {scalingStep === 1 && (
+                    <div className="wizard-content">
+                      <h3 className="wizard-heading">Step 1 — Select Target Role</h3>
+                      <div className="role-grid">
+                        <button type="button" className={`role-select-card ${scalingRole === "sales_rep" ? "role-select-card--active" : ""}`} onClick={() => { setScalingRole("sales_rep"); setScalingCount(salesReps); }}>
+                          <span className="role-select-card__name">Sales Representative</span>
+                        </button>
+                        <button type="button" className={`role-select-card ${scalingRole === "swe" ? "role-select-card--active" : ""}`} onClick={() => { setScalingRole("swe"); setScalingCount(sweAgents); }}>
+                          <span className="role-select-card__name">Software Engineer</span>
+                        </button>
+                        <button type="button" className={`role-select-card ${scalingRole === "support" ? "role-select-card--active" : ""}`} onClick={() => { setScalingRole("support"); setScalingCount(supportAgents); }}>
+                          <span className="role-select-card__name">Customer Support</span>
+                        </button>
+                      </div>
+                      <div style={{ marginTop: "1rem", display: "flex", justifyContent: "flex-end" }}>
+                        <button className="btn btn-primary" disabled={!scalingRole} onClick={() => setScalingStep(2)}>Next: Set Capacity →</button>
+                      </div>
                     </div>
-                    <input type="range" min="0" max="15" value={sweAgents} onChange={(e) => setSweAgents(parseInt(e.target.value))} className="scaling-slider"
-                           style={{ accentColor: "var(--accent-hire)" }} />
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                      <span>Cost: $800/mo per agent</span>
-                      <span>Total: ${sweAgents * 800}/mo</span>
+                  )}
+
+                  {scalingStep === 2 && (
+                    <div className="wizard-content">
+                      <h3 className="wizard-heading">Step 2 — Set Capacity</h3>
+                      <label className="field">
+                        <span className="field-label">Target Active Agents</span>
+                        <input className="input input--lg" type="number" min="0" max="50" value={scalingCount} onChange={(e) => setScalingCount(parseInt(e.target.value) || 0)} autoFocus />
+                        <span className="field-hint">Specify the total desired number of active agents for {scalingRole.replace(/_/g, " ")}.</span>
+                      </label>
+                      <div style={{ marginTop: "1rem", display: "flex", justifyContent: "space-between" }}>
+                        <button className="btn btn-ghost" onClick={() => setScalingStep(1)}>← Back</button>
+                        <button className="btn btn-primary" onClick={() => setScalingStep(3)}>Next: Review →</button>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div style={{ marginBottom: "1.5rem" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                      <strong>Customer Support</strong>
-                      <span><span style={{color: "var(--accent-hire)"}}>{supportAgents}</span> / 20 active</span>
-                    </div>
-                    <input type="range" min="0" max="20" value={supportAgents} onChange={(e) => setSupportAgents(parseInt(e.target.value))} className="scaling-slider"
-                           style={{ accentColor: "var(--accent-hire)" }} />
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                      <span>Cost: $300/mo per agent</span>
-                      <span>Total: ${supportAgents * 300}/mo</span>
-                    </div>
-                  </div>
+                  {scalingStep === 3 && (
+                    <div className="wizard-content">
+                      <h3 className="wizard-heading">Step 3 — Review & Confirm</h3>
+                      <div className="hire-summary" style={{ flexDirection: "column", alignItems: "flex-start" }}>
+                        <p><strong>Role:</strong> {scalingRole.replace(/_/g, " ")}</p>
+                        <p><strong>New Capacity:</strong> {scalingCount} agents</p>
+                        <p><strong>Cost Impact:</strong> ${scalingCount * (scalingRole === "swe" ? 800 : scalingRole === "sales_rep" ? 500 : 300)}/mo</p>
+                      </div>
+                      <div style={{ marginTop: "1rem", display: "flex", justifyContent: "space-between" }}>
+                        <button className="btn btn-ghost" disabled={isScalingActive} onClick={() => setScalingStep(2)}>← Back</button>
+                        <button className="btn btn-primary" disabled={isScalingActive} onClick={async () => {
+                          setIsScalingActive(true);
+                          setScalingLogs([]);
+                          try {
+                            if (scalingRole === "sales_rep") setSalesReps(scalingCount);
+                            if (scalingRole === "swe") setSweAgents(scalingCount);
+                            if (scalingRole === "support") setSupportAgents(scalingCount);
 
-                  <button className="btn btn-primary" style={{ width: "100%", marginTop: "1rem" }} disabled={isScalingActive} onClick={async () => {
-                    if (isScalingActive) return;
-                    setIsScalingActive(true);
-                    setScalingLogs([]);
-                    try {
-                      await scaleAgents("sales_rep", salesReps);
-                      await scaleAgents("swe", sweAgents);
-                      await scaleAgents("support", supportAgents);
-                      // Force a snapshot refresh so other parts of the dashboard see the newly created agents
-                      await loadAll();
+                            await scaleAgents(scalingRole, scalingCount);
+                            await loadAll();
 
-                      const token = getStoredToken();
-                      const url = token ? `/api/v1/scale/stream?token=${encodeURIComponent(token)}` : "/api/v1/scale/stream";
+                            const token = getStoredToken();
+                            const url = token ? `/api/v1/scale/stream?token=${encodeURIComponent(token)}` : "/api/v1/scale/stream";
 
-                      const eventSource = new EventSource(url);
-                      eventSource.onmessage = (event) => {
-                        try {
-                          const data = JSON.parse(event.data);
-                          setScalingLogs(prev => [...prev, {
-                            time: new Date().toISOString().substring(11, 19) + "Z",
-                            msg: data.event,
-                            type: data.status
-                          }]);
-                          if (data.event === "AgentHired") {
-                            eventSource.close();
+                            const eventSource = new EventSource(url);
+                            eventSource.onmessage = (event) => {
+                              try {
+                                const data = JSON.parse(event.data);
+                                setScalingLogs(prev => [...prev, {
+                                  time: new Date().toISOString().substring(11, 19) + "Z",
+                                  msg: data.event,
+                                  type: data.status
+                                }]);
+                                if (data.event === "AgentHired") {
+                                  eventSource.close();
+                                  setIsScalingActive(false);
+                                }
+                              } catch (e) {
+                                // Handle error or plain string
+                              }
+                            };
+                            eventSource.onerror = () => {
+                              eventSource.close();
+                              setIsScalingActive(false);
+                            };
+                          } catch (e) {
+                            console.error(e);
                             setIsScalingActive(false);
                           }
-                        } catch (e) {
-                          // Handle error or plain string
-                        }
-                      };
-                      eventSource.onerror = () => {
-                        eventSource.close();
-                        setIsScalingActive(false);
-                      };
-                    } catch (e) {
-                      console.error(e);
-                      setIsScalingActive(false);
-                    }
-                  }}>
-                    {isScalingActive ? "Applying Scaling Changes..." : "Apply Scaling Changes"}
-                  </button>
+                        }}>
+                          {isScalingActive ? "Applying Scaling Changes..." : "Apply Scaling Changes"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </article>
 
