@@ -46,12 +46,28 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Retrieves the organizational hierarchy.
+ * Intent: Retrieves the organizational hierarchy.
+ * Params: None
+ * Returns: Promise<Organization>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchOrganization(): Promise<Organization> {
   return authedGetJSON<Organization>("/api/org");
 }
 /**
  * Summary: Fetches all active virtual meeting rooms and their transcripts.
  * Intent: Fetches all active virtual meeting rooms and their transcripts.
+ * Params: None
+ * Returns: Promise<MeetingRoom[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Retrieves the meeting rooms.
+ * Intent: Retrieves the meeting rooms.
  * Params: None
  * Returns: Promise<MeetingRoom[]>
  * Errors: May throw an error
@@ -215,12 +231,28 @@ export async function sendMessage(form: {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Hires an agent.
+ * Intent: Hires an agent.
+ * Params: name, role
+ * Returns: Promise<DashboardSnapshot>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
   return authedPostJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
 }
 /**
  * Summary: Delegates a task from one agent to a specialist agent.
  * Intent: Delegates a task from one agent to a specialist agent.
+ * Params: fromAgentId, toAgentId, content, meetingId
+ * Returns: Promise<DashboardSnapshot>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Delegates a task to an agent.
+ * Intent: Delegates a task to an agent.
  * Params: fromAgentId, toAgentId, content, meetingId
  * Returns: Promise<DashboardSnapshot>
  * Errors: May throw an error
@@ -247,12 +279,28 @@ export function delegateTask(
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Fires an agent.
+ * Intent: Fires an agent.
+ * Params: agentId
+ * Returns: Promise<DashboardSnapshot>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fireAgent(agentId: string): Promise<DashboardSnapshot> {
   return authedPostJSON<DashboardSnapshot>("/api/agents/fire", { agentId });
 }
 /**
  * Summary: Retrieves available organizational domain templates (e.g., Software Company).
  * Intent: Retrieves available organizational domain templates (e.g., Software Company).
+ * Params: None
+ * Returns: Promise<DomainInfo[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Retrieves domains.
+ * Intent: Retrieves domains.
  * Params: None
  * Returns: Promise<DomainInfo[]>
  * Errors: May throw an error
@@ -269,12 +317,28 @@ export function fetchDomains(): Promise<DomainInfo[]> {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Retrieves MCP tools.
+ * Intent: Retrieves MCP tools.
+ * Params: None
+ * Returns: Promise<MCPTool[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchMCPTools(): Promise<MCPTool[]> {
   return getJSON<MCPTool[]>("/api/mcp/tools");
 }
 /**
  * Summary: Overrides current state with a predefined scenario for demonstration purposes.
  * Intent: Overrides current state with a predefined scenario for demonstration purposes.
+ * Params: scenario
+ * Returns: Promise<DashboardSnapshot>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Seeds a scenario.
+ * Intent: Seeds a scenario.
  * Params: scenario
  * Returns: Promise<DashboardSnapshot>
  * Errors: May throw an error
@@ -292,6 +356,14 @@ export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Retrieves approvals.
+ * Intent: Retrieves approvals.
+ * Params: None
+ * Returns: Promise<ApprovalRequest[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchApprovals(): Promise<ApprovalRequest[]> {
   return getJSON<ApprovalRequest[]>("/api/approvals");
 }
@@ -300,6 +372,14 @@ export function fetchApprovals(): Promise<ApprovalRequest[]> {
  * Intent: Submits a new request for human manager sign-off on a high-risk action.
  * Params: None
  * Returns: None
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Requests approval.
+ * Intent: Requests approval.
+ * Params: body
+ * Returns: Promise<ApprovalRequest>
  * Errors: May throw an error
  * Side Effects: None
  */
@@ -320,6 +400,14 @@ export function requestApproval(body: {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Decides an approval.
+ * Intent: Decides an approval.
+ * Params: approvalId, decision, decidedBy
+ * Returns: Promise<ApprovalRequest[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function decideApproval(
   approvalId: string,
   decision: "approve" | "reject",
@@ -337,6 +425,14 @@ export function decideApproval(
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Retrieves handoffs.
+ * Intent: Retrieves handoffs.
+ * Params: None
+ * Returns: Promise<HandoffPackage[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchHandoffs(): Promise<HandoffPackage[]> {
   return getJSON<HandoffPackage[]>("/api/handoffs");
 }
@@ -345,6 +441,14 @@ export function fetchHandoffs(): Promise<HandoffPackage[]> {
  * Intent: Escalates a complex task from an autonomous agent to a human manager.
  * Params: None
  * Returns: None
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Creates a handoff.
+ * Intent: Creates a handoff.
+ * Params: body
+ * Returns: Promise<HandoffPackage>
  * Errors: May throw an error
  * Side Effects: None
  */
@@ -366,6 +470,14 @@ export function createHandoff(body: {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Resolves a handoff.
+ * Intent: Resolves a handoff.
+ * Params: handoffId, status
+ * Returns: Promise<HandoffPackage[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function resolveHandoff(handoffId: string, status: "acknowledged" | "resolved"): Promise<HandoffPackage[]> {
   return postJSON<HandoffPackage[]>("/api/handoffs/resolve", { handoffId, status });
 }
@@ -374,6 +486,14 @@ export function resolveHandoff(handoffId: string, status: "acknowledged" | "reso
 /**
  * Summary: Retrieves the SPIFFE SVID certificates issued to the current workforce.
  * Intent: Retrieves the SPIFFE SVID certificates issued to the current workforce.
+ * Params: None
+ * Returns: Promise<AgentIdentity[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Retrieves agent identities.
+ * Intent: Retrieves agent identities.
  * Params: None
  * Returns: Promise<AgentIdentity[]>
  * Errors: May throw an error
@@ -392,6 +512,14 @@ export function fetchIdentities(): Promise<AgentIdentity[]> {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Retrieves skill packs.
+ * Intent: Retrieves skill packs.
+ * Params: None
+ * Returns: Promise<SkillPack[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchSkillPacks(): Promise<SkillPack[]> {
   return getJSON<SkillPack[]>("/api/skills");
 }
@@ -400,6 +528,14 @@ export function fetchSkillPacks(): Promise<SkillPack[]> {
  * Intent: Imports a new specialized skill pack into the organization's domain.
  * Params: None
  * Returns: None
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Imports a skill pack.
+ * Intent: Imports a skill pack.
+ * Params: body
+ * Returns: Promise<SkillPack>
  * Errors: May throw an error
  * Side Effects: None
  */
@@ -422,6 +558,14 @@ export function importSkillPack(body: {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Retrieves snapshots.
+ * Intent: Retrieves snapshots.
+ * Params: None
+ * Returns: Promise<OrgSnapshot[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchSnapshots(): Promise<OrgSnapshot[]> {
   return getJSON<OrgSnapshot[]>("/api/snapshots");
 }
@@ -429,6 +573,14 @@ export function fetchSnapshots(): Promise<OrgSnapshot[]> {
  * Summary: Captures a point-in-time snapshot of the entire organization's memory and state.
  * Intent: Captures a point-in-time snapshot of the entire organization's memory and state.
  * Params: label?
+ * Returns: Promise<OrgSnapshot>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Creates a snapshot.
+ * Intent: Creates a snapshot.
+ * Params: label
  * Returns: Promise<OrgSnapshot>
  * Errors: May throw an error
  * Side Effects: None
@@ -444,6 +596,14 @@ export function createSnapshot(label?: string): Promise<OrgSnapshot> {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Restores a snapshot.
+ * Intent: Restores a snapshot.
+ * Params: snapshotId
+ * Returns: Promise<DashboardSnapshot>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> {
   return postJSON<DashboardSnapshot>("/api/snapshots/restore", { snapshotId });
 }
@@ -452,6 +612,14 @@ export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> 
 /**
  * Summary: Retrieves the catalog of community-published agents and tools.
  * Intent: Retrieves the catalog of community-published agents and tools.
+ * Params: None
+ * Returns: Promise<MarketplaceItem[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Retrieves marketplace items.
+ * Intent: Retrieves marketplace items.
  * Params: None
  * Returns: Promise<MarketplaceItem[]>
  * Errors: May throw an error
@@ -490,6 +658,14 @@ import type {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Retrieves integrations.
+ * Intent: Retrieves integrations.
+ * Params: category
+ * Returns: Promise<Integration[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchIntegrations(category?: string): Promise<Integration[]> {
   const q = category ? `?category=${category}` : "";
   return getJSON<Integration[]>(`/api/integrations${q}`);
@@ -499,6 +675,14 @@ export function fetchIntegrations(category?: string): Promise<Integration[]> {
  * Intent: Connects and authenticates a specific external integration.
  * Params: None
  * Returns: None
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Connects an integration.
+ * Intent: Connects an integration.
+ * Params: integrationId, baseUrl, botToken, chatId, webhookUrl, apiToken
+ * Returns: Promise<Integration>
  * Errors: May throw an error
  * Side Effects: None
  */
@@ -529,6 +713,14 @@ export function connectIntegration(
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Disconnects an integration.
+ * Intent: Disconnects an integration.
+ * Params: integrationId
+ * Returns: Promise<Integration>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function disconnectIntegration(integrationId: string): Promise<Integration> {
   return postJSON<Integration>("/api/integrations/disconnect", { integrationId });
 }
@@ -537,6 +729,14 @@ export function disconnectIntegration(integrationId: string): Promise<Integratio
  * Intent: Sends a test message to validate credentials before saving them.
  * Params: None
  * Returns: None
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Tests chat integration.
+ * Intent: Tests chat integration.
+ * Params: integrationId, botToken, chatId, webhookUrl, apiToken
+ * Returns: Promise<{ success: boolean }>
  * Errors: May throw an error
  * Side Effects: None
  */
@@ -557,6 +757,14 @@ export function testChatIntegration(
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Retrieves chat messages.
+ * Intent: Retrieves chat messages.
+ * Params: integrationId
+ * Returns: Promise<ChatMessage[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return getJSON<ChatMessage[]>(`/api/integrations/chat/messages${q}`);
@@ -566,6 +774,14 @@ export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]
  * Intent: Dispatches a message to an external chat platform.
  * Params: None
  * Returns: None
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Sends a chat message.
+ * Intent: Sends a chat message.
+ * Params: body
+ * Returns: Promise<ChatMessage>
  * Errors: May throw an error
  * Side Effects: None
  */
@@ -586,6 +802,14 @@ export function sendChatMessage(body: {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Retrieves pull requests.
+ * Intent: Retrieves pull requests.
+ * Params: integrationId
+ * Returns: Promise<PullRequest[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return getJSON<PullRequest[]>(`/api/integrations/git/prs${q}`);
@@ -595,6 +819,14 @@ export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]
  * Intent: Opens a pull request/merge request on a connected git platform.
  * Params: None
  * Returns: None
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Creates a pull request.
+ * Intent: Creates a pull request.
+ * Params: body
+ * Returns: Promise<PullRequest>
  * Errors: May throw an error
  * Side Effects: None
  */
@@ -617,12 +849,28 @@ export function createPullRequest(body: {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Merges a pull request.
+ * Intent: Merges a pull request.
+ * Params: prId
+ * Returns: Promise<PullRequest>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function mergePullRequest(prId: string): Promise<PullRequest> {
   return postJSON<PullRequest>("/api/integrations/git/pr/merge", { prId });
 }
 /**
  * Summary: Closes an open pull request on a connected git platform without merging.
  * Intent: Closes an open pull request on a connected git platform without merging.
+ * Params: prId
+ * Returns: Promise<PullRequest>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Closes a pull request.
+ * Intent: Closes a pull request.
  * Params: prId
  * Returns: Promise<PullRequest>
  * Errors: May throw an error
@@ -639,6 +887,14 @@ export function closePullRequest(prId: string): Promise<PullRequest> {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Retrieves issues.
+ * Intent: Retrieves issues.
+ * Params: integrationId
+ * Returns: Promise<Issue[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchIssues(integrationId?: string): Promise<Issue[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return getJSON<Issue[]>(`/api/integrations/issues${q}`);
@@ -648,6 +904,14 @@ export function fetchIssues(integrationId?: string): Promise<Issue[]> {
  * Intent: Creates a ticket in a connected issue tracker.
  * Params: None
  * Returns: None
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Creates an issue.
+ * Intent: Creates an issue.
+ * Params: body
+ * Returns: Promise<Issue>
  * Errors: May throw an error
  * Side Effects: None
  */
@@ -670,12 +934,28 @@ export function createIssue(body: {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Updates an issue status.
+ * Intent: Updates an issue status.
+ * Params: issueId, status
+ * Returns: Promise<Issue>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function updateIssueStatus(issueId: string, status: string): Promise<Issue> {
   return postJSON<Issue>("/api/integrations/issues/status", { issueId, status });
 }
 /**
  * Summary: Assigns ownership of a ticket to a specific agent or human manager.
  * Intent: Assigns ownership of a ticket to a specific agent or human manager.
+ * Params: issueId, assignee
+ * Returns: Promise<Issue>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Assigns an issue.
+ * Intent: Assigns an issue.
  * Params: issueId, assignee
  * Returns: Promise<Issue>
  * Errors: May throw an error
@@ -689,6 +969,22 @@ export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
  * Intent: Invokes an MCP tool with the given action and parameters. Communication tools route to the underlying connected integration. Git/issue tools create PRs or tickets in the connected platform.
  * Params: None
  * Returns: None
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Invokes an MCP tool.
+ * Intent: Invokes an MCP tool.
+ * Params: toolId, action, params
+ * Returns: Promise<Record<string, unknown>>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Invokes an MCP tool.
+ * Intent: Invokes an MCP tool.
+ * Params: toolId, action, params
+ * Returns: Promise<Record<string, unknown>>
  * Errors: May throw an error
  * Side Effects: None
  */
@@ -707,12 +1003,36 @@ export function invokeMCPTool(
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Retrieves settings.
+ * Intent: Retrieves settings.
+ * Params: None
+ * Returns: Promise<Settings>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Retrieves settings.
+ * Intent: Retrieves settings.
+ * Params: None
+ * Returns: Promise<Settings>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchSettings(): Promise<Settings> {
   return getJSON<Settings>("/api/settings");
 }
 /**
  * Summary: Saves and updates the global settings and preferences.
  * Intent: Saves and updates the global settings and preferences.
+ * Params: settings
+ * Returns: Promise<Settings>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Saves settings.
+ * Intent: Saves settings.
  * Params: settings
  * Returns: Promise<Settings>
  * Errors: May throw an error
@@ -733,6 +1053,14 @@ const TOKEN_KEY = "ohc_token";
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Gets stored token.
+ * Intent: Gets stored token.
+ * Params: None
+ * Returns: string | null
+ * Errors: None
+ * Side Effects: None
+ */
 export function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -744,6 +1072,14 @@ export function getStoredToken(): string | null {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Sets stored token.
+ * Intent: Sets stored token.
+ * Params: token
+ * Returns: None
+ * Errors: None
+ * Side Effects: None
+ */
 export function setStoredToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
 }
@@ -753,6 +1089,14 @@ export function setStoredToken(token: string): void {
  * Params: None
  * Returns: void
  * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Clears stored token.
+ * Intent: Clears stored token.
+ * Params: None
+ * Returns: None
+ * Errors: None
  * Side Effects: None
  */
 export function clearStoredToken(): void {
@@ -816,6 +1160,14 @@ async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Authenticates a user and retrieves a JWT token.
+ * Intent: Authenticates a user and retrieves a JWT token.
+ * Params: username, password
+ * Returns: Promise<LoginResponse>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export async function login(username: string, password: string): Promise<LoginResponse> {
   const resp = await fetch("/api/auth/login", {
     method: "POST",
@@ -830,6 +1182,14 @@ export async function login(username: string, password: string): Promise<LoginRe
   setStoredToken(result.token);
   return result;
 }
+/**
+ * Summary: Invalidates the current session and clears the stored authentication token.
+ * Intent: Invalidates the current session and clears the stored authentication token.
+ * Params: None
+ * Returns: Promise<void>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 /**
  * Summary: Invalidates the current session and clears the stored authentication token.
  * Intent: Invalidates the current session and clears the stored authentication token.
@@ -853,12 +1213,28 @@ export async function logout(): Promise<void> {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Retrieves current user.
+ * Intent: Retrieves current user.
+ * Params: None
+ * Returns: Promise<UserPublic>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchMe(): Promise<UserPublic> {
   return authedGetJSON<UserPublic>("/api/auth/me");
 }
 /**
  * Summary: Retrieves a list of all registered users in the system (requires Admin role).
  * Intent: Retrieves a list of all registered users in the system (requires Admin role).
+ * Params: None
+ * Returns: Promise<UserPublic[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Retrieves all users.
+ * Intent: Retrieves all users.
  * Params: None
  * Returns: Promise<UserPublic[]>
  * Errors: May throw an error
@@ -875,6 +1251,14 @@ export function fetchUsers(): Promise<UserPublic[]> {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Creates a user.
+ * Intent: Creates a user.
+ * Params: body
+ * Returns: Promise<UserPublic>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function createUser(body: {
   username: string;
   email: string;
@@ -886,6 +1270,14 @@ export function createUser(body: {
 /**
  * Summary: Deletes an existing user account from the system (requires Admin role).
  * Intent: Deletes an existing user account from the system (requires Admin role).
+ * Params: id
+ * Returns: Promise<void>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Deletes an existing user account from the system.
+ * Intent: Deletes an existing user account from the system.
  * Params: id
  * Returns: Promise<void>
  * Errors: May throw an error
@@ -906,6 +1298,14 @@ export async function deleteUser(id: string): Promise<void> {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Retrieves roles.
+ * Intent: Retrieves roles.
+ * Params: None
+ * Returns: Promise<Role[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchRoles(): Promise<Role[]> {
   return authedGetJSON<Role[]>("/api/roles");
 }
@@ -917,12 +1317,28 @@ export function fetchRoles(): Promise<Role[]> {
  * Errors: May throw an error
  * Side Effects: None
  */
+/**
+ * Summary: Creates a role.
+ * Intent: Creates a role.
+ * Params: body
+ * Returns: Promise<Role>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function createRole(body: { name: string; permissions?: string[] }): Promise<Role> {
   return authedPostJSON<Role>("/api/roles", body);
 }
 /**
  * Summary: Scales the number of agents for a specific role dynamically.
  * Intent: Scales the number of agents for a specific role dynamically.
+ * Params: role, count
+ * Returns: Promise<{ status: string; role: string; count: number }>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Scales agents.
+ * Intent: Scales agents.
  * Params: role, count
  * Returns: Promise<{ status: string; role: string; count: number }>
  * Errors: May throw an error

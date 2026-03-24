@@ -55,7 +55,12 @@ type protoFile struct {
 
 var reWord = regexp.MustCompile(`[A-Za-z0-9]+`)
 
-// snakeToCamel converts a snake_case identifier to lowerCamelCase.
+// Summary: snakeToCamel converts a snake_case identifier to lowerCamelCase.
+// Intent: snakeToCamel converts a snake_case identifier to lowerCamelCase.
+// Params: s
+// Returns: string
+// Errors: None
+// Side Effects: None
 func snakeToCamel(s string) string {
 	parts := strings.Split(s, "_")
 	for i := 1; i < len(parts); i++ {
@@ -66,7 +71,12 @@ func snakeToCamel(s string) string {
 	return strings.Join(parts, "")
 }
 
-// pkgToPrefix converts a proto package name to a CamelCase prefix.
+// Summary: pkgToPrefix converts a proto package name to a CamelCase prefix.
+// Intent: pkgToPrefix converts a proto package name to a CamelCase prefix.
+// Params: pkg
+// Returns: string
+// Errors: None
+// Side Effects: None
 // e.g. "ohc.common" → "Common", "ohc.api.v1" → "Api"
 func pkgToPrefix(pkg string) string {
 	parts := strings.Split(pkg, ".")
@@ -100,7 +110,12 @@ func pkgToPrefix(pkg string) string {
 	return "Proto"
 }
 
-// qualifiedToTS resolves a (possibly-qualified) proto type name to its
+// Summary: qualifiedToTS resolves a (possibly-qualified) proto type name to its TypeScript equivalent.
+// Intent: qualifiedToTS resolves a (possibly-qualified) proto type name to its TypeScript equivalent.
+// Params: typeName, allTypes
+// Returns: string
+// Errors: None
+// Side Effects: None
 // TypeScript equivalent, given a map of all known types keyed by proto name.
 func qualifiedToTS(typeName string, allTypes map[string]string) string {
 	// Strip leading dot
@@ -120,7 +135,12 @@ func qualifiedToTS(typeName string, allTypes map[string]string) string {
 	return strings.ToUpper(unqualified[:1]) + unqualified[1:]
 }
 
-// protoTypeToTS converts a primitive proto type name to a TypeScript type string.
+// Summary: protoTypeToTS converts a primitive proto type name to a TypeScript type string.
+// Intent: protoTypeToTS converts a primitive proto type name to a TypeScript type string.
+// Params: t
+// Returns: string
+// Errors: None
+// Side Effects: None
 func protoTypeToTS(t string) string {
 	switch t {
 	case "string":
@@ -140,7 +160,12 @@ func protoTypeToTS(t string) string {
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 
-// stripComment removes inline // and /* */ comments from a line.
+// Summary: stripComment removes inline // and /* */ comments from a line.
+// Intent: stripComment removes inline // and /* */ comments from a line.
+// Params: line
+// Returns: string
+// Errors: None
+// Side Effects: None
 func stripComment(line string) string {
 	if idx := strings.Index(line, "//"); idx >= 0 {
 		line = line[:idx]
@@ -161,6 +186,12 @@ var (
 	reField   = regexp.MustCompile(`^(repeated\s+|optional\s+)?([\w.]+)\s+(\w+)\s*=\s*\d+`)
 )
 
+// Summary: parseProto parses a proto file.
+// Intent: parseProto parses a proto file.
+// Params: path
+// Returns: protoFile
+// Errors: None
+// Side Effects: None
 func parseProto(path string) protoFile {
 	f, err := os.Open(path)
 	if err != nil {
@@ -271,6 +302,12 @@ func parseProto(path string) protoFile {
 
 // ── Code generator ────────────────────────────────────────────────────────────
 
+// Summary: generate generates TypeScript types from proto files.
+// Intent: generate generates TypeScript types from proto files.
+// Params: files
+// Returns: None
+// Errors: None
+// Side Effects: None
 func generate(files []protoFile) {
 	// First pass: build a map from proto qualified name → TS type name.
 	// This lets us resolve cross-file references.
@@ -341,6 +378,12 @@ func generate(files []protoFile) {
 	}
 }
 
+// Summary: execute runs the ts generation.
+// Intent: execute runs the ts generation.
+// Params: args
+// Returns: None
+// Errors: None
+// Side Effects: None
 func execute(args []string) {
 	if len(args) < 1 {
 		fmt.Fprintln(os.Stderr, "usage: gen_ts <proto_file>...")
@@ -367,6 +410,12 @@ func execute(args []string) {
 	generate(files)
 }
 
+// Summary: Entry point for the proto ts generator.
+// Intent: Entry point for the proto ts generator.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 func main() {
 	execute(os.Args[1:])
 }
