@@ -16,19 +16,19 @@ import (
 
 // Built-in role names.
 const (
-	// Summary: Defines the RoleAdmin type.
+	// RoleAdmin defines the standard operational responsibilities and system access boundaries for the Admin persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleAdmin = "admin"
-	// Summary: Defines the RoleOperator type.
+	// RoleOperator defines the standard operational responsibilities and system access boundaries for the Operator persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleOperator = "operator"
-	// Summary: Defines the RoleViewer type.
+	// RoleViewer defines the standard operational responsibilities and system access boundaries for the Viewer persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
@@ -43,7 +43,7 @@ var rolePermissions = map[string][]string{
 	RoleViewer:   {"read"},
 }
 
-// Summary: User represents a human user account.
+// User represents a persistent user account with encrypted credentials and role-based permissions within the platform.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -60,7 +60,7 @@ type User struct {
 	OIDCSubject  string    `json:"oidcSubject,omitempty"`
 }
 
-// Summary: UserPublic is a safe subset of User with no sensitive fields.
+// UserPublic represents the sanitized, non-sensitive profile of a user suitable for external API consumption.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -76,7 +76,7 @@ type UserPublic struct {
 	OIDCSubject string    `json:"oidcSubject,omitempty"`
 }
 
-// Summary: PublicView returns a UserPublic with no sensitive fields.
+// PublicView returns a UserPublic with no sensitive fields.
 // Parameters: None
 // Returns: UserPublic
 // Errors: None
@@ -94,7 +94,7 @@ func (u *User) PublicView() UserPublic {
 	}
 }
 
-// Summary: Role represents a named permission group.
+// Role defines an operational role with an associated array of access permissions for Role-Based Access Control (RBAC).
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -106,7 +106,7 @@ type Role struct {
 	CreatedAt   time.Time `json:"createdAt"`
 }
 
-// Summary: Store is an in-memory user/role store that can be backed by Redis/DB in future. All exported methods are goroutine-safe.
+// Store manages secure, thread-safe persistence for user accounts, credentials, and roles, using mutexes for concurrent access.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -123,7 +123,7 @@ type Store struct {
 	oidcCfg OIDCConfig
 }
 
-// Summary: NewStore creates a Store seeded with default roles and an admin user. Admin credentials are read from ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_EMAIL environment variables (defaults: admin / admin / admin@localhost).
+// NewStore creates a Store seeded with default roles and an admin user. Admin credentials are read from ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_EMAIL environment variables (defaults: admin / admin / admin@localhost).
 // Parameters: None
 // Returns: *Store
 // Errors: None
@@ -187,7 +187,7 @@ func NewStore() *Store {
 	return s
 }
 
-// Summary: CreateUser creates a new user with the given credentials and roles.
+// CreateUser creates a new user with the given credentials and roles.
 // Parameters: s *Store (No Constraints)
 // Returns: (*User, error)
 // Errors: Explicit error handling
@@ -231,7 +231,7 @@ func (s *Store) CreateUser(username, email, password string, roles []string) (*U
 	return u, nil
 }
 
-// Summary: Authenticate validates username+password and returns the matching user.
+// Authenticate validates username+password and returns the matching user.
 // Parameters: s *Store (No Constraints)
 // Returns: (*User, error)
 // Errors: Explicit error handling
@@ -252,7 +252,7 @@ func (s *Store) Authenticate(username, password string) (*User, error) {
 	return u, nil
 }
 
-// Summary: GetUser returns a user by ID.
+// GetUser returns a user by ID.
 // Parameters: s *Store (No Constraints)
 // Returns: (*User, bool)
 // Errors: None
@@ -264,7 +264,7 @@ func (s *Store) GetUser(id string) (*User, bool) {
 	return u, ok
 }
 
-// Summary: ListUsers returns all users.
+// ListUsers returns all users.
 // Parameters: None
 // Returns: []*User
 // Errors: None
@@ -279,7 +279,7 @@ func (s *Store) ListUsers() []*User {
 	return out
 }
 
-// Summary: UpdateUser mutates mutable fields on the user identified by id.
+// UpdateUser mutates mutable fields on the user identified by id.
 // Parameters: s *Store (No Constraints)
 // Returns: (*User, error)
 // Errors: Explicit error handling
@@ -310,7 +310,7 @@ func (s *Store) UpdateUser(id string, emailPtr *string, roles []string, activePt
 	return u, nil
 }
 
-// Summary: DeleteUser removes a user by ID.
+// DeleteUser removes a user by ID.
 // Parameters: s *Store (No Constraints)
 // Returns: error
 // Errors: Explicit error handling
@@ -331,7 +331,7 @@ func (s *Store) DeleteUser(id string) error {
 	return nil
 }
 
-// Summary: ListRoles returns all roles.
+// ListRoles returns all roles.
 // Parameters: None
 // Returns: []*Role
 // Errors: None
@@ -346,7 +346,7 @@ func (s *Store) ListRoles() []*Role {
 	return out
 }
 
-// Summary: CreateRole adds a new named role with the given permissions.
+// CreateRole adds a new named role with the given permissions.
 // Parameters: s *Store (No Constraints)
 // Returns: (*Role, error)
 // Errors: Explicit error handling
@@ -370,7 +370,7 @@ func (s *Store) CreateRole(name string, permissions []string) (*Role, error) {
 	return r, nil
 }
 
-// Summary: RevokeToken records a JTI as revoked until its associated expiry.
+// RevokeToken records a JTI as revoked until its associated expiry.
 // Parameters: s *Store (No Constraints)
 // Returns: None
 // Errors: None
@@ -388,7 +388,7 @@ func (s *Store) RevokeToken(jti string, exp time.Time) {
 	}
 }
 
-// Summary: IsRevoked reports whether a JTI has been revoked.
+// IsRevoked reports whether a JTI has been revoked.
 // Parameters: s *Store (No Constraints)
 // Returns: bool
 // Errors: None
@@ -400,21 +400,21 @@ func (s *Store) IsRevoked(jti string) bool {
 	return ok
 }
 
-// Summary: Secret returns the HS256 signing secret.
+// Secret returns the HS256 signing secret.
 // Parameters: None
 // Returns: []byte
 // Errors: None
 // Side Effects: None
 func (s *Store) Secret() []byte { return s.secret }
 
-// Summary: OIDCCfg returns the OIDC configuration.
+// OIDCCfg returns the OIDC configuration.
 // Parameters: None
 // Returns: OIDCConfig
 // Errors: None
 // Side Effects: None
 func (s *Store) OIDCCfg() OIDCConfig { return s.oidcCfg }
 
-// Summary: GetOrCreateOIDCUser returns an existing user that matches the OIDC subject, or creates a new viewer-role user from the OIDC claims.
+// GetOrCreateOIDCUser returns an existing user that matches the OIDC subject, or creates a new viewer-role user from the OIDC claims.
 // Parameters: s *Store (No Constraints)
 // Returns: *User
 // Errors: None

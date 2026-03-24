@@ -20,7 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Summary: Status indicates the current operational phase of an AI agent within the workforce.
+// Status indicates the current operational phase of an AI agent within the workforce.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -28,31 +28,31 @@ import (
 type Status string
 
 const (
-	// Summary: Defines the StatusIdle type.
+	// StatusIdle represents the IDLE lifecycle phase of a tracked entity within the event-driven state machine.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StatusIdle Status = "IDLE"
-	// Summary: Defines the StatusActive type.
+	// StatusActive represents the ACTIVE lifecycle phase of a tracked entity within the event-driven state machine.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StatusActive Status = "ACTIVE"
-	// Summary: Defines the StatusInMeeting type.
+	// StatusInMeeting represents the INMEETING lifecycle phase of a tracked entity within the event-driven state machine.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StatusInMeeting Status = "IN_MEETING"
-	// Summary: Defines the StatusBlocked type.
+	// StatusBlocked represents the BLOCKED lifecycle phase of a tracked entity within the event-driven state machine.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StatusBlocked Status = "BLOCKED"
-	// Summary: Defines the StatusWaitingForTools type.
+	// StatusWaitingForTools represents the WAITINGFORTOOLS lifecycle phase of a tracked entity within the event-driven state machine.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
@@ -62,79 +62,79 @@ const (
 
 // Event type constants for the asynchronous pub/sub agent interaction protocol.
 const (
-	// Summary: Defines the EventTask type.
+	// EventTask provides domain-specific context and typed constraints for EventTask operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventTask = "task"
-	// Summary: Defines the EventStatus type.
+	// EventStatus provides domain-specific context and typed constraints for EventStatus operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventStatus = "status"
-	// Summary: Defines the EventHandoff type.
+	// EventHandoff provides domain-specific context and typed constraints for EventHandoff operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventHandoff = "handoff"
-	// Summary: Defines the EventCodeReviewed type.
+	// EventCodeReviewed provides domain-specific context and typed constraints for EventCodeReviewed operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventCodeReviewed = "CodeReviewed"
-	// Summary: Defines the EventTestsFailed type.
+	// EventTestsFailed provides domain-specific context and typed constraints for EventTestsFailed operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventTestsFailed = "TestsFailed"
-	// Summary: Defines the EventTestsPassed type.
+	// EventTestsPassed provides domain-specific context and typed constraints for EventTestsPassed operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventTestsPassed = "TestsPassed"
-	// Summary: Defines the EventSpecApproved type.
+	// EventSpecApproved provides domain-specific context and typed constraints for EventSpecApproved operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventSpecApproved = "SpecApproved"
-	// Summary: Defines the EventBlockerRaised type.
+	// EventBlockerRaised provides domain-specific context and typed constraints for EventBlockerRaised operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventBlockerRaised = "BlockerRaised"
-	// Summary: Defines the EventBlockerCleared type.
+	// EventBlockerCleared provides domain-specific context and typed constraints for EventBlockerCleared operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventBlockerCleared = "BlockerCleared"
-	// Summary: Defines the EventPRCreated type.
+	// EventPRCreated provides domain-specific context and typed constraints for EventPRCreated operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventPRCreated = "PRCreated"
-	// Summary: Defines the EventPRMerged type.
+	// EventPRMerged provides domain-specific context and typed constraints for EventPRMerged operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventPRMerged = "PRMerged"
-	// Summary: Defines the EventDesignReviewed type.
+	// EventDesignReviewed provides domain-specific context and typed constraints for EventDesignReviewed operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	EventDesignReviewed = "DesignReviewed"
-	// Summary: Defines the EventApprovalNeeded type.
+	// EventApprovalNeeded provides domain-specific context and typed constraints for EventApprovalNeeded operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
@@ -142,7 +142,7 @@ const (
 	EventApprovalNeeded = "ApprovalNeeded"
 )
 
-// Summary: Agent represents an active, instantiated worker within the AI organisation.
+// Agent represents an autonomous AI actor registered in the orchestration Hub, tracking its identity, role, and current state.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -160,7 +160,7 @@ type Agent struct {
 	Region       string `json:"region,omitempty"`
 }
 
-// Summary: Message encapsulates a discrete event, command, or context update passed between agents or rooms.
+// Message represents a discrete packet of communication between agents within a meeting room, containing the content and sender identity.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -210,7 +210,7 @@ func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
 	return err
 }
 
-// Summary: MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
+// MeetingRoom provides a thread-safe, isolated collaborative space where multiple agents can exchange messages and context.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -222,7 +222,7 @@ type MeetingRoom struct {
 	Transcript   []Message `json:"transcript"`
 }
 
-// Summary: Hub acts as the thread-safe central message broker and runtime state manager for the AI workforce.  Constraints: Must be accessed via its exported methods to preserve data race safety.
+// Hub acts as the central, thread-safe asynchronous message broker and state registry for all active agents and meeting rooms.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -263,7 +263,7 @@ func (h *Hub) GetSIPDB() *SIPDB {
 	return h.sipDB
 }
 
-// Summary: RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.  Parameters:   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
+// RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.  Parameters:   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
 // Parameters: h *Hub (No Constraints)
 // Returns: None
 // Errors: None
@@ -285,7 +285,7 @@ func (h *Hub) RegisterAgent(agent Agent) {
 	}
 }
 
-// Summary: SetMinimaxAPIKey functionality.
+// SetMinimaxAPIKey functionality.
 // Parameters: h *Hub (No Constraints)
 // Returns: None
 // Errors: None
@@ -296,7 +296,7 @@ func (h *Hub) SetMinimaxAPIKey(key string) {
 	h.minimaxAPIKey = key
 }
 
-// Summary: MinimaxAPIKey functionality.
+// MinimaxAPIKey functionality.
 // Parameters: None
 // Returns: string
 // Errors: None
@@ -368,7 +368,7 @@ func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) Me
 	return meeting
 }
 
-// Summary: FireAgent removes an agent from the hub and clears their inbox.  Parameters:   - id: string; The unique identifier of the agent to terminate.
+// FireAgent removes an agent from the hub and clears their inbox.  Parameters:   - id: string; The unique identifier of the agent to terminate.
 // Parameters: h *Hub (No Constraints)
 // Returns: None
 // Errors: None
@@ -500,7 +500,6 @@ func (h *Hub) Publish(message Message) error {
 }
 
 // Subscribe returns a channel that receives real-time messages for the given agent.
-// Summary: Subscribe returns a channel that receives real-time messages for the given agent.
 // Intent: Subscribe returns a channel that receives real-time messages for the given agent.
 // Params:
 //   - agentID: string; Description
@@ -601,7 +600,7 @@ func (h *Hub) Agents() []Agent {
 	return agents
 }
 
-// Summary: HubServiceServer implements the gRPC HubService defined in hub.proto.
+// RegisterHubService HubServiceServer implements the gRPC HubService defined in hub.proto.
 // Parameters: s *grpc.Server (No Constraints), hub *Hub (No Constraints)
 // Returns: None
 // Errors: None
@@ -610,7 +609,7 @@ func RegisterHubService(s *grpc.Server, hub *Hub) {
 	pb.RegisterHubServiceServer(s, &HubServiceServer{hub: hub})
 }
 
-// Summary: Defines the HubServiceServer type.
+// HubServiceServer implements the gRPC interface for the orchestration Hub, facilitating remote agent registration and message streaming.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -620,7 +619,7 @@ type HubServiceServer struct {
 	hub *Hub
 }
 
-// Summary: NewHubServiceServer functionality.
+// NewHubServiceServer functionality.
 // Parameters: hub *Hub (No Constraints)
 // Returns: *HubServiceServer
 // Errors: None
@@ -629,7 +628,7 @@ func NewHubServiceServer(hub *Hub) *HubServiceServer {
 	return &HubServiceServer{hub: hub}
 }
 
-// Summary: RegisterAgent functionality.
+// RegisterAgent functionality.
 // Parameters: s *HubServiceServer (No Constraints)
 // Returns: (*pb.RegisterAgentResponse, error)
 // Errors: Explicit error handling
@@ -648,7 +647,7 @@ func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAg
 	return pb.RegisterAgentResponse_builder{Success: true}.Build(), nil
 }
 
-// Summary: OpenMeeting functionality.
+// OpenMeeting functionality.
 // Parameters: s *HubServiceServer (No Constraints)
 // Returns: (*pb.MeetingRoom, error)
 // Errors: Explicit error handling
@@ -662,7 +661,7 @@ func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingR
 	}.Build(), nil
 }
 
-// Summary: Publish functionality.
+// Publish functionality.
 // Parameters: s *HubServiceServer (No Constraints)
 // Returns: (*pb.PublishMessageResponse, error)
 // Errors: Explicit error handling
@@ -684,7 +683,7 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 	return pb.PublishMessageResponse_builder{Success: true}.Build(), nil
 }
 
-// Summary: DelegateTask functionality.
+// DelegateTask functionality.
 // Parameters: s *HubServiceServer (No Constraints)
 // Returns: (*pb.DelegateTaskResponse, error)
 // Errors: Explicit error handling
@@ -709,7 +708,7 @@ func (s *HubServiceServer) DelegateTask(ctx context.Context, req *pb.DelegateTas
 	return pb.DelegateTaskResponse_builder{Success: true}.Build(), nil
 }
 
-// Summary: StreamMessages functionality.
+// StreamMessages functionality.
 // Parameters: s *HubServiceServer (No Constraints)
 // Returns: error
 // Errors: Explicit error handling
@@ -758,7 +757,7 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 	}
 }
 
-// Summary: Reason functionality.
+// Reason functionality.
 // Parameters: s *HubServiceServer (No Constraints)
 // Returns: (*pb.ReasonResponse, error)
 // Errors: Explicit error handling
@@ -776,7 +775,7 @@ func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*
 // ⚡ BOLT: [Configurable endpoint] - Randomized Selection from Top 5
 var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
 
-// Summary: MinimaxClient handles interaction with the Minimax Model 2.7.
+// MinimaxClient handles interaction with the Minimax Model 2.7.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -785,7 +784,7 @@ type MinimaxClient struct {
 	APIKey string
 }
 
-// Summary: NewMinimaxClient functionality.
+// NewMinimaxClient functionality.
 // Parameters: apiKey string (No Constraints)
 // Returns: *MinimaxClient
 // Errors: None
@@ -804,7 +803,7 @@ var sharedHTTPClient = &http.Client{
 	Timeout: 30 * time.Second,
 }
 
-// Summary: Reason functionality.
+// Reason functionality.
 // Parameters: c *MinimaxClient (No Constraints)
 // Returns: (string, error)
 // Errors: Explicit error handling

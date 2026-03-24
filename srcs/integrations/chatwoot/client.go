@@ -19,14 +19,14 @@ import (
 	"time"
 )
 
-// Summary: DefaultBaseURL is the in-cluster URL for the Chatwoot service.
+// DefaultBaseURL is the in-cluster URL for the Chatwoot service.
 // Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
 const DefaultBaseURL = "http://chatwoot:3000"
 
-// Summary: Client interacts with the Chatwoot REST API v1.
+// Client interacts with the Chatwoot REST API v1.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -38,7 +38,7 @@ type Client struct {
 	httpClient  *http.Client
 }
 
-// Summary: NewClientFromEnv creates a Client using environment variables. CHATWOOT_URL overrides the base URL.
+// NewClientFromEnv creates a Client using environment variables. CHATWOOT_URL overrides the base URL.
 // Parameters: None
 // Returns: *Client
 // Errors: None
@@ -54,7 +54,7 @@ func NewClientFromEnv() *Client {
 	}
 }
 
-// Summary: NewClient creates a Client with an explicit base URL (useful in tests).
+// NewClient creates a Client with an explicit base URL (useful in tests).
 // Parameters: baseURL string (No Constraints)
 // Returns: *Client
 // Errors: None
@@ -82,7 +82,7 @@ type signInResponse struct {
 	Data signInData `json:"data"`
 }
 
-// Summary: SignIn authenticates with Chatwoot and stores the resulting access token and account ID on the Client.
+// SignIn authenticates with Chatwoot and stores the resulting access token and account ID on the Client.
 // Parameters: c *Client (No Constraints)
 // Returns: error
 // Errors: Explicit error handling
@@ -102,7 +102,7 @@ func (c *Client) SignIn(email, password string) error {
 
 // ── Inboxes ───────────────────────────────────────────────────────────────────
 
-// Summary: Inbox represents a Chatwoot inbox (a communication channel).
+// Inbox represents a Chatwoot inbox (a communication channel).
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -124,7 +124,7 @@ type createInboxRequest struct {
 	Channel     map[string]string `json:"channel"`
 }
 
-// Summary: ListInboxes returns all inboxes in the account.
+// ListInboxes returns all inboxes in the account.
 // Parameters: None
 // Returns: ([]Inbox, error)
 // Errors: Explicit error handling
@@ -137,7 +137,7 @@ func (c *Client) ListInboxes() ([]Inbox, error) {
 	return resp.Payload, nil
 }
 
-// Summary: CreateAPIInbox creates a new API-type inbox with the given name.
+// CreateAPIInbox creates a new API-type inbox with the given name.
 // Parameters: c *Client (No Constraints)
 // Returns: (Inbox, error)
 // Errors: Explicit error handling
@@ -157,7 +157,7 @@ func (c *Client) CreateAPIInbox(name string) (Inbox, error) {
 
 // ── Contacts ──────────────────────────────────────────────────────────────────
 
-// Summary: Contact represents a Chatwoot contact (a participant in conversations).
+// Contact represents a Chatwoot contact (a participant in conversations).
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -173,7 +173,7 @@ type createContactRequest struct {
 	Email string `json:"email"`
 }
 
-// Summary: CreateContact creates a new contact.
+// CreateContact creates a new contact.
 // Parameters: c *Client (No Constraints)
 // Returns: (Contact, error)
 // Errors: Explicit error handling
@@ -188,7 +188,7 @@ func (c *Client) CreateContact(name, email string) (Contact, error) {
 
 // ── Conversations ─────────────────────────────────────────────────────────────
 
-// Summary: Conversation represents a Chatwoot conversation (a chat thread).
+// Conversation represents a Chatwoot conversation (a chat thread).
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -207,7 +207,7 @@ type createConversationRequest struct {
 	AdditionalAttributes map[string]string `json:"additional_attributes,omitempty"`
 }
 
-// Summary: CreateConversation opens a new conversation in the given inbox.
+// CreateConversation opens a new conversation in the given inbox.
 // Parameters: c *Client (No Constraints)
 // Returns: (Conversation, error)
 // Errors: Explicit error handling
@@ -226,7 +226,7 @@ func (c *Client) CreateConversation(inboxID, contactID int) (Conversation, error
 
 // ── Messages ──────────────────────────────────────────────────────────────────
 
-// Summary: Message represents a single message in a conversation.
+// Message represents a discrete packet of communication between agents within a meeting room, containing the content and sender identity.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -249,7 +249,7 @@ type messageListResponse struct {
 	Payload []Message `json:"payload"`
 }
 
-// Summary: SendMessage posts a message into a conversation.
+// SendMessage posts a message into a conversation.
 // Parameters: c *Client (No Constraints)
 // Returns: (Message, error)
 // Errors: Explicit error handling
@@ -267,7 +267,7 @@ func (c *Client) SendMessage(conversationID int, content, messageType string) (M
 	return msg, nil
 }
 
-// Summary: ListMessages returns all messages in a conversation.
+// ListMessages returns all messages in a conversation.
 // Parameters: c *Client (No Constraints)
 // Returns: ([]Message, error)
 // Errors: Explicit error handling

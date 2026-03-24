@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// Summary: State represents shared agent state.
+// State represents shared agent state.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -18,7 +18,7 @@ type State struct {
 	Owner string
 }
 
-// Summary: LogCheckpoint logs a state synchronization checkpoint for LangGraph.
+// LogCheckpoint logs a state synchronization checkpoint for LangGraph.
 // Parameters: state *State (No Constraints), identity string (No Constraints)
 // Returns: None
 // Errors: None
@@ -42,7 +42,7 @@ func LogCheckpoint(state *State, identity string) {
 	state.Data["checkpoints"] = checkpoints
 }
 
-// Summary: UniversalAdapter defines the interface for interacting with different agent frameworks.
+// UniversalAdapter defines the interface for interacting with different agent frameworks.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -55,7 +55,7 @@ type UniversalAdapter interface {
 	ExecuteCommand(ctx context.Context, cmd string) (string, error)
 }
 
-// Summary: ValidateSPIFFEID strictly validates SPIFFE IDs for agent identity.
+// ValidateSPIFFEID strictly validates SPIFFE IDs for agent identity.
 // Parameters: id string (No Constraints)
 // Returns: error
 // Errors: Returns an error if the SPIFFE ID is invalid or spoofed.

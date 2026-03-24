@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// Summary: FederatedAgent defines the structure for an agent in a federated multi-cluster environment.
+// FederatedAgent defines the structure for an agent in a federated multi-cluster environment.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -17,7 +17,7 @@ type FederatedAgent struct {
 	LatencyScore int    `json:"latency_ms"`
 }
 
-// Summary: FederatedRegistry holds the federated agents across the global organization.
+// FederatedRegistry holds the federated agents across the global organization.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -27,7 +27,7 @@ type FederatedRegistry struct {
 	agents map[string]FederatedAgent
 }
 
-// Summary: NewFederatedRegistry creates a new registry.
+// NewFederatedRegistry creates a new registry.
 // Parameters: None
 // Returns: *FederatedRegistry
 // Errors: None
@@ -38,7 +38,7 @@ func NewFederatedRegistry() *FederatedRegistry {
 	}
 }
 
-// Summary: RegisterAgent adds a new federated agent to the registry.
+// RegisterAgent adds a new federated agent to the registry.
 // Parameters: r *FederatedRegistry (No Constraints)
 // Returns: error
 // Errors: Returns error if agent already exists or home cluster is empty.
@@ -61,7 +61,7 @@ func (r *FederatedRegistry) RegisterAgent(agent FederatedAgent) error {
 	return nil
 }
 
-// Summary: GetAgent retrieves a federated agent from the registry.
+// GetAgent retrieves a federated agent from the registry.
 // Parameters: r *FederatedRegistry (No Constraints)
 // Returns: FederatedAgent, bool
 // Errors: None
@@ -74,7 +74,7 @@ func (r *FederatedRegistry) GetAgent(agentID string) (FederatedAgent, bool) {
 	return agent, ok
 }
 
-// Summary: UpdateAgentStatus updates the status of an existing agent.
+// UpdateAgentStatus updates the status of an existing agent.
 // Parameters: r *FederatedRegistry (No Constraints)
 // Returns: error
 // Errors: Returns error if agent is not found.

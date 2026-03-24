@@ -10,7 +10,7 @@ import (
 	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
-// Summary: Price represents the cost rates for a specific large language model.  Constraints: Cost must be provided per one million tokens.
+// Price represents the explicit input and output cost rates per million tokens for a specific large language model inference engine.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -65,7 +65,7 @@ DefaultCatalog = map[string]Price{
 	"minimax-m2.7-turbo": {InputPerMillionUSD: 0.50, OutputPerMillionUSD: 0.50},
 }
 
-// Summary: Usage models a single inference event's token consumption and associated cost.  Constraints: Must include valid AgentID, OrganizationID, and Model identifiers.
+// Usage models a single, discrete inference event's token consumption and computes its associated USD cost based on the active pricing catalog.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -81,7 +81,7 @@ type Usage struct {
 	CostUSD          float64   `json:"costUsd"`
 }
 
-// Summary: AgentSummary provides aggregated cost and token usage for an individual agent.
+// AgentSummary provides an aggregated view of total cost and token usage attributable to an individual AI agent across all its active execution sessions.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -92,7 +92,7 @@ type AgentSummary struct {
 	TokenUsed int64   `json:"tokenUsed"`
 }
 
-// Summary: Summary aggregates total cost and token usage for a specific organisation.
+// Summary aggregates the total infrastructure spend, overall token count, and per-agent metrics for a specific organization.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -115,7 +115,7 @@ type trackerShard struct {
 	usages []Usage
 }
 
-// Summary: Tracker calculates and stores LLM token consumption safely across concurrent calls.  Constraints: Uses an internal read-write mutex for thread-safe event ingestion.
+// Tracker calculates and safely persists LLM token consumption and associated costs across highly concurrent operations using an internal sharded read-write mutex.
 // Parameters: None
 // Returns: None
 // Errors: None

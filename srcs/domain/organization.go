@@ -2,7 +2,7 @@ package domain
 
 import "time"
 
-// Summary: Role represents a designated job title or operational function within the AI workforce.
+// Role defines an operational role with an associated array of access permissions for Role-Based Access Control (RBAC).
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -10,111 +10,111 @@ import "time"
 type Role string
 
 const (
-	// Summary: Defines the RoleCEO type.
+	// RoleCEO defines the standard operational responsibilities and system access boundaries for the CEO persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleCEO Role = "CEO"
-	// Summary: Defines the RoleProductManager type.
+	// RoleProductManager defines the standard operational responsibilities and system access boundaries for the ProductManager persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleProductManager Role = "PRODUCT_MANAGER"
-	// Summary: Defines the RoleSoftwareEngineer type.
+	// RoleSoftwareEngineer defines the standard operational responsibilities and system access boundaries for the SoftwareEngineer persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleSoftwareEngineer Role = "SOFTWARE_ENGINEER"
-	// Summary: Defines the RoleEngineeringDirector type.
+	// RoleEngineeringDirector defines the standard operational responsibilities and system access boundaries for the EngineeringDirector persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleEngineeringDirector Role = "ENGINEERING_DIRECTOR"
-	// Summary: Defines the RoleQATester type.
+	// RoleQATester defines the standard operational responsibilities and system access boundaries for the QATester persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleQATester Role = "QA_TESTER"
-	// Summary: Defines the RoleSecurityEngineer type.
+	// RoleSecurityEngineer defines the standard operational responsibilities and system access boundaries for the SecurityEngineer persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleSecurityEngineer Role = "SECURITY_ENGINEER"
-	// Summary: Defines the RoleDesigner type.
+	// RoleDesigner defines the standard operational responsibilities and system access boundaries for the Designer persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleDesigner Role = "DESIGNER"
-	// Summary: Defines the RoleMarketingManager type.
+	// RoleMarketingManager defines the standard operational responsibilities and system access boundaries for the MarketingManager persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleMarketingManager Role = "MARKETING_MANAGER"
 
-	// Summary: Digital Marketing Agency roles.
+	// RoleGrowthAgent Digital Marketing Agency roles.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleGrowthAgent Role = "GROWTH_AGENT"
-	// Summary: Defines the RoleContentStrategist type.
+	// RoleContentStrategist defines the standard operational responsibilities and system access boundaries for the ContentStrategist persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleContentStrategist Role = "CONTENT_STRATEGIST"
-	// Summary: Defines the RoleSEOSpecialist type.
+	// RoleSEOSpecialist defines the standard operational responsibilities and system access boundaries for the SEOSpecialist persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleSEOSpecialist Role = "SEO_SPECIALIST"
-	// Summary: Defines the RolePaidMediaManager type.
+	// RolePaidMediaManager defines the standard operational responsibilities and system access boundaries for the PaidMediaManager persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RolePaidMediaManager Role = "PAID_MEDIA_MANAGER"
-	// Summary: Defines the RoleAnalyticsEngineer type.
+	// RoleAnalyticsEngineer defines the standard operational responsibilities and system access boundaries for the AnalyticsEngineer persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleAnalyticsEngineer Role = "ANALYTICS_ENGINEER"
 
-	// Summary: Accounting Firm roles.
+	// RoleCFO Accounting Firm roles.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleCFO Role = "CFO"
-	// Summary: Defines the RoleBookkeeper type.
+	// RoleBookkeeper defines the standard operational responsibilities and system access boundaries for the Bookkeeper persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleBookkeeper Role = "BOOKKEEPER"
-	// Summary: Defines the RoleTaxSpecialist type.
+	// RoleTaxSpecialist defines the standard operational responsibilities and system access boundaries for the TaxSpecialist persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleTaxSpecialist Role = "TAX_SPECIALIST"
-	// Summary: Defines the RoleAuditManager type.
+	// RoleAuditManager defines the standard operational responsibilities and system access boundaries for the AuditManager persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleAuditManager Role = "AUDIT_MANAGER"
-	// Summary: Defines the RolePayrollManager type.
+	// RolePayrollManager defines the standard operational responsibilities and system access boundaries for the PayrollManager persona.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
@@ -122,7 +122,7 @@ const (
 	RolePayrollManager Role = "PAYROLL_MANAGER"
 )
 
-// Summary: Member defines an individual contributor within the organisation.  Constraints: An agent member must have isHuman set to false. The CEO must be a human.
+// Member represents a distinct individual (human or AI agent) assigned to a specific role within the organizational hierarchy.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -135,7 +135,7 @@ type Member struct {
 	IsHuman   bool   `json:"isHuman"`
 }
 
-// Summary: RoleProfile stores the playbook, prompt, and capabilities that instruct an AI on how to perform a Role.
+// RoleProfile defines the operational responsibilities, expected skill set, and default tools for a specific archetype within the organization.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -147,7 +147,7 @@ type RoleProfile struct {
 	ContextInputs []string `json:"contextInputs"`
 }
 
-// Summary: Organization aggregates the hierarchy, workforce details, and role playbooks for a domain.
+// Organization represents the top-level structural entity, maintaining the hierarchy of members, active roles, and cross-team workflows.
 // Parameters: None
 // Returns: None
 // Errors: None

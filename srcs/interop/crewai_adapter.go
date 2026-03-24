@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// Summary: CrewAIAdapter implements UniversalAdapter for CrewAI.
+// CrewAIAdapter implements UniversalAdapter for CrewAI.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -14,7 +14,7 @@ type CrewAIAdapter struct {
 	Identity string
 }
 
-// Summary: NewCrewAIAdapter creates a new CrewAIAdapter.
+// NewCrewAIAdapter creates a new CrewAIAdapter.
 // Parameters: identity string (No Constraints)
 // Returns: *CrewAIAdapter, error
 // Errors: Returns error if identity is invalid
@@ -28,7 +28,7 @@ func NewCrewAIAdapter(identity string) (*CrewAIAdapter, error) {
 	}, nil
 }
 
-// Summary: SyncState functionality.
+// SyncState functionality.
 // Parameters: a *CrewAIAdapter (No Constraints)
 // Returns: error
 // Errors: Explicit error handling
@@ -50,7 +50,7 @@ func (a *CrewAIAdapter) SyncState(ctx context.Context, state *State) error {
 	return nil
 }
 
-// Summary: ExecuteCommand functionality.
+// ExecuteCommand functionality.
 // Parameters: a *CrewAIAdapter (No Constraints)
 // Returns: (string, error)
 // Errors: Explicit error handling

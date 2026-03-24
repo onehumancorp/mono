@@ -18,7 +18,7 @@ var publicPaths = []string{
 	"/api/v1/scale/stream", // Manually authenticated inside handler for SSE query token bypass
 }
 
-// Summary: Middleware returns an HTTP middleware that enforces JWT authentication. Requests to public paths pass through unauthenticated. All other requests must carry a valid Bearer token in the Authorization header or an "ohc_token" cookie.
+// Middleware returns an HTTP middleware that enforces JWT authentication. Requests to public paths pass through unauthenticated. All other requests must carry a valid Bearer token in the Authorization header or an "ohc_token" cookie.
 // Parameters: store *Store (No Constraints)
 // Returns: func(http.Handler) http.Handler
 // Errors: None
@@ -51,7 +51,7 @@ func Middleware(store *Store) func(http.Handler) http.Handler {
 	}
 }
 
-// Summary: ClaimsFromContext extracts auth claims set by Middleware. Returns nil if no claims are present (public or in-process request).
+// ClaimsFromContext extracts auth claims set by Middleware. Returns nil if no claims are present (public or in-process request).
 // Parameters: ctx context.Context (No Constraints)
 // Returns: *Claims
 // Errors: None
@@ -61,7 +61,7 @@ func ClaimsFromContext(ctx context.Context) *Claims {
 	return v
 }
 
-// Summary: RequireRole returns a middleware that further restricts access to users that hold the given role (or "admin").
+// RequireRole returns a middleware that further restricts access to users that hold the given role (or "admin").
 // Parameters: role string (No Constraints), next http.HandlerFunc (No Constraints)
 // Returns: http.HandlerFunc
 // Errors: None
@@ -114,7 +114,7 @@ func jsonString(s string) string {
 	return `"` + strings.ReplaceAll(strings.ReplaceAll(s, `\`, `\\`), `"`, `\"`) + `"`
 }
 
-// Summary: Defines the ClaimsContextKeyForTest type.
+// ClaimsContextKeyForTest provides domain-specific context and typed constraints for ClaimsContextKeyForTest operations across the application.
 // Parameters: None
 // Returns: None
 // Errors: None

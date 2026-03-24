@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// Summary: AutoGenAdapter implements UniversalAdapter for AutoGen.
+// AutoGenAdapter implements UniversalAdapter for AutoGen.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -14,7 +14,7 @@ type AutoGenAdapter struct {
 	Identity string
 }
 
-// Summary: NewAutoGenAdapter creates a new AutoGenAdapter.
+// NewAutoGenAdapter creates a new AutoGenAdapter.
 // Parameters: identity string (No Constraints)
 // Returns: *AutoGenAdapter, error
 // Errors: Returns error if identity is invalid
@@ -28,7 +28,7 @@ func NewAutoGenAdapter(identity string) (*AutoGenAdapter, error) {
 	}, nil
 }
 
-// Summary: SyncState functionality.
+// SyncState functionality.
 // Parameters: a *AutoGenAdapter (No Constraints)
 // Returns: error
 // Errors: Explicit error handling
@@ -49,7 +49,7 @@ func (a *AutoGenAdapter) SyncState(ctx context.Context, state *State) error {
 	return nil
 }
 
-// Summary: ExecuteCommand functionality.
+// ExecuteCommand functionality.
 // Parameters: a *AutoGenAdapter (No Constraints)
 // Returns: (string, error)
 // Errors: Explicit error handling

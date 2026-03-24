@@ -19,7 +19,7 @@ type jwtHeader struct {
 	Typ string `json:"typ"`
 }
 
-// Summary: Claims holds the payload fields for both locally-issued (HS256) and OIDC (RS256) tokens. The standard set is kept small by design.  Constraints: Serializes to JSON for token encoding. Subject must uniquely identify the user.
+// Claims embeds the standard JWT Registered Claims and adds custom One Human Corp properties like user ID and assigned roles.
 // Parameters: None
 // Returns: None
 // Errors: None
