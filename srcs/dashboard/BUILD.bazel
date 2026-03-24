@@ -28,12 +28,17 @@ go_library(
 go_test(
     name = "dashboard_test",
     srcs = [
+        "handlers_b2b_extra_test.go",
+        "handlers_mcp_test.go",
         "handlers_ops_extra_test.go",
+        "handlers_ops_test.go",
         "server_missing_test.go",
+        "server_rate_limit_test.go",
         "server_test.go",
     ],
     embed = [":dashboard"],
     deps = [
+        "//srcs/auth",
         "//srcs/billing",
         "//srcs/domain",
         "//srcs/integrations",

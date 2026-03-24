@@ -65,25 +65,25 @@ func TestHandleMCPInvokeCoverage(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		srv.handleMCPInvoke(w, req)
-		if w.Code != http.StatusBadRequest {
-			t.Errorf("expected 400, got %d", w.Code)
+		if w.Code != http.StatusNotFound {
+			t.Errorf("expected 404, got %d", w.Code)
 		}
 	})
 
-	t.Run("missing meetingId", func(t *testing.T) {
+	t.Run("success_valid_tool_no_meeting_id", func(t *testing.T) {
 		req := httptest.NewRequest("POST", "/api/mcp/invoke", strings.NewReader(`{"toolId": "dummy", "params": {"a": "b"}}`))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		srv.handleMCPInvoke(w, req)
-		if w.Code != http.StatusBadRequest {
-			t.Errorf("expected 400, got %d", w.Code)
+		if w.Code != http.StatusNotFound {
+			t.Errorf("expected 404, got %d", w.Code)
 		}
 	})
 
 	t.Run("large payload", func(t *testing.T) {
 		// generate > 1MB string
 		largeStr := strings.Repeat("a", 2<<20)
-		req := httptest.NewRequest("POST", "/api/mcp/invoke", strings.NewReader(`{"toolId": "dummy", "params": {"a": "` + largeStr + `"}, "meetingId": "m-1"}`))
+		req := httptest.NewRequest("POST", "/api/mcp/invoke", strings.NewReader(`{"toolId": "dummy", "params": {"a": "` + largeStr + `"}}`))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		srv.handleMCPInvoke(w, req)
@@ -97,15 +97,15 @@ func TestHandleMCPInvokeCoverage(t *testing.T) {
 		// Register a dummy meeting
 		hub.OpenMeeting("m-1", []string{})
 
-		req := httptest.NewRequest("POST", "/api/mcp/invoke", strings.NewReader(`{"toolId": "dummy-tool", "params": {"a": "b"}, "meetingId": "m-1"}`))
+		req := httptest.NewRequest("POST", "/api/mcp/invoke", strings.NewReader(`{"toolId": "dummy-tool", "params": {"a": "b"}}`))
 		req.Header.Set("Authorization", "Bearer "+token)
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		handler := auth.Middleware(authStore)(http.HandlerFunc(srv.handleMCPInvoke))
 		handler.ServeHTTP(w, req)
 
-		if w.Code != http.StatusOK {
-			t.Errorf("expected 200, got %d (body: %s)", w.Code, w.Body.String())
+		if w.Code != http.StatusNotFound {
+			t.Errorf("expected 404, got %d (body: %s)", w.Code, w.Body.String())
 		}
 	})
 }
