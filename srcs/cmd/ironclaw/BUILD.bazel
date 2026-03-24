@@ -1,0 +1,77 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "ironclaw_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/onehumancorp/mono/srcs/cmd/ironclaw",
+    visibility = ["//visibility:private"],
+    deps = ["//srcs/agents"],
+)
+
+# ── Host binary ────────────────────────────────────────────────────────────────
+
+go_binary(
+    name = "ironclaw",
+    embed = [":ironclaw_lib"],
+    pure = "on",
+    visibility = ["//visibility:public"],
+    x_defs = {"main.Version": "{STABLE_GIT_COMMIT}"},
+)
+
+# ── Cross-platform binaries ────────────────────────────────────────────────────
+# These targets are built for release packaging.  Build with:
+#   bazelisk build //srcs/cmd/ironclaw:ironclaw_linux_amd64
+# etc.
+
+go_binary(
+    name = "ironclaw_linux_amd64",
+    embed = [":ironclaw_lib"],
+    goarch = "amd64",
+    goos = "linux",
+    pure = "on",
+    visibility = ["//visibility:public"],
+)
+
+go_binary(
+    name = "ironclaw_linux_arm64",
+    embed = [":ironclaw_lib"],
+    goarch = "arm64",
+    goos = "linux",
+    pure = "on",
+    visibility = ["//visibility:public"],
+)
+
+go_binary(
+    name = "ironclaw_darwin_amd64",
+    embed = [":ironclaw_lib"],
+    goarch = "amd64",
+    goos = "darwin",
+    pure = "on",
+    visibility = ["//visibility:public"],
+)
+
+go_binary(
+    name = "ironclaw_darwin_arm64",
+    embed = [":ironclaw_lib"],
+    goarch = "arm64",
+    goos = "darwin",
+    pure = "on",
+    visibility = ["//visibility:public"],
+)
+
+go_binary(
+    name = "ironclaw_windows_amd64",
+    embed = [":ironclaw_lib"],
+    goarch = "amd64",
+    goos = "windows",
+    pure = "on",
+    visibility = ["//visibility:public"],
+)
+
+# ── Tests ──────────────────────────────────────────────────────────────────────
+
+go_test(
+    name = "ironclaw_test",
+    srcs = ["main_test.go"],
+    embed = [":ironclaw_lib"],
+)
