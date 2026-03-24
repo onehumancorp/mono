@@ -111,7 +111,7 @@ func TestHandleScaleStreamOpsExtra(t *testing.T) {
 	s.handleScaleStream(w, req)
 
 	body := w.Body.String()
-	if !strings.Contains(body, "K8s Operator") {
-		t.Errorf("expected stream to contain K8s Operator messages, got %q", body)
+	if !strings.Contains(body, "AI Workforce Manager") {
+		t.Errorf("expected stream to contain AI Workforce Manager messages, got %q", body)
 	}
 }

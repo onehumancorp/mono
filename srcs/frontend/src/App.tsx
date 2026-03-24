@@ -2585,7 +2585,7 @@ export function App() {
             <div className="page-header">
               <div>
                 <h2 className="page-heading">Dynamic Scaling</h2>
-                <p className="page-sub">Scale AI agents dynamically across your enterprise. K8s operator handles the rest.</p>
+                <p className="page-sub">Scale AI agents dynamically across your enterprise. AI Workforce Manager handles the rest.</p>
               </div>
             </div>
             <div className="content-grid two-col">
@@ -2698,8 +2698,8 @@ export function App() {
 
               <article className="scaling-panel">
                 <header className="panel-head">
-                  <h2 className="panel-title">Real-Time Trace Logs</h2>
-                  <span className="chip chip--sm chip--green">Live SSE</span>
+                  <h2 className="panel-title">Real-Time Provisioning Logs</h2>
+                  <span className="chip chip--sm chip--green">Live Status</span>
                 </header>
                 <div className="panel-body" style={{ maxHeight: "400px", overflowY: "auto", background: "var(--bg-primary)", padding: "1rem", borderRadius: "4px" }}>
                   {scalingLogs.map((log, i) => (

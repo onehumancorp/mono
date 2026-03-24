@@ -309,7 +309,9 @@ func (s *Server) handleScale(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req ScaleRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 		return
 	}
@@ -390,8 +392,8 @@ func (s *Server) handleScaleStream(w http.ResponseWriter, r *http.Request) {
 
 	// Simulated events
 	events := []string{
-		`{"event":"K8s Operator: Reconciling TeamMember resource.","status":"INFO"}`,
-		`{"event":"K8s Operator: Spinning up new pods...","status":"INFO"}`,
+		`{"event":"AI Workforce Manager: Reconciling Team Member resource.","status":"INFO"}`,
+		`{"event":"AI Workforce Manager: Spinning up new instances...","status":"INFO"}`,
 		`{"event":"AgentHired","status":"Ready"}`,
 	}
 

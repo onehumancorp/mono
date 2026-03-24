@@ -97,7 +97,7 @@ test("CUJ 4: Dynamic Scaling triggers SSE trace logs", async ({ page }) => {
   await applyButton.click();
 
   // Verify that the SSE trace logs stream in
-  await expect(page.getByText("K8s Operator: Reconciling TeamMember resource.")).toBeVisible();
+  await expect(page.getByText("AI Workforce Manager: Reconciling Team Member resource.")).toBeVisible();
   await expect(page.getByText("AgentHired")).toBeVisible();
 
   await saveShot(page, "cuj-04-dynamic-scaling");
