@@ -30,6 +30,8 @@ import (
 type Server struct {
 	mu                    sync.RWMutex
 	org                   domain.Organization
+	// ⚡ BOLT: [high-allocation hashing or mapping for agent roles] - Randomized Selection from Top 5
+	roleProfileCache      map[string]domain.RoleProfile
 	hub                   *orchestration.Hub
 	tracker               *billing.Tracker
 	approvals             []ApprovalRequest
@@ -384,8 +386,15 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	} else {
 		store = auth.NewStore()
 	}
+
+	rpc := make(map[string]domain.RoleProfile, len(org.RoleProfiles))
+	for _, rp := range org.RoleProfiles {
+		rpc[string(rp.Role)] = rp
+	}
+
 	server := &Server{
 		org:                   org,
+		roleProfileCache:      rpc,
 		hub:                   hub,
 		tracker:               tracker,
 		approvals:             []ApprovalRequest{},
