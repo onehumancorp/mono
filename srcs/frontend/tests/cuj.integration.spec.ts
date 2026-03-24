@@ -83,6 +83,15 @@ test("CUJ 4: Dynamic Scaling triggers SSE trace logs", async ({ page }) => {
   await page.getByRole("button", { name: "Dynamic Scaling" }).click();
   await expect(page.getByRole("heading", { name: "Dynamic Scaling" })).toBeVisible();
 
+  // Step 1 - Select Role
+  await page.getByRole("button", { name: "Software Engineer" }).click();
+  await page.getByRole("button", { name: /Next: Set Capacity/i }).click();
+
+  // Step 2 - Set Capacity
+  const capacityInput = page.getByLabel("Target Active Agents");
+  await capacityInput.fill("5");
+  await page.getByRole("button", { name: /Next: Review/i }).click();
+
   // Apply scaling changes
   const applyButton = page.getByRole("button", { name: /Apply Scaling Changes/i });
   await applyButton.click();
