@@ -25,7 +25,7 @@ case "$COMMAND" in
         ;;
     e2e)
         echo "Running E2E tests..."
-        bazelisk test //srcs/integration/... "$@"
+        bazelisk test //:e2e "$@"
         ;;
     start-local)
         echo "Starting local environment..."
