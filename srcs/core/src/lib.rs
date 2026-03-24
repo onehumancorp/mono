@@ -7,8 +7,8 @@
 //!   embedded Tokio runtime.
 //! - **Cloud-native (Kubernetes) deployments** — the same library is used by
 //!   the backend server; the storage backends swap to PostgreSQL/Redis.
-//! - **Desktop apps** (macOS / Windows) — embedded via the Tauri host.
-//! - **Mobile apps** (iOS / Android) — called via FFI from Flutter.
+//! - **Desktop / mobile apps** (macOS, Windows, Linux, iOS, Android) —
+//!   called via FFI from the Flutter cross-platform app (`srcs/app`).
 //!
 //! ## Modules
 //!
@@ -18,7 +18,7 @@
 //! | [`agents`] | Register and manage AI agent lifecycle |
 //! | [`scheduler`] | Schedule agent tasks (once / interval / cron) |
 //! | [`meeting`] | Create and manage virtual meeting rooms |
-//! | [`chat`] | Unified chat integration (Chatwoot, Slack, Telegram, …) |
+//! | [`chat`] | Unified chat integration (Centrifuge native, Chatwoot, Slack, Telegram, …) |
 
 pub mod agents;
 pub mod chat;
