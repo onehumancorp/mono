@@ -17,22 +17,19 @@ import (
 // Built-in role names.
 const (
 	// Summary: Defines the RoleAdmin type.
-	// Intent: Defines the RoleAdmin type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleAdmin = "admin"
 	// Summary: Defines the RoleOperator type.
-	// Intent: Defines the RoleOperator type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	RoleOperator = "operator"
 	// Summary: Defines the RoleViewer type.
-	// Intent: Defines the RoleViewer type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -47,8 +44,7 @@ var rolePermissions = map[string][]string{
 }
 
 // Summary: User represents a human user account.
-// Intent: User represents a human user account.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -65,8 +61,7 @@ type User struct {
 }
 
 // Summary: UserPublic is a safe subset of User with no sensitive fields.
-// Intent: UserPublic is a safe subset of User with no sensitive fields.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -82,8 +77,7 @@ type UserPublic struct {
 }
 
 // Summary: PublicView returns a UserPublic with no sensitive fields.
-// Intent: PublicView returns a UserPublic with no sensitive fields.
-// Params: None
+// Parameters: None
 // Returns: UserPublic
 // Errors: None
 // Side Effects: None
@@ -101,8 +95,7 @@ func (u *User) PublicView() UserPublic {
 }
 
 // Summary: Role represents a named permission group.
-// Intent: Role represents a named permission group.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -114,8 +107,7 @@ type Role struct {
 }
 
 // Summary: Store is an in-memory user/role store that can be backed by Redis/DB in future. All exported methods are goroutine-safe.
-// Intent: Store is an in-memory user/role store that can be backed by Redis/DB in future. All exported methods are goroutine-safe.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -132,8 +124,7 @@ type Store struct {
 }
 
 // Summary: NewStore creates a Store seeded with default roles and an admin user. Admin credentials are read from ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_EMAIL environment variables (defaults: admin / admin / admin@localhost).
-// Intent: NewStore creates a Store seeded with default roles and an admin user. Admin credentials are read from ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_EMAIL environment variables (defaults: admin / admin / admin@localhost).
-// Params: None
+// Parameters: None
 // Returns: *Store
 // Errors: None
 // Side Effects: None
@@ -197,10 +188,9 @@ func NewStore() *Store {
 }
 
 // Summary: CreateUser creates a new user with the given credentials and roles.
-// Intent: CreateUser creates a new user with the given credentials and roles.
-// Params: username, email, password, roles
+// Parameters: s *Store (No Constraints)
 // Returns: (*User, error)
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func (s *Store) CreateUser(username, email, password string, roles []string) (*User, error) {
 	if username == "" {
@@ -242,10 +232,9 @@ func (s *Store) CreateUser(username, email, password string, roles []string) (*U
 }
 
 // Summary: Authenticate validates username+password and returns the matching user.
-// Intent: Authenticate validates username+password and returns the matching user.
-// Params: username, password
+// Parameters: s *Store (No Constraints)
 // Returns: (*User, error)
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func (s *Store) Authenticate(username, password string) (*User, error) {
 	s.mu.RLock()
@@ -264,8 +253,7 @@ func (s *Store) Authenticate(username, password string) (*User, error) {
 }
 
 // Summary: GetUser returns a user by ID.
-// Intent: GetUser returns a user by ID.
-// Params: id
+// Parameters: s *Store (No Constraints)
 // Returns: (*User, bool)
 // Errors: None
 // Side Effects: None
@@ -277,8 +265,7 @@ func (s *Store) GetUser(id string) (*User, bool) {
 }
 
 // Summary: ListUsers returns all users.
-// Intent: ListUsers returns all users.
-// Params: None
+// Parameters: None
 // Returns: []*User
 // Errors: None
 // Side Effects: None
@@ -293,10 +280,9 @@ func (s *Store) ListUsers() []*User {
 }
 
 // Summary: UpdateUser mutates mutable fields on the user identified by id.
-// Intent: UpdateUser mutates mutable fields on the user identified by id.
-// Params: id, emailPtr, roles, activePtr
+// Parameters: s *Store (No Constraints)
 // Returns: (*User, error)
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func (s *Store) UpdateUser(id string, emailPtr *string, roles []string, activePtr *bool) (*User, error) {
 	s.mu.Lock()
@@ -325,10 +311,9 @@ func (s *Store) UpdateUser(id string, emailPtr *string, roles []string, activePt
 }
 
 // Summary: DeleteUser removes a user by ID.
-// Intent: DeleteUser removes a user by ID.
-// Params: id
+// Parameters: s *Store (No Constraints)
 // Returns: error
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func (s *Store) DeleteUser(id string) error {
 	s.mu.Lock()
@@ -347,8 +332,7 @@ func (s *Store) DeleteUser(id string) error {
 }
 
 // Summary: ListRoles returns all roles.
-// Intent: ListRoles returns all roles.
-// Params: None
+// Parameters: None
 // Returns: []*Role
 // Errors: None
 // Side Effects: None
@@ -363,10 +347,9 @@ func (s *Store) ListRoles() []*Role {
 }
 
 // Summary: CreateRole adds a new named role with the given permissions.
-// Intent: CreateRole adds a new named role with the given permissions.
-// Params: name, permissions
+// Parameters: s *Store (No Constraints)
 // Returns: (*Role, error)
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func (s *Store) CreateRole(name string, permissions []string) (*Role, error) {
 	if name == "" {
@@ -388,8 +371,7 @@ func (s *Store) CreateRole(name string, permissions []string) (*Role, error) {
 }
 
 // Summary: RevokeToken records a JTI as revoked until its associated expiry.
-// Intent: RevokeToken records a JTI as revoked until its associated expiry.
-// Params: jti, exp
+// Parameters: s *Store (No Constraints)
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -407,8 +389,7 @@ func (s *Store) RevokeToken(jti string, exp time.Time) {
 }
 
 // Summary: IsRevoked reports whether a JTI has been revoked.
-// Intent: IsRevoked reports whether a JTI has been revoked.
-// Params: jti
+// Parameters: s *Store (No Constraints)
 // Returns: bool
 // Errors: None
 // Side Effects: None
@@ -420,24 +401,21 @@ func (s *Store) IsRevoked(jti string) bool {
 }
 
 // Summary: Secret returns the HS256 signing secret.
-// Intent: Secret returns the HS256 signing secret.
-// Params: None
+// Parameters: None
 // Returns: []byte
 // Errors: None
 // Side Effects: None
 func (s *Store) Secret() []byte { return s.secret }
 
 // Summary: OIDCCfg returns the OIDC configuration.
-// Intent: OIDCCfg returns the OIDC configuration.
-// Params: None
+// Parameters: None
 // Returns: OIDCConfig
 // Errors: None
 // Side Effects: None
 func (s *Store) OIDCCfg() OIDCConfig { return s.oidcCfg }
 
 // Summary: GetOrCreateOIDCUser returns an existing user that matches the OIDC subject, or creates a new viewer-role user from the OIDC claims.
-// Intent: GetOrCreateOIDCUser returns an existing user that matches the OIDC subject, or creates a new viewer-role user from the OIDC claims.
-// Params: sub, email, preferredUsername
+// Parameters: s *Store (No Constraints)
 // Returns: *User
 // Errors: None
 // Side Effects: None

@@ -6,8 +6,7 @@ import (
 )
 
 // Summary: Registry manages the set of available agent providers and their stored credentials.  Providers are registered once (typically at startup via DefaultRegistry) and then authenticated on-demand through the dashboard API.  Multiple goroutines may call Registry methods concurrently.
-// Intent: Registry manages the set of available agent providers and their stored credentials.  Providers are registered once (typically at startup via DefaultRegistry) and then authenticated on-demand through the dashboard API.  Multiple goroutines may call Registry methods concurrently.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -17,8 +16,7 @@ type Registry struct {
 }
 
 // Summary: NewRegistry returns an empty Registry.  Use DefaultRegistry to get a pre-populated instance with all built-in providers.
-// Intent: NewRegistry returns an empty Registry.  Use DefaultRegistry to get a pre-populated instance with all built-in providers.
-// Params: None
+// Parameters: None
 // Returns: *Registry
 // Errors: None
 // Side Effects: None
@@ -27,8 +25,7 @@ func NewRegistry() *Registry {
 }
 
 // Summary: DefaultRegistry returns a Registry pre-populated with every built-in provider.  This is the standard factory used by the dashboard server at startup.
-// Intent: DefaultRegistry returns a Registry pre-populated with every built-in provider.  This is the standard factory used by the dashboard server at startup.
-// Params: None
+// Parameters: None
 // Returns: *Registry
 // Errors: None
 // Side Effects: None
@@ -44,8 +41,7 @@ func DefaultRegistry() *Registry {
 }
 
 // Summary: Register adds a Provider to the Registry, overwriting any previously registered provider with the same type.
-// Intent: Register adds a Provider to the Registry, overwriting any previously registered provider with the same type.
-// Params: p
+// Parameters: r *Registry (No Constraints)
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -56,8 +52,7 @@ func (r *Registry) Register(p Provider) {
 }
 
 // Summary: Get returns the Provider for the given type, or false if not found.
-// Intent: Get returns the Provider for the given type, or false if not found.
-// Params: t
+// Parameters: r *Registry (No Constraints)
 // Returns: (Provider, bool)
 // Errors: None
 // Side Effects: None
@@ -69,8 +64,7 @@ func (r *Registry) Get(t ProviderType) (Provider, bool) {
 }
 
 // Summary: All returns a snapshot of all registered providers, ordered by type string.
-// Intent: All returns a snapshot of all registered providers, ordered by type string.
-// Params: None
+// Parameters: None
 // Returns: []Provider
 // Errors: None
 // Side Effects: None
@@ -104,10 +98,9 @@ func (r *Registry) All() []Provider {
 }
 
 // Summary: Authenticate forwards credentials to the named provider.  Returns an error if the provider type is unknown or if the provider rejects the supplied credentials.
-// Intent: Authenticate forwards credentials to the named provider.  Returns an error if the provider type is unknown or if the provider rejects the supplied credentials.
-// Params: t, creds
+// Parameters: r *Registry (No Constraints)
 // Returns: error
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func (r *Registry) Authenticate(t ProviderType, creds Credentials) error {
 	r.mu.RLock()
@@ -120,8 +113,7 @@ func (r *Registry) Authenticate(t ProviderType, creds Credentials) error {
 }
 
 // Summary: ProviderInfo is a serializable summary of a provider used by the dashboard API.
-// Intent: ProviderInfo is a serializable summary of a provider used by the dashboard API.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -133,8 +125,7 @@ type ProviderInfo struct {
 }
 
 // Summary: Infos returns a ProviderInfo summary for every registered provider.
-// Intent: Infos returns a ProviderInfo summary for every registered provider.
-// Params: None
+// Parameters: None
 // Returns: []ProviderInfo
 // Errors: None
 // Side Effects: None

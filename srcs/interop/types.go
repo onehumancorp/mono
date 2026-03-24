@@ -8,8 +8,7 @@ import (
 )
 
 // Summary: State represents shared agent state.
-// Intent: State represents shared agent state.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -20,8 +19,7 @@ type State struct {
 }
 
 // Summary: LogCheckpoint logs a state synchronization checkpoint for LangGraph.
-// Intent: LogCheckpoint provides a simulated LangGraph checkpoint.
-// Params: state, identity
+// Parameters: state *State (No Constraints), identity string (No Constraints)
 // Returns: None
 // Errors: None
 // Side Effects: Modifies state.Data by appending to the checkpoints list.
@@ -45,8 +43,7 @@ func LogCheckpoint(state *State, identity string) {
 }
 
 // Summary: UniversalAdapter defines the interface for interacting with different agent frameworks.
-// Intent: UniversalAdapter defines the interface for interacting with different agent frameworks.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -59,8 +56,7 @@ type UniversalAdapter interface {
 }
 
 // Summary: ValidateSPIFFEID strictly validates SPIFFE IDs for agent identity.
-// Intent: ValidateSPIFFEID strictly validates SPIFFE IDs for agent identity to prevent spoofing.
-// Params: id
+// Parameters: id string (No Constraints)
 // Returns: error
 // Errors: Returns an error if the SPIFFE ID is invalid or spoofed.
 // Side Effects: None

@@ -6,8 +6,7 @@ import (
 )
 
 // Summary: OpenClawAdapter implements UniversalAdapter for OpenClaw.
-// Intent: OpenClawAdapter implements UniversalAdapter for OpenClaw.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -16,8 +15,7 @@ type OpenClawAdapter struct {
 }
 
 // Summary: NewOpenClawAdapter creates a new OpenClawAdapter.
-// Intent: NewOpenClawAdapter creates a new OpenClawAdapter.
-// Params: identity
+// Parameters: identity string (No Constraints)
 // Returns: *OpenClawAdapter, error
 // Errors: Returns error if identity is invalid
 // Side Effects: None
@@ -31,10 +29,9 @@ func NewOpenClawAdapter(identity string) (*OpenClawAdapter, error) {
 }
 
 // Summary: SyncState functionality.
-// Intent: SyncState functionality.
-// Params: ctx, state
+// Parameters: a *OpenClawAdapter (No Constraints)
 // Returns: error
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func (a *OpenClawAdapter) SyncState(ctx context.Context, state *State) error {
 	// Mock K8s/LangGraph state sync
@@ -54,10 +51,9 @@ func (a *OpenClawAdapter) SyncState(ctx context.Context, state *State) error {
 }
 
 // Summary: ExecuteCommand functionality.
-// Intent: ExecuteCommand functionality.
-// Params: ctx, cmd
+// Parameters: a *OpenClawAdapter (No Constraints)
 // Returns: (string, error)
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func (a *OpenClawAdapter) ExecuteCommand(ctx context.Context, cmd string) (string, error) {
 	if cmd == "" {

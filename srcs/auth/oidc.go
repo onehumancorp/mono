@@ -121,8 +121,7 @@ func initSafeHTTPClient() *http.Client {
 var safeClient = initSafeHTTPClient()
 
 // Summary: OIDCConfig holds configuration for an external OIDC identity provider such as Keycloak or any compliant OAuth2/OIDC provider. Set OIDC_ISSUER_URL and OIDC_CLIENT_ID environment variables to enable.
-// Intent: OIDCConfig holds configuration for an external OIDC identity provider such as Keycloak or any compliant OAuth2/OIDC provider. Set OIDC_ISSUER_URL and OIDC_CLIENT_ID environment variables to enable.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -254,10 +253,9 @@ func rsaPublicKey(k jwk) (*rsa.PublicKey, error) {
 }
 
 // Summary: ValidateOIDCToken validates an RS256 JWT issued by the configured OIDC provider, verifying the signature against the provider's JWKS.
-// Intent: ValidateOIDCToken validates an RS256 JWT issued by the configured OIDC provider, verifying the signature against the provider's JWKS.
-// Params: tokenStr, cfg
+// Parameters: tokenStr string (No Constraints), cfg OIDCConfig (No Constraints)
 // Returns: (*Claims, error)
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func ValidateOIDCToken(tokenStr string, cfg OIDCConfig) (*Claims, error) {
 	if !cfg.Enabled {

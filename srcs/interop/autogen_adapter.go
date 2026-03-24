@@ -6,8 +6,7 @@ import (
 )
 
 // Summary: AutoGenAdapter implements UniversalAdapter for AutoGen.
-// Intent: AutoGenAdapter implements UniversalAdapter for AutoGen.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -16,8 +15,7 @@ type AutoGenAdapter struct {
 }
 
 // Summary: NewAutoGenAdapter creates a new AutoGenAdapter.
-// Intent: NewAutoGenAdapter creates a new AutoGenAdapter.
-// Params: identity
+// Parameters: identity string (No Constraints)
 // Returns: *AutoGenAdapter, error
 // Errors: Returns error if identity is invalid
 // Side Effects: None
@@ -31,10 +29,9 @@ func NewAutoGenAdapter(identity string) (*AutoGenAdapter, error) {
 }
 
 // Summary: SyncState functionality.
-// Intent: SyncState functionality.
-// Params: ctx, state
+// Parameters: a *AutoGenAdapter (No Constraints)
 // Returns: error
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func (a *AutoGenAdapter) SyncState(ctx context.Context, state *State) error {
 	// Mock K8s/LangGraph state sync for AutoGen
@@ -53,10 +50,9 @@ func (a *AutoGenAdapter) SyncState(ctx context.Context, state *State) error {
 }
 
 // Summary: ExecuteCommand functionality.
-// Intent: ExecuteCommand functionality.
-// Params: ctx, cmd
+// Parameters: a *AutoGenAdapter (No Constraints)
 // Returns: (string, error)
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func (a *AutoGenAdapter) ExecuteCommand(ctx context.Context, cmd string) (string, error) {
 	if cmd == "" {

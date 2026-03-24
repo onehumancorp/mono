@@ -11,8 +11,7 @@ import (
 )
 
 // Summary: Price represents the cost rates for a specific large language model.  Constraints: Cost must be provided per one million tokens.
-// Intent: Price represents the cost rates for a specific large language model.  Constraints: Cost must be provided per one million tokens.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -25,8 +24,7 @@ type Price struct {
 //
 // Side Effects: None. It serves as a read-only dictionary used by NewTracker.
 var // Summary: DefaultCatalog provides a comprehensive list of LLM inference prices.  Side Effects: None. It serves as a read-only dictionary used by NewTracker.
-// Intent: DefaultCatalog provides a comprehensive list of LLM inference prices.  Side Effects: None. It serves as a read-only dictionary used by NewTracker.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -68,8 +66,7 @@ DefaultCatalog = map[string]Price{
 }
 
 // Summary: Usage models a single inference event's token consumption and associated cost.  Constraints: Must include valid AgentID, OrganizationID, and Model identifiers.
-// Intent: Usage models a single inference event's token consumption and associated cost.  Constraints: Must include valid AgentID, OrganizationID, and Model identifiers.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -85,8 +82,7 @@ type Usage struct {
 }
 
 // Summary: AgentSummary provides aggregated cost and token usage for an individual agent.
-// Intent: AgentSummary provides aggregated cost and token usage for an individual agent.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -97,8 +93,7 @@ type AgentSummary struct {
 }
 
 // Summary: Summary aggregates total cost and token usage for a specific organisation.
-// Intent: Summary aggregates total cost and token usage for a specific organisation.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -121,8 +116,7 @@ type trackerShard struct {
 }
 
 // Summary: Tracker calculates and stores LLM token consumption safely across concurrent calls.  Constraints: Uses an internal read-write mutex for thread-safe event ingestion.
-// Intent: Tracker calculates and stores LLM token consumption safely across concurrent calls.  Constraints: Uses an internal read-write mutex for thread-safe event ingestion.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None

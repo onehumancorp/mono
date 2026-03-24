@@ -40,8 +40,7 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
 }
 /**
  * Summary: Fetches the current organization's hierarchical and structural state.
- * Intent: Fetches the current organization's hierarchical and structural state.
- * Params: None
+ * Parameters: None
  * Returns: Promise<Organization>
  * Errors: May throw an error
  * Side Effects: None
@@ -51,8 +50,7 @@ export function fetchOrganization(): Promise<Organization> {
 }
 /**
  * Summary: Fetches all active virtual meeting rooms and their transcripts.
- * Intent: Fetches all active virtual meeting rooms and their transcripts.
- * Params: None
+ * Parameters: None
  * Returns: Promise<MeetingRoom[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -137,8 +135,7 @@ function normalizeDashboard(response: Record<string, unknown>): DashboardSnapsho
 }
 /**
  * Summary: Fetches the accumulated API token costs and usage metrics for the organization.
- * Intent: Fetches the accumulated API token costs and usage metrics for the organization.
- * Params: None
+ * Parameters: None
  * Returns: Promise<CostSummary>
  * Errors: May throw an error
  * Side Effects: None
@@ -149,8 +146,7 @@ export async function fetchCosts(): Promise<CostSummary> {
 }
 /**
  * Summary: Fetches a complete, normalized snapshot of the organization's current orchestration state.
- * Intent: Fetches a complete, normalized snapshot of the organization's current orchestration state.
- * Params: None
+ * Parameters: None
  * Returns: Promise<DashboardSnapshot>
  * Errors: May throw an error
  * Side Effects: None
@@ -161,8 +157,7 @@ export async function fetchDashboard(): Promise<DashboardSnapshot> {
 }
 /**
  * Summary: Dispatches a message or task from one agent to another within a specific meeting.
- * Intent: Dispatches a message or task from one agent to another within a specific meeting.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: May throw an error
  * Side Effects: None
@@ -209,8 +204,7 @@ export async function sendMessage(form: {
 }
 /**
  * Summary: Instantiates a new agent and assigns it to the organizational workforce.
- * Intent: Instantiates a new agent and assigns it to the organizational workforce.
- * Params: name, role
+ * Parameters: name, role
  * Returns: Promise<DashboardSnapshot>
  * Errors: May throw an error
  * Side Effects: None
@@ -220,8 +214,7 @@ export function hireAgent(name: string, role: string): Promise<DashboardSnapshot
 }
 /**
  * Summary: Delegates a task from one agent to a specialist agent.
- * Intent: Delegates a task from one agent to a specialist agent.
- * Params: fromAgentId, toAgentId, content, meetingId
+ * Parameters: fromAgentId, toAgentId, content, meetingId
  * Returns: Promise<DashboardSnapshot>
  * Errors: May throw an error
  * Side Effects: None
@@ -241,8 +234,7 @@ export function delegateTask(
 }
 /**
  * Summary: Terminates an agent's process and removes it from the orchestration hub.
- * Intent: Terminates an agent's process and removes it from the orchestration hub.
- * Params: agentId
+ * Parameters: agentId
  * Returns: Promise<DashboardSnapshot>
  * Errors: May throw an error
  * Side Effects: None
@@ -252,8 +244,7 @@ export function fireAgent(agentId: string): Promise<DashboardSnapshot> {
 }
 /**
  * Summary: Retrieves available organizational domain templates (e.g., Software Company).
- * Intent: Retrieves available organizational domain templates (e.g., Software Company).
- * Params: None
+ * Parameters: None
  * Returns: Promise<DomainInfo[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -263,8 +254,7 @@ export function fetchDomains(): Promise<DomainInfo[]> {
 }
 /**
  * Summary: Retrieves the catalog of active tools registered in the MCP gateway.
- * Intent: Retrieves the catalog of active tools registered in the MCP gateway.
- * Params: None
+ * Parameters: None
  * Returns: Promise<MCPTool[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -274,8 +264,7 @@ export function fetchMCPTools(): Promise<MCPTool[]> {
 }
 /**
  * Summary: Overrides current state with a predefined scenario for demonstration purposes.
- * Intent: Overrides current state with a predefined scenario for demonstration purposes.
- * Params: scenario
+ * Parameters: scenario
  * Returns: Promise<DashboardSnapshot>
  * Errors: May throw an error
  * Side Effects: None
@@ -286,8 +275,7 @@ export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 /**
  * Summary: Retrieves all pending and resolved confidence gating approval requests.
- * Intent: Retrieves all pending and resolved confidence gating approval requests.
- * Params: None
+ * Parameters: None
  * Returns: Promise<ApprovalRequest[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -297,8 +285,7 @@ export function fetchApprovals(): Promise<ApprovalRequest[]> {
 }
 /**
  * Summary: Submits a new request for human manager sign-off on a high-risk action.
- * Intent: Submits a new request for human manager sign-off on a high-risk action.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: May throw an error
  * Side Effects: None
@@ -314,8 +301,7 @@ export function requestApproval(body: {
 }
 /**
  * Summary: Submits the human manager's decision (approve/reject) for an approval request.
- * Intent: Submits the human manager's decision (approve/reject) for an approval request.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: May throw an error
  * Side Effects: None
@@ -331,8 +317,7 @@ export function decideApproval(
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
 /**
  * Summary: Retrieves all warm handoff escalations across the organization.
- * Intent: Retrieves all warm handoff escalations across the organization.
- * Params: None
+ * Parameters: None
  * Returns: Promise<HandoffPackage[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -342,8 +327,7 @@ export function fetchHandoffs(): Promise<HandoffPackage[]> {
 }
 /**
  * Summary: Escalates a complex task from an autonomous agent to a human manager.
- * Intent: Escalates a complex task from an autonomous agent to a human manager.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: May throw an error
  * Side Effects: None
@@ -360,8 +344,7 @@ export function createHandoff(body: {
 
 /**
  * Summary: Updates the status of a handoff escalation (e.g. acknowledged or resolved).
- * Intent: Updates the status of a handoff escalation (e.g. acknowledged or resolved).
- * Params: handoffId, status
+ * Parameters: handoffId, status
  * Returns: Promise<HandoffPackage[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -373,8 +356,7 @@ export function resolveHandoff(handoffId: string, status: "acknowledged" | "reso
 // ── Identity Management ───────────────────────────────────────────────────────
 /**
  * Summary: Retrieves the SPIFFE SVID certificates issued to the current workforce.
- * Intent: Retrieves the SPIFFE SVID certificates issued to the current workforce.
- * Params: None
+ * Parameters: None
  * Returns: Promise<AgentIdentity[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -386,8 +368,7 @@ export function fetchIdentities(): Promise<AgentIdentity[]> {
 // ── Skill Packs ───────────────────────────────────────────────────────────────
 /**
  * Summary: Retrieves all imported skill packs available for agent instantiation.
- * Intent: Retrieves all imported skill packs available for agent instantiation.
- * Params: None
+ * Parameters: None
  * Returns: Promise<SkillPack[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -397,8 +378,7 @@ export function fetchSkillPacks(): Promise<SkillPack[]> {
 }
 /**
  * Summary: Imports a new specialized skill pack into the organization's domain.
- * Intent: Imports a new specialized skill pack into the organization's domain.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: May throw an error
  * Side Effects: None
@@ -416,8 +396,7 @@ export function importSkillPack(body: {
 // ── Snapshots ─────────────────────────────────────────────────────────────────
 /**
  * Summary: Retrieves all point-in-time recovery snapshots for the organization.
- * Intent: Retrieves all point-in-time recovery snapshots for the organization.
- * Params: None
+ * Parameters: None
  * Returns: Promise<OrgSnapshot[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -427,8 +406,7 @@ export function fetchSnapshots(): Promise<OrgSnapshot[]> {
 }
 /**
  * Summary: Captures a point-in-time snapshot of the entire organization's memory and state.
- * Intent: Captures a point-in-time snapshot of the entire organization's memory and state.
- * Params: label?
+ * Parameters: label?
  * Returns: Promise<OrgSnapshot>
  * Errors: May throw an error
  * Side Effects: None
@@ -438,8 +416,7 @@ export function createSnapshot(label?: string): Promise<OrgSnapshot> {
 }
 /**
  * Summary: Restores the organization to a specific point-in-time snapshot.
- * Intent: Restores the organization to a specific point-in-time snapshot.
- * Params: snapshotId
+ * Parameters: snapshotId
  * Returns: Promise<DashboardSnapshot>
  * Errors: May throw an error
  * Side Effects: None
@@ -451,8 +428,7 @@ export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> 
 // ── Marketplace ───────────────────────────────────────────────────────────────
 /**
  * Summary: Retrieves the catalog of community-published agents and tools.
- * Intent: Retrieves the catalog of community-published agents and tools.
- * Params: None
+ * Parameters: None
  * Returns: Promise<MarketplaceItem[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -464,8 +440,7 @@ export function fetchMarketplace(): Promise<MarketplaceItem[]> {
 // ── Real-time Analytics ───────────────────────────────────────────────────────
 /**
  * Summary: Fetches real-time operational and health metrics for the organization.
- * Intent: Fetches real-time operational and health metrics for the organization.
- * Params: None
+ * Parameters: None
  * Returns: Promise<AnalyticsSummary>
  * Errors: May throw an error
  * Side Effects: None
@@ -484,8 +459,7 @@ import type {
 } from "./types";
 /**
  * Summary: Retrieves external service connections, optionally filtered by category.
- * Intent: Retrieves external service connections, optionally filtered by category.
- * Params: category?
+ * Parameters: category?
  * Returns: Promise<Integration[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -496,8 +470,7 @@ export function fetchIntegrations(category?: string): Promise<Integration[]> {
 }
 /**
  * Summary: Connects and authenticates a specific external integration.
- * Intent: Connects and authenticates a specific external integration.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: May throw an error
  * Side Effects: None
@@ -523,8 +496,7 @@ export function connectIntegration(
 }
 /**
  * Summary: Disconnects an active external integration.
- * Intent: Disconnects an active external integration.
- * Params: integrationId
+ * Parameters: integrationId
  * Returns: Promise<Integration>
  * Errors: May throw an error
  * Side Effects: None
@@ -534,8 +506,7 @@ export function disconnectIntegration(integrationId: string): Promise<Integratio
 }
 /**
  * Summary: Sends a test message to validate credentials before saving them.
- * Intent: Sends a test message to validate credentials before saving them.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: May throw an error
  * Side Effects: None
@@ -551,8 +522,7 @@ export function testChatIntegration(
 }
 /**
  * Summary: Fetches recorded chat messages from the integration registry.
- * Intent: Fetches recorded chat messages from the integration registry.
- * Params: integrationId?
+ * Parameters: integrationId?
  * Returns: Promise<ChatMessage[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -563,8 +533,7 @@ export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]
 }
 /**
  * Summary: Dispatches a message to an external chat platform.
- * Intent: Dispatches a message to an external chat platform.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: May throw an error
  * Side Effects: None
@@ -580,8 +549,7 @@ export function sendChatMessage(body: {
 }
 /**
  * Summary: Fetches pull requests opened via the git integrations.
- * Intent: Fetches pull requests opened via the git integrations.
- * Params: integrationId?
+ * Parameters: integrationId?
  * Returns: Promise<PullRequest[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -592,8 +560,7 @@ export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]
 }
 /**
  * Summary: Opens a pull request/merge request on a connected git platform.
- * Intent: Opens a pull request/merge request on a connected git platform.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: May throw an error
  * Side Effects: None
@@ -611,8 +578,7 @@ export function createPullRequest(body: {
 }
 /**
  * Summary: Merges an open pull request on a connected git platform.
- * Intent: Merges an open pull request on a connected git platform.
- * Params: prId
+ * Parameters: prId
  * Returns: Promise<PullRequest>
  * Errors: May throw an error
  * Side Effects: None
@@ -622,8 +588,7 @@ export function mergePullRequest(prId: string): Promise<PullRequest> {
 }
 /**
  * Summary: Closes an open pull request on a connected git platform without merging.
- * Intent: Closes an open pull request on a connected git platform without merging.
- * Params: prId
+ * Parameters: prId
  * Returns: Promise<PullRequest>
  * Errors: May throw an error
  * Side Effects: None
@@ -633,8 +598,7 @@ export function closePullRequest(prId: string): Promise<PullRequest> {
 }
 /**
  * Summary: Fetches tickets from connected issue trackers.
- * Intent: Fetches tickets from connected issue trackers.
- * Params: integrationId?
+ * Parameters: integrationId?
  * Returns: Promise<Issue[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -645,8 +609,7 @@ export function fetchIssues(integrationId?: string): Promise<Issue[]> {
 }
 /**
  * Summary: Creates a ticket in a connected issue tracker.
- * Intent: Creates a ticket in a connected issue tracker.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: May throw an error
  * Side Effects: None
@@ -664,8 +627,7 @@ export function createIssue(body: {
 }
 /**
  * Summary: Updates the status phase of an existing ticket.
- * Intent: Updates the status phase of an existing ticket.
- * Params: issueId, status
+ * Parameters: issueId, status
  * Returns: Promise<Issue>
  * Errors: May throw an error
  * Side Effects: None
@@ -675,8 +637,7 @@ export function updateIssueStatus(issueId: string, status: string): Promise<Issu
 }
 /**
  * Summary: Assigns ownership of a ticket to a specific agent or human manager.
- * Intent: Assigns ownership of a ticket to a specific agent or human manager.
- * Params: issueId, assignee
+ * Parameters: issueId, assignee
  * Returns: Promise<Issue>
  * Errors: May throw an error
  * Side Effects: None
@@ -686,8 +647,7 @@ export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
 }
 /**
  * Summary: Invokes an MCP tool with the given action and parameters. Communication tools route to the underlying connected integration. Git/issue tools create PRs or tickets in the connected platform.
- * Intent: Invokes an MCP tool with the given action and parameters. Communication tools route to the underlying connected integration. Git/issue tools create PRs or tickets in the connected platform.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: May throw an error
  * Side Effects: None
@@ -701,8 +661,7 @@ export function invokeMCPTool(
 }
 /**
  * Summary: Fetches the user's or organization's global settings and preferences.
- * Intent: Fetches the user's or organization's global settings and preferences.
- * Params: None
+ * Parameters: None
  * Returns: Promise<Settings>
  * Errors: May throw an error
  * Side Effects: None
@@ -712,8 +671,7 @@ export function fetchSettings(): Promise<Settings> {
 }
 /**
  * Summary: Saves and updates the global settings and preferences.
- * Intent: Saves and updates the global settings and preferences.
- * Params: settings
+ * Parameters: settings
  * Returns: Promise<Settings>
  * Errors: May throw an error
  * Side Effects: None
@@ -727,8 +685,7 @@ export function saveSettings(settings: Settings): Promise<Settings> {
 const TOKEN_KEY = "ohc_token";
 /**
  * Summary: Retrieves the currently stored authentication JWT token from local storage.
- * Intent: Retrieves the currently stored authentication JWT token from local storage.
- * Params: None
+ * Parameters: None
  * Returns: string | null
  * Errors: May throw an error
  * Side Effects: None
@@ -738,8 +695,7 @@ export function getStoredToken(): string | null {
 }
 /**
  * Summary: Persists an authentication JWT token in local storage.
- * Intent: Persists an authentication JWT token in local storage.
- * Params: token
+ * Parameters: token
  * Returns: void
  * Errors: May throw an error
  * Side Effects: None
@@ -749,8 +705,7 @@ export function setStoredToken(token: string): void {
 }
 /**
  * Summary: Removes the stored authentication JWT token from local storage.
- * Intent: Removes the stored authentication JWT token from local storage.
- * Params: None
+ * Parameters: None
  * Returns: void
  * Errors: May throw an error
  * Side Effects: None
@@ -810,8 +765,7 @@ async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
 }
 /**
  * Summary: Authenticates a user and retrieves a JWT token.
- * Intent: Authenticates a user and retrieves a JWT token.
- * Params: username, password
+ * Parameters: username, password
  * Returns: Promise<LoginResponse>
  * Errors: May throw an error
  * Side Effects: None
@@ -832,8 +786,7 @@ export async function login(username: string, password: string): Promise<LoginRe
 }
 /**
  * Summary: Invalidates the current session and clears the stored authentication token.
- * Intent: Invalidates the current session and clears the stored authentication token.
- * Params: None
+ * Parameters: None
  * Returns: Promise<void>
  * Errors: May throw an error
  * Side Effects: None
@@ -847,8 +800,7 @@ export async function logout(): Promise<void> {
 }
 /**
  * Summary: Retrieves the public profile information of the currently authenticated user.
- * Intent: Retrieves the public profile information of the currently authenticated user.
- * Params: None
+ * Parameters: None
  * Returns: Promise<UserPublic>
  * Errors: May throw an error
  * Side Effects: None
@@ -858,8 +810,7 @@ export function fetchMe(): Promise<UserPublic> {
 }
 /**
  * Summary: Retrieves a list of all registered users in the system (requires Admin role).
- * Intent: Retrieves a list of all registered users in the system (requires Admin role).
- * Params: None
+ * Parameters: None
  * Returns: Promise<UserPublic[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -869,8 +820,7 @@ export function fetchUsers(): Promise<UserPublic[]> {
 }
 /**
  * Summary: Creates a new user account within the system (requires Admin role).
- * Intent: Creates a new user account within the system (requires Admin role).
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: May throw an error
  * Side Effects: None
@@ -885,8 +835,7 @@ export function createUser(body: {
 }
 /**
  * Summary: Deletes an existing user account from the system (requires Admin role).
- * Intent: Deletes an existing user account from the system (requires Admin role).
- * Params: id
+ * Parameters: id
  * Returns: Promise<void>
  * Errors: May throw an error
  * Side Effects: None
@@ -900,8 +849,7 @@ export async function deleteUser(id: string): Promise<void> {
 }
 /**
  * Summary: Retrieves the list of available operational roles and their associated permissions.
- * Intent: Retrieves the list of available operational roles and their associated permissions.
- * Params: None
+ * Parameters: None
  * Returns: Promise<Role[]>
  * Errors: May throw an error
  * Side Effects: None
@@ -911,8 +859,7 @@ export function fetchRoles(): Promise<Role[]> {
 }
 /**
  * Summary: Creates a new custom role with an optional set of permissions.
- * Intent: Creates a new custom role with an optional set of permissions.
- * Params: body
+ * Parameters: body
  * Returns: Promise<Role>
  * Errors: May throw an error
  * Side Effects: None
@@ -922,8 +869,7 @@ export function createRole(body: { name: string; permissions?: string[] }): Prom
 }
 /**
  * Summary: Scales the number of agents for a specific role dynamically.
- * Intent: Scales the number of agents for a specific role dynamically.
- * Params: role, count
+ * Parameters: role, count
  * Returns: Promise<{ status: string; role: string; count: number }>
  * Errors: May throw an error
  * Side Effects: None
