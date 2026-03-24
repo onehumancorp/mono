@@ -114,6 +114,17 @@ func jsonString(s string) string {
 	return `"` + strings.ReplaceAll(strings.ReplaceAll(s, `\`, `\\`), `"`, `\"`) + `"`
 }
 
+// OrganizationIDFromContext returns the organisation ID embedded in the JWT
+// claims, or an empty string when not authenticated or not set.
+// This is the primary tenant isolation key for multi-tenant deployments.
+func OrganizationIDFromContext(ctx context.Context) string {
+	if c := ClaimsFromContext(ctx); c != nil {
+		return c.OrganizationID
+	}
+	return ""
+}
+
+
 // ClaimsContextKeyForTest provides domain-specific context and typed constraints for ClaimsContextKeyForTest operations across the application.
 // Parameters: None
 // Returns: None

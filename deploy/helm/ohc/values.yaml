@@ -3,12 +3,32 @@ backend:
   replicas: 1
   service:
     port: 8080
+  # Set to "true" to enable the multi-tenant TenantRegistry.
+  # In multi-tenant mode a single server instance handles all organisations;
+  # each user can only see their own company's data after login.
+  multiTenant: false
 
 frontend:
   image: onehumancorp/mono-frontend:latest
   replicas: 1
   service:
     port: 8081
+
+# OHC Core — Rust library (settings · agent scheduler · meeting rooms · chat)
+# In cloud-native mode the core runs as a dedicated micro-service.
+ohcCore:
+  enabled: true
+  image: onehumancorp/mono-core:latest
+  replicas: 1
+  service:
+    port: 18789
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "64Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
 
 # Redis subchart (Bitnami) – used for session caching and pub/sub
 redis:
@@ -46,4 +66,13 @@ chatwoot:
   databaseUrl: ""   # defaults to in-cluster postgres service
   # Redis URL – defaults to the same Redis as the OHC backend.
   redisUrl: ""      # defaults to in-cluster redis service
+
+# Multi-tenant configuration.
+# When multiTenant.enabled is true the backend uses the TenantRegistry so
+# that every logged-in user can only see their own company's data.
+multiTenant:
+  enabled: false
+  # Maximum number of tenant organisations supported per replica.
+  maxOrgs: 1000
+
 

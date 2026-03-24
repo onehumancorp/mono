@@ -49,15 +49,16 @@ var rolePermissions = map[string][]string{
 // Errors: None
 // Side Effects: None
 type User struct {
-	ID           string    `json:"id"`
-	Username     string    `json:"username"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"` // never serialised to JSON
-	Roles        []string  `json:"roles"`
-	Active       bool      `json:"active"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-	OIDCSubject  string    `json:"oidcSubject,omitempty"`
+	ID             string    `json:"id"`
+	Username       string    `json:"username"`
+	Email          string    `json:"email"`
+	PasswordHash   string    `json:"-"` // never serialised to JSON
+	Roles          []string  `json:"roles"`
+	Active         bool      `json:"active"`
+	OrganizationID string    `json:"organizationId,omitempty"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+	OIDCSubject    string    `json:"oidcSubject,omitempty"`
 }
 
 // UserPublic represents the sanitized, non-sensitive profile of a user suitable for external API consumption.
@@ -66,14 +67,15 @@ type User struct {
 // Errors: None
 // Side Effects: None
 type UserPublic struct {
-	ID          string    `json:"id"`
-	Username    string    `json:"username"`
-	Email       string    `json:"email"`
-	Roles       []string  `json:"roles"`
-	Active      bool      `json:"active"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-	OIDCSubject string    `json:"oidcSubject,omitempty"`
+	ID             string    `json:"id"`
+	Username       string    `json:"username"`
+	Email          string    `json:"email"`
+	Roles          []string  `json:"roles"`
+	Active         bool      `json:"active"`
+	OrganizationID string    `json:"organizationId,omitempty"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+	OIDCSubject    string    `json:"oidcSubject,omitempty"`
 }
 
 // PublicView returns a UserPublic with no sensitive fields.
@@ -83,14 +85,15 @@ type UserPublic struct {
 // Side Effects: None
 func (u *User) PublicView() UserPublic {
 	return UserPublic{
-		ID:          u.ID,
-		Username:    u.Username,
-		Email:       u.Email,
-		Roles:       u.Roles,
-		Active:      u.Active,
-		CreatedAt:   u.CreatedAt,
-		UpdatedAt:   u.UpdatedAt,
-		OIDCSubject: u.OIDCSubject,
+		ID:             u.ID,
+		Username:       u.Username,
+		Email:          u.Email,
+		Roles:          u.Roles,
+		Active:         u.Active,
+		OrganizationID: u.OrganizationID,
+		CreatedAt:      u.CreatedAt,
+		UpdatedAt:      u.UpdatedAt,
+		OIDCSubject:    u.OIDCSubject,
 	}
 }
 

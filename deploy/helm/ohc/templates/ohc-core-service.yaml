@@ -1,0 +1,17 @@
+{{- if .Values.ohcCore.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-ohc-core
+  labels:
+    app: {{ .Release.Name }}-ohc-core
+spec:
+  selector:
+    app: {{ .Release.Name }}-ohc-core
+  ports:
+    - port: {{ .Values.ohcCore.service.port }}
+      targetPort: {{ .Values.ohcCore.service.port }}
+      protocol: TCP
+      name: http
+  type: ClusterIP
+{{- end }}
