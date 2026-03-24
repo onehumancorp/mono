@@ -60,7 +60,7 @@ oci_push(
 pkg_tar(
     name = "agent_pkg",
     srcs = [
-        "//srcs/cmd/ironclaw:ironclaw",
+        "//srcs/cmd/ironclaw",
         "//srcs/cmd/ohc",
     ],
     package_dir = "/usr/local/bin",
@@ -171,7 +171,6 @@ sh_test(
 sh_test(
     name = "kind_e2e_test",
     size = "large",
-    visibility = ["//visibility:public"],
     srcs = ["tests/kind_e2e_test.sh"],
     data = glob([
         "docker/**/*",
@@ -187,4 +186,5 @@ sh_test(
         "no-remote-exec",
         "requires-docker",
     ],
+    visibility = ["//visibility:public"],
 )

@@ -212,6 +212,34 @@ func (b DelegateTaskResponse_builder) Build() *DelegateTaskResponse {
 	return &DelegateTaskResponse{success: b.Success}
 }
 
+// ─── SharedOrganizationalMemoryBankEvent ─────────────────────────────────────
+
+type SharedOrganizationalMemoryBankEvent struct {
+	EventId string
+	AgentId string
+	Payload []byte
+}
+
+func (m *SharedOrganizationalMemoryBankEvent) ProtoReflect() {} // mock reflection if used
+
+func (m *SharedOrganizationalMemoryBankEvent) GetEventId() string { return m.EventId }
+func (m *SharedOrganizationalMemoryBankEvent) GetAgentId() string { return m.AgentId }
+func (m *SharedOrganizationalMemoryBankEvent) GetPayload() []byte { return m.Payload }
+
+type SharedOrganizationalMemoryBankEvent_builder struct {
+	EventId string
+	AgentId string
+	Payload []byte
+}
+
+func (b SharedOrganizationalMemoryBankEvent_builder) Build() *SharedOrganizationalMemoryBankEvent {
+	return &SharedOrganizationalMemoryBankEvent{
+		EventId: b.EventId,
+		AgentId: b.AgentId,
+		Payload: b.Payload,
+	}
+}
+
 // ─── StreamMessagesRequest ───────────────────────────────────────────────────
 
 type StreamMessagesRequest struct{ agentId string }
