@@ -665,9 +665,67 @@ func seededScenario(name string, now time.Time) (domain.Organization, *orchestra
 		return seededDigitalMarketing(now)
 	case "accounting":
 		return seededAccounting(now)
+	case "empty":
+		return seededEmpty(now)
+	case "no-activity":
+		return seededNoActivity(now)
+	case "no-cost":
+		return seededNoCost(now)
+	case "no-agent":
+		return seededNoAgent(now)
+	case "no-profile":
+		return seededNoProfile(now)
+	case "agent-conflict":
+		return seededAgentConflict(now)
 	default:
 		return domain.Organization{}, nil, nil, errors.New("unsupported seed scenario")
 	}
+}
+
+func seededEmpty(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
+	org := domain.NewSoftwareCompany("demo-empty", "Empty Company", "Human CEO", now.UTC())
+	hub := orchestration.NewHub()
+	tracker := billing.NewTracker(billing.DefaultCatalog)
+	return org, hub, tracker, nil
+}
+
+func seededNoActivity(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
+	org := domain.NewSoftwareCompany("demo-no-act", "No Activity", "Human CEO", now.UTC())
+	hub := orchestration.NewHub()
+	hub.RegisterAgent(orchestration.Agent{ID: "pm-1", Name: "Product Manager", Role: "PRODUCT_MANAGER", OrganizationID: org.ID})
+	tracker := billing.NewTracker(billing.DefaultCatalog)
+	return org, hub, tracker, nil
+}
+
+func seededNoCost(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
+	org := domain.NewSoftwareCompany("demo-no-cost", "No Cost", "Human CEO", now.UTC())
+	hub := orchestration.NewHub()
+	hub.RegisterAgent(orchestration.Agent{ID: "pm-1", Name: "Product Manager", Role: "PRODUCT_MANAGER", OrganizationID: org.ID})
+	tracker := billing.NewTracker(billing.DefaultCatalog)
+	return org, hub, tracker, nil
+}
+
+func seededNoAgent(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
+	org := domain.NewSoftwareCompany("demo-no-agent", "No Agent", "Human CEO", now.UTC())
+	hub := orchestration.NewHub()
+	tracker := billing.NewTracker(billing.DefaultCatalog)
+	return org, hub, tracker, nil
+}
+
+func seededNoProfile(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
+	org := domain.NewSoftwareCompany("demo-no-profile", "No Profile", "Human CEO", now.UTC())
+	org.RoleProfiles = nil
+	hub := orchestration.NewHub()
+	tracker := billing.NewTracker(billing.DefaultCatalog)
+	return org, hub, tracker, nil
+}
+
+func seededAgentConflict(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {
+	org := domain.NewSoftwareCompany("demo-conflict", "Agent Conflict", "Human CEO", now.UTC())
+	hub := orchestration.NewHub()
+	hub.RegisterAgent(orchestration.Agent{ID: "pm-1", Name: "Product Manager", Role: "PRODUCT_MANAGER", OrganizationID: org.ID})
+	tracker := billing.NewTracker(billing.DefaultCatalog)
+	return org, hub, tracker, nil
 }
 
 func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker, error) {

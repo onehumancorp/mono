@@ -238,7 +238,7 @@ export function fireAgent(agentId: string): Promise<DashboardSnapshot> {
  * Side Effects: None
  */
 export function fetchDomains(): Promise<DomainInfo[]> {
-  return getJSON<DomainInfo[]>("/api/domains");
+  return authedGetJSON<DomainInfo[]>("/api/domains");
 }
 /**
  * Summary: Retrieves the catalog of active tools registered in the MCP gateway.
@@ -249,7 +249,7 @@ export function fetchDomains(): Promise<DomainInfo[]> {
  * Side Effects: None
  */
 export function fetchMCPTools(): Promise<MCPTool[]> {
-  return getJSON<MCPTool[]>("/api/mcp/tools");
+  return authedGetJSON<MCPTool[]>("/api/mcp/tools");
 }
 /**
  * Summary: Overrides current state with a predefined scenario for demonstration purposes.
@@ -260,7 +260,7 @@ export function fetchMCPTools(): Promise<MCPTool[]> {
  * Side Effects: None
  */
 export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
-  return postJSON<DashboardSnapshot>("/api/dev/seed", { scenario });
+  return authedPostJSON<DashboardSnapshot>("/api/dev/seed", { scenario });
 }
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 /**
@@ -272,7 +272,7 @@ export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
  * Side Effects: None
  */
 export function fetchApprovals(): Promise<ApprovalRequest[]> {
-  return getJSON<ApprovalRequest[]>("/api/approvals");
+  return authedGetJSON<ApprovalRequest[]>("/api/approvals");
 }
 /**
  * Summary: Submits a new request for human manager sign-off on a high-risk action.
@@ -317,7 +317,7 @@ export function decideApproval(
  * Side Effects: None
  */
 export function fetchHandoffs(): Promise<HandoffPackage[]> {
-  return getJSON<HandoffPackage[]>("/api/handoffs");
+  return authedGetJSON<HandoffPackage[]>("/api/handoffs");
 }
 /**
  * Summary: Escalates a complex task from an autonomous agent to a human manager.
@@ -359,7 +359,7 @@ export function resolveHandoff(handoffId: string, status: "acknowledged" | "reso
  * Side Effects: None
  */
 export function fetchIdentities(): Promise<AgentIdentity[]> {
-  return getJSON<AgentIdentity[]>("/api/identities");
+  return authedGetJSON<AgentIdentity[]>("/api/identities");
 }
 
 // ── Skill Packs ───────────────────────────────────────────────────────────────
@@ -372,7 +372,7 @@ export function fetchIdentities(): Promise<AgentIdentity[]> {
  * Side Effects: None
  */
 export function fetchSkillPacks(): Promise<SkillPack[]> {
-  return getJSON<SkillPack[]>("/api/skills");
+  return authedGetJSON<SkillPack[]>("/api/skills");
 }
 /**
  * Summary: Imports a new specialized skill pack into the organization's domain.
@@ -402,7 +402,7 @@ export function importSkillPack(body: {
  * Side Effects: None
  */
 export function fetchSnapshots(): Promise<OrgSnapshot[]> {
-  return getJSON<OrgSnapshot[]>("/api/snapshots");
+  return authedGetJSON<OrgSnapshot[]>("/api/snapshots");
 }
 /**
  * Summary: Captures a point-in-time snapshot of the entire organization's memory and state.
@@ -437,7 +437,7 @@ export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> 
  * Side Effects: None
  */
 export function fetchMarketplace(): Promise<MarketplaceItem[]> {
-  return getJSON<MarketplaceItem[]>("/api/marketplace");
+  return authedGetJSON<MarketplaceItem[]>("/api/marketplace");
 }
 
 // ── Real-time Analytics ───────────────────────────────────────────────────────
@@ -450,7 +450,7 @@ export function fetchMarketplace(): Promise<MarketplaceItem[]> {
  * Side Effects: None
  */
 export function fetchAnalytics(): Promise<AnalyticsSummary> {
-  return getJSON<AnalyticsSummary>("/api/analytics");
+  return authedGetJSON<AnalyticsSummary>("/api/analytics");
 }
 
 // ── External Integrations ─────────────────────────────────────────────────────
