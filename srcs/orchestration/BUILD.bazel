@@ -6,6 +6,7 @@ go_library(
     name = "orchestration",
     srcs = [
         "auth_interceptor.go",
+        "delegation.go",
         "service.go",
         "sip.go",
     ],
@@ -28,6 +29,7 @@ go_test(
     srcs = [
         "auth_interceptor_test.go",
         "benchmark_test.go",
+        "delegation_test.go",
         "minimax_client_test.go",
         "service_extra_test.go",
         "service_grpc_test.go",

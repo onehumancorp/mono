@@ -1,0 +1,31 @@
+--- srcs/orchestration/delegation.go
++++ srcs/orchestration/delegation.go
+@@ -3,7 +3,6 @@
+
+ import (
+	"context"
+-	"errors"
+	"fmt"
+	"time"
+
+@@ -48,10 +47,7 @@
+		ProviderType:   "builtin",
+	}
+
+-	err := s.hub.RegisterAgent(subAgent)
+-	if err != nil {
+-		return nil, status.Errorf(codes.Internal, "failed to register sub-agent: %v", err)
+-	}
++	s.hub.RegisterAgent(subAgent)
+
+	// 3. Execution (trigger via task message)
+	msg := Message{
+@@ -63,7 +59,7 @@
+		OccurredAt: time.Now().UTC(),
+	}
+
+-	err = s.hub.Publish(msg)
++	err := s.hub.Publish(msg)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to publish task to sub-agent: %v", err)
+	}

@@ -64,13 +64,6 @@ message DelegateTaskResponse {
   bool success = 1;
 }
 
-message SubTask {
-  string task_id = 1;
-  string target_role = 2;
-  string instruction = 3;
-  string parent_thread_id = 4;
-}
-
 message StreamMessagesRequest {
   string agent_id = 1;
 }
@@ -90,5 +83,4 @@ service HubService {
   rpc DelegateTask(DelegateTaskRequest) returns (DelegateTaskResponse);
   rpc StreamMessages(StreamMessagesRequest) returns (stream Message);
   rpc Reason(ReasonRequest) returns (ReasonResponse);
-  rpc DelegateSubTask(SubTask) returns (DelegateTaskResponse);
 }
