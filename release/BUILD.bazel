@@ -14,16 +14,16 @@
 # The GitHub Actions release workflow (`.github/workflows/release.yml`) uses
 # these targets to produce artifacts that are uploaded to GitHub Releases.
 
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 # ── Linux x86_64 ──────────────────────────────────────────────────────────────
 
 pkg_files(
     name = "ironclaw_linux_amd64_files",
     srcs = ["//srcs/cmd/ironclaw:ironclaw_linux_amd64"],
-    strip_prefix = strip_prefix.from_pkg(),
     renames = {"//srcs/cmd/ironclaw:ironclaw_linux_amd64": "ironclaw"},
+    strip_prefix = strip_prefix.from_pkg(),
 )
 
 pkg_tar(
@@ -38,8 +38,8 @@ pkg_tar(
 pkg_files(
     name = "ironclaw_linux_arm64_files",
     srcs = ["//srcs/cmd/ironclaw:ironclaw_linux_arm64"],
-    strip_prefix = strip_prefix.from_pkg(),
     renames = {"//srcs/cmd/ironclaw:ironclaw_linux_arm64": "ironclaw"},
+    strip_prefix = strip_prefix.from_pkg(),
 )
 
 pkg_tar(
@@ -54,8 +54,8 @@ pkg_tar(
 pkg_files(
     name = "ironclaw_darwin_amd64_files",
     srcs = ["//srcs/cmd/ironclaw:ironclaw_darwin_amd64"],
-    strip_prefix = strip_prefix.from_pkg(),
     renames = {"//srcs/cmd/ironclaw:ironclaw_darwin_amd64": "ironclaw"},
+    strip_prefix = strip_prefix.from_pkg(),
 )
 
 pkg_tar(
@@ -70,8 +70,8 @@ pkg_tar(
 pkg_files(
     name = "ironclaw_darwin_arm64_files",
     srcs = ["//srcs/cmd/ironclaw:ironclaw_darwin_arm64"],
-    strip_prefix = strip_prefix.from_pkg(),
     renames = {"//srcs/cmd/ironclaw:ironclaw_darwin_arm64": "ironclaw"},
+    strip_prefix = strip_prefix.from_pkg(),
 )
 
 pkg_tar(
@@ -86,8 +86,8 @@ pkg_tar(
 pkg_files(
     name = "ironclaw_windows_amd64_files",
     srcs = ["//srcs/cmd/ironclaw:ironclaw_windows_amd64"],
-    strip_prefix = strip_prefix.from_pkg(),
     renames = {"//srcs/cmd/ironclaw:ironclaw_windows_amd64": "ironclaw.exe"},
+    strip_prefix = strip_prefix.from_pkg(),
 )
 
 pkg_tar(
@@ -117,9 +117,9 @@ filegroup(
 
 pkg_files(
     name = "ohc_linux_amd64_files",
-    srcs = ["//srcs/cmd/ohc:ohc"],
-    strip_prefix = strip_prefix.from_pkg(),
+    srcs = ["//srcs/cmd/ohc"],
     renames = {"//srcs/cmd/ohc:ohc": "ohc"},
+    strip_prefix = strip_prefix.from_pkg(),
 )
 
 pkg_tar(
