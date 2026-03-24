@@ -293,7 +293,7 @@ func (s *Server) handlePipelineStatus(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "pipeline not found", http.StatusNotFound)
 }
 
-// Summary: ScaleRequest defines the payload for scaling a team member role.
+// ScaleRequest defines the payload for scaling a team member role.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -377,7 +377,7 @@ func (s *Server) handleScale(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Summary: handleScaleStream streams real-time scaling trace events to the dashboard.
+// handleScaleStream streams real-time scaling trace events to the dashboard.
 // Parameters: s *Server (No Constraints)
 // Returns: None
 // Errors: None

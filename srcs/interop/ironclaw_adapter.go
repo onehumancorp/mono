@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Summary: IronClawAdapter implements UniversalAdapter for IronClaw.
+// IronClawAdapter implements UniversalAdapter for IronClaw.
 // IronClaw is a security and audit-focused agent with deep static-analysis
 // capabilities.  The adapter bridges the IronClaw agent into the platform's
 // universal interop layer so it can participate in cross-framework swarms.
@@ -18,7 +18,7 @@ type IronClawAdapter struct {
 	Identity string
 }
 
-// Summary: NewIronClawAdapter creates a new IronClawAdapter.
+// NewIronClawAdapter creates a new IronClawAdapter.
 // Parameters: identity string – a valid SPIFFE ID for the agent.
 // Returns: *IronClawAdapter, error
 // Errors: Returns error if identity does not pass SPIFFE validation.
@@ -30,7 +30,7 @@ func NewIronClawAdapter(identity string) (*IronClawAdapter, error) {
 	return &IronClawAdapter{Identity: identity}, nil
 }
 
-// Summary: SyncState synchronises the IronClaw agent's local state with the
+// SyncState synchronises the IronClaw agent's local state with the
 // central shared state via LangGraph checkpoints.
 // Parameters: a *IronClawAdapter (No Constraints), ctx context.Context, state *State
 // Returns: error
@@ -50,7 +50,7 @@ func (a *IronClawAdapter) SyncState(ctx context.Context, state *State) error {
 	return nil
 }
 
-// Summary: ExecuteCommand runs a security-oriented command via the IronClaw
+// ExecuteCommand runs a security-oriented command via the IronClaw
 // agent.  Commands are forwarded as-is; the agent is responsible for
 // interpreting security directives (e.g. "scan", "audit", "report").
 // Parameters: a *IronClawAdapter (No Constraints), ctx context.Context, cmd string

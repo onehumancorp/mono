@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Summary: ComputeProfile defines the hardware requirements for an agent role.
+// ComputeProfile defines the strict hardware constraints (CPU, Memory) and affinity rules for a specific agent role, ensuring optimal Kubernetes pod scheduling.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -17,7 +17,7 @@ type ComputeProfile struct {
 	Priority     int    `json:"scheduling_priority"`
 }
 
-// Summary: AffinityScoreResult holds the result of the affinity scoring engine.
+// AffinityScoreResult holds the result of the affinity scoring engine.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -27,14 +27,14 @@ type AffinityScoreResult struct {
 	Reason string
 }
 
-// Summary: AffinityEngine calculates hardware placement scores.
+// AffinityEngine calculates hardware placement scores.
 // Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
 type AffinityEngine struct{}
 
-// Summary: CalculateScore determines the placement score and hardware requirements based on the agent's profile and task details. This implements UT-01 from the test plan.
+// CalculateScore determines the placement score and hardware requirements based on the agent's profile and task details. This implements UT-01 from the test plan.
 // Parameters: ae *AffinityEngine (No Constraints)
 // Returns: AffinityScoreResult
 // Errors: None
@@ -77,14 +77,14 @@ func (ae *AffinityEngine) CalculateScore(profile ComputeProfile, isVIP bool, loc
 	}
 }
 
-// Summary: QuotaManager enforces hardware budget limits.
+// QuotaManager enforces hardware budget limits.
 // Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
 type QuotaManager struct{}
 
-// Summary: CheckQuota validates if the requested VRAM fits within the available quota limit. This implements UT-02 from the test plan.
+// CheckQuota validates if the requested VRAM fits within the available quota limit. This implements UT-02 from the test plan.
 // Parameters: qm *QuotaManager (No Constraints)
 // Returns: error
 // Errors: Explicit error handling

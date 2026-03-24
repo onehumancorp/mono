@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Summary: TrustAgreement represents a mutual trust relationship between two organizations.
+// TrustAgreement establishes a cryptographically verified, federated trust relationship between two distinct One Human Corp deployments using SPIFFE-federated JWTs.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -19,14 +19,14 @@ type TrustAgreement struct {
 	Status       string   `json:"status"` // PENDING, ACTIVE, REVOKED
 }
 
-// Summary: TrustManager handles the creation and management of TrustAgreements.
+// TrustManager handles the creation and management of TrustAgreements.
 // Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
 type TrustManager struct{}
 
-// Summary: ParseJWKS parses a partner's JWKS data (JSON) and creates an active TrustAgreement. This implements UT-01 from the test plan.
+// ParseJWKS parses a partner's JWKS data (JSON) and creates an active TrustAgreement. This implements UT-01 from the test plan.
 // Parameters: tm *TrustManager (No Constraints)
 // Returns: (TrustAgreement, error)
 // Errors: Explicit error handling
@@ -48,7 +48,7 @@ func (tm *TrustManager) ParseJWKS(partnerOrg, jwksJSON string, allowedRoles []st
 	}, nil
 }
 
-// Summary: B2BMessage represents an encapsulated agent message for cross-org tunneling.
+// B2BMessage represents an encapsulated agent message for cross-org tunneling.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -59,14 +59,14 @@ type B2BMessage struct {
 	Blocked  bool   `json:"blocked"`
 }
 
-// Summary: EgressFilter enforces the data perimeter for B2B collaboration.
+// EgressFilter enforces the data perimeter for B2B collaboration.
 // Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
 type EgressFilter struct{}
 
-// Summary: Scan checks the outgoing message content for internal keywords. If a keyword is found, the message is blocked and flagged. Messages entering/leaving an Inter-Org Room are flagged with CrossOrg: true. This implements UT-02 from the test plan.
+// Scan checks the outgoing message content for internal keywords. If a keyword is found, the message is blocked and flagged. Messages entering/leaving an Inter-Org Room are flagged with CrossOrg: true. This implements UT-02 from the test plan.
 // Parameters: ef *EgressFilter (No Constraints)
 // Returns: B2BMessage
 // Errors: None

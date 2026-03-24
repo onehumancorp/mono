@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Summary: Setup auto-configures the Chatwoot instance for OHC by:  1. Signing in with admin credentials (or signing up on first run).  2. Ensuring a default "OHC" API inbox exists (creates it if absent).  It retries up to maxAttempts times to accommodate Chatwoot's startup time. The configured Client is ready to use after a successful Setup call.
+// Setup auto-configures the Chatwoot instance for OHC by:  1. Signing in with admin credentials (or signing up on first run).  2. Ensuring a default "OHC" API inbox exists (creates it if absent).  It retries up to maxAttempts times to accommodate Chatwoot's startup time. The configured Client is ready to use after a successful Setup call.
 // Parameters: None
 // Returns: error
 // Errors: Explicit error handling
@@ -86,7 +86,7 @@ func (c *Client) ensureInbox(name string) (Inbox, error) {
 	return c.CreateAPIInbox(name)
 }
 
-// Summary: IsEnabled reports whether Chatwoot is configured in the environment.
+// IsEnabled reports whether Chatwoot is configured in the environment.
 // Parameters: None
 // Returns: bool
 // Errors: None

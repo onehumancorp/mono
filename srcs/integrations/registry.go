@@ -28,7 +28,7 @@ import (
 
 // ── Integration types ─────────────────────────────────────────────────────────
 
-// Summary: Category groups integrations by their function (e.g., chat, git, issues).
+// Category groups integrations by their function (e.g., chat, git, issues).
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -36,19 +36,19 @@ import (
 type Category string
 
 const (
-	// Summary: Defines the CategoryChat type.
+	// CategoryChat classifies the integration module under the Chat domain taxonomy for structured discovery.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	CategoryChat Category = "chat"
-	// Summary: Defines the CategoryGit type.
+	// CategoryGit classifies the integration module under the Git domain taxonomy for structured discovery.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	CategoryGit Category = "git"
-	// Summary: Defines the CategoryIssues type.
+	// CategoryIssues classifies the integration module under the Issues domain taxonomy for structured discovery.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
@@ -56,7 +56,7 @@ const (
 	CategoryIssues Category = "issues"
 )
 
-// Summary: IntegrationType identifies the specific external service platform (e.g., github, slack).
+// IntegrationType identifies the specific external service platform (e.g., github, slack).
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -64,75 +64,75 @@ const (
 type IntegrationType string
 
 const (
-	// Summary: Chat services.
+	// IntegrationTypeSlack Chat services.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeSlack IntegrationType = "slack"
-	// Summary: Defines the IntegrationTypeDiscord type.
+	// IntegrationTypeDiscord provides domain-specific context and typed constraints for IntegrationTypeDiscord operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeDiscord IntegrationType = "discord"
-	// Summary: Defines the IntegrationTypeGoogleChat type.
+	// IntegrationTypeGoogleChat provides domain-specific context and typed constraints for IntegrationTypeGoogleChat operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeGoogleChat IntegrationType = "google_chat"
-	// Summary: Defines the IntegrationTypeTelegram type.
+	// IntegrationTypeTelegram provides domain-specific context and typed constraints for IntegrationTypeTelegram operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeTelegram IntegrationType = "telegram"
-	// Summary: Defines the IntegrationTypeTeams type.
+	// IntegrationTypeTeams provides domain-specific context and typed constraints for IntegrationTypeTeams operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeTeams IntegrationType = "teams"
 
-	// Summary: Git platforms.
+	// IntegrationTypeGitHub Git platforms.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeGitHub IntegrationType = "github"
-	// Summary: Defines the IntegrationTypeGitLab type.
+	// IntegrationTypeGitLab provides domain-specific context and typed constraints for IntegrationTypeGitLab operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeGitLab IntegrationType = "gitlab"
-	// Summary: Defines the IntegrationTypeGitea type.
+	// IntegrationTypeGitea provides domain-specific context and typed constraints for IntegrationTypeGitea operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeGitea IntegrationType = "gitea"
 
-	// Summary: Issue trackers.
+	// IntegrationTypeJIRA issue trackers.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeJIRA IntegrationType = "jira"
-	// Summary: Defines the IntegrationTypePlane type.
+	// IntegrationTypePlane provides domain-specific context and typed constraints for IntegrationTypePlane operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypePlane IntegrationType = "plane"
-	// Summary: Defines the IntegrationTypeGitHubIssues type.
+	// IntegrationTypeGitHubIssues provides domain-specific context and typed constraints for IntegrationTypeGitHubIssues operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeGitHubIssues IntegrationType = "github_issues"
-	// Summary: Defines the IntegrationTypeLinear type.
+	// IntegrationTypeLinear provides domain-specific context and typed constraints for IntegrationTypeLinear operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
@@ -140,7 +140,7 @@ const (
 	IntegrationTypeLinear IntegrationType = "linear"
 )
 
-// Summary: ConnectionStatus reflects whether an integration is currently active and reachable.
+// ConnectionStatus reflects whether an integration is currently active and reachable.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -148,19 +148,19 @@ const (
 type ConnectionStatus string
 
 const (
-	// Summary: Defines the StatusConnected type.
+	// StatusConnected represents the CONNECTED lifecycle phase of a tracked entity within the event-driven state machine.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StatusConnected ConnectionStatus = "connected"
-	// Summary: Defines the StatusDisconnected type.
+	// StatusDisconnected represents the DISCONNECTED lifecycle phase of a tracked entity within the event-driven state machine.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StatusDisconnected ConnectionStatus = "disconnected"
-	// Summary: Defines the StatusError type.
+	// StatusError represents the ERROR lifecycle phase of a tracked entity within the event-driven state machine.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
@@ -168,7 +168,7 @@ const (
 	StatusError ConnectionStatus = "error"
 )
 
-// Summary: Integration represents a configured external service connection.
+// Integration represents a configured external service connection.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -186,7 +186,7 @@ type Integration struct {
 	CreatedAt      time.Time        `json:"createdAt"`
 }
 
-// Summary: IntegrationCredentials holds the secret configuration for an integration. These are stored server-side only and never serialised to the client.
+// IntegrationCredentials holds the secret configuration for an integration. These are stored server-side only and never serialised to the client.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -198,7 +198,7 @@ type IntegrationCredentials struct {
 	APIToken   string // Generic API token / Bearer credential
 }
 
-// Summary: IsEmpty reports whether no fields are set.
+// IsEmpty reports whether no fields are set.
 // Parameters: None
 // Returns: bool
 // Errors: None
@@ -209,7 +209,7 @@ func (c IntegrationCredentials) IsEmpty() bool {
 
 // ── Chat types ────────────────────────────────────────────────────────────────
 
-// Summary: ChatMessage represents a message dispatched through a chat service.
+// ChatMessage represents a message dispatched through a chat service.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -226,7 +226,7 @@ type ChatMessage struct {
 
 // ── Git types ─────────────────────────────────────────────────────────────────
 
-// Summary: PullRequestStatus tracks the lifecycle status of a PR/MR on a git platform.
+// PullRequestStatus tracks the lifecycle status of a PR/MR on a git platform.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -234,19 +234,19 @@ type ChatMessage struct {
 type PullRequestStatus string
 
 const (
-	// Summary: Defines the PRStatusOpen type.
+	// PRStatusOpen provides domain-specific context and typed constraints for PRStatusOpen operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	PRStatusOpen PullRequestStatus = "open"
-	// Summary: Defines the PRStatusMerged type.
+	// PRStatusMerged provides domain-specific context and typed constraints for PRStatusMerged operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	PRStatusMerged PullRequestStatus = "merged"
-	// Summary: Defines the PRStatusClosed type.
+	// PRStatusClosed provides domain-specific context and typed constraints for PRStatusClosed operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
@@ -254,7 +254,7 @@ const (
 	PRStatusClosed PullRequestStatus = "closed"
 )
 
-// Summary: PullRequest records an issue or code change request opened on a git hosting platform.
+// PullRequest records an issue or code change request opened on a git hosting platform.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -275,7 +275,7 @@ type PullRequest struct {
 
 // ── Issue types ───────────────────────────────────────────────────────────────
 
-// Summary: IssueStatus tracks the lifecycle phase of an issue or ticket.
+// IssueStatus tracks the lifecycle phase of an issue or ticket.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -283,25 +283,25 @@ type PullRequest struct {
 type IssueStatus string
 
 const (
-	// Summary: Defines the IssueStatusOpen type.
+	// IssueStatusOpen provides domain-specific context and typed constraints for IssueStatusOpen operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IssueStatusOpen IssueStatus = "open"
-	// Summary: Defines the IssueStatusInProgress type.
+	// IssueStatusInProgress provides domain-specific context and typed constraints for IssueStatusInProgress operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IssueStatusInProgress IssueStatus = "in_progress"
-	// Summary: Defines the IssueStatusDone type.
+	// IssueStatusDone provides domain-specific context and typed constraints for IssueStatusDone operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IssueStatusDone IssueStatus = "done"
-	// Summary: Defines the IssueStatusClosed type.
+	// IssueStatusClosed provides domain-specific context and typed constraints for IssueStatusClosed operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
@@ -309,7 +309,7 @@ const (
 	IssueStatusClosed IssueStatus = "closed"
 )
 
-// Summary: IssuePriority indicates the urgency of a ticket.
+// IssuePriority indicates the urgency of a ticket.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -317,25 +317,25 @@ const (
 type IssuePriority string
 
 const (
-	// Summary: Defines the IssuePriorityLow type.
+	// IssuePriorityLow provides domain-specific context and typed constraints for IssuePriorityLow operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IssuePriorityLow IssuePriority = "low"
-	// Summary: Defines the IssuePriorityMedium type.
+	// IssuePriorityMedium provides domain-specific context and typed constraints for IssuePriorityMedium operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IssuePriorityMedium IssuePriority = "medium"
-	// Summary: Defines the IssuePriorityHigh type.
+	// IssuePriorityHigh provides domain-specific context and typed constraints for IssuePriorityHigh operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IssuePriorityHigh IssuePriority = "high"
-	// Summary: Defines the IssuePriorityCritical type.
+	// IssuePriorityCritical provides domain-specific context and typed constraints for IssuePriorityCritical operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
@@ -343,7 +343,7 @@ const (
 	IssuePriorityCritical IssuePriority = "critical"
 )
 
-// Summary: Issue records a ticket created in an external issue tracker.
+// Issue records a ticket created in an external issue tracker.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -365,7 +365,7 @@ type Issue struct {
 
 // ── Registry ─────────────────────────────────────────────────────────────────
 
-// Summary: Registry manages all configured external service integrations and records every action taken through them (messages sent, PRs opened, tickets created).  Constraints: Thread-safe via sync.RWMutex.
+// Registry manages all configured external service integrations and records every action taken through them (messages sent, PRs opened, tickets created).  Constraints: Thread-safe via sync.RWMutex.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -1043,7 +1043,7 @@ func generateID(prefix string, now time.Time) string {
 
 // ── Real outbound HTTP helpers ────────────────────────────────────────────────
 
-// Summary: TelegramAPIBase is the base URL for the Telegram Bot API. Override in tests to point to a mock server.
+// TelegramAPIBase is the base URL for the Telegram Bot API. Override in tests to point to a mock server.
 // Parameters: None
 // Returns: None
 // Errors: None

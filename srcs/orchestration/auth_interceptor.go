@@ -16,7 +16,7 @@ import (
 
 // ExtractSPIFFEID gets the SPIFFE ID from the context.
 // It extracts the ID exclusively from the mTLS peer certificate.
-// Summary: ExtractSPIFFEID gets the SPIFFE ID from the context. It extracts the ID exclusively from the mTLS peer certificate.
+// ExtractSPIFFEID gets the SPIFFE ID from the context. It extracts the ID exclusively from the mTLS peer certificate.
 // Intent: ExtractSPIFFEID gets the SPIFFE ID from the context. It extracts the ID exclusively from the mTLS peer certificate.
 // Params:
 //   - ctx: complex; Description
@@ -43,7 +43,6 @@ func ExtractSPIFFEID(ctx context.Context) (string, error) {
 }
 
 // SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
-// Summary: SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
 // Parameters: None
 // Returns: Explicit success/failure
 // Errors: None
@@ -149,7 +148,6 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 }
 
 // SPIFFEStreamInterceptor validates SPIFFE IDs for streaming gRPC calls.
-// Summary: SPIFFEStreamInterceptor validates SPIFFE IDs for streaming gRPC calls.
 // Parameters: None
 // Returns: Explicit success/failure
 // Errors: None
@@ -246,7 +244,7 @@ type recvWrapper struct {
 	agentID  string
 }
 
-// Summary: RecvMsg functionality.
+// RecvMsg functionality.
 // Intent: RecvMsg functionality.
 // Params:
 //   - m: complex; Description

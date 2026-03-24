@@ -10,7 +10,7 @@ import (
 	"github.com/onehumancorp/mono/srcs/orchestration"
 )
 
-// Summary: PipelineState represents the current phase of the SDLC.  Constraints: Must be one of the predefined State constants.
+// PipelineState represents the current phase of the SDLC.  Constraints: Must be one of the predefined State constants.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -18,31 +18,31 @@ import (
 type PipelineState string
 
 const (
-	// Summary: Defines the StateImplementing type.
+	// StateImplementing provides domain-specific context and typed constraints for StateImplementing operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StateImplementing PipelineState = "IMPLEMENTING"
-	// Summary: Defines the StateTesting type.
+	// StateTesting provides domain-specific context and typed constraints for StateTesting operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StateTesting PipelineState = "TESTING"
-	// Summary: Defines the StateStagingReady type.
+	// StateStagingReady provides domain-specific context and typed constraints for StateStagingReady operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StateStagingReady PipelineState = "STAGING_READY"
-	// Summary: Defines the StateDeployed type.
+	// StateDeployed provides domain-specific context and typed constraints for StateDeployed operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StateDeployed PipelineState = "DEPLOYED"
-	// Summary: Defines the StateRollback type.
+	// StateRollback provides domain-specific context and typed constraints for StateRollback operations across the application.
 	// Parameters: None
 	// Returns: None
 	// Errors: None
@@ -50,7 +50,7 @@ const (
 	StateRollback PipelineState = "ROLLBACK"
 )
 
-// Summary: Pipeline models the SDLC progression for a specific feature branch.  Constraints: Requires a unique ID and an associated branch name.
+// Pipeline represents an autonomous, end-to-end implementation workflow, tracking a feature's progression from approved spec to a deployed artifact.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -63,7 +63,7 @@ type Pipeline struct {
 	CreatedAt time.Time
 }
 
-// Summary: SpecApprovedEvent models the parsed content of an EventSpecApproved message.  Constraints: The Branch field must not be empty.
+// SpecApprovedEvent models the parsed content of an EventSpecApproved message.  Constraints: The Branch field must not be empty.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -73,7 +73,7 @@ type SpecApprovedEvent struct {
 	Details string `json:"details"`
 }
 
-// Summary: CIJob represents a mock CI build/test job triggered by the Hub.  Constraints: Contains a predefined test command associated with a specific branch.
+// CIJob represents a mock CI build/test job triggered by the Hub.  Constraints: Contains a predefined test command associated with a specific branch.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -83,7 +83,7 @@ type CIJob struct {
 	Branch  string
 }
 
-// Summary: Orchestrator manages automated SDLC pipelines and interacts with the Hub.  Constraints: Uses an internal read-write mutex to ensure thread-safe map and slice operations.
+// Orchestrator manages automated SDLC pipelines and interacts with the Hub.  Constraints: Uses an internal read-write mutex to ensure thread-safe map and slice operations.
 // Parameters: None
 // Returns: None
 // Errors: None

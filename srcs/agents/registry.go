@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// Summary: Registry manages the set of available agent providers and their stored credentials.  Providers are registered once (typically at startup via DefaultRegistry) and then authenticated on-demand through the dashboard API.  Multiple goroutines may call Registry methods concurrently.
+// Registry manages the set of available agent providers and their stored credentials.  Providers are registered once (typically at startup via DefaultRegistry) and then authenticated on-demand through the dashboard API.  Multiple goroutines may call Registry methods concurrently.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -15,7 +15,7 @@ type Registry struct {
 	providers map[ProviderType]Provider
 }
 
-// Summary: NewRegistry returns an empty Registry.  Use DefaultRegistry to get a pre-populated instance with all built-in providers.
+// NewRegistry returns an empty Registry.  Use DefaultRegistry to get a pre-populated instance with all built-in providers.
 // Parameters: None
 // Returns: *Registry
 // Errors: None
@@ -24,7 +24,7 @@ func NewRegistry() *Registry {
 	return &Registry{providers: make(map[ProviderType]Provider)}
 }
 
-// Summary: DefaultRegistry returns a Registry pre-populated with every built-in provider.  This is the standard factory used by the dashboard server at startup.
+// DefaultRegistry returns a Registry pre-populated with every built-in provider.  This is the standard factory used by the dashboard server at startup.
 // Parameters: None
 // Returns: *Registry
 // Errors: None
@@ -40,7 +40,7 @@ func DefaultRegistry() *Registry {
 	return r
 }
 
-// Summary: Register adds a Provider to the Registry, overwriting any previously registered provider with the same type.
+// Register adds a Provider to the Registry, overwriting any previously registered provider with the same type.
 // Parameters: r *Registry (No Constraints)
 // Returns: None
 // Errors: None
@@ -51,7 +51,7 @@ func (r *Registry) Register(p Provider) {
 	r.providers[p.Type()] = p
 }
 
-// Summary: Get returns the Provider for the given type, or false if not found.
+// Get returns the Provider for the given type, or false if not found.
 // Parameters: r *Registry (No Constraints)
 // Returns: (Provider, bool)
 // Errors: None
@@ -63,7 +63,7 @@ func (r *Registry) Get(t ProviderType) (Provider, bool) {
 	return p, ok
 }
 
-// Summary: All returns a snapshot of all registered providers, ordered by type string.
+// All returns a snapshot of all registered providers, ordered by type string.
 // Parameters: None
 // Returns: []Provider
 // Errors: None
@@ -97,7 +97,7 @@ func (r *Registry) All() []Provider {
 	return out
 }
 
-// Summary: Authenticate forwards credentials to the named provider.  Returns an error if the provider type is unknown or if the provider rejects the supplied credentials.
+// Authenticate forwards credentials to the named provider.  Returns an error if the provider type is unknown or if the provider rejects the supplied credentials.
 // Parameters: r *Registry (No Constraints)
 // Returns: error
 // Errors: Explicit error handling
@@ -112,7 +112,7 @@ func (r *Registry) Authenticate(t ProviderType, creds Credentials) error {
 	return p.Authenticate(creds)
 }
 
-// Summary: ProviderInfo is a serializable summary of a provider used by the dashboard API.
+// ProviderInfo is a serializable summary of a provider used by the dashboard API.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -124,7 +124,7 @@ type ProviderInfo struct {
 	IsAuthenticated bool         `json:"isAuthenticated"`
 }
 
-// Summary: Infos returns a ProviderInfo summary for every registered provider.
+// Infos returns a ProviderInfo summary for every registered provider.
 // Parameters: None
 // Returns: []ProviderInfo
 // Errors: None

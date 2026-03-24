@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-// Summary: Defines the Server type.
+// Server encapsulates the HTTP routing logic, REST middleware, and cross-module state required to expose the One Human Corp dashboard to the human CEO.
 // Parameters: None
 // Returns: None
 // Errors: None
@@ -20,7 +20,7 @@ type Server struct {
 	proxy     *httputil.ReverseProxy
 }
 
-// Summary: New functionality.
+// New constructs and initializes a new instance of the core service component, wiring together necessary dependencies like static directories, proxy endpoints, or storage backends.
 // Parameters: None
 // Returns: (*Server, error)
 // Errors: Explicit error handling
@@ -47,7 +47,7 @@ func New() (*Server, error) {
 	}, nil
 }
 
-// Summary: Handler functionality.
+// Handler returns a multiplexed HTTP handler configured with the necessary API routes and static asset serving capabilities for the module.
 // Parameters: None
 // Returns: http.Handler
 // Errors: None
