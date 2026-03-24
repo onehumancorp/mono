@@ -2630,7 +2630,10 @@ export function App() {
                       <h3 className="wizard-heading">Step 2 — Set Capacity</h3>
                       <label className="field">
                         <span className="field-label">Target Active Agents</span>
-                        <input className="input input--lg" type="number" min="0" max="50" value={scalingCount} onChange={(e) => setScalingCount(parseInt(e.target.value) || 0)} autoFocus />
+                        <div className="capacity-slider-container">
+                          <input className="capacity-slider" id="capacity-slider" type="range" min="0" max="50" value={scalingCount} onChange={(e) => setScalingCount(parseInt(e.target.value) || 0)} aria-label="Target Active Agents" />
+                          <span className="capacity-slider-value">{scalingCount}</span>
+                        </div>
                         <span className="field-hint">Specify the total desired number of active agents for {scalingRole.replace(/_/g, " ")}.</span>
                       </label>
                       <div style={{ marginTop: "1rem", display: "flex", justifyContent: "space-between" }}>
@@ -2643,10 +2646,19 @@ export function App() {
                   {scalingStep === 3 && (
                     <div className="wizard-content">
                       <h3 className="wizard-heading">Step 3 — Review & Confirm</h3>
-                      <div className="hire-summary" style={{ flexDirection: "column", alignItems: "flex-start" }}>
-                        <p><strong>Role:</strong> {scalingRole.replace(/_/g, " ")}</p>
-                        <p><strong>New Capacity:</strong> {scalingCount} agents</p>
-                        <p><strong>Cost Impact:</strong> ${scalingCount * (scalingRole === "swe" ? 800 : scalingRole === "sales_rep" ? 500 : 300)}/mo</p>
+                      <div className="capacity-summary-cards">
+                        <div className="capacity-summary-card">
+                          <span className="capacity-summary-label">Role</span>
+                          <span className="capacity-summary-val">{scalingRole.replace(/_/g, " ")}</span>
+                        </div>
+                        <div className="capacity-summary-card">
+                          <span className="capacity-summary-label">New Capacity</span>
+                          <span className="capacity-summary-val">{scalingCount} agents</span>
+                        </div>
+                        <div className="capacity-summary-card">
+                          <span className="capacity-summary-label">Cost Impact</span>
+                          <span className="capacity-summary-val">${scalingCount * (scalingRole === "swe" ? 800 : scalingRole === "sales_rep" ? 500 : 300)}/mo</span>
+                        </div>
                       </div>
                       <div style={{ marginTop: "1rem", display: "flex", justifyContent: "space-between" }}>
                         <button className="btn btn-ghost" disabled={isScalingActive} onClick={() => setScalingStep(2)}>← Back</button>

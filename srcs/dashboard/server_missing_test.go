@@ -457,7 +457,9 @@ func TestHandleScaleStream1(t *testing.T) {
 	body := rec.Body.String()
 	expectedEvents := []string{
 		"data: {\"event\":\"AI Workforce Manager: Reconciling Team Member resource.\",\"status\":\"INFO\"}\n\n",
-		"data: {\"event\":\"AI Workforce Manager: Spinning up new instances...\",\"status\":\"INFO\"}\n\n",
+		"data: {\"event\":\"AI Workforce Manager: Allocating compute profiles...\",\"status\":\"INFO\"}\n\n",
+		"data: {\"event\":\"AI Workforce Manager: Provisioning SPIFFE identities...\",\"status\":\"INFO\"}\n\n",
+		"data: {\"event\":\"AI Workforce Manager: Integrating with orchestration Hub...\",\"status\":\"INFO\"}\n\n",
 		"data: {\"event\":\"AgentHired\",\"status\":\"Ready\"}\n\n",
 	}
 

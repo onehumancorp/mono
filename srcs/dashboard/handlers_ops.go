@@ -393,7 +393,9 @@ func (s *Server) handleScaleStream(w http.ResponseWriter, r *http.Request) {
 	// Simulated events
 	events := []string{
 		`{"event":"AI Workforce Manager: Reconciling Team Member resource.","status":"INFO"}`,
-		`{"event":"AI Workforce Manager: Spinning up new instances...","status":"INFO"}`,
+		`{"event":"AI Workforce Manager: Allocating compute profiles...","status":"INFO"}`,
+		`{"event":"AI Workforce Manager: Provisioning SPIFFE identities...","status":"INFO"}`,
+		`{"event":"AI Workforce Manager: Integrating with orchestration Hub...","status":"INFO"}`,
 		`{"event":"AgentHired","status":"Ready"}`,
 	}
 
