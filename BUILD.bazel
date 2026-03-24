@@ -40,7 +40,7 @@ alias(
 
 # Alias to run tests
 alias(
-    name = "test",
+    name = "e2e",
     actual = "//deploy:kind_e2e_test",
     visibility = ["//visibility:public"],
 )

@@ -16,14 +16,32 @@ elif command -v kubectl >/dev/null 2>&1 && kubectl config get-contexts -o name 2
     kubectl config use-context minikube
 else
     echo "No standard local K8s context (kind, docker-desktop, minikube) found."
-    if command -v kind >/dev/null 2>&1; then
-        echo "Attempting to create a new Kind cluster..."
-        kind create cluster
-        kubectl config use-context kind-kind
-    else
-        echo "Kind is not installed. Please install Kind or ensure you have a local Kubernetes cluster running."
-        exit 1
+    if ! command -v kind >/dev/null 2>&1; then
+        echo "Kind is not installed. Attempting to install Kind..."
+        # Install kind into a local bin directory if not present
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            curl -Lo ./kind "https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-amd64"
+            chmod +x ./kind
+            sudo mv ./kind /usr/local/bin/kind
+        elif [[ "$OSTYPE" == "darwin"* ]]; then
+            # Assuming macos with arm or amd64
+            ARCH=$(uname -m)
+            if [ "$ARCH" = "arm64" ]; then
+                curl -Lo ./kind "https://kind.sigs.k8s.io/dl/v0.22.0/kind-darwin-arm64"
+            else
+                curl -Lo ./kind "https://kind.sigs.k8s.io/dl/v0.22.0/kind-darwin-amd64"
+            fi
+            chmod +x ./kind
+            sudo mv ./kind /usr/local/bin/kind
+        else
+            echo "Unsupported OS for automatic Kind installation. Please install Kind manually."
+            exit 1
+        fi
     fi
+
+    echo "Attempting to create a new Kind cluster..."
+    kind create cluster
+    kubectl config use-context kind-kind
 fi
 
 echo "--- Local K8s Context Configured ---"

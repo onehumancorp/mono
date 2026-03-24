@@ -265,6 +265,10 @@ func TestConnectUpdatesStatus(t *testing.T) {
 }
 
 func TestConnectWithEmptyBaseURLPreservesExisting(t *testing.T) {
+	oldLookupIP := LookupIPFunc
+	LookupIPFunc = mockLookupIP
+	defer func() { LookupIPFunc = oldLookupIP }()
+
 	r := NewRegistry()
 	_, _ = r.Connect("github", "https://api.github.com")
 	updated, err := r.Connect("github", "")

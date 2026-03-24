@@ -1,25 +1,46 @@
-# Examples
+<div align="center">
+  <h1>One Human Corp Examples</h1>
+  <p><strong>Pre-configured, high-quality agent examples for the One Human Corp platform.</strong></p>
+</div>
 
-## Identity
-This directory contains pre-configured agent examples.
+---
 
-## Architecture
-Code templates to quickly ramp up new integrations.
+## 🚀 The "Hello World" Agent
+Experience the platform in seconds. The `hello-world-agent` is designed to run perfectly out-of-the-box with **zero configuration** and **no external API keys** required. It leverages the `builtin` model for immediate feedback.
 
-## Quick Start
-The `hello_world_agent.yaml` is a minimal, pre-configured agent definition that works out-of-the-box.
-It uses the `builtin` model to avoid requiring external API credentials.
-Use this example to verify your setup.
+### Quick Start
 
-You can also run the pre-compiled Go hello world agent easily via Bazel:
+Run the compiled Go agent directly using our intuitive Bazel aliases:
 ```bash
 bazelisk run //:hello-world
 ```
+*Expected Output: A successful boot log and a friendly "Hello World" message.*
 
-## Developer Workflow
-- **Build:** `bazelisk build //examples/...`
-- **Test:** `bazelisk test //examples/...`
+Alternatively, deploy the raw Kubernetes Custom Resource Definition (CRD) to your local cluster:
+```yaml
+# examples/hello_world_agent.yaml
+apiVersion: onehumancorp.com/v1alpha1
+kind: Agent
+metadata:
+  name: hello-world
+spec:
+  role: "SOFTWARE_ENGINEER"
+  model: "builtin"
+  prompt: "You are a friendly Hello World agent..."
+```
 
-## Configuration
-See source code for required environment variables.
-Uses Kubernetes Secrets in production for sensitive configs.
+## 🛠️ Developer Workflow
+
+The examples directory serves as a template and testing ground for new agent behaviors.
+
+- **Build all examples:**
+  ```bash
+  bazelisk build //examples/...
+  ```
+- **Test all examples:**
+  ```bash
+  bazelisk test //examples/...
+  ```
+
+## 🔐 Architecture & Secrets
+These examples demonstrate the **Zero-Lock** paradigm. Production agents rely on `SPIFFE/SPIRE` for identity and Kubernetes Secrets for configuration injection. The `hello-world-agent` specifically highlights how a generic provider interface is consumed by the application layer.
