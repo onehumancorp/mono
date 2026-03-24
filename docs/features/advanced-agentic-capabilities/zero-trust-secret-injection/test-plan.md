@@ -1,12 +1,12 @@
-# Test Plan: Zero-Trust Secret Injection
+# Test Plan: Zero Trust Secret Injection
 
 ## 1. Testing Strategy
-Validate the end-to-end functionality, security boundaries, and performance constraints of the Zero-Trust Secret Injection feature using hermetic, table-driven tests.
+Validate the end-to-end functionality, security boundaries, and performance constraints of the Zero Trust Secret Injection feature using hermetic, table-driven tests. Ensure we use the Database Seeder pattern to establish deterministic starting states.
 
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the Zero-Trust Secret Injection functionality.
+- **Action:** Simulate an agent invoking the Zero Trust Secret Injection functionality.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation

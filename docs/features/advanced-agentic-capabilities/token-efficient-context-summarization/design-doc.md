@@ -1,11 +1,11 @@
-# Design Document: Token-Efficient Context Summarization
+# Design Document: Token Efficient Context Summarization
 
 ## 1. Executive Summary
-**Objective:** Architect and implement Token-Efficient Context Summarization to empower autonomous agents and human operators.
+**Objective:** Architect and implement Token Efficient Context Summarization to empower autonomous agents and human operators.
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Architect the system for minimal token burn by implementing aggressive, intelligent AI context summarization. Agents must only be fed the exact summary and context needed for their specific roles to prevent context bloat and maximize API throughput.
+Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide Token Efficient Context Summarization capabilities seamlessly across all active Swarm Agents. It utilizes LangGraph Checkpointing backed by our native Kubernetes CSI Snapshotting.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.
@@ -26,3 +26,4 @@ message TokenEfficientContextSummarizationEvent {
 - Ensure strict JSON validation via `dec.DisallowUnknownFields()` when decoding related payloads.
 - Maintain minimal memory overhead by avoiding O(N) string manipulations in hot paths.
 - All K8s pods associated with this feature will enforce least privilege (e.g., `runAsNonRoot: true`, `readOnlyRootFilesystem: true`).
+- Implement bounded memory growth by explicitly deleting map entries upon successful execution.

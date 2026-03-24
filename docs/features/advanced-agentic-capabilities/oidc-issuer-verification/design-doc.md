@@ -5,7 +5,7 @@
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide oidc issuer verification capabilities seamlessly across all active Swarm Agents.
+Implements strict `aud` and `iss` claim checking in the Go backend middleware using the `go-oidc` package. Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide OIDC Issuer Verification capabilities seamlessly across all active Swarm Agents.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.
@@ -15,7 +15,7 @@ Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator 
 
 ## 4. API & Data Models
 ```protobuf
-message OIDCIssuerVerificationEvent {
+message OidcIssuerVerificationEvent {
   string event_id = 1;
   string agent_id = 2;
   bytes payload = 3;
@@ -26,3 +26,4 @@ message OIDCIssuerVerificationEvent {
 - Ensure strict JSON validation via `dec.DisallowUnknownFields()` when decoding related payloads.
 - Maintain minimal memory overhead by avoiding O(N) string manipulations in hot paths.
 - All K8s pods associated with this feature will enforce least privilege (e.g., `runAsNonRoot: true`, `readOnlyRootFilesystem: true`).
+- Implement bounded memory growth by explicitly deleting map entries upon successful execution.
