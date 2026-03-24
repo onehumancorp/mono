@@ -52,6 +52,16 @@ This document breaks down the Strategic Roadmap into discrete, parallelizable ta
   * **Description:** Update the central orchestration hub to support sending image payloads alongside text prompts to capable external LLM providers.
   * **Dependencies:** None.
   * **Status:** Ready
+* **Task 2.4: Implement Dynamic Tool Discovery**
+  * **Owner:** SWE Agent (Backend)
+  * **Description:** Enable agents to query the MCP Gateway at runtime to find and securely bind to the tools they need dynamically.
+  * **Dependencies:** None.
+  * **Status:** Ready
+* **Task 2.5: Implement Hierarchical Task Delegation**
+  * **Owner:** Orchestration Agent
+  * **Description:** Allow Manager agents to dynamically spawn sub-agents with narrow, highly focused contexts for specific sub-tasks.
+  * **Dependencies:** None.
+  * **Status:** Ready
 
 ## 3. Blocker Resolution Strategy
 
