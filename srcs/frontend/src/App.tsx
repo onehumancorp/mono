@@ -144,6 +144,13 @@ function SlideToApprove({
   const sliderRef = useRef<HTMLDivElement>(null);
   const maxDrag = 200; // pixels
 
+  // Reset slider if disabled goes back to false (e.g. error happened)
+  useEffect(() => {
+    if (!disabled && sliderPos === maxDrag) {
+      setSliderPos(0);
+    }
+  }, [disabled, maxDrag, sliderPos]);
+
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (disabled) return;
     setIsDragging(true);
@@ -184,9 +191,9 @@ function SlideToApprove({
 
   return (
     <div className="slide-action-area">
-      <div className="slide-approve-container">
+      <div className={`slide-approve-container ${disabled && sliderPos === maxDrag ? "processing" : ""}`}>
         <div className="slide-track">
-          <span className="slide-text">Slide to Approve</span>
+          <span className="slide-text">{disabled && sliderPos === maxDrag ? "Processing..." : "Slide to Approve"}</span>
           <div
             ref={sliderRef}
             className={`slide-thumb ${isDragging ? "dragging" : ""} ${disabled ? "disabled" : ""}`}
@@ -196,9 +203,13 @@ function SlideToApprove({
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
+            {disabled && sliderPos === maxDrag ? (
+              <span className="spinner" style={{ width: "16px", height: "16px", borderColor: "#a0a0a0", borderTopColor: "var(--accent)" }} aria-label="Loading" />
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            )}
           </div>
           <div className="slide-fill" style={{ width: `${sliderPos + 20}px` }}></div>
         </div>
@@ -210,7 +221,7 @@ function SlideToApprove({
         onClick={onReject}
         style={{ width: "100%", marginTop: "0.75rem", background: "rgba(255, 59, 48, 0.1)", color: "rgb(255, 69, 58)", border: "1px solid rgba(255, 59, 48, 0.2)" }}
       >
-        Reject Handoff
+        Reject
       </button>
     </div>
   );
@@ -1544,12 +1555,10 @@ export function App() {
                                       </span>
                                     </div>
                                   ) : (
-                                    <div className="approval-card__actions">
-                                      <button
-                                        type="button"
-                                        className="btn btn-primary btn-sm approval-btn"
+                                    <div className="approval-card__actions" style={{ padding: "1.25rem", background: "transparent" }}>
+                                      <SlideToApprove
                                         disabled={approvalLoading[msg.id]}
-                                        onClick={() => {
+                                        onApprove={() => {
                                           setApprovalLoading(prev => ({ ...prev, [msg.id]: true }));
                                           void decideApproval(msg.id, "approve", ceoMember?.id || "CEO").then(() => {
                                             const payload = {
@@ -1570,14 +1579,7 @@ export function App() {
                                             setApprovalLoading(prev => ({ ...prev, [msg.id]: false }));
                                           });
                                         }}
-                                      >
-                                        {approvalLoading[msg.id] ? "..." : "Approve"}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className="btn btn-danger btn-sm approval-btn"
-                                        disabled={approvalLoading[msg.id]}
-                                        onClick={() => {
+                                        onReject={() => {
                                           setApprovalLoading(prev => ({ ...prev, [msg.id]: true }));
                                           void decideApproval(msg.id, "reject", ceoMember?.id || "CEO").then(() => {
                                             const payload = {
@@ -1598,9 +1600,7 @@ export function App() {
                                             setApprovalLoading(prev => ({ ...prev, [msg.id]: false }));
                                           });
                                         }}
-                                      >
-                                        {approvalLoading[msg.id] ? "..." : "Reject"}
-                                      </button>
+                                      />
                                     </div>
                                   )}
                                 </div>
