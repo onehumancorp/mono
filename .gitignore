@@ -42,3 +42,9 @@ srcs/frontend/dist/
 /ohc
 /frontend
 coverage_html/
+
+# Desktop (Tauri) app artifacts
+desktop/node_modules/
+desktop/dist/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
