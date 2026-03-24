@@ -32,6 +32,10 @@ pub enum ChatBackend {
     Discord,
     Teams,
     Mattermost,
+    /// Native real-time chat via Centrifuge WebSocket.
+    /// Works without any external chat server — connect to the embedded
+    /// Centrifuge endpoint in the OHC service (`/connection/websocket`).
+    Centrifuge { url: String },
     /// Generic webhook backend.
     Webhook { url: String },
 }
@@ -253,6 +257,33 @@ mod tests {
         assert_eq!(msg.body, "hello");
         let msgs = mgr.messages(&ch.id, "org-1", 10).await.unwrap();
         assert_eq!(msgs.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn centrifuge_backend_channel() {
+        let mgr = make_manager();
+        let ch = mgr
+            .add_channel(
+                "org-1",
+                "native-chat",
+                ChatBackend::Centrifuge {
+                    url: "ws://localhost:8000/connection/websocket".to_string(),
+                },
+            )
+            .await
+            .unwrap();
+        assert_eq!(ch.name, "native-chat");
+        assert_eq!(
+            ch.backend,
+            ChatBackend::Centrifuge {
+                url: "ws://localhost:8000/connection/websocket".to_string()
+            }
+        );
+        let msg = mgr
+            .send(&ch.id, "org-1", "agent-1", "Bot", "Hello, human!")
+            .await
+            .unwrap();
+        assert_eq!(msg.body, "Hello, human!");
     }
 
     #[tokio::test]

@@ -5,8 +5,14 @@ import 'package:ohc_app/screens/dashboard_screen.dart';
 import 'package:ohc_app/screens/agents_screen.dart';
 import 'package:ohc_app/screens/meetings_screen.dart';
 import 'package:ohc_app/screens/chat_screen.dart';
+import 'package:ohc_app/screens/channels_screen.dart';
+import 'package:ohc_app/screens/ai_config_screen.dart';
+import 'package:ohc_app/screens/skills_screen.dart';
+import 'package:ohc_app/screens/logs_screen.dart';
+import 'package:ohc_app/screens/security_screen.dart';
 import 'package:ohc_app/screens/settings_screen.dart';
 import 'package:ohc_app/services/auth_service.dart';
+import 'package:flutter/material.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -44,6 +50,26 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/chat',
             builder: (context, state) => const ChatScreen(),
+          ),
+          GoRoute(
+            path: '/channels',
+            builder: (context, state) => const ChannelsScreen(),
+          ),
+          GoRoute(
+            path: '/ai-config',
+            builder: (context, state) => const AiConfigScreen(),
+          ),
+          GoRoute(
+            path: '/skills',
+            builder: (context, state) => const SkillsScreen(),
+          ),
+          GoRoute(
+            path: '/logs',
+            builder: (context, state) => const LogsScreen(),
+          ),
+          GoRoute(
+            path: '/security',
+            builder: (context, state) => const SecurityScreen(),
           ),
           GoRoute(
             path: '/settings',
@@ -91,6 +117,12 @@ class _Sidebar extends StatelessWidget {
         _NavItem(icon: Icons.smart_toy, label: 'Agents', path: '/agents'),
         _NavItem(icon: Icons.video_call, label: 'Meetings', path: '/meetings'),
         _NavItem(icon: Icons.chat, label: 'Chat', path: '/chat'),
+        _NavItem(icon: Icons.chat_bubble_outline, label: 'Channels', path: '/channels'),
+        const Divider(),
+        _NavItem(icon: Icons.psychology, label: 'AI Providers', path: '/ai-config'),
+        _NavItem(icon: Icons.extension, label: 'Skills', path: '/skills'),
+        _NavItem(icon: Icons.security, label: 'Security', path: '/security'),
+        _NavItem(icon: Icons.terminal, label: 'Logs', path: '/logs'),
         const Spacer(),
         _NavItem(icon: Icons.settings, label: 'Settings', path: '/settings'),
         const SizedBox(height: 16),
