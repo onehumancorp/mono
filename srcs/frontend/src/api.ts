@@ -18,26 +18,7 @@ import type {
   UserPublic,
 } from "./types";
 
-async function getJSON<T>(path: string): Promise<T> {
-  const response = await fetch(path);
-  if (!response.ok) {
-    throw new Error(`Request failed for ${path}: ${response.status}`);
-  }
-  return (await response.json()) as T;
-}
 
-async function postJSON<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    throw new Error(text || `Request failed for ${path}: ${response.status}`);
-  }
-  return (await response.json()) as T;
-}
 /**
  * Summary: Fetches the current organization's hierarchical and structural state.
  * Parameters: None
@@ -250,7 +231,7 @@ export function fireAgent(agentId: string): Promise<DashboardSnapshot> {
  * Side Effects: None
  */
 export function fetchDomains(): Promise<DomainInfo[]> {
-  return getJSON<DomainInfo[]>("/api/domains");
+  return authedGetJSON<DomainInfo[]>("/api/domains");
 }
 /**
  * Summary: Retrieves the catalog of active tools registered in the MCP gateway.
@@ -260,7 +241,7 @@ export function fetchDomains(): Promise<DomainInfo[]> {
  * Side Effects: None
  */
 export function fetchMCPTools(): Promise<MCPTool[]> {
-  return getJSON<MCPTool[]>("/api/mcp/tools");
+  return authedGetJSON<MCPTool[]>("/api/mcp/tools");
 }
 /**
  * Summary: Overrides current state with a predefined scenario for demonstration purposes.
@@ -270,7 +251,7 @@ export function fetchMCPTools(): Promise<MCPTool[]> {
  * Side Effects: None
  */
 export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
-  return postJSON<DashboardSnapshot>("/api/dev/seed", { scenario });
+  return authedPostJSON<DashboardSnapshot>("/api/dev/seed", { scenario });
 }
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 /**
@@ -281,7 +262,7 @@ export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
  * Side Effects: None
  */
 export function fetchApprovals(): Promise<ApprovalRequest[]> {
-  return getJSON<ApprovalRequest[]>("/api/approvals");
+  return authedGetJSON<ApprovalRequest[]>("/api/approvals");
 }
 /**
  * Summary: Submits a new request for human manager sign-off on a high-risk action.
@@ -297,7 +278,7 @@ export function requestApproval(body: {
   estimatedCostUsd?: number;
   riskLevel?: string;
 }): Promise<ApprovalRequest> {
-  return postJSON<ApprovalRequest>("/api/approvals/request", body);
+  return authedPostJSON<ApprovalRequest>("/api/approvals/request", body);
 }
 /**
  * Summary: Submits the human manager's decision (approve/reject) for an approval request.
@@ -311,7 +292,7 @@ export function decideApproval(
   decision: "approve" | "reject",
   decidedBy?: string,
 ): Promise<ApprovalRequest[]> {
-  return postJSON<ApprovalRequest[]>("/api/approvals/decide", { approvalId, decision, decidedBy });
+  return authedPostJSON<ApprovalRequest[]>("/api/approvals/decide", { approvalId, decision, decidedBy });
 }
 
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
@@ -323,7 +304,7 @@ export function decideApproval(
  * Side Effects: None
  */
 export function fetchHandoffs(): Promise<HandoffPackage[]> {
-  return getJSON<HandoffPackage[]>("/api/handoffs");
+  return authedGetJSON<HandoffPackage[]>("/api/handoffs");
 }
 /**
  * Summary: Escalates a complex task from an autonomous agent to a human manager.
@@ -339,7 +320,7 @@ export function createHandoff(body: {
   failedAttempts?: number;
   currentState?: string;
 }): Promise<HandoffPackage> {
-  return postJSON<HandoffPackage>("/api/handoffs", body);
+  return authedPostJSON<HandoffPackage>("/api/handoffs", body);
 }
 
 /**
@@ -350,7 +331,7 @@ export function createHandoff(body: {
  * Side Effects: None
  */
 export function resolveHandoff(handoffId: string, status: "acknowledged" | "resolved"): Promise<HandoffPackage[]> {
-  return postJSON<HandoffPackage[]>("/api/handoffs/resolve", { handoffId, status });
+  return authedPostJSON<HandoffPackage[]>("/api/handoffs/resolve", { handoffId, status });
 }
 
 // ── Identity Management ───────────────────────────────────────────────────────
@@ -362,7 +343,7 @@ export function resolveHandoff(handoffId: string, status: "acknowledged" | "reso
  * Side Effects: None
  */
 export function fetchIdentities(): Promise<AgentIdentity[]> {
-  return getJSON<AgentIdentity[]>("/api/identities");
+  return authedGetJSON<AgentIdentity[]>("/api/identities");
 }
 
 // ── Skill Packs ───────────────────────────────────────────────────────────────
@@ -374,7 +355,7 @@ export function fetchIdentities(): Promise<AgentIdentity[]> {
  * Side Effects: None
  */
 export function fetchSkillPacks(): Promise<SkillPack[]> {
-  return getJSON<SkillPack[]>("/api/skills");
+  return authedGetJSON<SkillPack[]>("/api/skills");
 }
 /**
  * Summary: Imports a new specialized skill pack into the organization's domain.
@@ -390,7 +371,7 @@ export function importSkillPack(body: {
   source?: string;
   author?: string;
 }): Promise<SkillPack> {
-  return postJSON<SkillPack>("/api/skills/import", body);
+  return authedPostJSON<SkillPack>("/api/skills/import", body);
 }
 
 // ── Snapshots ─────────────────────────────────────────────────────────────────
@@ -402,7 +383,7 @@ export function importSkillPack(body: {
  * Side Effects: None
  */
 export function fetchSnapshots(): Promise<OrgSnapshot[]> {
-  return getJSON<OrgSnapshot[]>("/api/snapshots");
+  return authedGetJSON<OrgSnapshot[]>("/api/snapshots");
 }
 /**
  * Summary: Captures a point-in-time snapshot of the entire organization's memory and state.
@@ -412,7 +393,7 @@ export function fetchSnapshots(): Promise<OrgSnapshot[]> {
  * Side Effects: None
  */
 export function createSnapshot(label?: string): Promise<OrgSnapshot> {
-  return postJSON<OrgSnapshot>("/api/snapshots/create", { label });
+  return authedPostJSON<OrgSnapshot>("/api/snapshots/create", { label });
 }
 /**
  * Summary: Restores the organization to a specific point-in-time snapshot.
@@ -422,7 +403,7 @@ export function createSnapshot(label?: string): Promise<OrgSnapshot> {
  * Side Effects: None
  */
 export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> {
-  return postJSON<DashboardSnapshot>("/api/snapshots/restore", { snapshotId });
+  return authedPostJSON<DashboardSnapshot>("/api/snapshots/restore", { snapshotId });
 }
 
 // ── Marketplace ───────────────────────────────────────────────────────────────
@@ -434,7 +415,7 @@ export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> 
  * Side Effects: None
  */
 export function fetchMarketplace(): Promise<MarketplaceItem[]> {
-  return getJSON<MarketplaceItem[]>("/api/marketplace");
+  return authedGetJSON<MarketplaceItem[]>("/api/marketplace");
 }
 
 // ── Real-time Analytics ───────────────────────────────────────────────────────
@@ -446,7 +427,7 @@ export function fetchMarketplace(): Promise<MarketplaceItem[]> {
  * Side Effects: None
  */
 export function fetchAnalytics(): Promise<AnalyticsSummary> {
-  return getJSON<AnalyticsSummary>("/api/analytics");
+  return authedGetJSON<AnalyticsSummary>("/api/analytics");
 }
 
 // ── External Integrations ─────────────────────────────────────────────────────
@@ -466,7 +447,7 @@ import type {
  */
 export function fetchIntegrations(category?: string): Promise<Integration[]> {
   const q = category ? `?category=${category}` : "";
-  return getJSON<Integration[]>(`/api/integrations${q}`);
+  return authedGetJSON<Integration[]>(`/api/integrations${q}`);
 }
 /**
  * Summary: Connects and authenticates a specific external integration.
@@ -485,7 +466,7 @@ export function connectIntegration(
     apiToken?: string;
   },
 ): Promise<Integration> {
-  return postJSON<Integration>("/api/integrations/connect", {
+  return authedPostJSON<Integration>("/api/integrations/connect", {
     integrationId,
     baseUrl: config?.baseUrl,
     botToken: config?.botToken,
@@ -502,7 +483,7 @@ export function connectIntegration(
  * Side Effects: None
  */
 export function disconnectIntegration(integrationId: string): Promise<Integration> {
-  return postJSON<Integration>("/api/integrations/disconnect", { integrationId });
+  return authedPostJSON<Integration>("/api/integrations/disconnect", { integrationId });
 }
 /**
  * Summary: Sends a test message to validate credentials before saving them.
@@ -515,7 +496,7 @@ export function testChatIntegration(
   integrationId: string,
   config: { botToken?: string; chatId?: string; webhookUrl?: string },
 ): Promise<{ success: boolean }> {
-  return postJSON<{ success: boolean }>("/api/integrations/chat/test", {
+  return authedPostJSON<{ success: boolean }>("/api/integrations/chat/test", {
     integrationId,
     ...config,
   });
@@ -529,7 +510,7 @@ export function testChatIntegration(
  */
 export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
-  return getJSON<ChatMessage[]>(`/api/integrations/chat/messages${q}`);
+  return authedGetJSON<ChatMessage[]>(`/api/integrations/chat/messages${q}`);
 }
 /**
  * Summary: Dispatches a message to an external chat platform.
@@ -545,7 +526,7 @@ export function sendChatMessage(body: {
   content: string;
   threadId?: string;
 }): Promise<ChatMessage> {
-  return postJSON<ChatMessage>("/api/integrations/chat/send", body);
+  return authedPostJSON<ChatMessage>("/api/integrations/chat/send", body);
 }
 /**
  * Summary: Fetches pull requests opened via the git integrations.
@@ -556,7 +537,7 @@ export function sendChatMessage(body: {
  */
 export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
-  return getJSON<PullRequest[]>(`/api/integrations/git/prs${q}`);
+  return authedGetJSON<PullRequest[]>(`/api/integrations/git/prs${q}`);
 }
 /**
  * Summary: Opens a pull request/merge request on a connected git platform.
@@ -574,7 +555,7 @@ export function createPullRequest(body: {
   targetBranch: string;
   createdBy?: string;
 }): Promise<PullRequest> {
-  return postJSON<PullRequest>("/api/integrations/git/pr/create", body);
+  return authedPostJSON<PullRequest>("/api/integrations/git/pr/create", body);
 }
 /**
  * Summary: Merges an open pull request on a connected git platform.
@@ -584,7 +565,7 @@ export function createPullRequest(body: {
  * Side Effects: None
  */
 export function mergePullRequest(prId: string): Promise<PullRequest> {
-  return postJSON<PullRequest>("/api/integrations/git/pr/merge", { prId });
+  return authedPostJSON<PullRequest>("/api/integrations/git/pr/merge", { prId });
 }
 /**
  * Summary: Closes an open pull request on a connected git platform without merging.
@@ -594,7 +575,7 @@ export function mergePullRequest(prId: string): Promise<PullRequest> {
  * Side Effects: None
  */
 export function closePullRequest(prId: string): Promise<PullRequest> {
-  return postJSON<PullRequest>("/api/integrations/git/pr/close", { prId });
+  return authedPostJSON<PullRequest>("/api/integrations/git/pr/close", { prId });
 }
 /**
  * Summary: Fetches tickets from connected issue trackers.
@@ -605,7 +586,7 @@ export function closePullRequest(prId: string): Promise<PullRequest> {
  */
 export function fetchIssues(integrationId?: string): Promise<Issue[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
-  return getJSON<Issue[]>(`/api/integrations/issues${q}`);
+  return authedGetJSON<Issue[]>(`/api/integrations/issues${q}`);
 }
 /**
  * Summary: Creates a ticket in a connected issue tracker.
@@ -623,7 +604,7 @@ export function createIssue(body: {
   priority?: string;
   labels?: string[];
 }): Promise<Issue> {
-  return postJSON<Issue>("/api/integrations/issues/create", body);
+  return authedPostJSON<Issue>("/api/integrations/issues/create", body);
 }
 /**
  * Summary: Updates the status phase of an existing ticket.
@@ -633,7 +614,7 @@ export function createIssue(body: {
  * Side Effects: None
  */
 export function updateIssueStatus(issueId: string, status: string): Promise<Issue> {
-  return postJSON<Issue>("/api/integrations/issues/status", { issueId, status });
+  return authedPostJSON<Issue>("/api/integrations/issues/status", { issueId, status });
 }
 /**
  * Summary: Assigns ownership of a ticket to a specific agent or human manager.
@@ -643,7 +624,7 @@ export function updateIssueStatus(issueId: string, status: string): Promise<Issu
  * Side Effects: None
  */
 export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
-  return postJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
+  return authedPostJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
 }
 /**
  * Summary: Invokes an MCP tool with the given action and parameters. Communication tools route to the underlying connected integration. Git/issue tools create PRs or tickets in the connected platform.
@@ -657,7 +638,7 @@ export function invokeMCPTool(
   action: string,
   params: Record<string, string>,
 ): Promise<Record<string, unknown>> {
-  return postJSON<Record<string, unknown>>("/api/mcp/tools/invoke", { toolId, action, params });
+  return authedPostJSON<Record<string, unknown>>("/api/mcp/tools/invoke", { toolId, action, params });
 }
 /**
  * Summary: Fetches the user's or organization's global settings and preferences.
@@ -667,7 +648,7 @@ export function invokeMCPTool(
  * Side Effects: None
  */
 export function fetchSettings(): Promise<Settings> {
-  return getJSON<Settings>("/api/settings");
+  return authedGetJSON<Settings>("/api/settings");
 }
 /**
  * Summary: Saves and updates the global settings and preferences.
@@ -677,7 +658,7 @@ export function fetchSettings(): Promise<Settings> {
  * Side Effects: None
  */
 export function saveSettings(settings: Settings): Promise<Settings> {
-  return postJSON<Settings>("/api/settings", settings);
+  return authedPostJSON<Settings>("/api/settings", settings);
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
