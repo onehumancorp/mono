@@ -383,8 +383,7 @@ function HireAgentForm({
 }
 /**
  * Summary: App is the root dashboard view component serving as the CEO's interface for overseeing virtual operations, tracking costs, and directing the AI workforce.
- * Intent: App is the root dashboard view component serving as the CEO's interface for overseeing virtual operations, tracking costs, and directing the AI workforce.
- * Params: None
+ * Parameters: None
  * Returns: None
  * Errors: May throw an error
  * Side Effects: None

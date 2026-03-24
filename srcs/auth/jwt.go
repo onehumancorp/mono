@@ -20,8 +20,7 @@ type jwtHeader struct {
 }
 
 // Summary: Claims holds the payload fields for both locally-issued (HS256) and OIDC (RS256) tokens. The standard set is kept small by design.  Constraints: Serializes to JSON for token encoding. Subject must uniquely identify the user.
-// Intent: Claims holds the payload fields for both locally-issued (HS256) and OIDC (RS256) tokens. The standard set is kept small by design.  Constraints: Serializes to JSON for token encoding. Subject must uniquely identify the user.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None

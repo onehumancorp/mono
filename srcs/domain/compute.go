@@ -6,8 +6,7 @@ import (
 )
 
 // Summary: ComputeProfile defines the hardware requirements for an agent role.
-// Intent: ComputeProfile defines the hardware requirements for an agent role.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -19,8 +18,7 @@ type ComputeProfile struct {
 }
 
 // Summary: AffinityScoreResult holds the result of the affinity scoring engine.
-// Intent: AffinityScoreResult holds the result of the affinity scoring engine.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -30,16 +28,14 @@ type AffinityScoreResult struct {
 }
 
 // Summary: AffinityEngine calculates hardware placement scores.
-// Intent: AffinityEngine calculates hardware placement scores.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
 type AffinityEngine struct{}
 
 // Summary: CalculateScore determines the placement score and hardware requirements based on the agent's profile and task details. This implements UT-01 from the test plan.
-// Intent: CalculateScore determines the placement score and hardware requirements based on the agent's profile and task details. This implements UT-01 from the test plan.
-// Params: profile, isVIP, localWeightsCached
+// Parameters: ae *AffinityEngine (No Constraints)
 // Returns: AffinityScoreResult
 // Errors: None
 // Side Effects: None
@@ -82,18 +78,16 @@ func (ae *AffinityEngine) CalculateScore(profile ComputeProfile, isVIP bool, loc
 }
 
 // Summary: QuotaManager enforces hardware budget limits.
-// Intent: QuotaManager enforces hardware budget limits.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
 type QuotaManager struct{}
 
 // Summary: CheckQuota validates if the requested VRAM fits within the available quota limit. This implements UT-02 from the test plan.
-// Intent: CheckQuota validates if the requested VRAM fits within the available quota limit. This implements UT-02 from the test plan.
-// Params: profile, availableVRAM
+// Parameters: qm *QuotaManager (No Constraints)
 // Returns: error
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func (qm *QuotaManager) CheckQuota(profile ComputeProfile, availableVRAM int) error {
 	if profile.MinVRAM > availableVRAM {

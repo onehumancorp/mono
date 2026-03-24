@@ -23,8 +23,7 @@ import (
 )
 
 // Summary: Server encapsulates the HTTP handlers and state for the One Human Corp dashboard.  Constraints: Must be instantiated with a valid domain.Organization, orchestration.Hub, and billing.Tracker.
-// Intent: Server encapsulates the HTTP handlers and state for the One Human Corp dashboard.  Constraints: Must be instantiated with a valid domain.Organization, orchestration.Hub, and billing.Tracker.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -58,8 +57,7 @@ type RateLimitState struct {
 }
 
 // Summary: Defines the Settings type.
-// Intent: Defines the Settings type.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -111,8 +109,7 @@ type delegateRequest struct {
 // ── Approval / Confidence Gating ─────────────────────────────────────────────
 
 // Summary: ApprovalStatus represents the lifecycle state of a guardian-gate request.
-// Intent: ApprovalStatus represents the lifecycle state of a guardian-gate request.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -120,22 +117,19 @@ type ApprovalStatus string
 
 const (
 	// Summary: Defines the ApprovalStatusPending type.
-	// Intent: Defines the ApprovalStatusPending type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	ApprovalStatusPending ApprovalStatus = "PENDING"
 	// Summary: Defines the ApprovalStatusApproved type.
-	// Intent: Defines the ApprovalStatusApproved type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	ApprovalStatusApproved ApprovalStatus = "APPROVED"
 	// Summary: Defines the ApprovalStatusRejected type.
-	// Intent: Defines the ApprovalStatusRejected type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -143,8 +137,7 @@ const (
 )
 
 // Summary: ApprovalRequest is created by the Guardian Agent when a high-risk action requires explicit human sign-off.
-// Intent: ApprovalRequest is created by the Guardian Agent when a high-risk action requires explicit human sign-off.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -178,8 +171,7 @@ type approvalDecideRequest struct {
 // ── Warm Handoff ──────────────────────────────────────────────────────────────
 
 // Summary: HandoffPackage carries the structured context an agent sends to a human manager when escalating a task it cannot complete autonomously.
-// Intent: HandoffPackage carries the structured context an agent sends to a human manager when escalating a task it cannot complete autonomously.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -205,8 +197,7 @@ type handoffCreateRequest struct {
 // ── Agent Identity (SPIFFE/SPIRE abstraction) ─────────────────────────────────
 
 // Summary: AgentIdentity represents the SPIFFE SVID certificate issued to an agent workload.
-// Intent: AgentIdentity represents the SPIFFE SVID certificate issued to an agent workload.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -221,8 +212,7 @@ type AgentIdentity struct {
 // ── Extensible Skill Import Framework ────────────────────────────────────────
 
 // Summary: SkillPackRole pairs a role name with its override base prompt.
-// Intent: SkillPackRole pairs a role name with its override base prompt.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -232,8 +222,7 @@ type SkillPackRole struct {
 }
 
 // Summary: SkillPack is an importable module that extends or overrides agent capabilities.
-// Intent: SkillPack is an importable module that extends or overrides agent capabilities.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -260,8 +249,7 @@ type skillImportRequest struct {
 // ── Org Snapshot & Recovery ───────────────────────────────────────────────────
 
 // Summary: OrgSnapshot is a point-in-time metadata record of an organization's state.
-// Intent: OrgSnapshot is a point-in-time metadata record of an organization's state.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -288,8 +276,7 @@ type snapshotRestoreRequest struct {
 // ── Marketplace ───────────────────────────────────────────────────────────────
 
 // Summary: MarketplaceItem describes a community-published asset.
-// Intent: MarketplaceItem describes a community-published asset.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -307,8 +294,7 @@ type MarketplaceItem struct {
 // ── Real-time Analytics ───────────────────────────────────────────────────────
 
 // Summary: AnalyticsSummary surfaces operational health metrics.
-// Intent: AnalyticsSummary surfaces operational health metrics.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -324,8 +310,7 @@ type AnalyticsSummary struct {
 }
 
 // Summary: MCPTool represents a registered tool in the MCP gateway.
-// Intent: MCPTool represents a registered tool in the MCP gateway.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -338,8 +323,7 @@ type MCPTool struct {
 }
 
 // Summary: DomainInfo describes a supported organizational domain template.
-// Intent: DomainInfo describes a supported organizational domain template.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -1379,8 +1363,7 @@ type issueAssignRequest struct {
 // ── B2B Collaboration ─────────────────────────────────────────────────────────
 
 // Summary: TrustAgreementStatus represents the lifecycle of a B2B trust agreement.
-// Intent: TrustAgreementStatus represents the lifecycle of a B2B trust agreement.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -1388,22 +1371,19 @@ type TrustAgreementStatus string
 
 const (
 	// Summary: Defines the TrustStatusPending type.
-	// Intent: Defines the TrustStatusPending type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	TrustStatusPending TrustAgreementStatus = "PENDING"
 	// Summary: Defines the TrustStatusActive type.
-	// Intent: Defines the TrustStatusActive type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	TrustStatusActive TrustAgreementStatus = "ACTIVE"
 	// Summary: Defines the TrustStatusRevoked type.
-	// Intent: Defines the TrustStatusRevoked type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -1411,8 +1391,7 @@ const (
 )
 
 // Summary: TrustAgreement is a federated trust relationship between two OHC organisations. It enables cross-org agent collaboration using SPIFFE-federated JWTs.
-// Intent: TrustAgreement is a federated trust relationship between two OHC organisations. It enables cross-org agent collaboration using SPIFFE-federated JWTs.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -1434,8 +1413,7 @@ type b2bHandshakeRequest struct {
 // ── Autonomous SRE / Incident Management ─────────────────────────────────────
 
 // Summary: IncidentSeverity classifies the urgency of an operational incident.
-// Intent: IncidentSeverity classifies the urgency of an operational incident.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -1443,22 +1421,19 @@ type IncidentSeverity string
 
 const (
 	// Summary: Defines the SeverityP0 type.
-	// Intent: Defines the SeverityP0 type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	SeverityP0 IncidentSeverity = "P0"
 	// Summary: Defines the SeverityP1 type.
-	// Intent: Defines the SeverityP1 type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	SeverityP1 IncidentSeverity = "P1"
 	// Summary: Defines the SeverityP2 type.
-	// Intent: Defines the SeverityP2 type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -1466,8 +1441,7 @@ const (
 )
 
 // Summary: IncidentStatus reflects the investigation lifecycle state.
-// Intent: IncidentStatus reflects the investigation lifecycle state.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -1475,22 +1449,19 @@ type IncidentStatus string
 
 const (
 	// Summary: Defines the IncidentStatusInvestigating type.
-	// Intent: Defines the IncidentStatusInvestigating type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IncidentStatusInvestigating IncidentStatus = "INVESTIGATING"
 	// Summary: Defines the IncidentStatusProposed type.
-	// Intent: Defines the IncidentStatusProposed type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IncidentStatusProposed IncidentStatus = "PROPOSED"
 	// Summary: Defines the IncidentStatusResolved type.
-	// Intent: Defines the IncidentStatusResolved type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -1498,8 +1469,7 @@ const (
 )
 
 // Summary: Incident represents an operational event requiring SRE attention.
-// Intent: Incident represents an operational event requiring SRE attention.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -1530,8 +1500,7 @@ type incidentStatusRequest struct {
 // ── Compute Optimization / Hardware-Aware Scheduling ─────────────────────────
 
 // Summary: ComputeProfile defines the hardware requirements for a given agent role.
-// Intent: ComputeProfile defines the hardware requirements for a given agent role.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -1551,8 +1520,7 @@ type computeProfileRequest struct {
 }
 
 // Summary: ClusterStatus reflects the health of a remote Kubernetes cluster region.
-// Intent: ClusterStatus reflects the health of a remote Kubernetes cluster region.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -1570,8 +1538,7 @@ type ClusterStatus struct {
 const defaultBudgetAlertNotifyPct = 0.8
 
 // Summary: BudgetAlert defines a spending threshold with notification behaviour.
-// Intent: BudgetAlert defines a spending threshold with notification behaviour.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -1593,8 +1560,7 @@ type budgetAlertRequest struct {
 // ── Automated SDLC / Pipelines ────────────────────────────────────────────────
 
 // Summary: PipelineStatus reflects the lifecycle of an autonomous CI/CD pipeline.
-// Intent: PipelineStatus reflects the lifecycle of an autonomous CI/CD pipeline.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -1602,43 +1568,37 @@ type PipelineStatus string
 
 const (
 	// Summary: Defines the PipelineStatusPending type.
-	// Intent: Defines the PipelineStatusPending type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	PipelineStatusPending PipelineStatus = "PENDING"
 	// Summary: Defines the PipelineStatusImplementing type.
-	// Intent: Defines the PipelineStatusImplementing type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	PipelineStatusImplementing PipelineStatus = "IMPLEMENTING"
 	// Summary: Defines the PipelineStatusTesting type.
-	// Intent: Defines the PipelineStatusTesting type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	PipelineStatusTesting PipelineStatus = "TESTING"
 	// Summary: Defines the PipelineStatusStaging type.
-	// Intent: Defines the PipelineStatusStaging type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	PipelineStatusStaging PipelineStatus = "STAGING"
 	// Summary: Defines the PipelineStatusPromoted type.
-	// Intent: Defines the PipelineStatusPromoted type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	PipelineStatusPromoted PipelineStatus = "PROMOTED"
 	// Summary: Defines the PipelineStatusFailed type.
-	// Intent: Defines the PipelineStatusFailed type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -1646,8 +1606,7 @@ const (
 )
 
 // Summary: Pipeline represents an autonomous implementation pipeline from spec to production.
-// Intent: Pipeline represents an autonomous implementation pipeline from spec to production.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None

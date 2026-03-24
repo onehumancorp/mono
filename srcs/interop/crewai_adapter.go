@@ -6,8 +6,7 @@ import (
 )
 
 // Summary: CrewAIAdapter implements UniversalAdapter for CrewAI.
-// Intent: CrewAIAdapter implements UniversalAdapter for CrewAI.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -16,8 +15,7 @@ type CrewAIAdapter struct {
 }
 
 // Summary: NewCrewAIAdapter creates a new CrewAIAdapter.
-// Intent: NewCrewAIAdapter creates a new CrewAIAdapter.
-// Params: identity
+// Parameters: identity string (No Constraints)
 // Returns: *CrewAIAdapter, error
 // Errors: Returns error if identity is invalid
 // Side Effects: None
@@ -31,10 +29,9 @@ func NewCrewAIAdapter(identity string) (*CrewAIAdapter, error) {
 }
 
 // Summary: SyncState functionality.
-// Intent: SyncState functionality.
-// Params: ctx, state
+// Parameters: a *CrewAIAdapter (No Constraints)
 // Returns: error
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func (a *CrewAIAdapter) SyncState(ctx context.Context, state *State) error {
 	// Mock K8s/LangGraph state sync
@@ -54,10 +51,9 @@ func (a *CrewAIAdapter) SyncState(ctx context.Context, state *State) error {
 }
 
 // Summary: ExecuteCommand functionality.
-// Intent: ExecuteCommand functionality.
-// Params: ctx, cmd
+// Parameters: a *CrewAIAdapter (No Constraints)
 // Returns: (string, error)
-// Errors: Returns an error if applicable
+// Errors: Explicit error handling
 // Side Effects: None
 func (a *CrewAIAdapter) ExecuteCommand(ctx context.Context, cmd string) (string, error) {
 	if cmd == "" {

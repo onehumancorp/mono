@@ -6,8 +6,7 @@ import (
 )
 
 // Summary: SemanticKernelAdapter implements UniversalAdapter for Semantic Kernel.
-// Intent: SemanticKernelAdapter implements UniversalAdapter for Semantic Kernel.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -16,8 +15,7 @@ type SemanticKernelAdapter struct {
 }
 
 // Summary: NewSemanticKernelAdapter creates a new SemanticKernelAdapter.
-// Intent: NewSemanticKernelAdapter creates a new SemanticKernelAdapter.
-// Params: identity
+// Parameters: identity string (No Constraints)
 // Returns: *SemanticKernelAdapter, error
 // Errors: Returns error if identity is invalid
 // Side Effects: None
@@ -31,8 +29,7 @@ func NewSemanticKernelAdapter(identity string) (*SemanticKernelAdapter, error) {
 }
 
 // Summary: SyncState synchronizes Semantic Kernel state.
-// Intent: SyncState synchronizes Semantic Kernel state.
-// Params: ctx, state
+// Parameters: a *SemanticKernelAdapter (No Constraints)
 // Returns: error
 // Errors: Returns an error if state is nil
 // Side Effects: Mutates state.Data by setting semantickernel_synced and last_identity
@@ -54,8 +51,7 @@ func (a *SemanticKernelAdapter) SyncState(ctx context.Context, state *State) err
 }
 
 // Summary: ExecuteCommand functionality for Semantic Kernel.
-// Intent: ExecuteCommand functionality for Semantic Kernel.
-// Params: ctx, cmd
+// Parameters: a *SemanticKernelAdapter (No Constraints)
 // Returns: string, error
 // Errors: Returns an error if cmd is empty
 // Side Effects: None

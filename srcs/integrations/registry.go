@@ -29,8 +29,7 @@ import (
 // ── Integration types ─────────────────────────────────────────────────────────
 
 // Summary: Category groups integrations by their function (e.g., chat, git, issues).
-// Intent: Category groups integrations by their function (e.g., chat, git, issues).
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -38,22 +37,19 @@ type Category string
 
 const (
 	// Summary: Defines the CategoryChat type.
-	// Intent: Defines the CategoryChat type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	CategoryChat Category = "chat"
 	// Summary: Defines the CategoryGit type.
-	// Intent: Defines the CategoryGit type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	CategoryGit Category = "git"
 	// Summary: Defines the CategoryIssues type.
-	// Intent: Defines the CategoryIssues type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -61,8 +57,7 @@ const (
 )
 
 // Summary: IntegrationType identifies the specific external service platform (e.g., github, slack).
-// Intent: IntegrationType identifies the specific external service platform (e.g., github, slack).
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -70,87 +65,75 @@ type IntegrationType string
 
 const (
 	// Summary: Chat services.
-	// Intent: Chat services.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeSlack IntegrationType = "slack"
 	// Summary: Defines the IntegrationTypeDiscord type.
-	// Intent: Defines the IntegrationTypeDiscord type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeDiscord IntegrationType = "discord"
 	// Summary: Defines the IntegrationTypeGoogleChat type.
-	// Intent: Defines the IntegrationTypeGoogleChat type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeGoogleChat IntegrationType = "google_chat"
 	// Summary: Defines the IntegrationTypeTelegram type.
-	// Intent: Defines the IntegrationTypeTelegram type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeTelegram IntegrationType = "telegram"
 	// Summary: Defines the IntegrationTypeTeams type.
-	// Intent: Defines the IntegrationTypeTeams type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeTeams IntegrationType = "teams"
 
 	// Summary: Git platforms.
-	// Intent: Git platforms.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeGitHub IntegrationType = "github"
 	// Summary: Defines the IntegrationTypeGitLab type.
-	// Intent: Defines the IntegrationTypeGitLab type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeGitLab IntegrationType = "gitlab"
 	// Summary: Defines the IntegrationTypeGitea type.
-	// Intent: Defines the IntegrationTypeGitea type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeGitea IntegrationType = "gitea"
 
 	// Summary: Issue trackers.
-	// Intent: Issue trackers.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeJIRA IntegrationType = "jira"
 	// Summary: Defines the IntegrationTypePlane type.
-	// Intent: Defines the IntegrationTypePlane type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypePlane IntegrationType = "plane"
 	// Summary: Defines the IntegrationTypeGitHubIssues type.
-	// Intent: Defines the IntegrationTypeGitHubIssues type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IntegrationTypeGitHubIssues IntegrationType = "github_issues"
 	// Summary: Defines the IntegrationTypeLinear type.
-	// Intent: Defines the IntegrationTypeLinear type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -158,8 +141,7 @@ const (
 )
 
 // Summary: ConnectionStatus reflects whether an integration is currently active and reachable.
-// Intent: ConnectionStatus reflects whether an integration is currently active and reachable.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -167,22 +149,19 @@ type ConnectionStatus string
 
 const (
 	// Summary: Defines the StatusConnected type.
-	// Intent: Defines the StatusConnected type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StatusConnected ConnectionStatus = "connected"
 	// Summary: Defines the StatusDisconnected type.
-	// Intent: Defines the StatusDisconnected type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StatusDisconnected ConnectionStatus = "disconnected"
 	// Summary: Defines the StatusError type.
-	// Intent: Defines the StatusError type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -190,8 +169,7 @@ const (
 )
 
 // Summary: Integration represents a configured external service connection.
-// Intent: Integration represents a configured external service connection.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -209,8 +187,7 @@ type Integration struct {
 }
 
 // Summary: IntegrationCredentials holds the secret configuration for an integration. These are stored server-side only and never serialised to the client.
-// Intent: IntegrationCredentials holds the secret configuration for an integration. These are stored server-side only and never serialised to the client.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -222,8 +199,7 @@ type IntegrationCredentials struct {
 }
 
 // Summary: IsEmpty reports whether no fields are set.
-// Intent: IsEmpty reports whether no fields are set.
-// Params: None
+// Parameters: None
 // Returns: bool
 // Errors: None
 // Side Effects: None
@@ -234,8 +210,7 @@ func (c IntegrationCredentials) IsEmpty() bool {
 // ── Chat types ────────────────────────────────────────────────────────────────
 
 // Summary: ChatMessage represents a message dispatched through a chat service.
-// Intent: ChatMessage represents a message dispatched through a chat service.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -252,8 +227,7 @@ type ChatMessage struct {
 // ── Git types ─────────────────────────────────────────────────────────────────
 
 // Summary: PullRequestStatus tracks the lifecycle status of a PR/MR on a git platform.
-// Intent: PullRequestStatus tracks the lifecycle status of a PR/MR on a git platform.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -261,22 +235,19 @@ type PullRequestStatus string
 
 const (
 	// Summary: Defines the PRStatusOpen type.
-	// Intent: Defines the PRStatusOpen type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	PRStatusOpen PullRequestStatus = "open"
 	// Summary: Defines the PRStatusMerged type.
-	// Intent: Defines the PRStatusMerged type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	PRStatusMerged PullRequestStatus = "merged"
 	// Summary: Defines the PRStatusClosed type.
-	// Intent: Defines the PRStatusClosed type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -284,8 +255,7 @@ const (
 )
 
 // Summary: PullRequest records an issue or code change request opened on a git hosting platform.
-// Intent: PullRequest records an issue or code change request opened on a git hosting platform.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -306,8 +276,7 @@ type PullRequest struct {
 // ── Issue types ───────────────────────────────────────────────────────────────
 
 // Summary: IssueStatus tracks the lifecycle phase of an issue or ticket.
-// Intent: IssueStatus tracks the lifecycle phase of an issue or ticket.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -315,29 +284,25 @@ type IssueStatus string
 
 const (
 	// Summary: Defines the IssueStatusOpen type.
-	// Intent: Defines the IssueStatusOpen type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IssueStatusOpen IssueStatus = "open"
 	// Summary: Defines the IssueStatusInProgress type.
-	// Intent: Defines the IssueStatusInProgress type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IssueStatusInProgress IssueStatus = "in_progress"
 	// Summary: Defines the IssueStatusDone type.
-	// Intent: Defines the IssueStatusDone type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IssueStatusDone IssueStatus = "done"
 	// Summary: Defines the IssueStatusClosed type.
-	// Intent: Defines the IssueStatusClosed type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -345,8 +310,7 @@ const (
 )
 
 // Summary: IssuePriority indicates the urgency of a ticket.
-// Intent: IssuePriority indicates the urgency of a ticket.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -354,29 +318,25 @@ type IssuePriority string
 
 const (
 	// Summary: Defines the IssuePriorityLow type.
-	// Intent: Defines the IssuePriorityLow type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IssuePriorityLow IssuePriority = "low"
 	// Summary: Defines the IssuePriorityMedium type.
-	// Intent: Defines the IssuePriorityMedium type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IssuePriorityMedium IssuePriority = "medium"
 	// Summary: Defines the IssuePriorityHigh type.
-	// Intent: Defines the IssuePriorityHigh type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	IssuePriorityHigh IssuePriority = "high"
 	// Summary: Defines the IssuePriorityCritical type.
-	// Intent: Defines the IssuePriorityCritical type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -384,8 +344,7 @@ const (
 )
 
 // Summary: Issue records a ticket created in an external issue tracker.
-// Intent: Issue records a ticket created in an external issue tracker.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -407,8 +366,7 @@ type Issue struct {
 // ── Registry ─────────────────────────────────────────────────────────────────
 
 // Summary: Registry manages all configured external service integrations and records every action taken through them (messages sent, PRs opened, tickets created).  Constraints: Thread-safe via sync.RWMutex.
-// Intent: Registry manages all configured external service integrations and records every action taken through them (messages sent, PRs opened, tickets created).  Constraints: Thread-safe via sync.RWMutex.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -486,8 +444,7 @@ func (r *Registry) Integration(id string) (Integration, bool) {
 
 // LookupIPFunc is a variable to allow mocking net.LookupIP in tests across packages.
 var // Summary: LookupIPFunc is a variable to allow mocking net.LookupIP in tests across packages.
-// Intent: LookupIPFunc is a variable to allow mocking net.LookupIP in tests across packages.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -495,8 +452,7 @@ LookupIPFunc = net.LookupIP
 
 // AllowLocalIPsForTesting can be set to true in tests to bypass SSRF IP checks
 var // Summary: AllowLocalIPsForTesting can be set to true in tests to bypass SSRF IP checks
-// Intent: AllowLocalIPsForTesting can be set to true in tests to bypass SSRF IP checks
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -1088,8 +1044,7 @@ func generateID(prefix string, now time.Time) string {
 // ── Real outbound HTTP helpers ────────────────────────────────────────────────
 
 // Summary: TelegramAPIBase is the base URL for the Telegram Bot API. Override in tests to point to a mock server.
-// Intent: TelegramAPIBase is the base URL for the Telegram Bot API. Override in tests to point to a mock server.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None

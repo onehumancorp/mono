@@ -11,8 +11,7 @@ import (
 )
 
 // Summary: PipelineState represents the current phase of the SDLC.  Constraints: Must be one of the predefined State constants.
-// Intent: PipelineState represents the current phase of the SDLC.  Constraints: Must be one of the predefined State constants.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -20,36 +19,31 @@ type PipelineState string
 
 const (
 	// Summary: Defines the StateImplementing type.
-	// Intent: Defines the StateImplementing type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StateImplementing PipelineState = "IMPLEMENTING"
 	// Summary: Defines the StateTesting type.
-	// Intent: Defines the StateTesting type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StateTesting PipelineState = "TESTING"
 	// Summary: Defines the StateStagingReady type.
-	// Intent: Defines the StateStagingReady type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StateStagingReady PipelineState = "STAGING_READY"
 	// Summary: Defines the StateDeployed type.
-	// Intent: Defines the StateDeployed type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
 	StateDeployed PipelineState = "DEPLOYED"
 	// Summary: Defines the StateRollback type.
-	// Intent: Defines the StateRollback type.
-	// Params: None
+	// Parameters: None
 	// Returns: None
 	// Errors: None
 	// Side Effects: None
@@ -57,8 +51,7 @@ const (
 )
 
 // Summary: Pipeline models the SDLC progression for a specific feature branch.  Constraints: Requires a unique ID and an associated branch name.
-// Intent: Pipeline models the SDLC progression for a specific feature branch.  Constraints: Requires a unique ID and an associated branch name.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -71,8 +64,7 @@ type Pipeline struct {
 }
 
 // Summary: SpecApprovedEvent models the parsed content of an EventSpecApproved message.  Constraints: The Branch field must not be empty.
-// Intent: SpecApprovedEvent models the parsed content of an EventSpecApproved message.  Constraints: The Branch field must not be empty.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -82,8 +74,7 @@ type SpecApprovedEvent struct {
 }
 
 // Summary: CIJob represents a mock CI build/test job triggered by the Hub.  Constraints: Contains a predefined test command associated with a specific branch.
-// Intent: CIJob represents a mock CI build/test job triggered by the Hub.  Constraints: Contains a predefined test command associated with a specific branch.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -93,8 +84,7 @@ type CIJob struct {
 }
 
 // Summary: Orchestrator manages automated SDLC pipelines and interacts with the Hub.  Constraints: Uses an internal read-write mutex to ensure thread-safe map and slice operations.
-// Intent: Orchestrator manages automated SDLC pipelines and interacts with the Hub.  Constraints: Uses an internal read-write mutex to ensure thread-safe map and slice operations.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None

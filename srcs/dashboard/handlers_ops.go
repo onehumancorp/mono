@@ -294,8 +294,7 @@ func (s *Server) handlePipelineStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // Summary: ScaleRequest defines the payload for scaling a team member role.
-// Intent: Structure for POST /api/v1/scale.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -377,8 +376,7 @@ func (s *Server) handleScale(w http.ResponseWriter, r *http.Request) {
 }
 
 // Summary: handleScaleStream streams real-time scaling trace events to the dashboard.
-// Intent: Endpoint for GET /api/v1/scale/stream.
-// Params: w, r
+// Parameters: s *Server (No Constraints)
 // Returns: None
 // Errors: None
 // Side Effects: None

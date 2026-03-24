@@ -8,8 +8,7 @@ import (
 )
 
 // Summary: Handlers bundles auth + user-management HTTP handlers around a Store.
-// Intent: Handlers bundles auth + user-management HTTP handlers around a Store.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -18,8 +17,7 @@ type Handlers struct {
 }
 
 // Summary: NewHandlers creates an HTTP handler bundle backed by the given store.
-// Intent: NewHandlers creates an HTTP handler bundle backed by the given store.
-// Params: store
+// Parameters: store *Store (No Constraints)
 // Returns: *Handlers
 // Errors: None
 // Side Effects: None
@@ -41,8 +39,7 @@ type loginResponse struct {
 }
 
 // Summary: HandleLogin validates credentials and returns a signed JWT.  	POST /api/auth/login  {"username":"…","password":"…"}
-// Intent: HandleLogin validates credentials and returns a signed JWT.  	POST /api/auth/login  {"username":"…","password":"…"}
-// Params: w, r
+// Parameters: h *Handlers (No Constraints)
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -84,8 +81,7 @@ func (h *Handlers) HandleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 // Summary: HandleLogout revokes the caller's token.  	POST /api/auth/logout
-// Intent: HandleLogout revokes the caller's token.  	POST /api/auth/logout
-// Params: w, r
+// Parameters: h *Handlers (No Constraints)
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -102,8 +98,7 @@ func (h *Handlers) HandleLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 // Summary: HandleMe returns the currently authenticated user.  	GET /api/auth/me
-// Intent: HandleMe returns the currently authenticated user.  	GET /api/auth/me
-// Params: w, r
+// Parameters: h *Handlers (No Constraints)
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -148,8 +143,7 @@ type updateUserRequest struct {
 }
 
 // Summary: HandleUsers handles listing and creation of users.  	GET  /api/users   → list all users (admin only) 	POST /api/users   → create user   (admin only)
-// Intent: HandleUsers handles listing and creation of users.  	GET  /api/users   → list all users (admin only) 	POST /api/users   → create user   (admin only)
-// Params: w, r
+// Parameters: h *Handlers (No Constraints)
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -193,8 +187,7 @@ func (h *Handlers) HandleUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 // Summary: HandleUser handles fetching, updating and deleting a single user by ID.  	GET    /api/users/{id} 	PUT    /api/users/{id} 	DELETE /api/users/{id}
-// Intent: HandleUser handles fetching, updating and deleting a single user by ID.  	GET    /api/users/{id} 	PUT    /api/users/{id} 	DELETE /api/users/{id}
-// Params: w, r
+// Parameters: h *Handlers (No Constraints)
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -272,8 +265,7 @@ type createRoleRequest struct {
 }
 
 // Summary: HandleRoles handles listing and creation of roles.  	GET  /api/roles   → list roles (authenticated) 	POST /api/roles   → create role (admin only)
-// Intent: HandleRoles handles listing and creation of roles.  	GET  /api/roles   → list roles (authenticated) 	POST /api/roles   → create role (admin only)
-// Params: w, r
+// Parameters: h *Handlers (No Constraints)
 // Returns: None
 // Errors: None
 // Side Effects: None

@@ -6,8 +6,7 @@ import (
 )
 
 // Summary: FederatedAgent defines the structure for an agent in a federated multi-cluster environment.
-// Intent: FederatedAgent defines the structure for an agent in a federated multi-cluster environment.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -19,8 +18,7 @@ type FederatedAgent struct {
 }
 
 // Summary: FederatedRegistry holds the federated agents across the global organization.
-// Intent: FederatedRegistry holds the federated agents across the global organization.
-// Params: None
+// Parameters: None
 // Returns: None
 // Errors: None
 // Side Effects: None
@@ -30,8 +28,7 @@ type FederatedRegistry struct {
 }
 
 // Summary: NewFederatedRegistry creates a new registry.
-// Intent: NewFederatedRegistry creates a new registry.
-// Params: None
+// Parameters: None
 // Returns: *FederatedRegistry
 // Errors: None
 // Side Effects: None
@@ -42,8 +39,7 @@ func NewFederatedRegistry() *FederatedRegistry {
 }
 
 // Summary: RegisterAgent adds a new federated agent to the registry.
-// Intent: RegisterAgent adds a new federated agent to the registry.
-// Params: agent FederatedAgent
+// Parameters: r *FederatedRegistry (No Constraints)
 // Returns: error
 // Errors: Returns error if agent already exists or home cluster is empty.
 // Side Effects: Modifies the registry map.
@@ -66,8 +62,7 @@ func (r *FederatedRegistry) RegisterAgent(agent FederatedAgent) error {
 }
 
 // Summary: GetAgent retrieves a federated agent from the registry.
-// Intent: GetAgent retrieves a federated agent from the registry.
-// Params: agentID string
+// Parameters: r *FederatedRegistry (No Constraints)
 // Returns: FederatedAgent, bool
 // Errors: None
 // Side Effects: None
@@ -80,8 +75,7 @@ func (r *FederatedRegistry) GetAgent(agentID string) (FederatedAgent, bool) {
 }
 
 // Summary: UpdateAgentStatus updates the status of an existing agent.
-// Intent: UpdateAgentStatus updates the status of an existing agent.
-// Params: agentID, status
+// Parameters: r *FederatedRegistry (No Constraints)
 // Returns: error
 // Errors: Returns error if agent is not found.
 // Side Effects: Modifies the agent's status in the registry.

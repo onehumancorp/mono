@@ -44,9 +44,8 @@ func ExtractSPIFFEID(ctx context.Context) (string, error) {
 
 // SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
 // Summary: SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
-// Intent: SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
-// Params: None
-// Returns: value
+// Parameters: None
+// Returns: Explicit success/failure
 // Errors: None
 // Side Effects: None
 func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
@@ -151,9 +150,8 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 
 // SPIFFEStreamInterceptor validates SPIFFE IDs for streaming gRPC calls.
 // Summary: SPIFFEStreamInterceptor validates SPIFFE IDs for streaming gRPC calls.
-// Intent: SPIFFEStreamInterceptor validates SPIFFE IDs for streaming gRPC calls.
-// Params: None
-// Returns: value
+// Parameters: None
+// Returns: Explicit success/failure
 // Errors: None
 // Side Effects: None
 func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
