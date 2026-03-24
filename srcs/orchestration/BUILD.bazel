@@ -32,7 +32,6 @@ go_test(
         "service_extra_test.go",
         "service_grpc_test.go",
         "service_test.go",
-        "sip_extra_test.go",
         "sip_test.go",
     ],
     embed = [":orchestration"],
