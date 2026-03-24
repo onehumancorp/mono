@@ -50,7 +50,7 @@ export ADMIN_PASSWORD="adminpass123"
 export VITE_BACKEND_URL="http://127.0.0.1:${PORT}"
 
 # Run vitest for the single specified test file only.
-if ! ./node_modules/vitest/vitest.mjs run --reporter=dot "${test_file}" 2>&1; then
+if ! npx vitest run --reporter=dot "${test_file}" 2>&1; then
     if [[ -n "${BACKEND_PID:-}" ]]; then
         echo "--- backend log ---"
         cat "${tmp}/backend.log" || true
