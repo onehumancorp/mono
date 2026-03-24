@@ -961,7 +961,7 @@ describe("App – navigation tabs", () => {
 
     await screen.findByText("Dynamic Scaling", { selector: 'h2' });
     expect(screen.getByText("Scale Agents")).toBeInTheDocument();
-    expect(screen.getByText("Real-Time Trace Logs")).toBeInTheDocument();
+    expect(screen.getByText("Real-Time Provisioning Logs")).toBeInTheDocument();
   });
 
 

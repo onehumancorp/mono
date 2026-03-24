@@ -3702,8 +3702,8 @@ func TestHandleScaleStream(t *testing.T) {
 	cancel() // terminate stream
 
 	body := string(buf[:n])
-	if !strings.Contains(body, "K8s Operator") {
-		t.Errorf("expected body to contain K8s Operator, got %s", body)
+	if !strings.Contains(body, "AI Workforce Manager") {
+		t.Errorf("expected body to contain AI Workforce Manager, got %s", body)
 	}
 }
 
