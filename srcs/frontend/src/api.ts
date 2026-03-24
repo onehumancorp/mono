@@ -317,7 +317,7 @@ export function decideApproval(
  * Side Effects: None
  */
 export function fetchHandoffs(): Promise<HandoffPackage[]> {
-  return getJSON<HandoffPackage[]>("/api/handoffs");
+  return authedGetJSON<HandoffPackage[]>("/api/handoffs");
 }
 /**
  * Summary: Escalates a complex task from an autonomous agent to a human manager.

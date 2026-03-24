@@ -173,14 +173,18 @@ type HandoffPackage struct {
 	CurrentState   string    `json:"currentState"`
 	Status         string    `json:"status"` // pending | acknowledged | resolved
 	CreatedAt      time.Time `json:"createdAt"`
+	ScreenshotURLs []string  `json:"screenshotUrls,omitempty"`
+	UIDiffURLs     []string  `json:"uiDiffUrls,omitempty"`
 }
 
 type handoffCreateRequest struct {
-	FromAgentID    string `json:"fromAgentId"`
-	ToHumanRole    string `json:"toHumanRole"`
-	Intent         string `json:"intent"`
-	FailedAttempts int    `json:"failedAttempts"`
-	CurrentState   string `json:"currentState"`
+	FromAgentID    string   `json:"fromAgentId"`
+	ToHumanRole    string   `json:"toHumanRole"`
+	Intent         string   `json:"intent"`
+	FailedAttempts int      `json:"failedAttempts"`
+	CurrentState   string   `json:"currentState"`
+	ScreenshotURLs []string `json:"screenshotUrls,omitempty"`
+	UIDiffURLs     []string `json:"uiDiffUrls,omitempty"`
 }
 
 // ── Agent Identity (SPIFFE/SPIRE abstraction) ─────────────────────────────────

@@ -244,6 +244,8 @@ export type HandoffPackage = {
   currentState: string;
   status: "pending" | "acknowledged" | "resolved";
   createdAt: string;
+  screenshotUrls?: string[];
+  uiDiffUrls?: string[];
 };
 
 // ── Identity Management ───────────────────────────────────────────────────────

@@ -2916,7 +2916,6 @@ describe("App - Dynamic Scaling", () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
-    delete (window as any).EventSource;
     vi.clearAllMocks();
   });
 
@@ -3307,7 +3306,7 @@ describe("App – agent chat detail view", () => {
     // No message API call
     await waitFor(() => {
       const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
-        ([url, init]: [string, RequestInit?]) => url === "/api/messages" && init?.method === "POST"
+        (args: any[]) => args[0] === "/api/messages" && args[1]?.method === "POST"
       );
       expect(calls).toHaveLength(0);
     });

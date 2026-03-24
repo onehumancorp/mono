@@ -1,5 +1,22 @@
 import "@testing-library/jest-dom/vitest";
 
+class MockEventSource {
+  onmessage: ((ev: any) => void) | null = null;
+  onerror: ((ev: any) => void) | null = null;
+  close() {}
+  constructor(url: string) {}
+}
+
+// Ensure EventSource is available globally
+Object.defineProperty(globalThis, "EventSource", {
+  value: MockEventSource,
+  writable: true,
+});
+Object.defineProperty(window, "EventSource", {
+  value: MockEventSource,
+  writable: true,
+});
+
 const backendUrl = process.env.VITE_BACKEND_URL || "http://127.0.0.1:8080";
 const originalFetch = globalThis.fetch;
 

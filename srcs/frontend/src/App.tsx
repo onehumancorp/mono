@@ -461,6 +461,28 @@ export function App() {
     }
     if (activeNav === "handoffs") {
       void fetchHandoffs().then(setHandoffList).catch(() => { });
+
+      const token = getStoredToken();
+      const url = token ? `/api/handoffs/stream?token=${encodeURIComponent(token)}` : "/api/handoffs/stream";
+      const eventSource = new EventSource(url);
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.event === "HandoffCreated" && data.handoff) {
+            setHandoffList(prev => {
+              if (prev.find(h => h.id === data.handoff.id)) return prev;
+              return [...prev, data.handoff];
+            });
+          }
+        } catch (e) {
+          // ignore parsing error
+        }
+      };
+
+      return () => {
+        eventSource.close();
+      };
     }
   }, [activeNav]);
 
@@ -1624,6 +1646,28 @@ export function App() {
                         <h4 style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", marginBottom: "0.25rem" }}>Current State</h4>
                         <p style={{ fontSize: "12px", color: "var(--text-secondary)", whiteSpace: "pre-wrap", fontFamily: "ui-monospace, monospace" }}>{handoff.currentState}</p>
                       </div>
+
+                      {handoff.screenshotUrls && handoff.screenshotUrls.length > 0 && (
+                        <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid var(--border)" }}>
+                          <h4 style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", marginBottom: "0.25rem" }}>Screenshots</h4>
+                          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                            {handoff.screenshotUrls.map((url, i) => (
+                              <img key={i} src={url} alt={`Screenshot ${i + 1}`} style={{ maxWidth: "200px", borderRadius: "4px", border: "1px solid var(--border)" }} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {handoff.uiDiffUrls && handoff.uiDiffUrls.length > 0 && (
+                        <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid var(--border)" }}>
+                          <h4 style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", marginBottom: "0.25rem" }}>UI Diffs</h4>
+                          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                            {handoff.uiDiffUrls.map((url, i) => (
+                              <img key={i} src={url} alt={`UI Diff ${i + 1}`} style={{ maxWidth: "200px", borderRadius: "4px", border: "1px solid var(--border)" }} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

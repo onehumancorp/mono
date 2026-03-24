@@ -142,6 +142,8 @@ func (s *Server) handleHandoffs(w http.ResponseWriter, r *http.Request) {
 			CurrentState:   req.CurrentState,
 			Status:         "pending",
 			CreatedAt:      now,
+			ScreenshotURLs: req.ScreenshotURLs,
+			UIDiffURLs:     req.UIDiffURLs,
 		}
 		s.mu.Lock()
 		s.handoffs = append(s.handoffs, handoff)
