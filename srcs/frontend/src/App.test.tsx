@@ -173,7 +173,7 @@ describe("App", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
 
-    await screen.findByText(/The recipient agent could not be found/i);
+    await screen.findByText(/The target agent is no longer available on the Org Chart/i);
   });
 
   it("shows friendly message when meeting room is not registered", async () => {
@@ -191,7 +191,7 @@ describe("App", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
 
-    await screen.findByText(/This virtual meeting room has been closed/i);
+    await screen.findByText(/This meeting room has expired/i);
   });
 
   it("shows friendly message when sender agent is not registered", async () => {
@@ -209,7 +209,7 @@ describe("App", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
 
-    await screen.findByText(/The sending agent is no longer active/i);
+    await screen.findByText(/The sender has been terminated or reassigned/i);
   });
 
   it("refreshes snapshot when refresh button is pressed", async () => {

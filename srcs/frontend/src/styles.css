@@ -2561,7 +2561,8 @@ select.input {
 
 .slide-approve-container.processing {
   border-color: rgba(48, 209, 88, 0.5);
-  box-shadow: 0 0 15px rgba(48, 209, 88, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 20px rgba(48, 209, 88, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: rgba(48, 209, 88, 0.1);
 }
 
 .slide-track {
@@ -2619,12 +2620,13 @@ select.input {
   color: #1a1a1a;
   cursor: grab;
   z-index: 2;
-  transition: transform 0.1s ease-out;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   touch-action: none;
 }
 
 .slide-thumb:hover {
   background: #ffffff;
+  transform: scale(1.05);
 }
 
 .slide-thumb.dragging {
@@ -2634,9 +2636,10 @@ select.input {
 }
 
 .slide-thumb.disabled {
-  opacity: 0.5;
   cursor: not-allowed;
-  background: #a0a0a0;
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0f0 100%);
+  box-shadow: 0 4px 12px rgba(48, 209, 88, 0.4);
+  transform: scale(1.1);
 }
 
 .handoff-resolved-stamp {

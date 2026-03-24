@@ -204,7 +204,9 @@ function SlideToApprove({
             onPointerCancel={handlePointerUp}
           >
             {disabled && sliderPos === maxDrag ? (
-              <span className="spinner" style={{ width: "16px", height: "16px", borderColor: "#a0a0a0", borderTopColor: "var(--accent)" }} aria-label="Loading" />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#30d158" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
             ) : (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6"></polyline>
@@ -579,13 +581,13 @@ export function App() {
     } catch (e) {
       let errMsg = e instanceof Error ? e.message : "Failed to send message";
       if (errMsg.includes("State Changed")) {
-        errMsg = "State Changed: This action has already been approved or rejected by another user.";
+        errMsg = "Conflict: Another human manager has already overridden this state. Please refresh to view the latest sequence.";
       } else if (errMsg.includes("sender agent is not registered")) {
-        errMsg = "The sending agent is no longer active. Please check the Agent Network to hire or assign a valid agent.";
+        errMsg = "Agent Missing: The sender has been terminated or reassigned. Please hire a replacement in the Agent Network.";
       } else if (errMsg.includes("recipient agent is not registered")) {
-        errMsg = "The recipient agent could not be found. They may have been removed. Please verify the Org Chart.";
+        errMsg = "Agent Missing: The target agent is no longer available on the Org Chart. Assign this task to an active worker.";
       } else if (errMsg.includes("meeting room is not registered")) {
-        errMsg = "This virtual meeting room has been closed or is invalid. Please select an active meeting.";
+        errMsg = "Invalid Context: This meeting room has expired. Please select a live room from the Virtual War Room panel.";
       }
       setError(errMsg);
       throw new Error(errMsg);
@@ -1747,7 +1749,7 @@ export function App() {
                             }).catch(err => {
                               let errMsg = err instanceof Error ? err.message : "Failed to resolve handoff";
                               if (errMsg.includes("State Changed")) {
-                                errMsg = "State Changed: This handoff has already been acknowledged or resolved.";
+                                errMsg = "Conflict: This handoff was already addressed by another manager. Refreshing state...";
                               }
                               setError(errMsg);
                             }).finally(() => {
@@ -1764,7 +1766,7 @@ export function App() {
                             }).catch(err => {
                               let errMsg = err instanceof Error ? err.message : "Failed to acknowledge handoff";
                               if (errMsg.includes("State Changed")) {
-                                errMsg = "State Changed: This handoff has already been acknowledged or resolved.";
+                                errMsg = "Conflict: This handoff was already addressed by another manager. Refreshing state...";
                               }
                               setError(errMsg);
                             }).finally(() => {
