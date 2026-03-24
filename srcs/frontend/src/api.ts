@@ -26,6 +26,14 @@ import type {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves the organizational hierarchy.
+ * Intent: Retrieves the organizational hierarchy.
+ * Params: None
+ * Returns: Promise<Organization>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchOrganization(): Promise<Organization> {
   return authedGetJSON<Organization>("/api/org");
 }
@@ -35,6 +43,14 @@ export function fetchOrganization(): Promise<Organization> {
  * @returns Promise<MeetingRoom[]>
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Retrieves the meeting rooms.
+ * Intent: Retrieves the meeting rooms.
+ * Params: None
+ * Returns: Promise<MeetingRoom[]>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function fetchMeetings(): Promise<MeetingRoom[]> {
   return authedGetJSON<MeetingRoom[]>("/api/meetings").then(normalizeMeetings);
@@ -191,6 +207,14 @@ export async function sendMessage(form: {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Hires an agent.
+ * Intent: Hires an agent.
+ * Params: name, role
+ * Returns: Promise<DashboardSnapshot>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
   return authedPostJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
 }
@@ -203,6 +227,14 @@ export function hireAgent(name: string, role: string): Promise<DashboardSnapshot
  * @returns Promise<DashboardSnapshot>
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Delegates a task to an agent.
+ * Intent: Delegates a task to an agent.
+ * Params: fromAgentId, toAgentId, content, meetingId
+ * Returns: Promise<DashboardSnapshot>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function delegateTask(
   fromAgentId: string,
@@ -224,6 +256,14 @@ export function delegateTask(
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Fires an agent.
+ * Intent: Fires an agent.
+ * Params: agentId
+ * Returns: Promise<DashboardSnapshot>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fireAgent(agentId: string): Promise<DashboardSnapshot> {
   return authedPostJSON<DashboardSnapshot>("/api/agents/fire", { agentId });
 }
@@ -233,6 +273,14 @@ export function fireAgent(agentId: string): Promise<DashboardSnapshot> {
  * @returns Promise<DomainInfo[]>
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Retrieves domains.
+ * Intent: Retrieves domains.
+ * Params: None
+ * Returns: Promise<DomainInfo[]>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function fetchDomains(): Promise<DomainInfo[]> {
   return authedGetJSON<DomainInfo[]>("/api/domains");
@@ -244,6 +292,14 @@ export function fetchDomains(): Promise<DomainInfo[]> {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves MCP tools.
+ * Intent: Retrieves MCP tools.
+ * Params: None
+ * Returns: Promise<MCPTool[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchMCPTools(): Promise<MCPTool[]> {
   return authedGetJSON<MCPTool[]>("/api/mcp/tools");
 }
@@ -253,6 +309,14 @@ export function fetchMCPTools(): Promise<MCPTool[]> {
  * @returns Promise<DashboardSnapshot>
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Seeds a scenario.
+ * Intent: Seeds a scenario.
+ * Params: scenario
+ * Returns: Promise<DashboardSnapshot>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
   return authedPostJSON<DashboardSnapshot>("/api/dev/seed", { scenario });
@@ -265,6 +329,14 @@ export function seedScenario(scenario: string): Promise<DashboardSnapshot> {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves approvals.
+ * Intent: Retrieves approvals.
+ * Params: None
+ * Returns: Promise<ApprovalRequest[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchApprovals(): Promise<ApprovalRequest[]> {
   return authedGetJSON<ApprovalRequest[]>("/api/approvals");
 }
@@ -274,6 +346,14 @@ export function fetchApprovals(): Promise<ApprovalRequest[]> {
  * @returns None
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Requests approval.
+ * Intent: Requests approval.
+ * Params: body
+ * Returns: Promise<ApprovalRequest>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function requestApproval(body: {
   agentId: string;
@@ -291,6 +371,14 @@ export function requestApproval(body: {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Decides an approval.
+ * Intent: Decides an approval.
+ * Params: approvalId, decision, decidedBy
+ * Returns: Promise<ApprovalRequest[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function decideApproval(
   approvalId: string,
   decision: "approve" | "reject",
@@ -307,6 +395,14 @@ export function decideApproval(
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves handoffs.
+ * Intent: Retrieves handoffs.
+ * Params: None
+ * Returns: Promise<HandoffPackage[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchHandoffs(): Promise<HandoffPackage[]> {
   return authedGetJSON<HandoffPackage[]>("/api/handoffs");
 }
@@ -316,6 +412,14 @@ export function fetchHandoffs(): Promise<HandoffPackage[]> {
  * @returns None
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Creates a handoff.
+ * Intent: Creates a handoff.
+ * Params: body
+ * Returns: Promise<HandoffPackage>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function createHandoff(body: {
   fromAgentId: string;
@@ -335,6 +439,14 @@ export function createHandoff(body: {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Resolves a handoff.
+ * Intent: Resolves a handoff.
+ * Params: handoffId, status
+ * Returns: Promise<HandoffPackage[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function resolveHandoff(handoffId: string, status: "acknowledged" | "resolved"): Promise<HandoffPackage[]> {
   return authedPostJSON<HandoffPackage[]>("/api/handoffs/resolve", { handoffId, status });
 }
@@ -346,6 +458,14 @@ export function resolveHandoff(handoffId: string, status: "acknowledged" | "reso
  * @returns Promise<AgentIdentity[]>
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Retrieves agent identities.
+ * Intent: Retrieves agent identities.
+ * Params: None
+ * Returns: Promise<AgentIdentity[]>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function fetchIdentities(): Promise<AgentIdentity[]> {
   return authedGetJSON<AgentIdentity[]>("/api/identities");
@@ -359,6 +479,14 @@ export function fetchIdentities(): Promise<AgentIdentity[]> {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves skill packs.
+ * Intent: Retrieves skill packs.
+ * Params: None
+ * Returns: Promise<SkillPack[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchSkillPacks(): Promise<SkillPack[]> {
   return authedGetJSON<SkillPack[]>("/api/skills");
 }
@@ -368,6 +496,14 @@ export function fetchSkillPacks(): Promise<SkillPack[]> {
  * @returns None
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Imports a skill pack.
+ * Intent: Imports a skill pack.
+ * Params: body
+ * Returns: Promise<SkillPack>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function importSkillPack(body: {
   name: string;
@@ -387,6 +523,14 @@ export function importSkillPack(body: {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves snapshots.
+ * Intent: Retrieves snapshots.
+ * Params: None
+ * Returns: Promise<OrgSnapshot[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchSnapshots(): Promise<OrgSnapshot[]> {
   return authedGetJSON<OrgSnapshot[]>("/api/snapshots");
 }
@@ -397,6 +541,14 @@ export function fetchSnapshots(): Promise<OrgSnapshot[]> {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Creates a snapshot.
+ * Intent: Creates a snapshot.
+ * Params: label
+ * Returns: Promise<OrgSnapshot>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function createSnapshot(label?: string): Promise<OrgSnapshot> {
   return authedPostJSON<OrgSnapshot>("/api/snapshots/create", { label });
 }
@@ -406,6 +558,14 @@ export function createSnapshot(label?: string): Promise<OrgSnapshot> {
  * @returns Promise<DashboardSnapshot>
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Restores a snapshot.
+ * Intent: Restores a snapshot.
+ * Params: snapshotId
+ * Returns: Promise<DashboardSnapshot>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> {
   return authedPostJSON<DashboardSnapshot>("/api/snapshots/restore", { snapshotId });
@@ -418,6 +578,14 @@ export function restoreSnapshot(snapshotId: string): Promise<DashboardSnapshot> 
  * @returns Promise<MarketplaceItem[]>
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Retrieves marketplace items.
+ * Intent: Retrieves marketplace items.
+ * Params: None
+ * Returns: Promise<MarketplaceItem[]>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function fetchMarketplace(): Promise<MarketplaceItem[]> {
   return authedGetJSON<MarketplaceItem[]>("/api/marketplace");
@@ -450,6 +618,14 @@ import type {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves integrations.
+ * Intent: Retrieves integrations.
+ * Params: category
+ * Returns: Promise<Integration[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchIntegrations(category?: string): Promise<Integration[]> {
   const q = category ? `?category=${category}` : "";
   return authedGetJSON<Integration[]>(`/api/integrations${q}`);
@@ -460,6 +636,14 @@ export function fetchIntegrations(category?: string): Promise<Integration[]> {
  * @returns None
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Connects an integration.
+ * Intent: Connects an integration.
+ * Params: integrationId, baseUrl, botToken, chatId, webhookUrl, apiToken
+ * Returns: Promise<Integration>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function connectIntegration(
   integrationId: string,
@@ -487,6 +671,14 @@ export function connectIntegration(
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Disconnects an integration.
+ * Intent: Disconnects an integration.
+ * Params: integrationId
+ * Returns: Promise<Integration>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function disconnectIntegration(integrationId: string): Promise<Integration> {
   return authedPostJSON<Integration>("/api/integrations/disconnect", { integrationId });
 }
@@ -496,6 +688,14 @@ export function disconnectIntegration(integrationId: string): Promise<Integratio
  * @returns None
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Tests chat integration.
+ * Intent: Tests chat integration.
+ * Params: integrationId, botToken, chatId, webhookUrl, apiToken
+ * Returns: Promise<{ success: boolean }>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function testChatIntegration(
   integrationId: string,
@@ -513,6 +713,14 @@ export function testChatIntegration(
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves chat messages.
+ * Intent: Retrieves chat messages.
+ * Params: integrationId
+ * Returns: Promise<ChatMessage[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return authedGetJSON<ChatMessage[]>(`/api/integrations/chat/messages${q}`);
@@ -523,6 +731,14 @@ export function fetchChatMessages(integrationId?: string): Promise<ChatMessage[]
  * @returns None
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Sends a chat message.
+ * Intent: Sends a chat message.
+ * Params: body
+ * Returns: Promise<ChatMessage>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function sendChatMessage(body: {
   integrationId: string;
@@ -540,6 +756,14 @@ export function sendChatMessage(body: {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves pull requests.
+ * Intent: Retrieves pull requests.
+ * Params: integrationId
+ * Returns: Promise<PullRequest[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return authedGetJSON<PullRequest[]>(`/api/integrations/git/prs${q}`);
@@ -550,6 +774,14 @@ export function fetchPullRequests(integrationId?: string): Promise<PullRequest[]
  * @returns None
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Creates a pull request.
+ * Intent: Creates a pull request.
+ * Params: body
+ * Returns: Promise<PullRequest>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function createPullRequest(body: {
   integrationId: string;
@@ -569,6 +801,14 @@ export function createPullRequest(body: {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Merges a pull request.
+ * Intent: Merges a pull request.
+ * Params: prId
+ * Returns: Promise<PullRequest>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function mergePullRequest(prId: string): Promise<PullRequest> {
   return authedPostJSON<PullRequest>("/api/integrations/git/pr/merge", { prId });
 }
@@ -578,6 +818,14 @@ export function mergePullRequest(prId: string): Promise<PullRequest> {
  * @returns Promise<PullRequest>
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Closes a pull request.
+ * Intent: Closes a pull request.
+ * Params: prId
+ * Returns: Promise<PullRequest>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function closePullRequest(prId: string): Promise<PullRequest> {
   return authedPostJSON<PullRequest>("/api/integrations/git/pr/close", { prId });
@@ -589,6 +837,14 @@ export function closePullRequest(prId: string): Promise<PullRequest> {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves issues.
+ * Intent: Retrieves issues.
+ * Params: integrationId
+ * Returns: Promise<Issue[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchIssues(integrationId?: string): Promise<Issue[]> {
   const q = integrationId ? `?integrationId=${integrationId}` : "";
   return authedGetJSON<Issue[]>(`/api/integrations/issues${q}`);
@@ -599,6 +855,14 @@ export function fetchIssues(integrationId?: string): Promise<Issue[]> {
  * @returns None
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Creates an issue.
+ * Intent: Creates an issue.
+ * Params: body
+ * Returns: Promise<Issue>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function createIssue(body: {
   integrationId: string;
@@ -619,6 +883,14 @@ export function createIssue(body: {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Updates an issue status.
+ * Intent: Updates an issue status.
+ * Params: issueId, status
+ * Returns: Promise<Issue>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function updateIssueStatus(issueId: string, status: string): Promise<Issue> {
   return authedPostJSON<Issue>("/api/integrations/issues/status", { issueId, status });
 }
@@ -630,6 +902,14 @@ export function updateIssueStatus(issueId: string, status: string): Promise<Issu
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Assigns an issue.
+ * Intent: Assigns an issue.
+ * Params: issueId, assignee
+ * Returns: Promise<Issue>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
   return authedPostJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
 }
@@ -639,6 +919,22 @@ export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
  * @returns None
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Invokes an MCP tool.
+ * Intent: Invokes an MCP tool.
+ * Params: toolId, action, params
+ * Returns: Promise<Record<string, unknown>>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Invokes an MCP tool.
+ * Intent: Invokes an MCP tool.
+ * Params: toolId, action, params
+ * Returns: Promise<Record<string, unknown>>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function invokeMCPTool(
   toolId: string,
@@ -654,6 +950,22 @@ export function invokeMCPTool(
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves settings.
+ * Intent: Retrieves settings.
+ * Params: None
+ * Returns: Promise<Settings>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
+/**
+ * Summary: Retrieves settings.
+ * Intent: Retrieves settings.
+ * Params: None
+ * Returns: Promise<Settings>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchSettings(): Promise<Settings> {
   return authedGetJSON<Settings>("/api/settings");
 }
@@ -663,6 +975,14 @@ export function fetchSettings(): Promise<Settings> {
  * @returns Promise<Settings>
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Saves settings.
+ * Intent: Saves settings.
+ * Params: settings
+ * Returns: Promise<Settings>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function saveSettings(settings: Settings): Promise<Settings> {
   return authedPostJSON<Settings>("/api/settings", settings);
@@ -678,6 +998,14 @@ const TOKEN_KEY = "ohc_token";
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Gets stored token.
+ * Intent: Gets stored token.
+ * Params: None
+ * Returns: string | null
+ * Errors: None
+ * Side Effects: None
+ */
 export function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -688,6 +1016,14 @@ export function getStoredToken(): string | null {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Sets stored token.
+ * Intent: Sets stored token.
+ * Params: token
+ * Returns: None
+ * Errors: None
+ * Side Effects: None
+ */
 export function setStoredToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
 }
@@ -697,6 +1033,14 @@ export function setStoredToken(token: string): void {
  * @returns void
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Clears stored token.
+ * Intent: Clears stored token.
+ * Params: None
+ * Returns: None
+ * Errors: None
+ * Side Effects: None
  */
 export function clearStoredToken(): void {
   localStorage.removeItem(TOKEN_KEY);
@@ -759,6 +1103,14 @@ async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Authenticates a user and retrieves a JWT token.
+ * Intent: Authenticates a user and retrieves a JWT token.
+ * Params: username, password
+ * Returns: Promise<LoginResponse>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export async function login(username: string, password: string): Promise<LoginResponse> {
   const resp = await fetch("/api/auth/login", {
     method: "POST",
@@ -780,6 +1132,14 @@ export async function login(username: string, password: string): Promise<LoginRe
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Invalidates the current session and clears the stored authentication token.
+ * Intent: Invalidates the current session and clears the stored authentication token.
+ * Params: None
+ * Returns: Promise<void>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export async function logout(): Promise<void> {
   try {
     await authedPostJSON<void>("/api/auth/logout", {});
@@ -794,6 +1154,14 @@ export async function logout(): Promise<void> {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves current user.
+ * Intent: Retrieves current user.
+ * Params: None
+ * Returns: Promise<UserPublic>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchMe(): Promise<UserPublic> {
   return authedGetJSON<UserPublic>("/api/auth/me");
 }
@@ -804,6 +1172,14 @@ export function fetchMe(): Promise<UserPublic> {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves all users.
+ * Intent: Retrieves all users.
+ * Params: None
+ * Returns: Promise<UserPublic[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchUsers(): Promise<UserPublic[]> {
   return authedGetJSON<UserPublic[]>("/api/users");
 }
@@ -813,6 +1189,14 @@ export function fetchUsers(): Promise<UserPublic[]> {
  * @returns None
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Creates a user.
+ * Intent: Creates a user.
+ * Params: body
+ * Returns: Promise<UserPublic>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function createUser(body: {
   username: string;
@@ -829,6 +1213,14 @@ export function createUser(body: {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Deletes an existing user account from the system.
+ * Intent: Deletes an existing user account from the system.
+ * Params: id
+ * Returns: Promise<void>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export async function deleteUser(id: string): Promise<void> {
   const token = getStoredToken();
   await fetch(`/api/users/${id}`, {
@@ -843,6 +1235,14 @@ export async function deleteUser(id: string): Promise<void> {
  * @throws May throw an error
  * @remarks Side Effects: None
  */
+/**
+ * Summary: Retrieves roles.
+ * Intent: Retrieves roles.
+ * Params: None
+ * Returns: Promise<Role[]>
+ * Errors: May throw an error
+ * Side Effects: None
+ */
 export function fetchRoles(): Promise<Role[]> {
   return authedGetJSON<Role[]>("/api/roles");
 }
@@ -852,6 +1252,14 @@ export function fetchRoles(): Promise<Role[]> {
  * @returns Promise<Role>
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Creates a role.
+ * Intent: Creates a role.
+ * Params: body
+ * Returns: Promise<Role>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function createRole(body: { name: string; permissions?: string[] }): Promise<Role> {
   return authedPostJSON<Role>("/api/roles", body);
@@ -863,6 +1271,14 @@ export function createRole(body: { name: string; permissions?: string[] }): Prom
  * @returns Promise<{ status: string; role: string; count: number }>
  * @throws May throw an error
  * @remarks Side Effects: None
+ */
+/**
+ * Summary: Scales agents.
+ * Intent: Scales agents.
+ * Params: role, count
+ * Returns: Promise<{ status: string; role: string; count: number }>
+ * Errors: May throw an error
+ * Side Effects: None
  */
 export function scaleAgents(
   role: string,

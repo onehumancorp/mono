@@ -11,12 +11,24 @@ import (
 	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
+// Summary: Handles retrieving meetings.
+// Intent: Handles retrieving meetings.
+// Params: w, _
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleMeetings(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	writeJSON(w, s.hub.Meetings())
 }
 
+// Summary: Handles sending a message.
+// Intent: Handles sending a message.
+// Params: w, r
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -86,6 +98,12 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+// Summary: Handles testing chat connection.
+// Intent: Handles testing chat connection.
+// Params: w, r
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleChatTest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -115,6 +133,12 @@ func (s *Server) handleChatTest(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]bool{"success": true})
 }
 
+// Summary: Handles retrieving chat messages.
+// Intent: Handles retrieving chat messages.
+// Params: w, r
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleChatMessages(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -128,6 +152,12 @@ func (s *Server) handleChatMessages(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, msgs)
 }
 
+// Summary: Handles sending a chat message.
+// Intent: Handles sending a chat message.
+// Params: w, r
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleChatSend(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)

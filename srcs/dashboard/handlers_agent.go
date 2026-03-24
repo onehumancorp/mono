@@ -10,6 +10,12 @@ import (
 	"github.com/onehumancorp/mono/srcs/orchestration"
 )
 
+// Summary: Handles hiring a new agent.
+// Intent: Handles hiring a new agent.
+// Params: w, r
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleHireAgent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -67,6 +73,12 @@ func (s *Server) handleHireAgent(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, snapshot)
 }
 
+// Summary: Handles firing an agent.
+// Intent: Handles firing an agent.
+// Params: w, r
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleFireAgent(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -93,6 +105,12 @@ func (s *Server) handleFireAgent(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, snapshot)
 }
 
+// Summary: Handles delegating a task to an agent.
+// Intent: Handles delegating a task to an agent.
+// Params: w, r
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleDelegateTask(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -131,6 +149,12 @@ func (s *Server) handleDelegateTask(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, snapshot)
 }
 
+// Summary: Handles retrieving agent providers.
+// Intent: Handles retrieving agent providers.
+// Params: w, r
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleAgentProviders(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -139,6 +163,12 @@ func (s *Server) handleAgentProviders(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, s.agentProviderRegistry.Infos())
 }
 
+// Summary: Handles authenticating an agent provider.
+// Intent: Handles authenticating an agent provider.
+// Params: w, r
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleAgentProviderAuth(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -171,6 +201,12 @@ func (s *Server) handleAgentProviderAuth(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, infos)
 }
 
+// Summary: Handles retrieving identities.
+// Intent: Handles retrieving identities.
+// Params: w, _
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleIdentities(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
 	agents := s.hub.Agents()
@@ -191,6 +227,12 @@ func (s *Server) handleIdentities(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, identities)
 }
 
+// Summary: Handles retrieving skills.
+// Intent: Handles retrieving skills.
+// Params: w, _
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleSkills(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
 	list := append([]SkillPack(nil), s.skills...)
@@ -198,6 +240,12 @@ func (s *Server) handleSkills(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, list)
 }
 
+// Summary: Handles importing a skill.
+// Intent: Handles importing a skill.
+// Params: w, r
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleSkillImport(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -242,6 +290,12 @@ func (s *Server) handleSkillImport(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, pack)
 }
 
+// Summary: Handles retrieving snapshots.
+// Intent: Handles retrieving snapshots.
+// Params: w, _
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleSnapshots(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
 	list := append([]OrgSnapshot(nil), s.snapshots...)
@@ -249,6 +303,12 @@ func (s *Server) handleSnapshots(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, list)
 }
 
+// Summary: Handles creating a snapshot.
+// Intent: Handles creating a snapshot.
+// Params: w, r
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleSnapshotCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -309,6 +369,12 @@ func (s *Server) handleSnapshotCreate(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, snap)
 }
 
+// Summary: Handles restoring a snapshot.
+// Intent: Handles restoring a snapshot.
+// Params: w, r
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (s *Server) handleSnapshotRestore(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)

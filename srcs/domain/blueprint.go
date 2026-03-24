@@ -9,7 +9,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// RoleDefinition defines a single agent role within a Skill Blueprint.
+// Summary: RoleDefinition defines a single agent role within a Skill Blueprint.
+// Intent: RoleDefinition defines a single agent role within a Skill Blueprint.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type RoleDefinition struct {
 	ID        string   `yaml:"id" json:"id"`
 	Title     string   `yaml:"title" json:"title"`
@@ -18,13 +23,23 @@ type RoleDefinition struct {
 	ReportsTo string   `yaml:"reports_to,omitempty" json:"reports_to,omitempty"`
 }
 
-// SkillBlueprint represents a domain-specific organizational structure imported by the CEO.
+// Summary: SkillBlueprint represents a domain-specific organizational structure imported by the CEO.
+// Intent: SkillBlueprint represents a domain-specific organizational structure imported by the CEO.
+// Params: None
+// Returns: None
+// Errors: None
+// Side Effects: None
 type SkillBlueprint struct {
 	Domain string           `yaml:"domain" json:"domain"`
 	Roles  []RoleDefinition `yaml:"roles" json:"roles"`
 }
 
-// ParseBlueprint parses a JSON or YAML byte slice into a SkillBlueprint.
+// Summary: ParseBlueprint parses a JSON or YAML byte slice into a SkillBlueprint.
+// Intent: ParseBlueprint parses a JSON or YAML byte slice into a SkillBlueprint.
+// Params: data, isYAML
+// Returns: (*SkillBlueprint, error)
+// Errors: Returns an error if applicable
+// Side Effects: None
 // It also validates required fields and checks for cyclic reporting structures (DAG).
 func ParseBlueprint(data []byte, isYAML bool) (*SkillBlueprint, error) {
 	var bp SkillBlueprint
@@ -47,7 +62,12 @@ func ParseBlueprint(data []byte, isYAML bool) (*SkillBlueprint, error) {
 	return &bp, nil
 }
 
-// Validate checks for missing required fields and ensures the organizational hierarchy is a Directed Acyclic Graph (DAG).
+// Summary: Validate checks for missing required fields and ensures the organizational hierarchy is a Directed Acyclic Graph (DAG).
+// Intent: Validate checks for missing required fields and ensures the organizational hierarchy is a Directed Acyclic Graph (DAG).
+// Params: None
+// Returns: error
+// Errors: Returns an error if applicable
+// Side Effects: None
 func (b *SkillBlueprint) Validate() error {
 	if strings.TrimSpace(b.Domain) == "" {
 		return errors.New("domain is required")
@@ -115,7 +135,12 @@ func (b *SkillBlueprint) Validate() error {
 	return nil
 }
 
-// NamespaceRoles prepends a namespace to all role IDs and their reports_to fields to prevent conflicts.
+// Summary: NamespaceRoles prepends a namespace to all role IDs and their reports_to fields to prevent conflicts.
+// Intent: NamespaceRoles prepends a namespace to all role IDs and their reports_to fields to prevent conflicts.
+// Params: namespace
+// Returns: None
+// Errors: None
+// Side Effects: None
 func (b *SkillBlueprint) NamespaceRoles(namespace string) {
 	prefix := namespace + "/"
 	for i, role := range b.Roles {
