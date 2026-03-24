@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "autogen_adapter.go",
         "crewai_adapter.go",
+        "ironclaw_adapter.go",
         "openclaw_adapter.go",
         "semantickernel_adapter.go",
         "types.go",
@@ -16,6 +17,7 @@ go_library(
 go_test(
     name = "interop_test",
     srcs = [
+        "ironclaw_adapter_test.go",
         "swarm_test.go",
         "types_test.go",
     ],

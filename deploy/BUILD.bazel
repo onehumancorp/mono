@@ -1,4 +1,4 @@
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
@@ -7,6 +7,8 @@ exports_files([
     "docker-compose.yml",
     "setup_k8s.sh",
 ])
+
+# ── server image (onehumancorp/server) ────────────────────────────────────────
 
 # Package backend binary
 pkg_tar(
@@ -26,6 +28,64 @@ oci_load(
     name = "backend_load",
     image = ":backend_image",
     repo_tags = ["onehumancorp/mono-backend:bazel"],
+    visibility = ["//visibility:public"],
+)
+
+# Published as onehumancorp/server – the canonical backend server image.
+oci_image(
+    name = "server_image",
+    base = "@distroless_static",
+    entrypoint = ["/usr/local/bin/ohc"],
+    tars = [":backend_pkg"],
+)
+
+oci_load(
+    name = "server_load",
+    image = ":server_image",
+    repo_tags = ["onehumancorp/server:bazel"],
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "server_push",
+    image = ":server_image",
+    repository = "ghcr.io/onehumancorp/server",
+    visibility = ["//visibility:public"],
+)
+
+# ── agent image (onehumancorp/agent) ──────────────────────────────────────────
+# The agent image bundles the ironclaw CLI alongside the ohc server binary so
+# that any specialised AI agent container can be started from this base.
+
+pkg_tar(
+    name = "agent_pkg",
+    srcs = [
+        "//srcs/cmd/ironclaw:ironclaw",
+        "//srcs/cmd/ohc",
+    ],
+    package_dir = "/usr/local/bin",
+)
+
+oci_image(
+    name = "agent_image",
+    base = "@distroless_static",
+    # The agent container runs the ohc server; the ironclaw binary is available
+    # as a sidecar tool inside the container.
+    entrypoint = ["/usr/local/bin/ohc"],
+    tars = [":agent_pkg"],
+)
+
+oci_load(
+    name = "agent_load",
+    image = ":agent_image",
+    repo_tags = ["onehumancorp/agent:bazel"],
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "agent_push",
+    image = ":agent_image",
+    repository = "ghcr.io/onehumancorp/agent",
     visibility = ["//visibility:public"],
 )
 
@@ -65,6 +125,33 @@ oci_load(
     name = "frontend_load",
     image = ":frontend_image",
     repo_tags = ["onehumancorp/mono-frontend:bazel"],
+    visibility = ["//visibility:public"],
+)
+
+# ── ui image (onehumancorp/ui) ────────────────────────────────────────────────
+# Published as onehumancorp/ui – the canonical frontend image.
+
+oci_image(
+    name = "ui_image",
+    base = "@distroless_static",
+    entrypoint = ["/usr/local/bin/frontend"],
+    tars = [
+        ":frontend_server_pkg",
+        ":frontend_static_assets",
+    ],
+)
+
+oci_load(
+    name = "ui_load",
+    image = ":ui_image",
+    repo_tags = ["onehumancorp/ui:bazel"],
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "ui_push",
+    image = ":ui_image",
+    repository = "ghcr.io/onehumancorp/ui",
     visibility = ["//visibility:public"],
 )
 

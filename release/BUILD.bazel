@@ -1,0 +1,130 @@
+# Cross-platform release packaging for ironclaw and the ohc server binary.
+#
+# Each pkg_tar target bundles the compiled binary into a tar.gz that mirrors
+# the naming convention used by popular CLI tools:
+#
+#   ironclaw-<arch>-<vendor>-<os>[-<abi>].tar.gz
+#
+# Build a specific archive:
+#   bazelisk build //release:ironclaw-x86_64-unknown-linux-gnu.tar.gz
+#
+# Build all archives:
+#   bazelisk build //release:all_ironclaw_archives
+#
+# The GitHub Actions release workflow (`.github/workflows/release.yml`) uses
+# these targets to produce artifacts that are uploaded to GitHub Releases.
+
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+
+# ── Linux x86_64 ──────────────────────────────────────────────────────────────
+
+pkg_files(
+    name = "ironclaw_linux_amd64_files",
+    srcs = ["//srcs/cmd/ironclaw:ironclaw_linux_amd64"],
+    strip_prefix = strip_prefix.from_pkg(),
+    renames = {"//srcs/cmd/ironclaw:ironclaw_linux_amd64": "ironclaw"},
+)
+
+pkg_tar(
+    name = "ironclaw-x86_64-unknown-linux-gnu",
+    srcs = [":ironclaw_linux_amd64_files"],
+    extension = "tar.gz",
+    visibility = ["//visibility:public"],
+)
+
+# ── Linux aarch64 ─────────────────────────────────────────────────────────────
+
+pkg_files(
+    name = "ironclaw_linux_arm64_files",
+    srcs = ["//srcs/cmd/ironclaw:ironclaw_linux_arm64"],
+    strip_prefix = strip_prefix.from_pkg(),
+    renames = {"//srcs/cmd/ironclaw:ironclaw_linux_arm64": "ironclaw"},
+)
+
+pkg_tar(
+    name = "ironclaw-aarch64-unknown-linux-gnu",
+    srcs = [":ironclaw_linux_arm64_files"],
+    extension = "tar.gz",
+    visibility = ["//visibility:public"],
+)
+
+# ── macOS x86_64 (Intel) ──────────────────────────────────────────────────────
+
+pkg_files(
+    name = "ironclaw_darwin_amd64_files",
+    srcs = ["//srcs/cmd/ironclaw:ironclaw_darwin_amd64"],
+    strip_prefix = strip_prefix.from_pkg(),
+    renames = {"//srcs/cmd/ironclaw:ironclaw_darwin_amd64": "ironclaw"},
+)
+
+pkg_tar(
+    name = "ironclaw-x86_64-apple-darwin",
+    srcs = [":ironclaw_darwin_amd64_files"],
+    extension = "tar.gz",
+    visibility = ["//visibility:public"],
+)
+
+# ── macOS aarch64 (Apple Silicon) ─────────────────────────────────────────────
+
+pkg_files(
+    name = "ironclaw_darwin_arm64_files",
+    srcs = ["//srcs/cmd/ironclaw:ironclaw_darwin_arm64"],
+    strip_prefix = strip_prefix.from_pkg(),
+    renames = {"//srcs/cmd/ironclaw:ironclaw_darwin_arm64": "ironclaw"},
+)
+
+pkg_tar(
+    name = "ironclaw-aarch64-apple-darwin",
+    srcs = [":ironclaw_darwin_arm64_files"],
+    extension = "tar.gz",
+    visibility = ["//visibility:public"],
+)
+
+# ── Windows x86_64 ────────────────────────────────────────────────────────────
+
+pkg_files(
+    name = "ironclaw_windows_amd64_files",
+    srcs = ["//srcs/cmd/ironclaw:ironclaw_windows_amd64"],
+    strip_prefix = strip_prefix.from_pkg(),
+    renames = {"//srcs/cmd/ironclaw:ironclaw_windows_amd64": "ironclaw.exe"},
+)
+
+pkg_tar(
+    name = "ironclaw-x86_64-pc-windows-msvc",
+    srcs = [":ironclaw_windows_amd64_files"],
+    extension = "tar.gz",
+    visibility = ["//visibility:public"],
+)
+
+# ── Convenience alias ─────────────────────────────────────────────────────────
+# Build all platform archives in one shot.
+
+filegroup(
+    name = "all_ironclaw_archives",
+    srcs = [
+        ":ironclaw-aarch64-apple-darwin",
+        ":ironclaw-aarch64-unknown-linux-gnu",
+        ":ironclaw-x86_64-apple-darwin",
+        ":ironclaw-x86_64-pc-windows-msvc",
+        ":ironclaw-x86_64-unknown-linux-gnu",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# ── Server (ohc) cross-platform packaging ─────────────────────────────────────
+# Mirrors the ironclaw layout for the backend server binary.
+
+pkg_files(
+    name = "ohc_linux_amd64_files",
+    srcs = ["//srcs/cmd/ohc:ohc"],
+    strip_prefix = strip_prefix.from_pkg(),
+    renames = {"//srcs/cmd/ohc:ohc": "ohc"},
+)
+
+pkg_tar(
+    name = "ohc-x86_64-unknown-linux-gnu",
+    srcs = [":ohc_linux_amd64_files"],
+    extension = "tar.gz",
+    visibility = ["//visibility:public"],
+)
