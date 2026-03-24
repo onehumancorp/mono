@@ -28,7 +28,7 @@ spec:
             runAsUser: 1000
             capabilities:
               drop:
-                - ALL
+                - "ALL"
           volumeMounts:
             - name: tmp
               mountPath: /tmp

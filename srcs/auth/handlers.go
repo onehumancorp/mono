@@ -49,7 +49,7 @@ func (h *Handlers) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req loginRequest
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		jsonError(w, "invalid JSON", http.StatusBadRequest)
@@ -165,7 +165,7 @@ func (h *Handlers) HandleUsers(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 		var req createUserRequest
-		dec := json.NewDecoder(r.Body)
+		dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 		dec.DisallowUnknownFields()
 		if err := dec.Decode(&req); err != nil {
 			jsonError(w, "invalid JSON", http.StatusBadRequest)
@@ -223,7 +223,7 @@ func (h *Handlers) HandleUser(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPut:
 		var req updateUserRequest
-		dec := json.NewDecoder(r.Body)
+		dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 		dec.DisallowUnknownFields()
 		if err := dec.Decode(&req); err != nil {
 			jsonError(w, "invalid JSON", http.StatusBadRequest)
@@ -287,7 +287,7 @@ func (h *Handlers) HandleRoles(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		var req createRoleRequest
-		dec := json.NewDecoder(r.Body)
+		dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 		dec.DisallowUnknownFields()
 		if err := dec.Decode(&req); err != nil {
 			jsonError(w, "invalid JSON", http.StatusBadRequest)

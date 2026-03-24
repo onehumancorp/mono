@@ -26,7 +26,7 @@ func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		var req Settings
-		dec := json.NewDecoder(r.Body)
+		dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 		dec.DisallowUnknownFields()
 		if err := dec.Decode(&req); err != nil {
 			http.Error(w, "invalid JSON payload", http.StatusBadRequest)

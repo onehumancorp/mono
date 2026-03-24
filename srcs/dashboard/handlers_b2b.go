@@ -26,7 +26,7 @@ func (s *Server) handleApprovalRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req approvalCreateRequest
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
@@ -72,7 +72,7 @@ func (s *Server) handleApprovalDecide(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req approvalDecideRequest
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
@@ -128,7 +128,7 @@ func (s *Server) handleHandoffs(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, list)
 	case http.MethodPost:
 		var req handoffCreateRequest
-		dec := json.NewDecoder(r.Body)
+		dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 		dec.DisallowUnknownFields()
 		if err := dec.Decode(&req); err != nil {
 			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
@@ -168,7 +168,7 @@ func (s *Server) handleHandoffResolve(w http.ResponseWriter, r *http.Request) {
 		HandoffID string `json:"handoffId"`
 		Status    string `json:"status"` // acknowledged | resolved
 	}
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
@@ -234,7 +234,7 @@ func (s *Server) handleB2BHandshake(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req b2bHandshakeRequest
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
@@ -269,7 +269,7 @@ func (s *Server) handleB2BRevoke(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		AgreementID string `json:"agreementId"`
 	}
-	dec := json.NewDecoder(r.Body)
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
 		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
