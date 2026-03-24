@@ -45,6 +45,8 @@ cd "${tmp}/frontend"
 
 export ADMIN_USERNAME="admin"
 export ADMIN_PASSWORD="adminpass123"
+export ADMIN_USERNAME="admin"
+export ADMIN_PASSWORD="adminpass123"
 export VITE_BACKEND_URL="http://127.0.0.1:${PORT}"
 
 # Run vitest once (non-watch mode) with coverage.

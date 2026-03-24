@@ -15,7 +15,7 @@ import (
 	"github.com/onehumancorp/mono/srcs/orchestration"
 )
 
-func TestHandleScale(t *testing.T) {
+func TestHandleScaleExtra(t *testing.T) {
 	org := domain.Organization{ID: "test"}
 	hub := orchestration.NewHub()
 	tracker := billing.NewTracker(nil)
@@ -80,7 +80,7 @@ func TestHandleScale(t *testing.T) {
 	}
 }
 
-func TestHandleScaleStream(t *testing.T) {
+func TestHandleScaleStreamExtra(t *testing.T) {
 	org := domain.Organization{ID: "test"}
 	hub := orchestration.NewHub()
 	tracker := billing.NewTracker(nil)

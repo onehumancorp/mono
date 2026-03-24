@@ -15,7 +15,7 @@ test.beforeEach(async ({ page, request }) => {
   const data = await loginResp.json();
   const token = data.token;
 
-  const response = await request.post("http://127.0.0.1:8080/api/dev/seed", {
+  const response = await request.post("http://127.0.0.1:8080/api/dev/seed", { headers: { Authorization: "Bearer " + token }, data: { scenario: "launch-readiness" } }, {
     headers: { Authorization: "Bearer " + token },
     data: { scenario: "launch-readiness" }
   });
