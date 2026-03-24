@@ -778,7 +778,6 @@ func TestHub_Publish_UnbufferedChannel(t *testing.T) {
 		ID: "m2-1", FromAgent: "sender", ToAgent: "receiver2", Type: EventTask, Content: "fill", OccurredAt: time.Now(),
 	})
 
-
 	// Fill the channel or just let Publish run twice without draining it
 	_ = hub.Publish(Message{
 		ID:         "msg-1",
