@@ -1,24 +1,25 @@
-# Test Plan: Tool Access Control Via Spiffe
+# Test Plan: Tool Access Control via SPIFFE
 
-**Author(s):** TPM Agent
-**Status:** Ready
-**Last Updated:** 2026-03-23
+## 1. Testing Strategy
+Validate the end-to-end functionality, security boundaries, and performance constraints of the Tool Access Control via SPIFFE feature using hermetic, table-driven tests.
 
-## 1. Overview
-This test plan ensures the reliability and correctness of Tool Access Control Via Spiffe.
+## 2. Test Cases
+### 2.1 E2E Integration Test: Standard Execution Flow
+- **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
+- **Action:** Simulate an agent invoking the Tool Access Control via SPIFFE functionality.
+- **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
-## 2. Unit Tests
-- Verify that tool-access-control-via-spiffe payloads are serialized and deserialized correctly.
-- Ensure state transitions in the Orchestration Hub occur as expected.
+### 2.2 Edge Case: Strict Schema and Payload Validation
+- **Setup:** Craft an invalid payload containing unknown JSON fields.
+- **Action:** Submit the payload to the feature's API endpoint.
+- **Assertion:** Verify the request is rejected immediately via `dec.DisallowUnknownFields()` and does not crash the server.
 
-## 3. Integration Tests
-- **Database Seeding:** Use the deterministic `/api/dev/seed` endpoint to establish a known state.
-- **End-to-End Flow:** Simulate an agent invoking Tool Access Control Via Spiffe and verify that the event is correctly logged and accessible via the API.
+### 2.3 Edge Case: Memory and Resource Bounding
+- **Setup:** Simulate a high-frequency barrage of requests.
+- **Action:** Monitor the feature's map-based trackers and buffers.
+- **Assertion:** Verify memory growth remains bounded and map entries are properly deleted after resolving tracked states.
 
-## 4. Edge Case Testing
-- Test behavior when external MCP tools are unavailable (expecting graceful fallback).
-- Test retry mechanism under simulated network failure conditions.
-- Test authentication failures (missing or invalid SPIFFE IDs).
-
-## 5. Performance Criteria
-- API endpoints for Tool Access Control Via Spiffe must respond within 50ms at p95 under standard load.
+## 3. Automation & CI/CD
+- All tests must be integrated into the Bazel `//...` test suite.
+- Coverage MUST strictly exceed 95% for the corresponding Go packages.
+- Tests will utilize lightweight dependency injection for fatal exit paths (`os.Exit`).
