@@ -212,7 +212,8 @@ func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
 		h.mu.RUnlock()
 		return errors.New("sender agent is not registered")
 	}
-	if _, ok := h.agents[toAgentID]; !ok {
+	toAgent, ok := h.agents[toAgentID]
+	if !ok {
 		h.mu.RUnlock()
 		return errors.New("recipient agent is not registered")
 	}
@@ -220,7 +221,14 @@ func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
 
 	task.FromAgent = fromAgentID
 	task.ToAgent = toAgentID
-	return h.Publish(task)
+
+	err := h.Publish(task)
+	if err == nil && h.sipDB != nil {
+		go func(t Message, r string) {
+			_ = h.sipDB.DelegateMission(context.Background(), t.ID, r, t)
+		}(task, toAgent.Role)
+	}
+	return err
 }
 
 // Summary: MeetingRoom maintains a persistent, sequential transcript of inter-agent collaboration.
@@ -249,6 +257,7 @@ type Hub struct {
 	meetings      map[string]MeetingRoom
 	minimaxAPIKey string
 	subs          map[string][]chan struct{}
+	sipDB         *SIPDB
 }
 
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
@@ -261,6 +270,20 @@ func NewHub() *Hub {
 		meetings: map[string]MeetingRoom{},
 		subs:     map[string][]chan struct{}{},
 	}
+}
+
+// SetSIPDB injects a database-driven Swarm Intelligence Protocol interface.
+func (h *Hub) SetSIPDB(sipDB *SIPDB) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.sipDB = sipDB
+}
+
+// GetSIPDB retrieves the current SIP database interface.
+func (h *Hub) GetSIPDB() *SIPDB {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.sipDB
 }
 
 // Summary: RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.  Parameters:   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
@@ -278,6 +301,12 @@ func (h *Hub) RegisterAgent(agent Agent) {
 	}
 
 	h.agents[agent.ID] = agent
+
+	if h.sipDB != nil {
+		go func(a Agent) {
+			_ = h.sipDB.Heartbeat(context.Background(), a.ID, a.Role, string(a.Status))
+		}(agent)
+	}
 }
 
 // Summary: SetMinimaxAPIKey functionality.
