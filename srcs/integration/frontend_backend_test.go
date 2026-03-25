@@ -564,3 +564,75 @@ func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(v)
 }
+
+// ── Automated SDLC (Pipelines) tests ──────────────────────────────────────────
+
+func TestAutomatedSDLCPipelines(t *testing.T) {
+	srv, _ := newTestBackend(t)
+	token := loginAdmin(t, srv.URL)
+
+	// Fetch pipelines initially (should be empty).
+	resp := authedGet(t, srv.URL+"/api/pipelines", token)
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("GET /api/pipelines returned %d", resp.StatusCode)
+	}
+	var pipes []map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&pipes)
+	if len(pipes) != 0 {
+		t.Errorf("expected 0 pipelines initially, got %d", len(pipes))
+	}
+
+	// Create a new pipeline.
+	createBody := map[string]any{
+		"name":        "feat-test",
+		"branch":      "feature/test",
+		"initiatedBy": "admin",
+	}
+	createResp := authedPost(t, srv.URL+"/api/pipelines", token, createBody)
+	defer createResp.Body.Close()
+	if createResp.StatusCode != http.StatusCreated && createResp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(createResp.Body)
+		t.Fatalf("POST /api/pipelines returned %d: %s", createResp.StatusCode, b)
+	}
+
+	var created map[string]any
+	_ = json.NewDecoder(createResp.Body).Decode(&created)
+	pipeID, ok := created["id"].(string)
+	if !ok || pipeID == "" {
+		t.Fatalf("expected pipeline ID in response, got %v", created)
+	}
+
+	// Fetch pipelines again to verify it was added.
+	resp2 := authedGet(t, srv.URL+"/api/pipelines", token)
+	defer resp2.Body.Close()
+	var pipes2 []map[string]any
+	_ = json.NewDecoder(resp2.Body).Decode(&pipes2)
+	if len(pipes2) != 1 {
+		t.Errorf("expected 1 pipeline, got %d", len(pipes2))
+	}
+
+	// Update pipeline status to STAGING so it can be promoted.
+	statusBody := map[string]any{
+		"pipelineId": pipeID,
+		"status":     "STAGING",
+	}
+	statusResp := authedPost(t, srv.URL+"/api/pipelines/status", token, statusBody)
+	defer statusResp.Body.Close()
+	if statusResp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(statusResp.Body)
+		t.Fatalf("POST /api/pipelines/status returned %d: %s", statusResp.StatusCode, b)
+	}
+
+	// Promote the pipeline.
+	promoteBody := map[string]any{
+		"pipelineId": pipeID,
+		"approvedBy": "admin",
+	}
+	promoteResp := authedPost(t, srv.URL+"/api/pipelines/promote", token, promoteBody)
+	defer promoteResp.Body.Close()
+	if promoteResp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(promoteResp.Body)
+		t.Fatalf("POST /api/pipelines/promote returned %d: %s", promoteResp.StatusCode, b)
+	}
+}

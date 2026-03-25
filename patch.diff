@@ -1,0 +1,39 @@
+<<<<<<< SEARCH
+	// Promote the pipeline.
+	promoteBody := map[string]any{
+		"pipelineId": pipeID,
+		"approvedBy": "admin",
+	}
+	promoteResp := authedPost(t, srv.URL+"/api/pipelines/promote", token, promoteBody)
+	defer promoteResp.Body.Close()
+	if promoteResp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(promoteResp.Body)
+		t.Fatalf("POST /api/pipelines/promote returned %d: %s", promoteResp.StatusCode, b)
+	}
+}
+=======
+	// Update pipeline status to STAGING so it can be promoted.
+	statusBody := map[string]any{
+		"pipelineId": pipeID,
+		"status":     "STAGING",
+	}
+	statusResp := authedPost(t, srv.URL+"/api/pipelines/status", token, statusBody)
+	defer statusResp.Body.Close()
+	if statusResp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(statusResp.Body)
+		t.Fatalf("POST /api/pipelines/status returned %d: %s", statusResp.StatusCode, b)
+	}
+
+	// Promote the pipeline.
+	promoteBody := map[string]any{
+		"pipelineId": pipeID,
+		"approvedBy": "admin",
+	}
+	promoteResp := authedPost(t, srv.URL+"/api/pipelines/promote", token, promoteBody)
+	defer promoteResp.Body.Close()
+	if promoteResp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(promoteResp.Body)
+		t.Fatalf("POST /api/pipelines/promote returned %d: %s", promoteResp.StatusCode, b)
+	}
+}
+>>>>>>> REPLACE
