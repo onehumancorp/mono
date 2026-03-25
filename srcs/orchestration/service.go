@@ -237,6 +237,7 @@ type Hub struct {
 	subs          map[string][]chan struct{}
 	sipDB         *SIPDB
 	tokenTrackers map[string]struct{}
+	autoCorTrack  map[string]struct{}
 	eventLogChan  chan interface{}
 }
 
@@ -250,6 +251,7 @@ func NewHub() *Hub {
 		meetings:      map[string]MeetingRoom{},
 		subs:          map[string][]chan struct{}{},
 		tokenTrackers: map[string]struct{}{},
+		autoCorTrack:  map[string]struct{}{},
 		eventLogChan:  make(chan interface{}, 100),
 	}
 	go h.eventLogWorker()
@@ -333,6 +335,71 @@ func (h *Hub) TokenEfficientContextSummarization(eventID, agentID string, payloa
 		"type":               "TokenEfficientContextSummarization",
 		"summarized_context": summarizedContext,
 	}
+
+	return nil
+}
+
+// ToolParameterAutoCorrection securely processes tool parameter auto-correction.
+//
+// Parameters:
+//   - eventID: string; Unique event identifier.
+//   - agentID: string; Identifier of the invoking agent.
+//   - payload: []byte; The operation payload containing tool parameters.
+//
+// Returns:
+//   - error: Error object if validation or processing fails.
+func (h *Hub) ToolParameterAutoCorrection(eventID, agentID string, payload []byte) error {
+	h.mu.Lock()
+	if _, exists := h.autoCorTrack[eventID]; exists {
+		h.mu.Unlock()
+		return errors.New("event already being processed")
+	}
+	h.autoCorTrack[eventID] = struct{}{}
+	h.mu.Unlock()
+
+	defer func() {
+		h.mu.Lock()
+		delete(h.autoCorTrack, eventID)
+		h.mu.Unlock()
+	}()
+
+	var temp map[string]interface{}
+	dec := json.NewDecoder(bytes.NewReader(payload))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&temp); err != nil {
+		return fmt.Errorf("invalid payload: %w", err)
+	}
+
+	corrected := false
+	for k, v := range temp {
+		if strVal, ok := v.(string); ok {
+			var intVal int
+			if _, err := fmt.Sscanf(strVal, "%d", &intVal); err == nil {
+				// To ensure it's purely numerical without any extra characters, check if fmt.Sprintf back matches.
+				if fmt.Sprintf("%d", intVal) == strVal {
+					temp[k] = intVal
+					corrected = true
+				}
+			}
+		}
+	}
+
+	tempBytes, _ := json.Marshal(temp)
+
+	// Create protobuf event representing the autocoorection
+	pbEvent := pb.ToolParameterAutoCorrectionEvent_builder{
+		EventId: eventID,
+		AgentId: agentID,
+		Payload: tempBytes,
+	}.Build()
+
+	h.LogEvent(map[string]interface{}{
+		"event_id":  pbEvent.GetEventId(),
+		"agent_id":  pbEvent.GetAgentId(),
+		"type":      "ToolParameterAutoCorrection",
+		"payload":   temp,
+		"corrected": corrected,
+	})
 
 	return nil
 }

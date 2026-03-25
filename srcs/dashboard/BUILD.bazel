@@ -10,6 +10,7 @@ go_library(
         "handlers_ops.go",
         "handlers_org.go",
         "server.go",
+        "tenant.go",
     ],
     importpath = "github.com/onehumancorp/mono/srcs/dashboard",
     visibility = ["//visibility:public"],
@@ -35,6 +36,7 @@ go_test(
         "server_missing_test.go",
         "server_rate_limit_test.go",
         "server_test.go",
+        "tenant_test.go",
     ],
     embed = [":dashboard"],
     deps = [
