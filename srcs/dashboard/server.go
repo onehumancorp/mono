@@ -612,6 +612,9 @@ func (s *Server) handleMCPRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Enforce a strict 1MB limit on tool payloads to prevent DOS via massive JSON strings.
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+
 	var req mcpRegisterRequest
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()

@@ -109,3 +109,24 @@ func TestHandleMCPInvokeCoverage(t *testing.T) {
 		}
 	})
 }
+
+func TestHandleMCPRegisterCoverage(t *testing.T) {
+	org := domain.NewSoftwareCompany("test-org", "Test", "CEO", time.Now())
+	hub := orchestration.NewHub()
+	tracker := billing.NewTracker(billing.DefaultCatalog)
+	authStore := auth.NewStore()
+
+	srv := &Server{org: org, hub: hub, tracker: tracker, authStore: authStore}
+
+	t.Run("large payload", func(t *testing.T) {
+		largeStr := strings.Repeat("a", 2<<20)
+		req := httptest.NewRequest("POST", "/api/mcp/tools/register", strings.NewReader(`{"tool": {"id": "dummy", "name": "dummy"}, "spiffeId": "spiffe://onehumancorp.io/org-1/`+largeStr+`"}`))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		srv.handleMCPRegister(w, req)
+		// Should fail due to MaxBytesReader
+		if w.Code != http.StatusBadRequest && w.Code != http.StatusRequestEntityTooLarge {
+			t.Errorf("expected 400 or 413, got %d", w.Code)
+		}
+	})
+}
