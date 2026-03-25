@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"regexp"
 	"sort"
 	"sync"
 	"time"
@@ -20,6 +21,19 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+var (
+	emailRegex = regexp.MustCompile(`[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`)
+	phoneRegex = regexp.MustCompile(`\b\d{3}[-.]?\d{3}[-.]?\d{4}\b`)
+	ssnRegex   = regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`)
+)
+
+func redactPII(input string) string {
+	s := emailRegex.ReplaceAllString(input, "[REDACTED_EMAIL]")
+	s = phoneRegex.ReplaceAllString(s, "[REDACTED_PHONE]")
+	s = ssnRegex.ReplaceAllString(s, "[REDACTED_SSN]")
+	return s
+}
 
 // Status indicates the current operational phase of an AI agent within the workforce.
 // Accepts no parameters.
@@ -312,7 +326,7 @@ func (h *Hub) TokenEfficientContextSummarization(eventID, agentID string, payloa
 	}
 
 	client := NewMinimaxClient(h.MinimaxAPIKey())
-	prompt := fmt.Sprintf("Summarize the following context efficiently to save tokens: %s", temp.Context)
+	prompt := fmt.Sprintf("Summarize the following context efficiently to save tokens: %s", redactPII(temp.Context))
 	summarizedContext, err := client.Reason(context.Background(), prompt)
 	if err != nil {
 		return fmt.Errorf("summarization failed: %w", err)
@@ -515,7 +529,7 @@ func (h *Hub) Publish(message Message) error {
 				client := NewMinimaxClient(h.MinimaxAPIKey())
 				prompt := "Extract and summarize ONLY the exact parameters, architectural decisions, and required next steps from this transcript. Discard all conversational filler, pleasantries, and non-actionable text. Output MUST be an ultra-dense, bulleted technical brief optimized for minimal token footprint:\n"
 				for _, msg := range transcript {
-					prompt += "- " + msg.FromAgent + ": " + msg.Content + "\n"
+					prompt += "- " + msg.FromAgent + ": " + redactPII(msg.Content) + "\n"
 				}
 
 				summary, err := client.Reason(ctx, prompt)
