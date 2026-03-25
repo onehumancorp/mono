@@ -227,6 +227,7 @@ export type HandoffPackage = {
   intent: string;
   failedAttempts: number;
   currentState: string;
+  visualGroundTruth?: string;
   status: "pending" | "acknowledged" | "resolved";
   createdAt: string;
 };

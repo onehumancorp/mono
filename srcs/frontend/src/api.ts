@@ -427,6 +427,7 @@ export function createHandoff(body: {
   intent: string;
   failedAttempts?: number;
   currentState?: string;
+  visualGroundTruth?: string;
 }): Promise<HandoffPackage> {
   return authedPostJSON<HandoffPackage>("/api/handoffs", body);
 }

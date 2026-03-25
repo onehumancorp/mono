@@ -164,14 +164,15 @@ func (s *Server) handleHandoffs(w http.ResponseWriter, r *http.Request) {
 		}
 		now := time.Now().UTC()
 		handoff := HandoffPackage{
-			ID:             s.org.ID + "-handoff-" + now.Format("20060102150405000"),
-			FromAgentID:    req.FromAgentID,
-			ToHumanRole:    req.ToHumanRole,
-			Intent:         req.Intent,
-			FailedAttempts: req.FailedAttempts,
-			CurrentState:   req.CurrentState,
-			Status:         "pending",
-			CreatedAt:      now,
+			ID:                s.org.ID + "-handoff-" + now.Format("20060102150405000"),
+			FromAgentID:       req.FromAgentID,
+			ToHumanRole:       req.ToHumanRole,
+			Intent:            req.Intent,
+			FailedAttempts:    req.FailedAttempts,
+			CurrentState:      req.CurrentState,
+			VisualGroundTruth: req.VisualGroundTruth,
+			Status:            "pending",
+			CreatedAt:         now,
 		}
 		s.mu.Lock()
 		s.handoffs = append(s.handoffs, handoff)

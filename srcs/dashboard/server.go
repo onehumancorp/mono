@@ -178,22 +178,24 @@ type approvalDecideRequest struct {
 // Errors: None
 // Side Effects: None
 type HandoffPackage struct {
-	ID             string    `json:"id"`
-	FromAgentID    string    `json:"fromAgentId"`
-	ToHumanRole    string    `json:"toHumanRole"`
-	Intent         string    `json:"intent"`
-	FailedAttempts int       `json:"failedAttempts"`
-	CurrentState   string    `json:"currentState"`
-	Status         string    `json:"status"` // pending | acknowledged | resolved
-	CreatedAt      time.Time `json:"createdAt"`
+	ID                string    `json:"id"`
+	FromAgentID       string    `json:"fromAgentId"`
+	ToHumanRole       string    `json:"toHumanRole"`
+	Intent            string    `json:"intent"`
+	FailedAttempts    int       `json:"failedAttempts"`
+	CurrentState      string    `json:"currentState"`
+	VisualGroundTruth string    `json:"visualGroundTruth,omitempty"`
+	Status            string    `json:"status"` // pending | acknowledged | resolved
+	CreatedAt         time.Time `json:"createdAt"`
 }
 
 type handoffCreateRequest struct {
-	FromAgentID    string `json:"fromAgentId"`
-	ToHumanRole    string `json:"toHumanRole"`
-	Intent         string `json:"intent"`
-	FailedAttempts int    `json:"failedAttempts"`
-	CurrentState   string `json:"currentState"`
+	FromAgentID       string `json:"fromAgentId"`
+	ToHumanRole       string `json:"toHumanRole"`
+	Intent            string `json:"intent"`
+	FailedAttempts    int    `json:"failedAttempts"`
+	CurrentState      string `json:"currentState"`
+	VisualGroundTruth string `json:"visualGroundTruth,omitempty"`
 }
 
 // ── Agent Identity (SPIFFE/SPIRE abstraction) ─────────────────────────────────
