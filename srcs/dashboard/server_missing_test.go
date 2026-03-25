@@ -598,6 +598,20 @@ func TestHandleMCPInvokeUnknownTool(t *testing.T) {
 	}
 }
 
+func TestHandleMCPInvokeInvalidSPIFFEID(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	reqBody := `{"toolId":"dummy-tool", "spiffeId":"spiffe://evil-hacker.com/agent/1"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/mcp/tools/invoke", strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.handleMCPInvoke(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected 403 for invalid SPIFFE ID, got %d", rec.Code)
+	}
+}
+
 func TestHandleMCPInvokeWithNilParams(t *testing.T) {
 	app, _, _ := newTestServer(t)
 	// Add a dummy tool to bypass the unknown tool check for testing nil params specifically
