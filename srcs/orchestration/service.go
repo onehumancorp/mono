@@ -237,7 +237,7 @@ type Hub struct {
 	subs          map[string][]chan struct{}
 	sipDB         *SIPDB
 	tokenTrackers map[string]struct{}
-	eventLogChan  chan map[string]interface{}
+	eventLogChan  chan interface{}
 }
 
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
@@ -250,7 +250,7 @@ func NewHub() *Hub {
 		meetings:      map[string]MeetingRoom{},
 		subs:          map[string][]chan struct{}{},
 		tokenTrackers: map[string]struct{}{},
-		eventLogChan:  make(chan map[string]interface{}, 100),
+		eventLogChan:  make(chan interface{}, 100),
 	}
 	go h.eventLogWorker()
 	return h
@@ -275,6 +275,15 @@ func (h *Hub) eventLogWorker() {
 		if _, err := f.Write(b); err != nil {
 			slog.Error("failed to write to events.jsonl", "error", err)
 		}
+	}
+}
+
+// LogEvent queues an event to be written sequentially to events.jsonl via the background worker.
+func (h *Hub) LogEvent(event interface{}) {
+	select {
+	case h.eventLogChan <- event:
+	default:
+		slog.Warn("eventLogChan is full, dropping event")
 	}
 }
 
