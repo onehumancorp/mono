@@ -3850,6 +3850,24 @@ func TestHandleMCPRegister_Errors(t *testing.T) {
 		}
 	})
 
+	t.Run("Payload Too Large (DoS Protection)", func(t *testing.T) {
+		// Generate a payload larger than 1MB
+		largePayload := make([]byte, 1024*1024+10)
+		for i := range largePayload {
+			largePayload[i] = 'a'
+		}
+
+		req, _ := http.NewRequest(http.MethodPost, server.URL+"/api/mcp/tools/register", bytes.NewReader(largePayload))
+		req.Header.Set("Content-Type", "application/json")
+		resp, _ := client.Do(req)
+		defer resp.Body.Close()
+
+		// http.MaxBytesReader will cause the decoder to fail, resulting in a Bad Request
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("expected status %d, got %d", http.StatusBadRequest, resp.StatusCode)
+		}
+	})
+
 	t.Run("Missing Tool ID and Name", func(t *testing.T) {
 		payload := map[string]interface{}{
 			"spiffeId": "spiffe://onehumancorp.io/agent/test",
