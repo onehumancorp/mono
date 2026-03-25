@@ -51,6 +51,81 @@ func TestExtractSPIFFEID_MissingPeer(t *testing.T) {
 	}
 }
 
+func TestSPIFFEAuthInterceptor_MissingSlash(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+	ctx := mockSPIFFEContext("spiffe://onehumancorpiowithoutslahesha")
+
+	_, err := interceptor(ctx, nil, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+		return nil, nil
+	})
+
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	st, ok := status.FromError(err)
+	if !ok || st.Code() != codes.PermissionDenied {
+		t.Errorf("expected PermissionDenied, got %v", err)
+	}
+}
+
+func TestSPIFFEAuthInterceptor_EscapeDotDot(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+	ctx := mockSPIFFEContext("spiffe://onehumancorp.io/../org-1/agent-1")
+
+	_, err := interceptor(ctx, nil, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+		return nil, nil
+	})
+
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	st, ok := status.FromError(err)
+	if !ok || st.Code() != codes.PermissionDenied {
+		t.Errorf("expected PermissionDenied, got %v", err)
+	}
+}
+
+func TestSPIFFEAuthInterceptor_EscapeDoubleSlash(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+	ctx := mockSPIFFEContext("spiffe://onehumancorp.io//org-1/agent-1")
+
+	_, err := interceptor(ctx, nil, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+		return nil, nil
+	})
+
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	st, ok := status.FromError(err)
+	if !ok || st.Code() != codes.PermissionDenied {
+		t.Errorf("expected PermissionDenied, got %v", err)
+	}
+}
+
+func TestSPIFFEAuthInterceptor_DelegateTask(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+	ctx := mockSPIFFEContext("spiffe://onehumancorp.io/org-1/attacker-agent")
+
+	req := pb.DelegateTaskRequest_builder{
+		FromAgentId: "target-agent",
+	}.Build()
+
+	_, err := interceptor(ctx, req, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+		return nil, nil
+	})
+
+	if err == nil {
+		t.Fatal("expected error due to spoofing")
+	}
+	st, ok := status.FromError(err)
+	if !ok || st.Code() != codes.PermissionDenied {
+		t.Errorf("expected PermissionDenied, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "cannot delegate task as agent target-agent") {
+		t.Errorf("expected spoofing error message, got %v", err)
+	}
+}
+
 func TestSPIFFEAuthInterceptor_MissingID(t *testing.T) {
 	interceptor := SPIFFEAuthInterceptor()
 	ctx := context.Background()
@@ -315,6 +390,20 @@ func TestSPIFFEAuthInterceptor_OHCLocalDomain(t *testing.T) {
 			expectedErr: true,
 			errCode:     codes.PermissionDenied,
 		},
+		{
+			name:        "Global Domain - Short Path org",
+			spiffeID:    "spiffe://ohc.global/org/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name:        "Global Domain - Not agent",
+			spiffeID:    "spiffe://ohc.global/org/org-1/user/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
 	}
 
 	for _, tc := range tests {
@@ -374,6 +463,27 @@ func TestSPIFFEAuthInterceptor_OHCOSDomain(t *testing.T) {
 		{
 			name:        "Spoofing OHC OS Domain",
 			spiffeID:    "spiffe://ohc.os/agent/attacker-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name:        "Local Domain - Not org prefix",
+			spiffeID:    "spiffe://ohc.local/user/org-1/agent/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name:        "Local Domain - Not agent",
+			spiffeID:    "spiffe://ohc.local/org/org-1/user/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name:        "Local Domain - Short path",
+			spiffeID:    "spiffe://ohc.local/org/agent-1",
 			reqAgentID:  "agent-1",
 			expectedErr: true,
 			errCode:     codes.PermissionDenied,
@@ -466,6 +576,13 @@ func TestSPIFFEAuthInterceptor_OHCGlobalDomain(t *testing.T) {
 			expectedErr: true,
 			errCode:     codes.PermissionDenied,
 		},
+		{
+			name:        "OS Domain - Not agent prefix",
+			spiffeID:    "spiffe://ohc.os/user/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
 	}
 
 	for _, tc := range tests {
@@ -532,6 +649,38 @@ func TestSPIFFEStreamInterceptor(t *testing.T) {
 		errMsg      string
 	}{
 		{
+			name: "Stream %2f encoded slash",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://onehumancorp.io/org-1%2fagent-1")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name: "Stream Double Slash",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://onehumancorp.io//org-1/agent-1")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name: "Stream Dot Dot",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://onehumancorp.io/../org-1/agent-1")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name: "Stream Missing Slash",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://onehumancorpiowithoutslahesha")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
 			name: "Missing SPIFFE ID",
 			setupCtx: func() context.Context {
 				return context.Background()
@@ -592,6 +741,22 @@ func TestSPIFFEStreamInterceptor(t *testing.T) {
 			errMsg:      "invalid SPIFFE ID path structure for domain ohc.local",
 		},
 		{
+			name: "ohc.local short path",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://ohc.local/org/agent-1")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name: "ohc.local not org prefix",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://ohc.local/user/org-1/agent/agent-1")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
 			name: "Valid ohc.os Domain",
 			setupCtx: func() context.Context {
 				return mockSPIFFEContext("spiffe://ohc.os/agent/agent-1")
@@ -607,6 +772,14 @@ func TestSPIFFEStreamInterceptor(t *testing.T) {
 			expectedErr: true,
 			errCode:     codes.PermissionDenied,
 			errMsg:      "invalid SPIFFE ID path structure for domain ohc.os",
+		},
+		{
+			name: "ohc.os not agent prefix",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://ohc.os/user/agent-1")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
 		},
 		{
 			name: "Valid ohc.global Domain",
@@ -632,6 +805,22 @@ func TestSPIFFEStreamInterceptor(t *testing.T) {
 			expectedErr: true,
 			errCode:     codes.PermissionDenied,
 			errMsg:      "invalid SPIFFE ID path structure",
+		},
+		{
+			name: "ohc.global short path",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://ohc.global/org/agent-1")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name: "ohc.global not org prefix",
+			setupCtx: func() context.Context {
+				return mockSPIFFEContext("spiffe://ohc.global/user/org-1/agent/agent-1")
+			},
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
 		},
 		{
 			name: "Unsupported Trust Domain",
