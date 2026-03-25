@@ -236,8 +236,9 @@ type Hub struct {
 	minimaxAPIKey string
 	subs          map[string][]chan struct{}
 	sipDB         *SIPDB
-	tokenTrackers map[string]struct{}
-	eventLogChan  chan map[string]interface{}
+	tokenTrackers          map[string]struct{}
+	eventLogChan           chan map[string]interface{}
+	episodicMemoryTrackers map[string]struct{}
 }
 
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
@@ -245,12 +246,13 @@ type Hub struct {
 // Returns An instantiated *Hub ready to register agents and route events.
 func NewHub() *Hub {
 	h := &Hub{
-		agents:        map[string]Agent{},
-		inbox:         map[string][]Message{},
-		meetings:      map[string]MeetingRoom{},
-		subs:          map[string][]chan struct{}{},
-		tokenTrackers: map[string]struct{}{},
-		eventLogChan:  make(chan map[string]interface{}, 100),
+		agents:                 map[string]Agent{},
+		inbox:                  map[string][]Message{},
+		meetings:               map[string]MeetingRoom{},
+		subs:                   map[string][]chan struct{}{},
+		tokenTrackers:          map[string]struct{}{},
+		eventLogChan:           make(chan map[string]interface{}, 100),
+		episodicMemoryTrackers: map[string]struct{}{},
 	}
 	go h.eventLogWorker()
 	return h
@@ -323,6 +325,44 @@ func (h *Hub) TokenEfficientContextSummarization(eventID, agentID string, payloa
 		"agent_id":           agentID,
 		"type":               "TokenEfficientContextSummarization",
 		"summarized_context": summarizedContext,
+	}
+
+	return nil
+}
+
+// StatefulEpisodicMemory processes stateful episodic memory events, ensuring minimal overhead and bounded growth.
+func (h *Hub) StatefulEpisodicMemory(eventID, agentID string, payload []byte) error {
+	h.mu.Lock()
+	if _, exists := h.episodicMemoryTrackers[eventID]; exists {
+		h.mu.Unlock()
+		return errors.New("event already being processed")
+	}
+	h.episodicMemoryTrackers[eventID] = struct{}{}
+	h.mu.Unlock()
+
+	// Ensure bounded memory growth by explicitly deleting map entries upon completion.
+	defer func() {
+		h.mu.Lock()
+		delete(h.episodicMemoryTrackers, eventID)
+		h.mu.Unlock()
+	}()
+
+	// Ensure strict JSON validation via dec.DisallowUnknownFields() when decoding related payloads.
+	var genericPayload struct {
+		Action string `json:"action"`
+		State  string `json:"state"`
+	}
+	dec := json.NewDecoder(bytes.NewReader(payload))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&genericPayload); err != nil {
+		return fmt.Errorf("invalid payload schema: %w", err)
+	}
+
+	h.eventLogChan <- map[string]interface{}{
+		"event_id": eventID,
+		"agent_id": agentID,
+		"type":     "StatefulEpisodicMemory",
+		"payload":  genericPayload,
 	}
 
 	return nil
@@ -784,6 +824,20 @@ func (s *HubServiceServer) DelegateTask(ctx context.Context, req *pb.DelegateTas
 	}
 
 	return pb.DelegateTaskResponse_builder{Success: true}.Build(), nil
+}
+
+// StatefulEpisodicMemory functionality.
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns (*pb.StatefulEpisodicMemoryResponse, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *HubServiceServer) StatefulEpisodicMemory(ctx context.Context, req *pb.StatefulEpisodicMemoryEvent) (*pb.StatefulEpisodicMemoryResponse, error) {
+	err := s.hub.StatefulEpisodicMemory(req.GetEventId(), req.GetAgentId(), req.GetPayload())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "stateful episodic memory failed: %v", err)
+	}
+
+	return pb.StatefulEpisodicMemoryResponse_builder{Success: true}.Build(), nil
 }
 
 // StreamMessages functionality.

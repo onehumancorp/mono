@@ -1148,3 +1148,81 @@ func TestSPIFFEStreamInterceptor_CoverageGaps(t *testing.T) {
 		})
 	}
 }
+
+func TestSPIFFEAuthInterceptor_StatefulEpisodicMemoryEvent_Valid(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+
+	req := pb.StatefulEpisodicMemoryEvent_builder{
+		EventId: "event-1",
+		AgentId: "agent-1",
+		Payload: []byte("{}"),
+	}.Build()
+
+	info := &grpc.UnaryServerInfo{FullMethod: "/test.Service/Method"}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "success", nil
+	}
+
+	// Valid SPIFFE SVID for agent-1
+	ctx := peer.NewContext(context.Background(), &peer.Peer{
+		AuthInfo: credentials.TLSInfo{
+			State: tls.ConnectionState{
+				PeerCertificates: []*x509.Certificate{
+					{
+						URIs: []*url.URL{
+							{Scheme: "spiffe", Host: "onehumancorp.io", Path: "/agent/agent-1"},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	resp, err := interceptor(ctx, req, info, handler)
+	if err != nil {
+		t.Fatalf("expected success, got error: %v", err)
+	}
+	if resp != "success" {
+		t.Fatalf("expected 'success', got %v", resp)
+	}
+}
+
+func TestSPIFFEAuthInterceptor_StatefulEpisodicMemoryEvent_Spoofing(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+
+	// Requesting to access memory for agent-2
+	req := pb.StatefulEpisodicMemoryEvent_builder{
+		EventId: "event-1",
+		AgentId: "agent-2",
+		Payload: []byte("{}"),
+	}.Build()
+
+	info := &grpc.UnaryServerInfo{FullMethod: "/test.Service/Method"}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "success", nil
+	}
+
+	// But authenticated as agent-1
+	ctx := peer.NewContext(context.Background(), &peer.Peer{
+		AuthInfo: credentials.TLSInfo{
+			State: tls.ConnectionState{
+				PeerCertificates: []*x509.Certificate{
+					{
+						URIs: []*url.URL{
+							{Scheme: "spiffe", Host: "onehumancorp.io", Path: "/agent/agent-1"},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	_, err := interceptor(ctx, req, info, handler)
+	if err == nil {
+		t.Fatalf("expected permission denied error for spoofing")
+	}
+	st, ok := status.FromError(err)
+	if !ok || st.Code() != codes.PermissionDenied {
+		t.Fatalf("expected PermissionDenied, got %v", err)
+	}
+}

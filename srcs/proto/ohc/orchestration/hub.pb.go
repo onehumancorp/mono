@@ -238,6 +238,44 @@ func (b TokenEfficientContextSummarizationEvent_builder) Build() *TokenEfficient
 	}
 }
 
+// ─── StatefulEpisodicMemoryEvent ─────────────────────────────────────────────
+
+type StatefulEpisodicMemoryEvent struct {
+	eventId string
+	agentId string
+	payload []byte
+}
+
+func (e *StatefulEpisodicMemoryEvent) GetEventId() string { return e.eventId }
+func (e *StatefulEpisodicMemoryEvent) GetAgentId() string { return e.agentId }
+func (e *StatefulEpisodicMemoryEvent) GetPayload() []byte { return e.payload }
+
+type StatefulEpisodicMemoryEvent_builder struct {
+	EventId string
+	AgentId string
+	Payload []byte
+}
+
+func (b StatefulEpisodicMemoryEvent_builder) Build() *StatefulEpisodicMemoryEvent {
+	return &StatefulEpisodicMemoryEvent{
+		eventId: b.EventId,
+		agentId: b.AgentId,
+		payload: b.Payload,
+	}
+}
+
+// ─── StatefulEpisodicMemoryResponse ──────────────────────────────────────────
+
+type StatefulEpisodicMemoryResponse struct{ success bool }
+
+func (r *StatefulEpisodicMemoryResponse) GetSuccess() bool { return r.success }
+
+type StatefulEpisodicMemoryResponse_builder struct{ Success bool }
+
+func (b StatefulEpisodicMemoryResponse_builder) Build() *StatefulEpisodicMemoryResponse {
+	return &StatefulEpisodicMemoryResponse{success: b.Success}
+}
+
 // ─── StreamMessagesRequest ───────────────────────────────────────────────────
 
 type StreamMessagesRequest struct{ agentId string }
@@ -315,6 +353,7 @@ type HubServiceServer interface {
 	StreamMessages(*StreamMessagesRequest, HubService_StreamMessagesServer) error
 	Reason(context.Context, *ReasonRequest) (*ReasonResponse, error)
 	DelegateSubTask(context.Context, *SubTask) (*DelegateTaskResponse, error)
+	StatefulEpisodicMemory(context.Context, *StatefulEpisodicMemoryEvent) (*StatefulEpisodicMemoryResponse, error)
 	mustEmbedUnimplementedHubServiceServer()
 }
 
@@ -341,6 +380,9 @@ func (UnimplementedHubServiceServer) Reason(context.Context, *ReasonRequest) (*R
 }
 func (UnimplementedHubServiceServer) DelegateSubTask(context.Context, *SubTask) (*DelegateTaskResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DelegateSubTask not implemented")
+}
+func (UnimplementedHubServiceServer) StatefulEpisodicMemory(context.Context, *StatefulEpisodicMemoryEvent) (*StatefulEpisodicMemoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StatefulEpisodicMemory not implemented")
 }
 func (UnimplementedHubServiceServer) mustEmbedUnimplementedHubServiceServer() {}
 
@@ -389,6 +431,10 @@ var HubService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "DelegateSubTask",
 			Handler:    _HubService_DelegateSubTask_Handler,
 		},
+		{
+			MethodName: "StatefulEpisodicMemory",
+			Handler:    _HubService_StatefulEpisodicMemory_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -411,6 +457,21 @@ func _HubService_RegisterAgent_Handler(srv interface{}, ctx context.Context, dec
 	info := &grpc.UnaryServerInfo{Server: srv, FullMethod: "/ohc.orchestration.HubService/RegisterAgent"}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(HubServiceServer).RegisterAgent(ctx, req.(*RegisterAgentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HubService_StatefulEpisodicMemory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StatefulEpisodicMemoryEvent)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HubServiceServer).StatefulEpisodicMemory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{Server: srv, FullMethod: "/ohc.orchestration.HubService/StatefulEpisodicMemory"}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HubServiceServer).StatefulEpisodicMemory(ctx, req.(*StatefulEpisodicMemoryEvent))
 	}
 	return interceptor(ctx, in, info, handler)
 }

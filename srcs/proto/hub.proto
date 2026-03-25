@@ -77,6 +77,16 @@ message TokenEfficientContextSummarizationEvent {
   bytes payload = 3;
 }
 
+message StatefulEpisodicMemoryEvent {
+  string event_id = 1;
+  string agent_id = 2;
+  bytes payload = 3;
+}
+
+message StatefulEpisodicMemoryResponse {
+  bool success = 1;
+}
+
 message StreamMessagesRequest {
   string agent_id = 1;
 }
@@ -97,4 +107,5 @@ service HubService {
   rpc StreamMessages(StreamMessagesRequest) returns (stream Message);
   rpc Reason(ReasonRequest) returns (ReasonResponse);
   rpc DelegateSubTask(SubTask) returns (DelegateTaskResponse);
+  rpc StatefulEpisodicMemory(StatefulEpisodicMemoryEvent) returns (StatefulEpisodicMemoryResponse);
 }

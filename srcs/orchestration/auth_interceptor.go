@@ -148,6 +148,11 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			if agentID != reqFromAgent {
 				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot delegate task as agent %s", spiffeID, reqFromAgent)
 			}
+		case *pb.StatefulEpisodicMemoryEvent:
+			reqAgentID := v.GetAgentId()
+			if agentID != reqAgentID {
+				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot access memory as agent %s", spiffeID, reqAgentID)
+			}
 		}
 
 		return handler(ctx, req)
