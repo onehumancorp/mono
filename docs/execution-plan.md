@@ -19,12 +19,12 @@ This document breaks down the Strategic Roadmap into discrete, parallelizable ta
   * **Owner:** SWE Agent (Backend)
   * **Description:** Build the ingestion mechanism to parse `SkillBlueprint.yaml` files, validate schemas, and perform Directed Acyclic Graph (DAG) checks on reporting lines.
   * **Dependencies:** None.
-  * **Status:** Ready
+  * **Status:** Complete
 * **Task 1.2: Dynamic Organization Generation (K8s CRDs)**
   * **Owner:** DevOps Agent
   * **Description:** Update the `ohc-operator` to dynamically instantiate `RoleProfile` and `TeamMember` Custom Resource Definitions based on ingested blueprints.
   * **Dependencies:** Task 1.1
-  * **Status:** Blocked
+  * **Status:** Ready
 * **Task 1.3: Dynamic Scaling UI ("Hire/Fire")**
   * **Owner:** Frontend Agent
   * **Description:** Build a real-time React component in the CEO Dashboard that allows replica count adjustments for newly generated roles.
@@ -41,12 +41,12 @@ This document breaks down the Strategic Roadmap into discrete, parallelizable ta
   * **Owner:** SWE Agent (Backend)
   * **Description:** Build the `LangGraphCheckpointer` struct in Go, connecting it to the persistent PostgreSQL backend to store and retrieve agent thread states.
   * **Dependencies:** None.
-  * **Status:** Ready
+  * **Status:** Complete
 * **Task 2.2: Implement Semantic Distillation Worker**
   * **Owner:** SWE Agent (Data/ML)
   * **Description:** Create an asynchronous background worker that distills older checkpoints into semantic summaries and stores them as vector embeddings.
   * **Dependencies:** Task 2.1
-  * **Status:** Blocked
+  * **Status:** Ready
 * **Task 2.3: Integrate Multimodal LLM Endpoints**
   * **Owner:** SWE Agent (Backend)
   * **Description:** Update the central orchestration hub to support sending image payloads alongside text prompts to capable external LLM providers.
