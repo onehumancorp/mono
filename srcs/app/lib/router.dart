@@ -123,7 +123,7 @@ class _Sidebar extends StatelessWidget {
         _NavItem(icon: Icons.extension, label: 'Skills', path: '/skills'),
         _NavItem(icon: Icons.security, label: 'Security', path: '/security'),
         _NavItem(icon: Icons.terminal, label: 'Logs', path: '/logs'),
-        const Spacer(),
+        const SizedBox(height: 8),
         _NavItem(icon: Icons.settings, label: 'Settings', path: '/settings'),
         const SizedBox(height: 16),
       ],
