@@ -5,14 +5,14 @@
 **Success Metrics:** Task completion latency under 50ms, zero unauthorized access, and complete observability via the event log.
 
 ## 1. User Journey Overview
-When an AI agent or human operator needs to execute a task involving Multimodal Tool Payloads, the system seamlessly provisions the necessary context, authenticates the request via SPIFFE, and processes the operation without breaking the established Zero-Lock toolchain or risking context bloat.
+When an agent calls a tool that requires both text parameters and an image (e.g., uploading a receipt for expense tracking), the system seamlessly handles the multipart payload without serialization errors.
 
 ## 2. Detailed Step-by-Step Breakdown
 | Step | Action | System Trigger | Resulting State | Verification |
 |------|--------|----------------|-----------------|--------------|
 | 1 | Action initiated by Agent/User | API call to Orchestration Hub | Request queued | Database Check |
 | 2 | SPIFFE Authentication | Gateway verifies `AuthRole` | Request authorized | Log Check |
-| 3 | Core Processing | The Multimodal Tool Payloads logic is executed | Operation completed | DB Check |
+| 3 | Core Processing | The workflow integrates Multimodal Tool Payloads securely | Operation completed | DB Check |
 | 4 | Audit & Telemetry | Result appended to `events.jsonl` | Metric logged | DB Check |
 
 ## 3. Edge Cases & Error Recovery

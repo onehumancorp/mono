@@ -1,18 +1,18 @@
-# CUJ: B2B SPIFFE Federation
+# CUJ: B2b Spiffe Federation
 
 **Persona:** Autonomous Agent / Human Manager
-**Context:** Leveraging B2B SPIFFE Federation during standard operational workflows or cross-team collaboration.
+**Context:** Leveraging B2b Spiffe Federation during standard operational workflows or cross-team collaboration.
 **Success Metrics:** Task completion latency under 50ms, zero unauthorized access, and complete observability via the event log.
 
 ## 1. User Journey Overview
-When two independent OHC clusters need to collaborate, the Orchestrator initiates a SPIRE trust bundle exchange to issue federated SVIDs.
+When agents from two separate corporate entities (e.g., a vendor and a client) need to collaborate securely, they authenticate across organizational boundaries using federated SPIFFE identities.
 
 ## 2. Detailed Step-by-Step Breakdown
 | Step | Action | System Trigger | Resulting State | Verification |
 |------|--------|----------------|-----------------|--------------|
 | 1 | Action initiated by Agent/User | API call to Orchestration Hub | Request queued | Database Check |
 | 2 | SPIFFE Authentication | Gateway verifies `AuthRole` | Request authorized | Log Check |
-| 3 | Core Processing | The B2B SPIFFE Federation logic is executed | Operation completed | DB Check |
+| 3 | Core Processing | The workflow integrates B2b Spiffe Federation securely | Operation completed | DB Check |
 | 4 | Audit & Telemetry | Result appended to `events.jsonl` | Metric logged | DB Check |
 
 ## 3. Edge Cases & Error Recovery

@@ -5,7 +5,7 @@
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide Working Memory Scratchpad capabilities seamlessly across all active Swarm Agents. It utilizes LangGraph Checkpointing backed by our native Kubernetes CSI Snapshotting.
+Provides a dedicated `/scratchpad` MCP tool. The agent can read and write arbitrary JSON state to this endpoint during a single session. The state is held in fast Redis cache and explicitly purged when the LangGraph thread completes.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

@@ -5,7 +5,7 @@
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide Just In Time Tool Synthesis capabilities seamlessly across all active Swarm Agents. It utilizes LangGraph Checkpointing backed by our native Kubernetes CSI Snapshotting.
+Provides agents with a Sandboxed Execution Environment (e.g., a locked-down, network-restricted container). Agents submit code via the `/synthesize` API, which compiles the tool, registers it temporarily in the Gateway, and exposes the execution endpoint.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

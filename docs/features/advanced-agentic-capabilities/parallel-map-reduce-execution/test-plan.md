@@ -6,7 +6,7 @@ Validate the end-to-end functionality, security boundaries, and performance cons
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the Parallel Map Reduce Execution functionality.
+- **Action:** Dispatch a task requiring analysis of 1000 files. Verify that the K8s Operator spins up 10 worker pods, they process the fragments concurrently, and the final synthesized result matches the expected aggregate.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation

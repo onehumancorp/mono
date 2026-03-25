@@ -1,12 +1,12 @@
-# Test Plan: Tool Access Control Via SPIFFE
+# Test Plan: Tool Access Control Via Spiffe
 
 ## 1. Testing Strategy
-Validate the end-to-end functionality, security boundaries, and performance constraints of the Tool Access Control Via SPIFFE feature using hermetic, table-driven tests. Ensure we use the Database Seeder pattern to establish deterministic starting states.
+Validate the end-to-end functionality, security boundaries, and performance constraints of the Tool Access Control Via Spiffe feature using hermetic, table-driven tests. Ensure we use the Database Seeder pattern to establish deterministic starting states.
 
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the Tool Access Control Via SPIFFE functionality.
+- **Action:** Attempt to call the `/deploy` tool using an SVID issued to a `QA` agent. Verify the request is rejected with a 403 Forbidden and the attempt is logged to the immutable audit trail.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation

@@ -6,7 +6,7 @@ Validate the end-to-end functionality, security boundaries, and performance cons
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the Semantic Tool Search Routing functionality.
+- **Action:** Submit an intent to 'save data to a spreadsheet' when only an 'append_csv' tool exists. Verify the semantic router correctly identifies and binds the 'append_csv' tool.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation

@@ -6,7 +6,7 @@ Validate the end-to-end functionality, security boundaries, and performance cons
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the Working Memory Scratchpad functionality.
+- **Action:** Prompt an agent to calculate the Fibonacci sequence up to N=20. Verify it uses the scratchpad to store intermediate sums, completes the task successfully, and the scratchpad is cleared post-execution.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation

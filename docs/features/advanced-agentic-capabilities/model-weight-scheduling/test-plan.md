@@ -6,7 +6,7 @@ Validate the end-to-end functionality, security boundaries, and performance cons
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the Model Weight Scheduling functionality.
+- **Action:** Queue tasks requiring two different 70B models on a single GPU node. Verify the system efficiently unloads Model A, loads Model B, and executes the second task without crashing the inference server.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation

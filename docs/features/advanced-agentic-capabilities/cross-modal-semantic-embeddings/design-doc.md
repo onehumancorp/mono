@@ -5,7 +5,7 @@
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide Cross Modal Semantic Embeddings capabilities seamlessly across all active Swarm Agents. It utilizes LangGraph Checkpointing backed by our native Kubernetes CSI Snapshotting.
+Integrates an external Vision-Language Model (VLM) via the MCP Gateway. The image bytes and text are projected into a shared latent space, allowing the semantic vector search engine to retrieve multimodal checkpoints seamlessly.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

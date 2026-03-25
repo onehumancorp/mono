@@ -5,14 +5,14 @@
 **Success Metrics:** Task completion latency under 50ms, zero unauthorized access, and complete observability via the event log.
 
 ## 1. User Journey Overview
-When an AI agent or human operator needs to execute a task involving Shared Organizational Memory Bank, the system seamlessly provisions the necessary context, authenticates the request via SPIFFE, and processes the operation without breaking the established Zero-Lock toolchain or risking context bloat.
+When a new agent is onboarded to a project, it instantly gains access to the collective knowledge, decisions, and past code reviews of all other agents in the organization, preventing redundant work.
 
 ## 2. Detailed Step-by-Step Breakdown
 | Step | Action | System Trigger | Resulting State | Verification |
 |------|--------|----------------|-----------------|--------------|
 | 1 | Action initiated by Agent/User | API call to Orchestration Hub | Request queued | Database Check |
 | 2 | SPIFFE Authentication | Gateway verifies `AuthRole` | Request authorized | Log Check |
-| 3 | Core Processing | The Shared Organizational Memory Bank logic is executed | Operation completed | DB Check |
+| 3 | Core Processing | The workflow integrates Shared Organizational Memory Bank securely | Operation completed | DB Check |
 | 4 | Audit & Telemetry | Result appended to `events.jsonl` | Metric logged | DB Check |
 
 ## 3. Edge Cases & Error Recovery

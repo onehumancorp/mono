@@ -5,7 +5,7 @@
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide Diagram Auto Generation capabilities seamlessly across all active Swarm Agents. It utilizes LangGraph Checkpointing backed by our native Kubernetes CSI Snapshotting.
+The Orchestration Hub includes a post-processing interceptor that parses agent output for structured system descriptions. It dynamically constructs Mermaid markdown blocks and embeds them into the final `events.jsonl` payload for the frontend to render.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

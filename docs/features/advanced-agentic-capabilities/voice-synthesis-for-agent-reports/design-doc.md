@@ -5,7 +5,7 @@
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide Voice Synthesis For Agent Reports capabilities seamlessly across all active Swarm Agents. It utilizes LangGraph Checkpointing backed by our native Kubernetes CSI Snapshotting.
+Integrates an edge-based Text-to-Speech (TTS) engine. Upon completion of specific high-priority tasks, the generated summary text is routed to the TTS service, which outputs an audio stream that is pushed to the Dashboard via Server-Sent Events (SSE).
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

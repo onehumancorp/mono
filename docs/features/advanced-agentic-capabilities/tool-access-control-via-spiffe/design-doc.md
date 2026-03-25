@@ -1,11 +1,11 @@
-# Design Document: Tool Access Control Via SPIFFE
+# Design Document: Tool Access Control Via Spiffe
 
 ## 1. Executive Summary
-**Objective:** Architect and implement Tool Access Control Via SPIFFE to empower autonomous agents and human operators.
+**Objective:** Architect and implement Tool Access Control Via Spiffe to empower autonomous agents and human operators.
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide Tool Access Control Via SPIFFE capabilities seamlessly across all active Swarm Agents. It utilizes LangGraph Checkpointing backed by our native Kubernetes CSI Snapshotting.
+Enforces Zero-Trust at the MCP layer. Every tool invocation requires an X.509 SVID. The Gateway extracts the URI SAN (e.g., `spiffe://onehumancorp.io/agent/swe-1`) and cross-references it against the RBAC policies defined in the K8s CRDs.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

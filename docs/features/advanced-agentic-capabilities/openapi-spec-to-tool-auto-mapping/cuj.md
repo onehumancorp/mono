@@ -1,18 +1,18 @@
-# CUJ: OpenAPI Spec To Tool Auto Mapping
+# CUJ: Openapi Spec To Tool Auto Mapping
 
 **Persona:** Autonomous Agent / Human Manager
-**Context:** Leveraging OpenAPI Spec To Tool Auto Mapping during standard operational workflows or cross-team collaboration.
+**Context:** Leveraging Openapi Spec To Tool Auto Mapping during standard operational workflows or cross-team collaboration.
 **Success Metrics:** Task completion latency under 50ms, zero unauthorized access, and complete observability via the event log.
 
 ## 1. User Journey Overview
-When an AI agent or human operator needs to execute a task involving OpenAPI Spec To Tool Auto Mapping, the system seamlessly provisions the necessary context, authenticates the request via SPIFFE, and processes the operation without breaking the established Zero-Lock toolchain or risking context bloat.
+When integrating a new SaaS product, a developer simply provides the OpenAPI (Swagger) specification URL. The system automatically parses the spec and registers every endpoint as a fully-typed MCP tool for immediate agent use.
 
 ## 2. Detailed Step-by-Step Breakdown
 | Step | Action | System Trigger | Resulting State | Verification |
 |------|--------|----------------|-----------------|--------------|
 | 1 | Action initiated by Agent/User | API call to Orchestration Hub | Request queued | Database Check |
 | 2 | SPIFFE Authentication | Gateway verifies `AuthRole` | Request authorized | Log Check |
-| 3 | Core Processing | The OpenAPI Spec To Tool Auto Mapping logic is executed | Operation completed | DB Check |
+| 3 | Core Processing | The workflow integrates Openapi Spec To Tool Auto Mapping securely | Operation completed | DB Check |
 | 4 | Audit & Telemetry | Result appended to `events.jsonl` | Metric logged | DB Check |
 
 ## 3. Edge Cases & Error Recovery

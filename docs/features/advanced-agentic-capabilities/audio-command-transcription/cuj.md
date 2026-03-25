@@ -5,14 +5,14 @@
 **Success Metrics:** Task completion latency under 50ms, zero unauthorized access, and complete observability via the event log.
 
 ## 1. User Journey Overview
-When an AI agent or human operator needs to execute a task involving Audio Command Transcription, the system seamlessly provisions the necessary context, authenticates the request via SPIFFE, and processes the operation without breaking the established Zero-Lock toolchain or risking context bloat.
+When a human CEO issues a complex verbal command via the mobile dashboard, the system transcribes the audio with high fidelity, preserving technical jargon and intent before passing it to the Orchestration Hub.
 
 ## 2. Detailed Step-by-Step Breakdown
 | Step | Action | System Trigger | Resulting State | Verification |
 |------|--------|----------------|-----------------|--------------|
 | 1 | Action initiated by Agent/User | API call to Orchestration Hub | Request queued | Database Check |
 | 2 | SPIFFE Authentication | Gateway verifies `AuthRole` | Request authorized | Log Check |
-| 3 | Core Processing | The Audio Command Transcription logic is executed | Operation completed | DB Check |
+| 3 | Core Processing | The workflow integrates Audio Command Transcription securely | Operation completed | DB Check |
 | 4 | Audit & Telemetry | Result appended to `events.jsonl` | Metric logged | DB Check |
 
 ## 3. Edge Cases & Error Recovery

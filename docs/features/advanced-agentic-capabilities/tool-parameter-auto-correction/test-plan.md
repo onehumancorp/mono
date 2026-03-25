@@ -6,7 +6,7 @@ Validate the end-to-end functionality, security boundaries, and performance cons
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the Tool Parameter Auto Correction functionality.
+- **Action:** Submit a tool call expecting an integer with a string representation. Verify the Gateway auto-corrects the type, executes the tool, and logs the correction event.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation

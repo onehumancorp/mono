@@ -5,7 +5,7 @@
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide Hierarchical Memory Retrieval capabilities seamlessly across all active Swarm Agents. It utilizes LangGraph Checkpointing backed by our native Kubernetes CSI Snapshotting.
+Combines Postgres relational querying with pgvector. The initial query filters the `checkpoints` table using B-Tree indexes on `project_id` and `timestamp`, restricting the costly semantic cosine-similarity search to a much smaller subset of candidate rows.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

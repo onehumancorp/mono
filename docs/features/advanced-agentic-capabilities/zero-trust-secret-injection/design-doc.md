@@ -5,7 +5,7 @@
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide Zero Trust Secret Injection capabilities seamlessly across all active Swarm Agents. It utilizes LangGraph Checkpointing backed by our native Kubernetes CSI Snapshotting.
+Integrates with Kubernetes Secrets or HashiCorp Vault. The MCP Gateway fetches the required secret just-in-time during tool execution, injecting it as an environment variable in the isolated worker pod. The secret is completely obfuscated from the agent's LLM context window.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

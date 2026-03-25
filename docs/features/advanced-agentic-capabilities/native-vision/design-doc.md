@@ -5,7 +5,7 @@
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Utilizes local visual encoders integrated with the MCP gateway to process byte streams and return structured spatial coordinates and bounding boxes. Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide Native Vision capabilities seamlessly across all active Swarm Agents.
+Integrates directly with local VLMs (e.g., LLaVA) deployed on GPU nodes within the K8s cluster. The MCP Gateway routes image byte arrays directly to the inference server, ensuring maximum privacy and zero egress latency.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

@@ -6,7 +6,7 @@ Validate the end-to-end functionality, security boundaries, and performance cons
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the Shared Organizational Memory Bank functionality.
+- **Action:** Agent A (Backend Dept) solves a specific database locking issue. Agent B (Backend Dept) encounters a similar issue days later. Verify Agent B successfully queries the shared memory bank and retrieves Agent A's exact solution.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation

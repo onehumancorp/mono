@@ -1,12 +1,12 @@
-# Test Plan: OpenAPI Spec To Tool Auto Mapping
+# Test Plan: Openapi Spec To Tool Auto Mapping
 
 ## 1. Testing Strategy
-Validate the end-to-end functionality, security boundaries, and performance constraints of the OpenAPI Spec To Tool Auto Mapping feature using hermetic, table-driven tests. Ensure we use the Database Seeder pattern to establish deterministic starting states.
+Validate the end-to-end functionality, security boundaries, and performance constraints of the Openapi Spec To Tool Auto Mapping feature using hermetic, table-driven tests. Ensure we use the Database Seeder pattern to establish deterministic starting states.
 
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the OpenAPI Spec To Tool Auto Mapping functionality.
+- **Action:** Provide a mock OpenAPI 3.0 spec with two endpoints (GET and POST). Run the ingestion worker and verify the MCP Gateway registry is updated with two newly available, fully schema-compliant tools.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation
