@@ -71,6 +71,12 @@ message SubTask {
   string parent_thread_id = 4;
 }
 
+message TokenEfficientContextSummarizationEvent {
+  string event_id = 1;
+  string agent_id = 2;
+  bytes payload = 3;
+}
+
 message StreamMessagesRequest {
   string agent_id = 1;
 }

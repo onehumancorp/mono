@@ -212,6 +212,32 @@ func (b DelegateTaskResponse_builder) Build() *DelegateTaskResponse {
 	return &DelegateTaskResponse{success: b.Success}
 }
 
+// ─── TokenEfficientContextSummarizationEvent ───────────────────────────────────────────────────
+
+type TokenEfficientContextSummarizationEvent struct {
+	eventId string
+	agentId string
+	payload []byte
+}
+
+func (t *TokenEfficientContextSummarizationEvent) GetEventId() string { return t.eventId }
+func (t *TokenEfficientContextSummarizationEvent) GetAgentId() string { return t.agentId }
+func (t *TokenEfficientContextSummarizationEvent) GetPayload() []byte { return t.payload }
+
+type TokenEfficientContextSummarizationEvent_builder struct {
+	EventId string
+	AgentId string
+	Payload []byte
+}
+
+func (b TokenEfficientContextSummarizationEvent_builder) Build() *TokenEfficientContextSummarizationEvent {
+	return &TokenEfficientContextSummarizationEvent{
+		eventId: b.EventId,
+		agentId: b.AgentId,
+		payload: b.Payload,
+	}
+}
+
 // ─── StreamMessagesRequest ───────────────────────────────────────────────────
 
 type StreamMessagesRequest struct{ agentId string }

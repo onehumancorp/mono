@@ -2,9 +2,12 @@ package orchestration
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -962,5 +965,159 @@ func TestHubServiceServer_Publish(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestHub_TokenEfficientContextSummarization(t *testing.T) {
+	hub := NewHub()
+	agentID := "test-agent"
+	validPayload := []byte(`{"context": "some data to summarize"}`)
+	invalidPayload := []byte(`{"context": "some data", "unknown_field": "bad data"}`)
+
+	defer func() {
+		os.Remove("events.jsonl")
+	}()
+
+	tests := []struct {
+		name          string
+		eventID       string
+		payload       []byte
+		setup         func()
+		expectError   bool
+		expectedErr   string
+	}{
+		{
+			name:        "E2E Integration Test: Standard Execution Flow",
+			eventID:     "event-1",
+			payload:     validPayload,
+			setup:       func() {},
+			expectError: true,
+			expectedErr: "summarization failed: minimax API key is not configured",
+		},
+		{
+			name:        "Edge Case: Strict Schema and Payload Validation",
+			eventID:     "event-2",
+			payload:     invalidPayload,
+			setup:       func() {},
+			expectError: true,
+			expectedErr: "invalid payload",
+		},
+		{
+			name:    "Edge Case: Concurrent Execution on same eventID",
+			eventID: "event-4",
+			payload: validPayload,
+			setup: func() {
+				hub.mu.Lock()
+				hub.tokenTrackers["event-4"] = struct{}{}
+				hub.mu.Unlock()
+			},
+			expectError: true,
+			expectedErr: "event already being processed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+
+			err := hub.TokenEfficientContextSummarization(tt.eventID, agentID, tt.payload)
+
+			if tt.expectError {
+				if err == nil {
+					t.Fatalf("expected error containing %q, got nil", tt.expectedErr)
+				}
+				if tt.expectedErr != "" && !strings.Contains(err.Error(), tt.expectedErr) {
+					t.Fatalf("expected error containing %q, got %q", tt.expectedErr, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("expected success, got error: %v", err)
+				}
+
+				// Verify map entry is deleted (bounded memory growth)
+				hub.mu.RLock()
+				_, exists := hub.tokenTrackers[tt.eventID]
+				hub.mu.RUnlock()
+				if exists {
+					t.Errorf("expected map entry %q to be deleted, but it still exists", tt.eventID)
+				}
+			}
+		})
+	}
+}
+
+func TestHub_TokenEfficientContextSummarization_SuccessFlow(t *testing.T) {
+	// 1. Setup Mock Server for Minimax
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := `{
+			"choices": [
+				{
+					"message": {
+						"content": "summarized data"
+					}
+				}
+			]
+		}`
+		w.Write([]byte(response))
+	}))
+	defer ts.Close()
+
+	// Override the Minimax API URL to point to our test server
+	originalAPIURL := minimaxAPIURL
+	minimaxAPIURL = ts.URL
+	defer func() { minimaxAPIURL = originalAPIURL }()
+
+	// 2. Initialize Hub and set a fake API key
+	hub := NewHub()
+	hub.mu.Lock()
+	hub.minimaxAPIKey = "fake-key"
+	hub.mu.Unlock()
+
+	agentID := "test-agent-2"
+	eventID := "event-123"
+	payload := []byte(`{"context": "some data to summarize"}`)
+
+	defer os.Remove("events.jsonl")
+
+	// 3. Execute the function
+	err := hub.TokenEfficientContextSummarization(eventID, agentID, payload)
+	if err != nil {
+		t.Fatalf("expected success, got error: %v", err)
+	}
+
+	// Wait briefly for the background worker to write to the file
+	time.Sleep(100 * time.Millisecond)
+
+	// 4. Verify log entry was written
+	b, err := os.ReadFile("events.jsonl")
+	if err != nil {
+		t.Fatalf("failed to read events.jsonl: %v", err)
+	}
+
+	var logEntry map[string]interface{}
+	if err := json.Unmarshal(b, &logEntry); err != nil {
+		t.Fatalf("failed to unmarshal events.jsonl: %v", err)
+	}
+
+	if logEntry["event_id"] != eventID {
+		t.Errorf("expected event_id %q, got %q", eventID, logEntry["event_id"])
+	}
+	if logEntry["agent_id"] != agentID {
+		t.Errorf("expected agent_id %q, got %q", agentID, logEntry["agent_id"])
+	}
+	if logEntry["type"] != "TokenEfficientContextSummarization" {
+		t.Errorf("expected type %q, got %q", "TokenEfficientContextSummarization", logEntry["type"])
+	}
+	if logEntry["summarized_context"] != "summarized data" {
+		t.Errorf("expected summarized_context %q, got %q", "summarized data", logEntry["summarized_context"])
+	}
+
+	// Verify memory leak fix (map deletion)
+	hub.mu.RLock()
+	_, exists := hub.tokenTrackers[eventID]
+	hub.mu.RUnlock()
+	if exists {
+		t.Errorf("expected map entry %q to be deleted, but it still exists", eventID)
 	}
 }
