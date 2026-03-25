@@ -80,8 +80,9 @@ func ValidateSPIFFEID(id string) error {
 		return fmt.Errorf("untrusted SPIFFE domain: %s", u.Host)
 	}
 
-	pathSegments := strings.Split(strings.TrimPrefix(u.Path, "/"), "/")
-	if len(pathSegments) < 2 || pathSegments[0] != "agent" {
+	path := strings.TrimPrefix(u.Path, "/")
+	idx := strings.IndexByte(path, '/')
+	if idx == -1 || path[:idx] != "agent" || len(path[idx+1:]) == 0 {
 		return fmt.Errorf("invalid SPIFFE ID path structure: %s", u.Path)
 	}
 
