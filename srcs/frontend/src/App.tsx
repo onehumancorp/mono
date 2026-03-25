@@ -193,7 +193,14 @@ function SlideToApprove({
     <div className="slide-action-area">
       <div className={`slide-approve-container ${disabled && sliderPos === maxDrag ? "processing" : ""}`}>
         <div className="slide-track">
-          <span className="slide-text">{disabled && sliderPos === maxDrag ? "Processing..." : "Slide to Approve"}</span>
+          <span className="slide-text">
+            {disabled && sliderPos === maxDrag ? (
+              <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <div className="spinner" style={{ width: "16px", height: "16px", borderWidth: "2px" }} />
+                Authorizing...
+              </span>
+            ) : "Slide to Approve"}
+          </span>
           <div
             ref={sliderRef}
             className={`slide-thumb ${isDragging ? "dragging" : ""} ${disabled ? "disabled" : ""}`}
@@ -587,14 +594,14 @@ export function App() {
       setForm((f) => ({ ...f, content: "" }));
     } catch (e) {
       let errMsg = e instanceof Error ? e.message : "Failed to send message";
-      if (errMsg.includes("State Changed")) {
-        errMsg = "Conflict: Another human manager has already overridden this state. Please refresh to view the latest sequence.";
+      if (errMsg.toLowerCase().includes("conflict") || errMsg.includes("State Changed")) {
+        errMsg = "Action Required: The organizational state has shifted. Please review the updated meeting transcript before providing direction.";
       } else if (errMsg.includes("sender agent is not registered")) {
-        errMsg = "Agent Missing: The sender has been terminated or reassigned. Please hire a replacement in the Agent Network.";
+        errMsg = "Workforce Alert: The issuing agent has been decommissioned. Please re-assign this workflow to an active resource.";
       } else if (errMsg.includes("recipient agent is not registered")) {
-        errMsg = "Agent Missing: The target agent is no longer available on the Org Chart. Assign this task to an active worker.";
+        errMsg = "Workforce Alert: The assigned agent is inactive. Please hire a new resource or redirect to an active worker.";
       } else if (errMsg.includes("meeting room is not registered")) {
-        errMsg = "Invalid Context: This meeting room has expired. Please select a live room from the Virtual War Room panel.";
+        errMsg = "Context Expired: This virtual war room has been archived. Please navigate to the active meetings panel.";
       }
       setError(errMsg);
       throw new Error(errMsg);
@@ -1724,13 +1731,29 @@ export function App() {
 
                         <div className="handoff-card__section">
                           <h4 className="handoff-card__label">Current State</h4>
-                          <pre className="handoff-card__code">{handoff.currentState}</pre>
+                          {(() => {
+                            try {
+                              const parsed = JSON.parse(handoff.currentState);
+                              return (
+                                <div className="handoff-property-list">
+                                  {Object.entries(parsed).map(([key, value]) => (
+                                    <div key={key} className="handoff-property-row">
+                                      <span className="handoff-property-key">{key}</span>
+                                      <span className="handoff-property-value">{String(value)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            } catch {
+                              return <pre className="handoff-card__code">{handoff.currentState}</pre>;
+                            }
+                          })()}
                         </div>
                         {handoff.visualGroundTruth && (
                           <div className="handoff-card__section" style={{ marginTop: "1rem" }}>
                             <h4 className="handoff-card__label">Visual Ground Truth</h4>
                             {handoff.visualGroundTruth.startsWith("http") || handoff.visualGroundTruth.startsWith("data:image") ? (
-                              <img src={handoff.visualGroundTruth} alt="Visual Ground Truth" className="handoff-card__image" style={{ maxWidth: "100%", maxHeight: "400px", borderRadius: "8px", marginTop: "8px", objectFit: "contain" }} />
+                              <img src={handoff.visualGroundTruth} alt="Visual Ground Truth" className="handoff-card__image" style={{ maxWidth: "100%", maxHeight: "400px", borderRadius: "12px", marginTop: "8px", objectFit: "contain", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 4px 16px rgba(0,0,0,0.3)" }} />
                             ) : (
                               <pre className="handoff-card__code">{handoff.visualGroundTruth}</pre>
                             )}
@@ -1762,11 +1785,11 @@ export function App() {
                               return fetchHandoffs();
                             }).then(list => {
                               setHandoffList(list);
-                              setNotice("Handoff resolved and agent execution resumed.");
+                              setNotice("Direction provided. Agent operations have resumed.");
                             }).catch(err => {
                               let errMsg = err instanceof Error ? err.message : "Failed to resolve handoff";
-                              if (errMsg.includes("State Changed")) {
-                                errMsg = "Conflict: This handoff was already addressed by another manager. Refreshing state...";
+                              if (errMsg.toLowerCase().includes("conflict") || errMsg.includes("State Changed")) {
+                                errMsg = "Action Required: The organizational state has shifted. Please review the updated meeting transcript before providing direction.";
                               }
                               setError(errMsg);
                             }).finally(() => {
@@ -1779,11 +1802,11 @@ export function App() {
                               return fetchHandoffs();
                             }).then(list => {
                               setHandoffList(list);
-                              setNotice("Handoff rejected.");
+                              setNotice("Direction provided. Task has been recalled.");
                             }).catch(err => {
                               let errMsg = err instanceof Error ? err.message : "Failed to acknowledge handoff";
-                              if (errMsg.includes("State Changed")) {
-                                errMsg = "Conflict: This handoff was already addressed by another manager. Refreshing state...";
+                              if (errMsg.toLowerCase().includes("conflict") || errMsg.includes("State Changed")) {
+                                errMsg = "Action Required: The organizational state has shifted. Please review the updated meeting transcript before providing direction.";
                               }
                               setError(errMsg);
                             }).finally(() => {

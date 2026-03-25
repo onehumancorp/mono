@@ -508,12 +508,12 @@ func (h *Hub) Publish(message Message) error {
 
 		// ⚡ BOLT: [Aggressive AI Context Summarization] - Randomized Selection from Top 5
 		// Reduces token burn by summarizing transcripts when they exceed a threshold (e.g. 15 msgs)
-		if len(meeting.Transcript) > 15 && h.minimaxAPIKey != "" {
+		if len(meeting.Transcript) > 10 && h.minimaxAPIKey != "" {
 			go func(mID string, transcript []Message) {
 				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
 				client := NewMinimaxClient(h.MinimaxAPIKey())
-				prompt := "Summarize the following meeting transcript into a concise technical context for AI agents, maintaining key decisions, constraints, and assigned action items:\n"
+				prompt := "Extract and summarize ONLY the exact parameters, architectural decisions, and required next steps from this transcript. Discard all conversational filler, pleasantries, and non-actionable text. Output MUST be an ultra-dense, bulleted technical brief optimized for minimal token footprint:\n"
 				for _, msg := range transcript {
 					prompt += "- " + msg.FromAgent + ": " + msg.Content + "\n"
 				}
