@@ -1719,6 +1719,16 @@ export function App() {
                           <h4 className="handoff-card__label">Current State</h4>
                           <pre className="handoff-card__code">{handoff.currentState}</pre>
                         </div>
+                        {handoff.visualGroundTruth && (
+                          <div className="handoff-card__section" style={{ marginTop: "1rem" }}>
+                            <h4 className="handoff-card__label">Visual Ground Truth</h4>
+                            {handoff.visualGroundTruth.startsWith("http") || handoff.visualGroundTruth.startsWith("data:image") ? (
+                              <img src={handoff.visualGroundTruth} alt="Visual Ground Truth" className="handoff-card__image" style={{ maxWidth: "100%", maxHeight: "400px", borderRadius: "8px", marginTop: "8px", objectFit: "contain" }} />
+                            ) : (
+                              <pre className="handoff-card__code">{handoff.visualGroundTruth}</pre>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div className="handoff-card__footer">
