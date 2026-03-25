@@ -22,132 +22,132 @@ import (
 )
 
 // Status indicates the current operational phase of an AI agent within the workforce.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Status string
 
 const (
 	// StatusIdle represents the IDLE lifecycle phase of a tracked entity within the event-driven state machine.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	StatusIdle Status = "IDLE"
 	// StatusActive represents the ACTIVE lifecycle phase of a tracked entity within the event-driven state machine.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	StatusActive Status = "ACTIVE"
 	// StatusInMeeting represents the INMEETING lifecycle phase of a tracked entity within the event-driven state machine.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	StatusInMeeting Status = "IN_MEETING"
 	// StatusBlocked represents the BLOCKED lifecycle phase of a tracked entity within the event-driven state machine.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	StatusBlocked Status = "BLOCKED"
 	// StatusWaitingForTools represents the WAITINGFORTOOLS lifecycle phase of a tracked entity within the event-driven state machine.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	StatusWaitingForTools Status = "WAITING_FOR_TOOLS"
 )
 
 // Event type constants for the asynchronous pub/sub agent interaction protocol.
 const (
 	// EventTask provides domain-specific context and typed constraints for EventTask operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	EventTask = "task"
 	// EventStatus provides domain-specific context and typed constraints for EventStatus operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	EventStatus = "status"
 	// EventHandoff provides domain-specific context and typed constraints for EventHandoff operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	EventHandoff = "handoff"
 	// EventCodeReviewed provides domain-specific context and typed constraints for EventCodeReviewed operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	EventCodeReviewed = "CodeReviewed"
 	// EventTestsFailed provides domain-specific context and typed constraints for EventTestsFailed operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	EventTestsFailed = "TestsFailed"
 	// EventTestsPassed provides domain-specific context and typed constraints for EventTestsPassed operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	EventTestsPassed = "TestsPassed"
 	// EventSpecApproved provides domain-specific context and typed constraints for EventSpecApproved operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	EventSpecApproved = "SpecApproved"
 	// EventBlockerRaised provides domain-specific context and typed constraints for EventBlockerRaised operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	EventBlockerRaised = "BlockerRaised"
 	// EventBlockerCleared provides domain-specific context and typed constraints for EventBlockerCleared operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	EventBlockerCleared = "BlockerCleared"
 	// EventPRCreated provides domain-specific context and typed constraints for EventPRCreated operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	EventPRCreated = "PRCreated"
 	// EventPRMerged provides domain-specific context and typed constraints for EventPRMerged operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	EventPRMerged = "PRMerged"
 	// EventDesignReviewed provides domain-specific context and typed constraints for EventDesignReviewed operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	EventDesignReviewed = "DesignReviewed"
 	// EventApprovalNeeded provides domain-specific context and typed constraints for EventApprovalNeeded operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	EventApprovalNeeded = "ApprovalNeeded"
 )
 
 // Agent represents an autonomous AI actor registered in the orchestration Hub, tracking its identity, role, and current state.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Agent struct {
 	ID             string `json:"id"`
 	Name           string `json:"name"`
@@ -162,10 +162,10 @@ type Agent struct {
 }
 
 // Message represents a discrete packet of communication between agents within a meeting room, containing the content and sender identity.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Message struct {
 	ID         string    `json:"id"`
 	FromAgent  string    `json:"fromAgent"`
@@ -180,12 +180,12 @@ type Message struct {
 // It inspects an incoming task, updates the sender and recipient fields,
 // and forwards the task to the best-fit specialist agent from the registry.
 //
-// Parameters:
+// Accepts parameters:
 //   - fromAgentID: string; The unique identifier of the delegating agent.
 //   - toAgentID: string; The unique identifier of the specialist agent.
 //   - task: Message; The task payload to be delegated.
 //
-// Returns: An error if either the delegating agent or the specialist agent does not exist.
+// Returns An error if either the delegating agent or the specialist agent does not exist.
 func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
 	h.mu.RLock()
 	if _, ok := h.agents[fromAgentID]; !ok {
@@ -212,10 +212,10 @@ func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
 }
 
 // MeetingRoom provides a thread-safe, isolated collaborative space where multiple agents can exchange messages and context.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type MeetingRoom struct {
 	ID           string    `json:"id"`
 	Agenda       string    `json:"agenda,omitempty"`
@@ -224,10 +224,10 @@ type MeetingRoom struct {
 }
 
 // Hub acts as the central, thread-safe asynchronous message broker and state registry for all active agents and meeting rooms.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Hub struct {
 	mu            sync.RWMutex
 	agents        map[string]Agent
@@ -242,7 +242,7 @@ type Hub struct {
 
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
 //
-// Returns: An instantiated *Hub ready to register agents and route events.
+// Returns An instantiated *Hub ready to register agents and route events.
 func NewHub() *Hub {
 	h := &Hub{
 		agents:        map[string]Agent{},
@@ -343,10 +343,10 @@ func (h *Hub) GetSIPDB() *SIPDB {
 }
 
 // RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.  Parameters:   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
-// Parameters: h *Hub (No Constraints)
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts parameters: h *Hub (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) RegisterAgent(agent Agent) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -365,10 +365,10 @@ func (h *Hub) RegisterAgent(agent Agent) {
 }
 
 // SetMinimaxAPIKey functionality.
-// Parameters: h *Hub (No Constraints)
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts parameters: h *Hub (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) SetMinimaxAPIKey(key string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -376,10 +376,10 @@ func (h *Hub) SetMinimaxAPIKey(key string) {
 }
 
 // MinimaxAPIKey functionality.
-// Parameters: None
-// Returns: string
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) MinimaxAPIKey() string {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -388,10 +388,10 @@ func (h *Hub) MinimaxAPIKey() string {
 
 // Agent retrieves the runtime state of a specific worker by ID.
 //
-// Parameters:
+// Accepts parameters:
 //   - id: string; The unique identifier of the agent.
 //
-// Returns: The matching Agent object and a boolean indicating if it exists in the registry.
+// Returns The matching Agent object and a boolean indicating if it exists in the registry.
 func (h *Hub) Agent(id string) (Agent, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -402,11 +402,11 @@ func (h *Hub) Agent(id string) (Agent, bool) {
 
 // OpenMeeting instantiates a new collaborative context window and marks all participants as InMeeting.
 //
-// Parameters:
+// Accepts parameters:
 //   - id: string; Unique identifier for the room.
 //   - participants: []string; A list of agent IDs to be enrolled in the discussion.
 //
-// Returns: The instantiated MeetingRoom.
+// Returns The instantiated MeetingRoom.
 func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -425,12 +425,12 @@ func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 
 // OpenMeetingWithAgenda creates a meeting room with an explicit agenda descriptor.
 //
-// Parameters:
+// Accepts parameters:
 //   - id: string; Unique identifier for the room.
 //   - agenda: string; The primary objective guiding the agents' conversation.
 //   - participants: []string; A list of agent IDs to be enrolled in the discussion.
 //
-// Returns: The instantiated MeetingRoom.
+// Returns The instantiated MeetingRoom.
 func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -448,10 +448,10 @@ func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) Me
 }
 
 // FireAgent removes an agent from the hub and clears their inbox.  Parameters:   - id: string; The unique identifier of the agent to terminate.
-// Parameters: h *Hub (No Constraints)
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts parameters: h *Hub (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) FireAgent(id string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -462,10 +462,10 @@ func (h *Hub) FireAgent(id string) {
 
 // Publish validates and routes a message to a direct recipient, a meeting room, or both.
 //
-// Parameters:
+// Accepts parameters:
 //   - message: Message; The event payload containing routing headers and content.
 //
-// Returns: An error if the sender or recipient agents do not exist, or if the target meeting is unrecognised.
+// Returns An error if the sender or recipient agents do not exist, or if the target meeting is unrecognised.
 func (h *Hub) Publish(message Message) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -579,13 +579,12 @@ func (h *Hub) Publish(message Message) error {
 }
 
 // Subscribe returns a channel that receives real-time messages for the given agent.
-// Intent: Subscribe returns a channel that receives real-time messages for the given agent.
-// Params:
+// Accepts no parameters.
 //   - agentID: string; Description
 //
-// Returns: value, value
-// Errors: None
-// Side Effects: None
+// Returns value, value.
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -612,10 +611,10 @@ func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 
 // Inbox retrieves all undelivered or direct messages routed exclusively to a single agent.
 //
-// Parameters:
+// Accepts parameters:
 //   - agentID: string; The unique identifier of the worker.
 //
-// Returns: A slice of direct Message objects.
+// Returns A slice of direct Message objects.
 func (h *Hub) Inbox(agentID string) []Message {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -631,10 +630,10 @@ func (h *Hub) Inbox(agentID string) []Message {
 
 // Meeting retrieves the current state and transcript of a specified virtual meeting room.
 //
-// Parameters:
+// Accepts parameters:
 //   - id: string; The unique identifier of the room.
 //
-// Returns: The matching MeetingRoom object and a boolean indicating if it exists.
+// Returns The matching MeetingRoom object and a boolean indicating if it exists.
 func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -646,7 +645,7 @@ func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 
 // Meetings fetches a point-in-time snapshot of all active meeting rooms.
 //
-// Returns: A slice containing all MeetingRoom objects.
+// Returns A slice containing all MeetingRoom objects.
 func (h *Hub) Meetings() []MeetingRoom {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -662,7 +661,7 @@ func (h *Hub) Meetings() []MeetingRoom {
 
 // Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID.
 //
-// Returns: A slice of all active Agent objects in the orchestration Hub.
+// Returns A slice of all active Agent objects in the orchestration Hub.
 func (h *Hub) Agents() []Agent {
 	h.mu.RLock()
 	agents := make([]Agent, 0, len(h.agents))
@@ -680,38 +679,38 @@ func (h *Hub) Agents() []Agent {
 }
 
 // RegisterHubService HubServiceServer implements the gRPC HubService defined in hub.proto.
-// Parameters: s *grpc.Server (No Constraints), hub *Hub (No Constraints)
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts parameters: s *grpc.Server (No Constraints), hub *Hub (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func RegisterHubService(s *grpc.Server, hub *Hub) {
 	pb.RegisterHubServiceServer(s, &HubServiceServer{hub: hub})
 }
 
 // HubServiceServer implements the gRPC interface for the orchestration Hub, facilitating remote agent registration and message streaming.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type HubServiceServer struct {
 	pb.UnimplementedHubServiceServer
 	hub *Hub
 }
 
 // NewHubServiceServer functionality.
-// Parameters: hub *Hub (No Constraints)
-// Returns: *HubServiceServer
-// Errors: None
-// Side Effects: None
+// Accepts parameters: hub *Hub (No Constraints).
+// Returns *HubServiceServer.
+// Produces no errors.
+// Has no side effects.
 func NewHubServiceServer(hub *Hub) *HubServiceServer {
 	return &HubServiceServer{hub: hub}
 }
 
 // RegisterAgent functionality.
-// Parameters: s *HubServiceServer (No Constraints)
-// Returns: (*pb.RegisterAgentResponse, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns (*pb.RegisterAgentResponse, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAgentRequest) (*pb.RegisterAgentResponse, error) {
 	agentReq := req.GetAgent()
 	agent := Agent{
@@ -727,10 +726,10 @@ func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAg
 }
 
 // OpenMeeting functionality.
-// Parameters: s *HubServiceServer (No Constraints)
-// Returns: (*pb.MeetingRoom, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns (*pb.MeetingRoom, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingRequest) (*pb.MeetingRoom, error) {
 	meeting := s.hub.OpenMeetingWithAgenda(req.GetMeetingId(), req.GetAgenda(), req.GetParticipants())
 	return pb.MeetingRoom_builder{
@@ -741,10 +740,10 @@ func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingR
 }
 
 // Publish functionality.
-// Parameters: s *HubServiceServer (No Constraints)
-// Returns: (*pb.PublishMessageResponse, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns (*pb.PublishMessageResponse, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRequest) (*pb.PublishMessageResponse, error) {
 	msgReq := req.GetMessage()
 	msg := Message{
@@ -763,10 +762,10 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 }
 
 // DelegateTask functionality.
-// Parameters: s *HubServiceServer (No Constraints)
-// Returns: (*pb.DelegateTaskResponse, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns (*pb.DelegateTaskResponse, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *HubServiceServer) DelegateTask(ctx context.Context, req *pb.DelegateTaskRequest) (*pb.DelegateTaskResponse, error) {
 	msgReq := req.GetTask()
 	msg := Message{
@@ -788,10 +787,10 @@ func (s *HubServiceServer) DelegateTask(ctx context.Context, req *pb.DelegateTas
 }
 
 // StreamMessages functionality.
-// Parameters: s *HubServiceServer (No Constraints)
-// Returns: error
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream pb.HubService_StreamMessagesServer) error {
 	agentID := req.GetAgentId()
 
@@ -837,10 +836,10 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 }
 
 // Reason functionality.
-// Parameters: s *HubServiceServer (No Constraints)
-// Returns: (*pb.ReasonResponse, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns (*pb.ReasonResponse, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*pb.ReasonResponse, error) {
 	client := NewMinimaxClient(s.hub.MinimaxAPIKey())
 	content, err := client.Reason(ctx, req.GetPrompt())
@@ -855,19 +854,19 @@ func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*
 var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
 
 // MinimaxClient handles interaction with the Minimax Model 2.7.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type MinimaxClient struct {
 	APIKey string
 }
 
 // NewMinimaxClient functionality.
-// Parameters: apiKey string (No Constraints)
-// Returns: *MinimaxClient
-// Errors: None
-// Side Effects: None
+// Accepts parameters: apiKey string (No Constraints).
+// Returns *MinimaxClient.
+// Produces no errors.
+// Has no side effects.
 func NewMinimaxClient(apiKey string) *MinimaxClient {
 	return &MinimaxClient{APIKey: apiKey}
 }
@@ -883,10 +882,10 @@ var sharedHTTPClient = &http.Client{
 }
 
 // Reason functionality.
-// Parameters: c *MinimaxClient (No Constraints)
-// Returns: (string, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: c *MinimaxClient (No Constraints).
+// Returns (string, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, error) {
 	if c.APIKey == "" {
 		return "", errors.New("minimax API key is not configured")

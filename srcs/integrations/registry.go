@@ -29,150 +29,150 @@ import (
 // ── Integration types ─────────────────────────────────────────────────────────
 
 // Category groups integrations by their function (e.g., chat, git, issues).
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Category string
 
 const (
 	// CategoryChat classifies the integration module under the Chat domain taxonomy for structured discovery.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	CategoryChat Category = "chat"
 	// CategoryGit classifies the integration module under the Git domain taxonomy for structured discovery.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	CategoryGit Category = "git"
 	// CategoryIssues classifies the integration module under the Issues domain taxonomy for structured discovery.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	CategoryIssues Category = "issues"
 )
 
 // IntegrationType identifies the specific external service platform (e.g., github, slack).
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type IntegrationType string
 
 const (
 	// IntegrationTypeSlack Chat services.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IntegrationTypeSlack IntegrationType = "slack"
 	// IntegrationTypeDiscord provides domain-specific context and typed constraints for IntegrationTypeDiscord operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IntegrationTypeDiscord IntegrationType = "discord"
 	// IntegrationTypeGoogleChat provides domain-specific context and typed constraints for IntegrationTypeGoogleChat operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IntegrationTypeGoogleChat IntegrationType = "google_chat"
 	// IntegrationTypeTelegram provides domain-specific context and typed constraints for IntegrationTypeTelegram operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IntegrationTypeTelegram IntegrationType = "telegram"
 	// IntegrationTypeTeams provides domain-specific context and typed constraints for IntegrationTypeTeams operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IntegrationTypeTeams IntegrationType = "teams"
 
 	// IntegrationTypeGitHub Git platforms.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IntegrationTypeGitHub IntegrationType = "github"
 	// IntegrationTypeGitLab provides domain-specific context and typed constraints for IntegrationTypeGitLab operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IntegrationTypeGitLab IntegrationType = "gitlab"
 	// IntegrationTypeGitea provides domain-specific context and typed constraints for IntegrationTypeGitea operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IntegrationTypeGitea IntegrationType = "gitea"
 
 	// IntegrationTypeJIRA issue trackers.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IntegrationTypeJIRA IntegrationType = "jira"
 	// IntegrationTypePlane provides domain-specific context and typed constraints for IntegrationTypePlane operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IntegrationTypePlane IntegrationType = "plane"
 	// IntegrationTypeGitHubIssues provides domain-specific context and typed constraints for IntegrationTypeGitHubIssues operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IntegrationTypeGitHubIssues IntegrationType = "github_issues"
 	// IntegrationTypeLinear provides domain-specific context and typed constraints for IntegrationTypeLinear operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IntegrationTypeLinear IntegrationType = "linear"
 )
 
 // ConnectionStatus reflects whether an integration is currently active and reachable.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type ConnectionStatus string
 
 const (
 	// StatusConnected represents the CONNECTED lifecycle phase of a tracked entity within the event-driven state machine.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	StatusConnected ConnectionStatus = "connected"
 	// StatusDisconnected represents the DISCONNECTED lifecycle phase of a tracked entity within the event-driven state machine.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	StatusDisconnected ConnectionStatus = "disconnected"
 	// StatusError represents the ERROR lifecycle phase of a tracked entity within the event-driven state machine.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	StatusError ConnectionStatus = "error"
 )
 
 // Integration represents a configured external service connection.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Integration struct {
 	ID             string           `json:"id"`
 	Name           string           `json:"name"`
@@ -187,10 +187,10 @@ type Integration struct {
 }
 
 // IntegrationCredentials holds the secret configuration for an integration. These are stored server-side only and never serialised to the client.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type IntegrationCredentials struct {
 	BotToken   string // Telegram Bot API token
 	ChatID     string // Telegram chat / group ID
@@ -199,10 +199,10 @@ type IntegrationCredentials struct {
 }
 
 // IsEmpty reports whether no fields are set.
-// Parameters: None
-// Returns: bool
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns bool.
+// Produces no errors.
+// Has no side effects.
 func (c IntegrationCredentials) IsEmpty() bool {
 	return c.BotToken == "" && c.ChatID == "" && c.WebhookURL == "" && c.APIToken == ""
 }
@@ -210,10 +210,10 @@ func (c IntegrationCredentials) IsEmpty() bool {
 // ── Chat types ────────────────────────────────────────────────────────────────
 
 // ChatMessage represents a message dispatched through a chat service.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type ChatMessage struct {
 	ID            string    `json:"id"`
 	IntegrationID string    `json:"integrationId"`
@@ -227,38 +227,38 @@ type ChatMessage struct {
 // ── Git types ─────────────────────────────────────────────────────────────────
 
 // PullRequestStatus tracks the lifecycle status of a PR/MR on a git platform.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type PullRequestStatus string
 
 const (
 	// PRStatusOpen provides domain-specific context and typed constraints for PRStatusOpen operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	PRStatusOpen PullRequestStatus = "open"
 	// PRStatusMerged provides domain-specific context and typed constraints for PRStatusMerged operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	PRStatusMerged PullRequestStatus = "merged"
 	// PRStatusClosed provides domain-specific context and typed constraints for PRStatusClosed operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	PRStatusClosed PullRequestStatus = "closed"
 )
 
 // PullRequest records an issue or code change request opened on a git hosting platform.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type PullRequest struct {
 	ID             string            `json:"id"`
 	IntegrationID  string            `json:"integrationId"`
@@ -276,78 +276,78 @@ type PullRequest struct {
 // ── Issue types ───────────────────────────────────────────────────────────────
 
 // IssueStatus tracks the lifecycle phase of an issue or ticket.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type IssueStatus string
 
 const (
 	// IssueStatusOpen provides domain-specific context and typed constraints for IssueStatusOpen operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IssueStatusOpen IssueStatus = "open"
 	// IssueStatusInProgress provides domain-specific context and typed constraints for IssueStatusInProgress operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IssueStatusInProgress IssueStatus = "in_progress"
 	// IssueStatusDone provides domain-specific context and typed constraints for IssueStatusDone operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IssueStatusDone IssueStatus = "done"
 	// IssueStatusClosed provides domain-specific context and typed constraints for IssueStatusClosed operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IssueStatusClosed IssueStatus = "closed"
 )
 
 // IssuePriority indicates the urgency of a ticket.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type IssuePriority string
 
 const (
 	// IssuePriorityLow provides domain-specific context and typed constraints for IssuePriorityLow operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IssuePriorityLow IssuePriority = "low"
 	// IssuePriorityMedium provides domain-specific context and typed constraints for IssuePriorityMedium operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IssuePriorityMedium IssuePriority = "medium"
 	// IssuePriorityHigh provides domain-specific context and typed constraints for IssuePriorityHigh operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IssuePriorityHigh IssuePriority = "high"
 	// IssuePriorityCritical provides domain-specific context and typed constraints for IssuePriorityCritical operations across the application.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	IssuePriorityCritical IssuePriority = "critical"
 )
 
 // Issue records a ticket created in an external issue tracker.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Issue struct {
 	ID             string        `json:"id"`
 	IntegrationID  string        `json:"integrationId"`
@@ -366,10 +366,10 @@ type Issue struct {
 // ── Registry ─────────────────────────────────────────────────────────────────
 
 // Registry manages all configured external service integrations and records every action taken through them (messages sent, PRs opened, tickets created).  Constraints: Thread-safe via sync.RWMutex.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Registry struct {
 	mu           sync.RWMutex
 	integrations []Integration
@@ -382,7 +382,7 @@ type Registry struct {
 // NewRegistry returns an initialised Registry pre-populated with the default
 // set of supported integrations (all marked as disconnected until configured).
 //
-// Returns: A newly instantiated Registry pointer.
+// Returns A newly instantiated Registry pointer.
 func NewRegistry() *Registry {
 	return &Registry{
 		integrations: defaultIntegrations(),
@@ -397,7 +397,7 @@ func NewRegistry() *Registry {
 
 // Integrations retrieves a snapshot of all registered external service integrations.
 //
-// Returns: A slice of Integration objects representing the current connection states.
+// Returns A slice of Integration objects representing the current connection states.
 func (r *Registry) Integrations() []Integration {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -407,10 +407,10 @@ func (r *Registry) Integrations() []Integration {
 
 // IntegrationsByCategory returns integrations filtered by their service category.
 //
-// Parameters:
+// Accepts parameters:
 //   - cat: Category; The category to filter by (e.g., CategoryChat).
 //
-// Returns: A slice of Integration objects belonging to the specified category.
+// Returns A slice of Integration objects belonging to the specified category.
 func (r *Registry) IntegrationsByCategory(cat Category) []Integration {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -426,10 +426,10 @@ func (r *Registry) IntegrationsByCategory(cat Category) []Integration {
 
 // Integration looks up a specific integration by its unique ID.
 //
-// Parameters:
+// Accepts parameters:
 //   - id: string; The identifier of the integration.
 //
-// Returns: The matching Integration and a boolean indicating if it was found.
+// Returns The matching Integration and a boolean indicating if it was found.
 func (r *Registry) Integration(id string) (Integration, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -444,18 +444,18 @@ func (r *Registry) Integration(id string) (Integration, bool) {
 
 // LookupIPFunc is a variable to allow mocking net.LookupIP in tests across packages.
 var // Summary: LookupIPFunc is a variable to allow mocking net.LookupIP in tests across packages.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 LookupIPFunc = net.LookupIP
 
 // AllowLocalIPsForTesting can be set to true in tests to bypass SSRF IP checks
 var // Summary: AllowLocalIPsForTesting can be set to true in tests to bypass SSRF IP checks
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 AllowLocalIPsForTesting = false
 
 // cgnatRange defines the RFC 6598 Shared Address Space (100.64.0.0/10)
@@ -556,12 +556,12 @@ var safeClient = initSafeHTTPClient()
 // An optional IntegrationCredentials value stores secrets (e.g. bot tokens)
 // for integrations that make real outbound API calls.
 //
-// Parameters:
+// Accepts parameters:
 //   - id: string; The identifier of the integration to connect.
 //   - baseURL: string; The API base URL to use for requests.
 //   - creds: IntegrationCredentials; Optional credentials for outbound API calls.
 //
-// Returns: The updated Integration, or an error if it was not found.
+// Returns The updated Integration, or an error if it was not found.
 func (r *Registry) Connect(id, baseURL string, creds ...IntegrationCredentials) (Integration, error) {
 	if baseURL != "" {
 		if err := validateURL(baseURL); err != nil {
@@ -600,10 +600,10 @@ func (r *Registry) Connect(id, baseURL string, creds ...IntegrationCredentials) 
 
 // Disconnect marks a previously connected integration as disconnected.
 //
-// Parameters:
+// Accepts parameters:
 //   - id: string; The identifier of the integration to disconnect.
 //
-// Returns: The updated Integration, or an error if it was not found.
+// Returns The updated Integration, or an error if it was not found.
 func (r *Registry) Disconnect(id string) (Integration, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -621,7 +621,7 @@ func (r *Registry) Disconnect(id string) (Integration, error) {
 
 // SendChatMessage records the dispatch of a message through the specified chat integration.
 //
-// Parameters:
+// Accepts parameters:
 //   - integrationID: string; The ID of the chat integration (e.g., "slack").
 //   - channel: string; The target channel or space.
 //   - fromAgent: string; The ID of the agent sending the message.
@@ -629,7 +629,7 @@ func (r *Registry) Disconnect(id string) (Integration, error) {
 //   - threadID: string; The thread context, if applicable.
 //   - now: time.Time; The current timestamp.
 //
-// Returns: A ChatMessage record of the action, or an error if the integration is invalid.
+// Returns A ChatMessage record of the action, or an error if the integration is invalid.
 func (r *Registry) SendChatMessage(integrationID, channel, fromAgent, content, threadID string, now time.Time) (ChatMessage, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -690,15 +690,15 @@ func (r *Registry) SendChatMessage(integrationID, channel, fromAgent, content, t
 // service by sending a short test message.  Use this during setup wizards
 // before persisting credentials.
 //
-// Parameters:
+// Accepts parameters:
 //   - id: string; The identifier of the integration to test.
 //   - creds: IntegrationCredentials; The credentials to validate.
 //
-// Returns: An error if the connection test fails.
+// Returns An error if the connection test fails.
 //
-// Errors: Fails if the integration is missing or if the external API call fails.
+// Produces errors: Fails if the integration is missing or if the external API call fails.
 //
-// Side Effects: Triggers real outbound HTTP API calls to Telegram or Discord.
+// Has side effects: Triggers real outbound HTTP API calls to Telegram or Discord.
 func (r *Registry) TestConnection(id string, creds IntegrationCredentials) error {
 	r.mu.RLock()
 	integ, ok := r.findIntegration(id)
@@ -742,14 +742,14 @@ func (r *Registry) TestConnection(id string, creds IntegrationCredentials) error
 
 // ChatMessages retrieves all recorded chat messages, with an optional integration ID filter.
 //
-// Parameters:
+// Accepts parameters:
 //   - integrationID: string; Filter by integration. Pass an empty string for all messages.
 //
-// Returns: A slice of ChatMessage records.
+// Returns A slice of ChatMessage records.
 //
-// Errors: None.
+// Produces errors: None.
 //
-// Side Effects: None. Executes a read-only lock.
+// Has side effects: None. Executes a read-only lock.
 func (r *Registry) ChatMessages(integrationID string) []ChatMessage {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -767,7 +767,7 @@ func (r *Registry) ChatMessages(integrationID string) []ChatMessage {
 
 // CreatePullRequest registers a new PR/MR action on the specified git integration.
 //
-// Parameters:
+// Accepts parameters:
 //   - integrationID: string; The ID of the git integration (e.g., "github").
 //   - repo: string; Target repository name.
 //   - title: string; PR title.
@@ -777,11 +777,11 @@ func (r *Registry) ChatMessages(integrationID string) []ChatMessage {
 //   - createdBy: string; Agent ID opening the PR.
 //   - now: time.Time; Timestamp.
 //
-// Returns: A PullRequest record of the action, or an error if parameters are invalid.
+// Returns A PullRequest record of the action, or an error if parameters are invalid.
 //
-// Errors: Fails if the integration is not a git platform or if required fields are missing.
+// Produces errors: Fails if the integration is not a git platform or if required fields are missing.
 //
-// Side Effects: Appends a new PullRequest to the internal memory store.
+// Has side effects: Appends a new PullRequest to the internal memory store.
 func (r *Registry) CreatePullRequest(integrationID, repo, title, body, source, target, createdBy string, now time.Time) (PullRequest, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -823,14 +823,14 @@ func (r *Registry) CreatePullRequest(integrationID, repo, title, body, source, t
 
 // MergePullRequest transitions an open Pull Request to merged status.
 //
-// Parameters:
+// Accepts parameters:
 //   - prID: string; The unique registry ID of the pull request.
 //
-// Returns: The updated PullRequest record.
+// Returns The updated PullRequest record.
 //
-// Errors: Fails if the PR is not found or is not in the open state.
+// Produces errors: Fails if the PR is not found or is not in the open state.
 //
-// Side Effects: Mutates the status of the PullRequest to PRStatusMerged.
+// Has side effects: Mutates the status of the PullRequest to PRStatusMerged.
 func (r *Registry) MergePullRequest(prID string) (PullRequest, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -849,14 +849,14 @@ func (r *Registry) MergePullRequest(prID string) (PullRequest, error) {
 
 // ClosePullRequest transitions an open Pull Request to closed status without merging.
 //
-// Parameters:
+// Accepts parameters:
 //   - prID: string; The unique registry ID of the pull request.
 //
-// Returns: The updated PullRequest record.
+// Returns The updated PullRequest record.
 //
-// Errors: Fails if the PR is not found or is not in the open state.
+// Produces errors: Fails if the PR is not found or is not in the open state.
 //
-// Side Effects: Mutates the status of the PullRequest to PRStatusClosed.
+// Has side effects: Mutates the status of the PullRequest to PRStatusClosed.
 func (r *Registry) ClosePullRequest(prID string) (PullRequest, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -875,14 +875,14 @@ func (r *Registry) ClosePullRequest(prID string) (PullRequest, error) {
 
 // PullRequests retrieves all recorded pull requests, with an optional integration ID filter.
 //
-// Parameters:
+// Accepts parameters:
 //   - integrationID: string; Filter by integration. Pass an empty string to return all.
 //
-// Returns: A slice of PullRequest records.
+// Returns A slice of PullRequest records.
 //
-// Errors: None.
+// Produces errors: None.
 //
-// Side Effects: None. Executes a read-only lock.
+// Has side effects: None. Executes a read-only lock.
 func (r *Registry) PullRequests(integrationID string) []PullRequest {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -900,7 +900,7 @@ func (r *Registry) PullRequests(integrationID string) []PullRequest {
 
 // CreateIssue registers a new ticket action in the specified issue tracker integration.
 //
-// Parameters:
+// Accepts parameters:
 //   - integrationID: string; The ID of the issue integration (e.g., "jira").
 //   - project: string; The target project or board.
 //   - title: string; The issue summary.
@@ -910,11 +910,11 @@ func (r *Registry) PullRequests(integrationID string) []PullRequest {
 //   - labels: []string; Categorisation tags.
 //   - now: time.Time; Current timestamp.
 //
-// Returns: An Issue record of the action, or an error if parameters are invalid.
+// Returns An Issue record of the action, or an error if parameters are invalid.
 //
-// Errors: Fails if the integration is not an issue tracker or required fields are missing.
+// Produces errors: Fails if the integration is not an issue tracker or required fields are missing.
 //
-// Side Effects: Appends a new Issue to the internal memory store.
+// Has side effects: Appends a new Issue to the internal memory store.
 func (r *Registry) CreateIssue(integrationID, project, title, description, createdBy string, priority IssuePriority, labels []string, now time.Time) (Issue, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -959,15 +959,15 @@ func (r *Registry) CreateIssue(integrationID, project, title, description, creat
 
 // UpdateIssueStatus transitions an existing issue to the specified lifecycle phase.
 //
-// Parameters:
+// Accepts parameters:
 //   - issueID: string; The unique registry ID of the issue.
 //   - status: IssueStatus; The new status phase (e.g., IssueStatusDone).
 //
-// Returns: The updated Issue record.
+// Returns The updated Issue record.
 //
-// Errors: Fails if the issue cannot be found.
+// Produces errors: Fails if the issue cannot be found.
 //
-// Side Effects: Mutates the status of the specific Issue record.
+// Has side effects: Mutates the status of the specific Issue record.
 func (r *Registry) UpdateIssueStatus(issueID string, status IssueStatus) (Issue, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -983,15 +983,15 @@ func (r *Registry) UpdateIssueStatus(issueID string, status IssueStatus) (Issue,
 
 // AssignIssue sets or transfers ownership of an issue to a specific agent or human.
 //
-// Parameters:
+// Accepts parameters:
 //   - issueID: string; The unique registry ID of the issue.
 //   - assignee: string; The identifier of the assigned worker.
 //
-// Returns: The updated Issue record.
+// Returns The updated Issue record.
 //
-// Errors: Fails if the issue cannot be found.
+// Produces errors: Fails if the issue cannot be found.
 //
-// Side Effects: Mutates the AssignedTo field of the specific Issue record.
+// Has side effects: Mutates the AssignedTo field of the specific Issue record.
 func (r *Registry) AssignIssue(issueID, assignee string) (Issue, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -1007,14 +1007,14 @@ func (r *Registry) AssignIssue(issueID, assignee string) (Issue, error) {
 
 // Issues retrieves all recorded tickets, with an optional integration ID filter.
 //
-// Parameters:
+// Accepts parameters:
 //   - integrationID: string; Filter by integration. Pass an empty string for all tickets.
 //
-// Returns: A slice of Issue records.
+// Returns A slice of Issue records.
 //
-// Errors: None.
+// Produces errors: None.
 //
-// Side Effects: None. Executes a read-only lock.
+// Has side effects: None. Executes a read-only lock.
 func (r *Registry) Issues(integrationID string) []Issue {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -1048,10 +1048,10 @@ func generateID(prefix string, now time.Time) string {
 // ── Real outbound HTTP helpers ────────────────────────────────────────────────
 
 // TelegramAPIBase is the base URL for the Telegram Bot API. Override in tests to point to a mock server.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 var TelegramAPIBase = "https://api.telegram.org"
 
 // sendTelegramMessage posts a text message to a Telegram chat via the Bot API.

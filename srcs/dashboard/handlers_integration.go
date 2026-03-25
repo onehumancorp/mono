@@ -8,12 +8,11 @@ import (
 	"github.com/onehumancorp/mono/srcs/integrations"
 )
 
-// Summary: Handles retrieving integrations.
-// Intent: Handles retrieving integrations.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles retrieving integrations.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleIntegrations(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -27,12 +26,11 @@ func (s *Server) handleIntegrations(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, s.integReg.Integrations())
 }
 
-// Summary: Handles connecting an integration.
-// Intent: Handles connecting an integration.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles connecting an integration.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleIntegrationConnect(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -61,12 +59,11 @@ func (s *Server) handleIntegrationConnect(w http.ResponseWriter, r *http.Request
 	writeJSON(w, updated)
 }
 
-// Summary: Handles disconnecting an integration.
-// Intent: Handles disconnecting an integration.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles disconnecting an integration.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleIntegrationDisconnect(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -89,12 +86,11 @@ func (s *Server) handleIntegrationDisconnect(w http.ResponseWriter, r *http.Requ
 	writeJSON(w, updated)
 }
 
-// Summary: Handles retrieving pull requests.
-// Intent: Handles retrieving pull requests.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles retrieving pull requests.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handlePullRequests(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -108,12 +104,11 @@ func (s *Server) handlePullRequests(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, prs)
 }
 
-// Summary: Handles creating a pull request.
-// Intent: Handles creating a pull request.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles creating a pull request.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handlePRCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -132,12 +127,11 @@ func (s *Server) handlePRCreate(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, pr)
 }
 
-// Summary: Handles merging a pull request.
-// Intent: Handles merging a pull request.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles merging a pull request.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handlePRMerge(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -160,12 +154,11 @@ func (s *Server) handlePRMerge(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, pr)
 }
 
-// Summary: Handles closing a pull request.
-// Intent: Handles closing a pull request.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles closing a pull request.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handlePRClose(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -188,12 +181,11 @@ func (s *Server) handlePRClose(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, pr)
 }
 
-// Summary: Handles retrieving issues.
-// Intent: Handles retrieving issues.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles retrieving issues.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleIssues(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -207,12 +199,11 @@ func (s *Server) handleIssues(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, issues)
 }
 
-// Summary: Handles creating an issue.
-// Intent: Handles creating an issue.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles creating an issue.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleIssueCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -231,12 +222,11 @@ func (s *Server) handleIssueCreate(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, issue)
 }
 
-// Summary: Handles updating an issue status.
-// Intent: Handles updating an issue status.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles updating an issue status.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleIssueUpdateStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -259,12 +249,11 @@ func (s *Server) handleIssueUpdateStatus(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, issue)
 }
 
-// Summary: Handles assigning an issue.
-// Intent: Handles assigning an issue.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles assigning an issue.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleIssueAssign(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)

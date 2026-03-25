@@ -55,12 +55,11 @@ type protoFile struct {
 
 var reWord = regexp.MustCompile(`[A-Za-z0-9]+`)
 
-// Summary: snakeToCamel converts a snake_case identifier to lowerCamelCase.
-// Intent: snakeToCamel converts a snake_case identifier to lowerCamelCase.
-// Params: s
-// Returns: string
-// Errors: None
-// Side Effects: None
+// snakeToCamel converts a snake_case identifier to lowerCamelCase.
+// Accepts parameters: s.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 func snakeToCamel(s string) string {
 	parts := strings.Split(s, "_")
 	for i := 1; i < len(parts); i++ {
@@ -71,12 +70,11 @@ func snakeToCamel(s string) string {
 	return strings.Join(parts, "")
 }
 
-// Summary: pkgToPrefix converts a proto package name to a CamelCase prefix.
-// Intent: pkgToPrefix converts a proto package name to a CamelCase prefix.
-// Params: pkg
-// Returns: string
-// Errors: None
-// Side Effects: None
+// pkgToPrefix converts a proto package name to a CamelCase prefix.
+// Accepts parameters: pkg.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 // e.g. "ohc.common" → "Common", "ohc.api.v1" → "Api"
 func pkgToPrefix(pkg string) string {
 	parts := strings.Split(pkg, ".")
@@ -110,12 +108,11 @@ func pkgToPrefix(pkg string) string {
 	return "Proto"
 }
 
-// Summary: qualifiedToTS resolves a (possibly-qualified) proto type name to its TypeScript equivalent.
-// Intent: qualifiedToTS resolves a (possibly-qualified) proto type name to its TypeScript equivalent.
-// Params: typeName, allTypes
-// Returns: string
-// Errors: None
-// Side Effects: None
+// qualifiedToTS resolves a (possibly-qualified) proto type name to its TypeScript equivalent.
+// Accepts parameters: typeName, allTypes.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 // TypeScript equivalent, given a map of all known types keyed by proto name.
 func qualifiedToTS(typeName string, allTypes map[string]string) string {
 	// Strip leading dot
@@ -135,12 +132,11 @@ func qualifiedToTS(typeName string, allTypes map[string]string) string {
 	return strings.ToUpper(unqualified[:1]) + unqualified[1:]
 }
 
-// Summary: protoTypeToTS converts a primitive proto type name to a TypeScript type string.
-// Intent: protoTypeToTS converts a primitive proto type name to a TypeScript type string.
-// Params: t
-// Returns: string
-// Errors: None
-// Side Effects: None
+// protoTypeToTS converts a primitive proto type name to a TypeScript type string.
+// Accepts parameters: t.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 func protoTypeToTS(t string) string {
 	switch t {
 	case "string":
@@ -160,12 +156,11 @@ func protoTypeToTS(t string) string {
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 
-// Summary: stripComment removes inline // and /* */ comments from a line.
-// Intent: stripComment removes inline // and /* */ comments from a line.
-// Params: line
-// Returns: string
-// Errors: None
-// Side Effects: None
+// stripComment removes inline // and /* */ comments from a line.
+// Accepts parameters: line.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 func stripComment(line string) string {
 	if idx := strings.Index(line, "//"); idx >= 0 {
 		line = line[:idx]
@@ -186,12 +181,11 @@ var (
 	reField   = regexp.MustCompile(`^(repeated\s+|optional\s+)?([\w.]+)\s+(\w+)\s*=\s*\d+`)
 )
 
-// Summary: parseProto parses a proto file.
-// Intent: parseProto parses a proto file.
-// Params: path
-// Returns: protoFile
-// Errors: None
-// Side Effects: None
+// parseProto parses a proto file.
+// Accepts parameters: path.
+// Returns protoFile.
+// Produces no errors.
+// Has no side effects.
 func parseProto(path string) protoFile {
 	f, err := os.Open(path)
 	if err != nil {
@@ -302,12 +296,11 @@ func parseProto(path string) protoFile {
 
 // ── Code generator ────────────────────────────────────────────────────────────
 
-// Summary: generate generates TypeScript types from proto files.
-// Intent: generate generates TypeScript types from proto files.
-// Params: files
-// Returns: None
-// Errors: None
-// Side Effects: None
+// generate generates TypeScript types from proto files.
+// Accepts parameters: files.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func generate(files []protoFile) {
 	// First pass: build a map from proto qualified name → TS type name.
 	// This lets us resolve cross-file references.
@@ -378,12 +371,11 @@ func generate(files []protoFile) {
 	}
 }
 
-// Summary: execute runs the ts generation.
-// Intent: execute runs the ts generation.
-// Params: args
-// Returns: None
-// Errors: None
-// Side Effects: None
+// execute runs the ts generation.
+// Accepts parameters: args.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func execute(args []string) {
 	if len(args) < 1 {
 		fmt.Fprintln(os.Stderr, "usage: gen_ts <proto_file>...")
@@ -410,12 +402,11 @@ func execute(args []string) {
 	generate(files)
 }
 
-// Summary: Entry point for the proto ts generator.
-// Intent: Entry point for the proto ts generator.
-// Params: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Entry point for the proto ts generator.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func main() {
 	execute(os.Args[1:])
 }

@@ -7,12 +7,11 @@ import (
 	"time"
 )
 
-// Summary: Handles retrieving approvals.
-// Intent: Handles retrieving approvals.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles retrieving approvals.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleApprovals(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -25,12 +24,11 @@ func (s *Server) handleApprovals(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Summary: Handles creating an approval request.
-// Intent: Handles creating an approval request.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles creating an approval request.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleApprovalRequest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -77,12 +75,11 @@ func (s *Server) handleApprovalRequest(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, approval)
 }
 
-// Summary: Handles deciding on an approval request.
-// Intent: Handles deciding on an approval request.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles deciding on an approval request.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleApprovalDecide(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -137,12 +134,11 @@ func (s *Server) handleApprovalDecide(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, list)
 }
 
-// Summary: Handles retrieving or creating handoffs.
-// Intent: Handles retrieving or creating handoffs.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles retrieving or creating handoffs.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleHandoffs(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -183,12 +179,11 @@ func (s *Server) handleHandoffs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Summary: Handles resolving a handoff.
-// Intent: Handles resolving a handoff.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles resolving a handoff.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleHandoffResolve(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -247,12 +242,11 @@ func (s *Server) handleHandoffResolve(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, list)
 }
 
-// Summary: Handles retrieving B2B agreements.
-// Intent: Handles retrieving B2B agreements.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles retrieving B2B agreements.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleB2BAgreements(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -265,12 +259,11 @@ func (s *Server) handleB2BAgreements(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Summary: Handles B2B handshake.
-// Intent: Handles B2B handshake.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles B2B handshake.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleB2BHandshake(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -304,12 +297,11 @@ func (s *Server) handleB2BHandshake(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, agreement)
 }
 
-// Summary: Handles revoking a B2B agreement.
-// Intent: Handles revoking a B2B agreement.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles revoking a B2B agreement.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleB2BRevoke(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)

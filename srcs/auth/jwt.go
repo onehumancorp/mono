@@ -20,10 +20,10 @@ type jwtHeader struct {
 }
 
 // Claims embeds the standard JWT Registered Claims and adds custom One Human Corp properties like user ID and assigned roles.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Claims struct {
 	Subject        string   `json:"sub"`
 	Username       string   `json:"username"`
@@ -37,12 +37,12 @@ type Claims struct {
 
 // HasRole checks whether the token's claims include authorization for a specific role.
 //
-// Parameters:
+// Accepts parameters:
 //   - role: string; The target role identifier to check for.
 //
-// Returns: A boolean indicating if the role is present (true if present or if the user is an admin).
+// Returns A boolean indicating if the role is present (true if present or if the user is an admin).
 //
-// Side Effects: None. Executes a read-only iteration over the claims.
+// Has side effects: None. Executes a read-only iteration over the claims.
 func (c *Claims) HasRole(role string) bool {
 	for _, r := range c.Roles {
 		if r == role || r == RoleAdmin {
@@ -54,14 +54,14 @@ func (c *Claims) HasRole(role string) bool {
 
 // IssueToken generates and cryptographically signs a new HS256 JWT for the specified user.
 //
-// Parameters:
+// Accepts parameters:
 //   - u: *User; The user entity to construct the token payload for.
 //
-// Returns: The fully encoded and signed JWT string, or an error if signing fails.
+// Returns The fully encoded and signed JWT string, or an error if signing fails.
 //
-// Errors: Fails if JSON serialization or cryptographic signing encounters an error.
+// Produces errors: Fails if JSON serialization or cryptographic signing encounters an error.
 //
-// Side Effects: None. Uses the store's symmetric secret for signing.
+// Has side effects: None. Uses the store's symmetric secret for signing.
 func (s *Store) IssueToken(u *User) (string, error) {
 	now := time.Now().UTC()
 	claims := Claims{
@@ -79,14 +79,14 @@ func (s *Store) IssueToken(u *User) (string, error) {
 
 // ValidateToken decodes and verifies the signature and expiration of a provided JWT string.
 //
-// Parameters:
+// Accepts parameters:
 //   - token: string; The raw JWT string to be verified.
 //
-// Returns: The successfully parsed token Claims if validation passes.
+// Returns The successfully parsed token Claims if validation passes.
 //
-// Errors: Fails if the token is malformed, expired, has an invalid signature, or has been revoked.
+// Produces errors: Fails if the token is malformed, expired, has an invalid signature, or has been revoked.
 //
-// Side Effects: May delegate to external OIDC configuration logic if the primary HS256 parsing fails and OIDC is enabled.
+// Has side effects: May delegate to external OIDC configuration logic if the primary HS256 parsing fails and OIDC is enabled.
 func (s *Store) ValidateToken(token string) (*Claims, error) {
 	claims, err := parseHS256(token, s.secret)
 	if err != nil {

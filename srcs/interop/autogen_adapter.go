@@ -6,19 +6,19 @@ import (
 )
 
 // AutoGenAdapter implements UniversalAdapter for AutoGen.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type AutoGenAdapter struct {
 	Identity string
 }
 
 // NewAutoGenAdapter creates a new AutoGenAdapter.
-// Parameters: identity string (No Constraints)
-// Returns: *AutoGenAdapter, error
-// Errors: Returns error if identity is invalid
-// Side Effects: None
+// Accepts parameters: identity string (No Constraints).
+// Returns *AutoGenAdapter, error.
+// Produces errors: Returns error if identity is invalid.
+// Has no side effects.
 func NewAutoGenAdapter(identity string) (*AutoGenAdapter, error) {
 	if err := ValidateSPIFFEID(identity); err != nil {
 		return nil, fmt.Errorf("invalid identity for AutoGenAdapter: %w", err)
@@ -29,10 +29,10 @@ func NewAutoGenAdapter(identity string) (*AutoGenAdapter, error) {
 }
 
 // SyncState functionality.
-// Parameters: a *AutoGenAdapter (No Constraints)
-// Returns: error
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: a *AutoGenAdapter (No Constraints).
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (a *AutoGenAdapter) SyncState(ctx context.Context, state *State) error {
 	// Mock K8s/LangGraph state sync for AutoGen
 	if state == nil {
@@ -50,10 +50,10 @@ func (a *AutoGenAdapter) SyncState(ctx context.Context, state *State) error {
 }
 
 // ExecuteCommand functionality.
-// Parameters: a *AutoGenAdapter (No Constraints)
-// Returns: (string, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: a *AutoGenAdapter (No Constraints).
+// Returns (string, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (a *AutoGenAdapter) ExecuteCommand(ctx context.Context, cmd string) (string, error) {
 	if cmd == "" {
 		return "", fmt.Errorf("empty command")

@@ -17,13 +17,12 @@ import (
 // ExtractSPIFFEID gets the SPIFFE ID from the context.
 // It extracts the ID exclusively from the mTLS peer certificate.
 // ExtractSPIFFEID gets the SPIFFE ID from the context. It extracts the ID exclusively from the mTLS peer certificate.
-// Intent: ExtractSPIFFEID gets the SPIFFE ID from the context. It extracts the ID exclusively from the mTLS peer certificate.
-// Params:
+// Accepts no parameters.
 //   - ctx: complex; Description
 //
-// Returns: string, error
-// Errors: Returns error on failure conditions.
-// Side Effects: None
+// Returns string, error.
+// Produces errors: Returns error on failure conditions.
+// Has no side effects.
 func ExtractSPIFFEID(ctx context.Context) (string, error) {
 	p, ok := peer.FromContext(ctx)
 	if !ok {
@@ -43,10 +42,10 @@ func ExtractSPIFFEID(ctx context.Context) (string, error) {
 }
 
 // SPIFFEAuthInterceptor validates SPIFFE IDs for incoming gRPC calls.
-// Parameters: None
-// Returns: Explicit success/failure
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns Explicit success/failure.
+// Produces no errors.
+// Has no side effects.
 func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -156,10 +155,10 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 }
 
 // SPIFFEStreamInterceptor validates SPIFFE IDs for streaming gRPC calls.
-// Parameters: None
-// Returns: Explicit success/failure
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns Explicit success/failure.
+// Produces no errors.
+// Has no side effects.
 func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
 	return func(
 		srv interface{},
@@ -256,13 +255,12 @@ type recvWrapper struct {
 }
 
 // RecvMsg functionality.
-// Intent: RecvMsg functionality.
-// Params:
+// Accepts no parameters.
 //   - m: complex; Description
 //
-// Returns: error
-// Errors: Returns error on failure conditions.
-// Side Effects: None
+// Returns error.
+// Produces errors: Returns error on failure conditions.
+// Has no side effects.
 func (w *recvWrapper) RecvMsg(m interface{}) error {
 	if err := w.ServerStream.RecvMsg(m); err != nil {
 		return err

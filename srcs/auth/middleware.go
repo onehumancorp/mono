@@ -19,10 +19,10 @@ var publicPaths = []string{
 }
 
 // Middleware returns an HTTP middleware that enforces JWT authentication. Requests to public paths pass through unauthenticated. All other requests must carry a valid Bearer token in the Authorization header or an "ohc_token" cookie.
-// Parameters: store *Store (No Constraints)
-// Returns: func(http.Handler) http.Handler
-// Errors: None
-// Side Effects: None
+// Accepts parameters: store *Store (No Constraints).
+// Returns func(http.Handler) http.Handler.
+// Produces no errors.
+// Has no side effects.
 func Middleware(store *Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -52,20 +52,20 @@ func Middleware(store *Store) func(http.Handler) http.Handler {
 }
 
 // ClaimsFromContext extracts auth claims set by Middleware. Returns nil if no claims are present (public or in-process request).
-// Parameters: ctx context.Context (No Constraints)
-// Returns: *Claims
-// Errors: None
-// Side Effects: None
+// Accepts parameters: ctx context.Context (No Constraints).
+// Returns *Claims.
+// Produces no errors.
+// Has no side effects.
 func ClaimsFromContext(ctx context.Context) *Claims {
 	v, _ := ctx.Value(claimsContextKey).(*Claims)
 	return v
 }
 
 // RequireRole returns a middleware that further restricts access to users that hold the given role (or "admin").
-// Parameters: role string (No Constraints), next http.HandlerFunc (No Constraints)
-// Returns: http.HandlerFunc
-// Errors: None
-// Side Effects: None
+// Accepts parameters: role string (No Constraints), next http.HandlerFunc (No Constraints).
+// Returns http.HandlerFunc.
+// Produces no errors.
+// Has no side effects.
 func RequireRole(role string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		claims := ClaimsFromContext(r.Context())
@@ -126,8 +126,8 @@ func OrganizationIDFromContext(ctx context.Context) string {
 
 
 // ClaimsContextKeyForTest provides domain-specific context and typed constraints for ClaimsContextKeyForTest operations across the application.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 const ClaimsContextKeyForTest = claimsContextKey

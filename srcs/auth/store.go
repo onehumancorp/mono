@@ -17,22 +17,22 @@ import (
 // Built-in role names.
 const (
 	// RoleAdmin defines the standard operational responsibilities and system access boundaries for the Admin persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleAdmin = "admin"
 	// RoleOperator defines the standard operational responsibilities and system access boundaries for the Operator persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleOperator = "operator"
 	// RoleViewer defines the standard operational responsibilities and system access boundaries for the Viewer persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleViewer = "viewer"
 )
 
@@ -44,10 +44,10 @@ var rolePermissions = map[string][]string{
 }
 
 // User represents a persistent user account with encrypted credentials and role-based permissions within the platform.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type User struct {
 	ID             string    `json:"id"`
 	Username       string    `json:"username"`
@@ -62,10 +62,10 @@ type User struct {
 }
 
 // UserPublic represents the sanitized, non-sensitive profile of a user suitable for external API consumption.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type UserPublic struct {
 	ID             string    `json:"id"`
 	Username       string    `json:"username"`
@@ -79,10 +79,10 @@ type UserPublic struct {
 }
 
 // PublicView returns a UserPublic with no sensitive fields.
-// Parameters: None
-// Returns: UserPublic
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns UserPublic.
+// Produces no errors.
+// Has no side effects.
 func (u *User) PublicView() UserPublic {
 	return UserPublic{
 		ID:             u.ID,
@@ -98,10 +98,10 @@ func (u *User) PublicView() UserPublic {
 }
 
 // Role defines an operational role with an associated array of access permissions for Role-Based Access Control (RBAC).
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Role struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
@@ -110,10 +110,10 @@ type Role struct {
 }
 
 // Store manages secure, thread-safe persistence for user accounts, credentials, and roles, using mutexes for concurrent access.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Store struct {
 	mu      sync.RWMutex
 	users   map[string]*User
@@ -127,10 +127,10 @@ type Store struct {
 }
 
 // NewStore creates a Store seeded with default roles and an admin user. Admin credentials are read from ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_EMAIL environment variables (defaults: admin / admin / admin@localhost).
-// Parameters: None
-// Returns: *Store
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns *Store.
+// Produces no errors.
+// Has no side effects.
 func NewStore() *Store {
 	s := &Store{
 		users:   make(map[string]*User),
@@ -191,10 +191,10 @@ func NewStore() *Store {
 }
 
 // CreateUser creates a new user with the given credentials and roles.
-// Parameters: s *Store (No Constraints)
-// Returns: (*User, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: s *Store (No Constraints).
+// Returns (*User, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *Store) CreateUser(username, email, password string, roles []string) (*User, error) {
 	if username == "" {
 		return nil, errors.New("username is required")
@@ -235,10 +235,10 @@ func (s *Store) CreateUser(username, email, password string, roles []string) (*U
 }
 
 // Authenticate validates username+password and returns the matching user.
-// Parameters: s *Store (No Constraints)
-// Returns: (*User, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: s *Store (No Constraints).
+// Returns (*User, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *Store) Authenticate(username, password string) (*User, error) {
 	s.mu.RLock()
 	u, ok := s.byName[username]
@@ -256,10 +256,10 @@ func (s *Store) Authenticate(username, password string) (*User, error) {
 }
 
 // GetUser returns a user by ID.
-// Parameters: s *Store (No Constraints)
-// Returns: (*User, bool)
-// Errors: None
-// Side Effects: None
+// Accepts parameters: s *Store (No Constraints).
+// Returns (*User, bool).
+// Produces no errors.
+// Has no side effects.
 func (s *Store) GetUser(id string) (*User, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -268,10 +268,10 @@ func (s *Store) GetUser(id string) (*User, bool) {
 }
 
 // ListUsers returns all users.
-// Parameters: None
-// Returns: []*User
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns []*User.
+// Produces no errors.
+// Has no side effects.
 func (s *Store) ListUsers() []*User {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -283,10 +283,10 @@ func (s *Store) ListUsers() []*User {
 }
 
 // UpdateUser mutates mutable fields on the user identified by id.
-// Parameters: s *Store (No Constraints)
-// Returns: (*User, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: s *Store (No Constraints).
+// Returns (*User, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *Store) UpdateUser(id string, emailPtr *string, roles []string, activePtr *bool) (*User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -314,10 +314,10 @@ func (s *Store) UpdateUser(id string, emailPtr *string, roles []string, activePt
 }
 
 // DeleteUser removes a user by ID.
-// Parameters: s *Store (No Constraints)
-// Returns: error
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: s *Store (No Constraints).
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *Store) DeleteUser(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -335,10 +335,10 @@ func (s *Store) DeleteUser(id string) error {
 }
 
 // ListRoles returns all roles.
-// Parameters: None
-// Returns: []*Role
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns []*Role.
+// Produces no errors.
+// Has no side effects.
 func (s *Store) ListRoles() []*Role {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -350,10 +350,10 @@ func (s *Store) ListRoles() []*Role {
 }
 
 // CreateRole adds a new named role with the given permissions.
-// Parameters: s *Store (No Constraints)
-// Returns: (*Role, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: s *Store (No Constraints).
+// Returns (*Role, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *Store) CreateRole(name string, permissions []string) (*Role, error) {
 	if name == "" {
 		return nil, errors.New("role name is required")
@@ -374,10 +374,10 @@ func (s *Store) CreateRole(name string, permissions []string) (*Role, error) {
 }
 
 // RevokeToken records a JTI as revoked until its associated expiry.
-// Parameters: s *Store (No Constraints)
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts parameters: s *Store (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Store) RevokeToken(jti string, exp time.Time) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -392,10 +392,10 @@ func (s *Store) RevokeToken(jti string, exp time.Time) {
 }
 
 // IsRevoked reports whether a JTI has been revoked.
-// Parameters: s *Store (No Constraints)
-// Returns: bool
-// Errors: None
-// Side Effects: None
+// Accepts parameters: s *Store (No Constraints).
+// Returns bool.
+// Produces no errors.
+// Has no side effects.
 func (s *Store) IsRevoked(jti string) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -404,24 +404,24 @@ func (s *Store) IsRevoked(jti string) bool {
 }
 
 // Secret returns the HS256 signing secret.
-// Parameters: None
-// Returns: []byte
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns []byte.
+// Produces no errors.
+// Has no side effects.
 func (s *Store) Secret() []byte { return s.secret }
 
 // OIDCCfg returns the OIDC configuration.
-// Parameters: None
-// Returns: OIDCConfig
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns OIDCConfig.
+// Produces no errors.
+// Has no side effects.
 func (s *Store) OIDCCfg() OIDCConfig { return s.oidcCfg }
 
 // GetOrCreateOIDCUser returns an existing user that matches the OIDC subject, or creates a new viewer-role user from the OIDC claims.
-// Parameters: s *Store (No Constraints)
-// Returns: *User
-// Errors: None
-// Side Effects: None
+// Accepts parameters: s *Store (No Constraints).
+// Returns *User.
+// Produces no errors.
+// Has no side effects.
 func (s *Store) GetOrCreateOIDCUser(sub, email, preferredUsername string) *User {
 	s.mu.Lock()
 	defer s.mu.Unlock()

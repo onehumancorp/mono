@@ -6,19 +6,19 @@ import (
 )
 
 // SemanticKernelAdapter implements UniversalAdapter for Semantic Kernel.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type SemanticKernelAdapter struct {
 	Identity string
 }
 
 // NewSemanticKernelAdapter creates a new SemanticKernelAdapter.
-// Parameters: identity string (No Constraints)
-// Returns: *SemanticKernelAdapter, error
-// Errors: Returns error if identity is invalid
-// Side Effects: None
+// Accepts parameters: identity string (No Constraints).
+// Returns *SemanticKernelAdapter, error.
+// Produces errors: Returns error if identity is invalid.
+// Has no side effects.
 func NewSemanticKernelAdapter(identity string) (*SemanticKernelAdapter, error) {
 	if err := ValidateSPIFFEID(identity); err != nil {
 		return nil, fmt.Errorf("invalid identity for SemanticKernelAdapter: %w", err)
@@ -29,10 +29,10 @@ func NewSemanticKernelAdapter(identity string) (*SemanticKernelAdapter, error) {
 }
 
 // SyncState synchronizes Semantic Kernel state.
-// Parameters: a *SemanticKernelAdapter (No Constraints)
-// Returns: error
-// Errors: Returns an error if state is nil
-// Side Effects: Mutates state.Data by setting semantickernel_synced and last_identity
+// Accepts parameters: a *SemanticKernelAdapter (No Constraints).
+// Returns error.
+// Produces errors: Returns an error if state is nil.
+// Has side effects: Mutates state.Data by setting semantickernel_synced and last_identity.
 func (a *SemanticKernelAdapter) SyncState(ctx context.Context, state *State) error {
 	// Mock K8s/LangGraph state sync
 	if state == nil {
@@ -51,10 +51,10 @@ func (a *SemanticKernelAdapter) SyncState(ctx context.Context, state *State) err
 }
 
 // ExecuteCommand functionality for Semantic Kernel.
-// Parameters: a *SemanticKernelAdapter (No Constraints)
-// Returns: string, error
-// Errors: Returns an error if cmd is empty
-// Side Effects: None
+// Accepts parameters: a *SemanticKernelAdapter (No Constraints).
+// Returns string, error.
+// Produces errors: Returns an error if cmd is empty.
+// Has no side effects.
 func (a *SemanticKernelAdapter) ExecuteCommand(ctx context.Context, cmd string) (string, error) {
 	if cmd == "" {
 		return "", fmt.Errorf("empty command")

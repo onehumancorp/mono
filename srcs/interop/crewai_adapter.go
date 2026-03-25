@@ -6,19 +6,19 @@ import (
 )
 
 // CrewAIAdapter implements UniversalAdapter for CrewAI.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type CrewAIAdapter struct {
 	Identity string
 }
 
 // NewCrewAIAdapter creates a new CrewAIAdapter.
-// Parameters: identity string (No Constraints)
-// Returns: *CrewAIAdapter, error
-// Errors: Returns error if identity is invalid
-// Side Effects: None
+// Accepts parameters: identity string (No Constraints).
+// Returns *CrewAIAdapter, error.
+// Produces errors: Returns error if identity is invalid.
+// Has no side effects.
 func NewCrewAIAdapter(identity string) (*CrewAIAdapter, error) {
 	if err := ValidateSPIFFEID(identity); err != nil {
 		return nil, fmt.Errorf("invalid identity for CrewAIAdapter: %w", err)
@@ -29,10 +29,10 @@ func NewCrewAIAdapter(identity string) (*CrewAIAdapter, error) {
 }
 
 // SyncState functionality.
-// Parameters: a *CrewAIAdapter (No Constraints)
-// Returns: error
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: a *CrewAIAdapter (No Constraints).
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (a *CrewAIAdapter) SyncState(ctx context.Context, state *State) error {
 	// Mock K8s/LangGraph state sync
 	if state == nil {
@@ -51,10 +51,10 @@ func (a *CrewAIAdapter) SyncState(ctx context.Context, state *State) error {
 }
 
 // ExecuteCommand functionality.
-// Parameters: a *CrewAIAdapter (No Constraints)
-// Returns: (string, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: a *CrewAIAdapter (No Constraints).
+// Returns (string, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (a *CrewAIAdapter) ExecuteCommand(ctx context.Context, cmd string) (string, error) {
 	if cmd == "" {
 		return "", fmt.Errorf("empty command")

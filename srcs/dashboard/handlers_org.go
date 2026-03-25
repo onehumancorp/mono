@@ -5,34 +5,31 @@ import (
 	"net/http"
 )
 
-// Summary: Handles retrieving organization details.
-// Intent: Handles retrieving organization details.
-// Params: w, _
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles retrieving organization details.
+// Accepts parameters: w, _.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleOrg(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	writeJSON(w, s.org)
 }
 
-// Summary: Handles retrieving available domains.
-// Intent: Handles retrieving available domains.
-// Params: w, _
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles retrieving available domains.
+// Accepts parameters: w, _.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleDomains(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, availableDomains)
 }
 
-// Summary: Handles retrieving or updating settings.
-// Intent: Handles retrieving or updating settings.
-// Params: w, r
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles retrieving or updating settings.
+// Accepts parameters: w, r.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -59,22 +56,20 @@ func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 }
 
-// Summary: Handles retrieving marketplace items.
-// Intent: Handles retrieving marketplace items.
-// Params: w, _
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles retrieving marketplace items.
+// Accepts parameters: w, _.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleMarketplace(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, defaultMarketplaceItems())
 }
 
-// Summary: Handles retrieving analytics summary.
-// Intent: Handles retrieving analytics summary.
-// Params: w, _
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Handles retrieving analytics summary.
+// Accepts parameters: w, _.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleAnalytics(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
 	agents := s.hub.Agents()

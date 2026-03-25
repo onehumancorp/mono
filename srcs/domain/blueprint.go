@@ -9,12 +9,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Summary: RoleDefinition defines a single agent role within a Skill Blueprint.
-// Intent: RoleDefinition defines a single agent role within a Skill Blueprint.
-// Params: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// RoleDefinition defines a single agent role within a Skill Blueprint.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type RoleDefinition struct {
 	ID        string   `yaml:"id" json:"id"`
 	Title     string   `yaml:"title" json:"title"`
@@ -23,23 +22,21 @@ type RoleDefinition struct {
 	ReportsTo string   `yaml:"reports_to,omitempty" json:"reports_to,omitempty"`
 }
 
-// Summary: SkillBlueprint represents a domain-specific organizational structure imported by the CEO.
-// Intent: SkillBlueprint represents a domain-specific organizational structure imported by the CEO.
-// Params: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// SkillBlueprint represents a domain-specific organizational structure imported by the CEO.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type SkillBlueprint struct {
 	Domain string           `yaml:"domain" json:"domain"`
 	Roles  []RoleDefinition `yaml:"roles" json:"roles"`
 }
 
-// Summary: ParseBlueprint parses a JSON or YAML byte slice into a SkillBlueprint.
-// Intent: ParseBlueprint parses a JSON or YAML byte slice into a SkillBlueprint.
-// Params: data, isYAML
-// Returns: (*SkillBlueprint, error)
-// Errors: Returns an error if applicable
-// Side Effects: None
+// ParseBlueprint parses a JSON or YAML byte slice into a SkillBlueprint.
+// Accepts parameters: data, isYAML.
+// Returns (*SkillBlueprint, error).
+// Produces errors: Returns an error if applicable.
+// Has no side effects.
 // It also validates required fields and checks for cyclic reporting structures (DAG).
 func ParseBlueprint(data []byte, isYAML bool) (*SkillBlueprint, error) {
 	var bp SkillBlueprint
@@ -62,12 +59,11 @@ func ParseBlueprint(data []byte, isYAML bool) (*SkillBlueprint, error) {
 	return &bp, nil
 }
 
-// Summary: Validate checks for missing required fields and ensures the organizational hierarchy is a Directed Acyclic Graph (DAG).
-// Intent: Validate checks for missing required fields and ensures the organizational hierarchy is a Directed Acyclic Graph (DAG).
-// Params: None
-// Returns: error
-// Errors: Returns an error if applicable
-// Side Effects: None
+// Validate checks for missing required fields and ensures the organizational hierarchy is a Directed Acyclic Graph (DAG).
+// Accepts no parameters.
+// Returns error.
+// Produces errors: Returns an error if applicable.
+// Has no side effects.
 func (b *SkillBlueprint) Validate() error {
 	if strings.TrimSpace(b.Domain) == "" {
 		return errors.New("domain is required")
@@ -135,12 +131,11 @@ func (b *SkillBlueprint) Validate() error {
 	return nil
 }
 
-// Summary: NamespaceRoles prepends a namespace to all role IDs and their reports_to fields to prevent conflicts.
-// Intent: NamespaceRoles prepends a namespace to all role IDs and their reports_to fields to prevent conflicts.
-// Params: namespace
-// Returns: None
-// Errors: None
-// Side Effects: None
+// NamespaceRoles prepends a namespace to all role IDs and their reports_to fields to prevent conflicts.
+// Accepts parameters: namespace.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (b *SkillBlueprint) NamespaceRoles(namespace string) {
 	prefix := namespace + "/"
 	for i, role := range b.Roles {

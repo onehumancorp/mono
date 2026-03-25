@@ -20,17 +20,17 @@ import (
 )
 
 // DefaultBaseURL is the in-cluster URL for the Chatwoot service.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 const DefaultBaseURL = "http://chatwoot:3000"
 
 // Client interacts with the Chatwoot REST API v1.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Client struct {
 	BaseURL     string
 	AccessToken string // api_access_token for authenticated requests
@@ -39,10 +39,10 @@ type Client struct {
 }
 
 // NewClientFromEnv creates a Client using environment variables. CHATWOOT_URL overrides the base URL.
-// Parameters: None
-// Returns: *Client
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns *Client.
+// Produces no errors.
+// Has no side effects.
 func NewClientFromEnv() *Client {
 	base := os.Getenv("CHATWOOT_URL")
 	if base == "" {
@@ -55,10 +55,10 @@ func NewClientFromEnv() *Client {
 }
 
 // NewClient creates a Client with an explicit base URL (useful in tests).
-// Parameters: baseURL string (No Constraints)
-// Returns: *Client
-// Errors: None
-// Side Effects: None
+// Accepts parameters: baseURL string (No Constraints).
+// Returns *Client.
+// Produces no errors.
+// Has no side effects.
 func NewClient(baseURL string) *Client {
 	return &Client{
 		BaseURL:    baseURL,
@@ -83,10 +83,10 @@ type signInResponse struct {
 }
 
 // SignIn authenticates with Chatwoot and stores the resulting access token and account ID on the Client.
-// Parameters: c *Client (No Constraints)
-// Returns: error
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: c *Client (No Constraints).
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (c *Client) SignIn(email, password string) error {
 	var resp signInResponse
 	if err := c.post("/auth/sign_in", signInRequest{Email: email, Password: password}, &resp); err != nil {
@@ -103,10 +103,10 @@ func (c *Client) SignIn(email, password string) error {
 // ── Inboxes ───────────────────────────────────────────────────────────────────
 
 // Inbox represents a Chatwoot inbox (a communication channel).
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Inbox struct {
 	ID        int    `json:"id"`
 	Name      string `json:"name"`
@@ -125,10 +125,10 @@ type createInboxRequest struct {
 }
 
 // ListInboxes returns all inboxes in the account.
-// Parameters: None
-// Returns: ([]Inbox, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts no parameters.
+// Returns ([]Inbox, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (c *Client) ListInboxes() ([]Inbox, error) {
 	var resp inboxListResponse
 	if err := c.get(c.accountPath("/inboxes"), &resp); err != nil {
@@ -138,10 +138,10 @@ func (c *Client) ListInboxes() ([]Inbox, error) {
 }
 
 // CreateAPIInbox creates a new API-type inbox with the given name.
-// Parameters: c *Client (No Constraints)
-// Returns: (Inbox, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: c *Client (No Constraints).
+// Returns (Inbox, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (c *Client) CreateAPIInbox(name string) (Inbox, error) {
 	body := createInboxRequest{
 		Name:        name,
@@ -158,10 +158,10 @@ func (c *Client) CreateAPIInbox(name string) (Inbox, error) {
 // ── Contacts ──────────────────────────────────────────────────────────────────
 
 // Contact represents a Chatwoot contact (a participant in conversations).
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Contact struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`
@@ -174,10 +174,10 @@ type createContactRequest struct {
 }
 
 // CreateContact creates a new contact.
-// Parameters: c *Client (No Constraints)
-// Returns: (Contact, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: c *Client (No Constraints).
+// Returns (Contact, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (c *Client) CreateContact(name, email string) (Contact, error) {
 	var contact Contact
 	if err := c.post(c.accountPath("/contacts"), createContactRequest{Name: name, Email: email}, &contact); err != nil {
@@ -189,10 +189,10 @@ func (c *Client) CreateContact(name, email string) (Contact, error) {
 // ── Conversations ─────────────────────────────────────────────────────────────
 
 // Conversation represents a Chatwoot conversation (a chat thread).
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Conversation struct {
 	ID        int `json:"id"`
 	InboxID   int `json:"inbox_id"`
@@ -208,10 +208,10 @@ type createConversationRequest struct {
 }
 
 // CreateConversation opens a new conversation in the given inbox.
-// Parameters: c *Client (No Constraints)
-// Returns: (Conversation, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: c *Client (No Constraints).
+// Returns (Conversation, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (c *Client) CreateConversation(inboxID, contactID int) (Conversation, error) {
 	body := createConversationRequest{
 		InboxID:   inboxID,
@@ -227,10 +227,10 @@ func (c *Client) CreateConversation(inboxID, contactID int) (Conversation, error
 // ── Messages ──────────────────────────────────────────────────────────────────
 
 // Message represents a discrete packet of communication between agents within a meeting room, containing the content and sender identity.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Message struct {
 	ID             int    `json:"id"`
 	Content        string `json:"content"`
@@ -250,10 +250,10 @@ type messageListResponse struct {
 }
 
 // SendMessage posts a message into a conversation.
-// Parameters: c *Client (No Constraints)
-// Returns: (Message, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: c *Client (No Constraints).
+// Returns (Message, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (c *Client) SendMessage(conversationID int, content, messageType string) (Message, error) {
 	if messageType == "" {
 		messageType = "outgoing"
@@ -268,10 +268,10 @@ func (c *Client) SendMessage(conversationID int, content, messageType string) (M
 }
 
 // ListMessages returns all messages in a conversation.
-// Parameters: c *Client (No Constraints)
-// Returns: ([]Message, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: c *Client (No Constraints).
+// Returns ([]Message, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (c *Client) ListMessages(conversationID int) ([]Message, error) {
 	var resp messageListResponse
 	path := fmt.Sprintf("%s/conversations/%d/messages", c.accountBase(), conversationID)

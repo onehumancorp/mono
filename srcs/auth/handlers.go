@@ -8,19 +8,19 @@ import (
 )
 
 // Handlers bundles auth + user-management HTTP handlers around a Store.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Handlers struct {
 	store *Store
 }
 
 // NewHandlers creates an HTTP handler bundle backed by the given store.
-// Parameters: store *Store (No Constraints)
-// Returns: *Handlers
-// Errors: None
-// Side Effects: None
+// Accepts parameters: store *Store (No Constraints).
+// Returns *Handlers.
+// Produces no errors.
+// Has no side effects.
 func NewHandlers(store *Store) *Handlers {
 	return &Handlers{store: store}
 }
@@ -39,10 +39,10 @@ type loginResponse struct {
 }
 
 // HandleLogin validates credentials and returns a signed JWT.  	POST /api/auth/login  {"username":"…","password":"…"}
-// Parameters: h *Handlers (No Constraints)
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts parameters: h *Handlers (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (h *Handlers) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		jsonError(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -81,10 +81,10 @@ func (h *Handlers) HandleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleLogout revokes the caller's token.  	POST /api/auth/logout
-// Parameters: h *Handlers (No Constraints)
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts parameters: h *Handlers (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (h *Handlers) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		jsonError(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -98,10 +98,10 @@ func (h *Handlers) HandleLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleMe returns the currently authenticated user.  	GET /api/auth/me
-// Parameters: h *Handlers (No Constraints)
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts parameters: h *Handlers (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (h *Handlers) HandleMe(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		jsonError(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -143,10 +143,10 @@ type updateUserRequest struct {
 }
 
 // HandleUsers handles listing and creation of users.  	GET  /api/users   → list all users (admin only) 	POST /api/users   → create user   (admin only)
-// Parameters: h *Handlers (No Constraints)
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts parameters: h *Handlers (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (h *Handlers) HandleUsers(w http.ResponseWriter, r *http.Request) {
 	claims := ClaimsFromContext(r.Context())
 	if claims == nil || !claims.HasRole(RoleAdmin) {
@@ -187,10 +187,10 @@ func (h *Handlers) HandleUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleUser handles fetching, updating and deleting a single user by ID.  	GET    /api/users/{id} 	PUT    /api/users/{id} 	DELETE /api/users/{id}
-// Parameters: h *Handlers (No Constraints)
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts parameters: h *Handlers (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (h *Handlers) HandleUser(w http.ResponseWriter, r *http.Request) {
 	claims := ClaimsFromContext(r.Context())
 	if claims == nil {
@@ -265,10 +265,10 @@ type createRoleRequest struct {
 }
 
 // HandleRoles handles listing and creation of roles.  	GET  /api/roles   → list roles (authenticated) 	POST /api/roles   → create role (admin only)
-// Parameters: h *Handlers (No Constraints)
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts parameters: h *Handlers (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (h *Handlers) HandleRoles(w http.ResponseWriter, r *http.Request) {
 	claims := ClaimsFromContext(r.Context())
 	if claims == nil {

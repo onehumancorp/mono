@@ -14,12 +14,12 @@ import (
 // specialized sub-agents. It enforces VRAM quota limits before creating the agent,
 // and isolates the sub-agent with its own thread ID and instructions.
 //
-// Parameters:
+// Accepts no parameters.
 //   ctx context.Context
 //   req *pb.SubTask
 //
-// Returns: (*pb.DelegateTaskResponse, error)
-// Errors: Returns ResourceExhausted if VRAM quota is exceeded.
+// Returns (*pb.DelegateTaskResponse, error).
+// Produces errors: Returns ResourceExhausted if VRAM quota is exceeded.
 func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask) (*pb.DelegateTaskResponse, error) {
 	if req.GetTaskId() == "" || req.GetTargetRole() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "task_id and target_role are required")
