@@ -62,16 +62,24 @@ class CentrifugeService {
   final Map<String, centrifuge.Subscription> _subscriptions = {};
   final Map<String, StreamController<CentrifugeMessage>> _controllers = {};
 
+  /// Optional factory used to create the centrifuge [Client]. When omitted the
+  /// default [centrifuge.createClient] function is used. Inject a custom
+  /// factory in tests to avoid real network connections.
+  final centrifuge.Client Function(String, centrifuge.ClientConfig)?
+      clientFactory;
+
   CentrifugeService({
     required this.serverUrl,
     required this.token,
     required this.userId,
     required this.userName,
+    this.clientFactory,
   });
 
   /// Connect to the Centrifuge server.
   Future<void> connect() async {
-    _client = centrifuge.createClient(
+    final factory = clientFactory ?? centrifuge.createClient;
+    _client = factory(
       serverUrl,
       centrifuge.ClientConfig(
         token: token,
