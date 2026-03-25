@@ -7,10 +7,10 @@ import (
 )
 
 // TrustAgreement establishes a cryptographically verified, federated trust relationship between two distinct One Human Corp deployments using SPIFFE-federated JWTs.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type TrustAgreement struct {
 	ID           string   `json:"id"`
 	PartnerOrg   string   `json:"partner_org"`
@@ -20,17 +20,17 @@ type TrustAgreement struct {
 }
 
 // TrustManager handles the creation and management of TrustAgreements.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type TrustManager struct{}
 
 // ParseJWKS parses a partner's JWKS data (JSON) and creates an active TrustAgreement. This implements UT-01 from the test plan.
-// Parameters: tm *TrustManager (No Constraints)
-// Returns: (TrustAgreement, error)
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: tm *TrustManager (No Constraints).
+// Returns (TrustAgreement, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (tm *TrustManager) ParseJWKS(partnerOrg, jwksJSON string, allowedRoles []string) (TrustAgreement, error) {
 	// Simple validation to simulate parsing the JWKS JSON string.
 	// In a real implementation, this would validate the keys cryptographically.
@@ -49,10 +49,10 @@ func (tm *TrustManager) ParseJWKS(partnerOrg, jwksJSON string, allowedRoles []st
 }
 
 // B2BMessage represents an encapsulated agent message for cross-org tunneling.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type B2BMessage struct {
 	Content  string `json:"content"`
 	CrossOrg bool   `json:"cross_org"`
@@ -60,17 +60,17 @@ type B2BMessage struct {
 }
 
 // EgressFilter enforces the data perimeter for B2B collaboration.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type EgressFilter struct{}
 
 // Scan checks the outgoing message content for internal keywords. If a keyword is found, the message is blocked and flagged. Messages entering/leaving an Inter-Org Room are flagged with CrossOrg: true. This implements UT-02 from the test plan.
-// Parameters: ef *EgressFilter (No Constraints)
-// Returns: B2BMessage
-// Errors: None
-// Side Effects: None
+// Accepts parameters: ef *EgressFilter (No Constraints).
+// Returns B2BMessage.
+// Produces no errors.
+// Has no side effects.
 func (ef *EgressFilter) Scan(message string, keywords []string) B2BMessage {
 	blocked := false
 	lowerMsg := strings.ToLower(message)

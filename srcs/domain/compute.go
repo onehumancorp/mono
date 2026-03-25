@@ -6,10 +6,10 @@ import (
 )
 
 // ComputeProfile defines the strict hardware constraints (CPU, Memory) and affinity rules for a specific agent role, ensuring optimal Kubernetes pod scheduling.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type ComputeProfile struct {
 	RoleID       string `json:"role_id"`
 	MinVRAM      int    `json:"min_vram_gb"`
@@ -18,27 +18,27 @@ type ComputeProfile struct {
 }
 
 // AffinityScoreResult holds the result of the affinity scoring engine.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type AffinityScoreResult struct {
 	Score  int
 	Reason string
 }
 
 // AffinityEngine calculates hardware placement scores.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type AffinityEngine struct{}
 
 // CalculateScore determines the placement score and hardware requirements based on the agent's profile and task details. This implements UT-01 from the test plan.
-// Parameters: ae *AffinityEngine (No Constraints)
-// Returns: AffinityScoreResult
-// Errors: None
-// Side Effects: None
+// Accepts parameters: ae *AffinityEngine (No Constraints).
+// Returns AffinityScoreResult.
+// Produces no errors.
+// Has no side effects.
 func (ae *AffinityEngine) CalculateScore(profile ComputeProfile, isVIP bool, localWeightsCached bool) AffinityScoreResult {
 	score := 0
 	var reasons []string
@@ -78,17 +78,17 @@ func (ae *AffinityEngine) CalculateScore(profile ComputeProfile, isVIP bool, loc
 }
 
 // QuotaManager enforces hardware budget limits.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type QuotaManager struct{}
 
 // CheckQuota validates if the requested VRAM fits within the available quota limit. This implements UT-02 from the test plan.
-// Parameters: qm *QuotaManager (No Constraints)
-// Returns: error
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: qm *QuotaManager (No Constraints).
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (qm *QuotaManager) CheckQuota(profile ComputeProfile, availableVRAM int) error {
 	if profile.MinVRAM > availableVRAM {
 		return errors.New("quota exceeded: min_vram_gb exceeds available VRAM")

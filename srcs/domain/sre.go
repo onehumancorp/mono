@@ -6,12 +6,11 @@ import (
 	"time"
 )
 
-// Summary: Incident represents an operational event requiring SRE attention.
-// Intent: Incident represents an operational event requiring SRE attention.
-// Params: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Incident represents an operational event requiring SRE attention.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Incident struct {
 	ID           string    `json:"id"`
 	Severity     string    `json:"severity"` // P0, P1, P2
@@ -21,20 +20,18 @@ type Incident struct {
 	Status       string    `json:"status"` // INVESTIGATING, PROPOSED, RESOLVED
 }
 
-// Summary: AlertParser handles incoming alerts from Observability tools.
-// Intent: AlertParser handles incoming alerts from Observability tools.
-// Params: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// AlertParser handles incoming alerts from Observability tools.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type AlertParser struct{}
 
-// Summary: ParsePrometheusAlert takes a raw alert string and translates it into an Incident.
-// Intent: ParsePrometheusAlert takes a raw alert string and translates it into an Incident.
-// Params: alert
-// Returns: (Incident, error)
-// Errors: Returns an error if applicable
-// Side Effects: None
+// ParsePrometheusAlert takes a raw alert string and translates it into an Incident.
+// Accepts parameters: alert.
+// Returns (Incident, error).
+// Produces errors: Returns an error if applicable.
+// Has no side effects.
 func (ap *AlertParser) ParsePrometheusAlert(alert string) (Incident, error) {
 	if strings.Contains(alert, "HighErrorRate") {
 		return Incident{
@@ -47,20 +44,18 @@ func (ap *AlertParser) ParsePrometheusAlert(alert string) (Incident, error) {
 	return Incident{}, errors.New("unknown alert")
 }
 
-// Summary: RCAEngine evaluates root cause analysis confidence.
-// Intent: RCAEngine evaluates root cause analysis confidence.
-// Params: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// RCAEngine evaluates root cause analysis confidence.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type RCAEngine struct{}
 
-// Summary: EvaluateConfidence determines the remediation path based on the agent's confidence score.
-// Intent: EvaluateConfidence determines the remediation path based on the agent's confidence score.
-// Params: confidence
-// Returns: string
-// Errors: None
-// Side Effects: None
+// EvaluateConfidence determines the remediation path based on the agent's confidence score.
+// Accepts parameters: confidence.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 func (r *RCAEngine) EvaluateConfidence(confidence float64) string {
 	if confidence < 0.80 {
 		return "WARM_HANDOFF"

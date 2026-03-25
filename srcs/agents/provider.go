@@ -12,61 +12,61 @@ import (
 )
 
 // ProviderType is the unique identifier for an external agent implementation.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type ProviderType string
 
 const (
 	// ProviderTypeClaude targets Anthropic Claude Code (claude.ai/code). Best suited for software-engineering and security-review roles.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	ProviderTypeClaude ProviderType = "claude"
 
 	// ProviderTypeGemini targets Google Gemini CLI. Best suited for product-management, analytics, and assistant roles.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	ProviderTypeGemini ProviderType = "gemini"
 
 	// ProviderTypeOpenCode targets the open-source OpenCode SWE agent. Best suited for software-engineering roles.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	ProviderTypeOpenCode ProviderType = "opencode"
 
 	// ProviderTypeOpenClaw targets the OpenClaw assistant agent. Best suited for assistant and content-strategy roles.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	ProviderTypeOpenClaw ProviderType = "openclaw"
 
 	// ProviderTypeIronClaw targets the IronClaw agent. Best suited for security, audit, and QA roles.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	ProviderTypeIronClaw ProviderType = "ironclaw"
 
 	// ProviderTypeBuiltin is the platform's own lightweight agent implementation. Suitable for any role when no external provider is required.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	ProviderTypeBuiltin ProviderType = "builtin"
 )
 
 // Credentials holds the authentication material for an external agent provider. Providers may use an API key, an OAuth bearer token, or both alongside any additional provider-specific configuration entries.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Credentials struct {
 	APIKey     string            `json:"apiKey,omitempty"`
 	OAuthToken string            `json:"oauthToken,omitempty"`
@@ -74,19 +74,19 @@ type Credentials struct {
 }
 
 // IsEmpty returns true when no authentication material has been set.
-// Parameters: None
-// Returns: bool
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns bool.
+// Produces no errors.
+// Has no side effects.
 func (c Credentials) IsEmpty() bool {
 	return c.APIKey == "" && c.OAuthToken == ""
 }
 
 // Provider is the interface every external agent implementation must satisfy.  Implementations are registered with a Registry and selected by name when an agent is hired through the dashboard API.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Provider interface {
 	// Type returns the unique identifier for this provider.
 	Type() ProviderType
@@ -135,42 +135,42 @@ func (b *baseProvider) load() Credentials {
 // ── Claude (Anthropic) ────────────────────────────────────────────────────────
 
 // ClaudeProvider implements Provider for Anthropic Claude Code.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type ClaudeProvider struct{ baseProvider }
 
 // Type functionality.
-// Parameters: None
-// Returns: ProviderType
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns ProviderType.
+// Produces no errors.
+// Has no side effects.
 func (p *ClaudeProvider) Type() ProviderType { return ProviderTypeClaude }
 
 // Description functionality.
-// Parameters: None
-// Returns: string
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 func (p *ClaudeProvider) Description() string {
 	return "Anthropic Claude Code — advanced coding and reasoning agent backed by Claude Sonnet/Opus"
 }
 
 // SupportedRoles functionality.
-// Parameters: None
-// Returns: []string
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns []string.
+// Produces no errors.
+// Has no side effects.
 func (p *ClaudeProvider) SupportedRoles() []string {
 	return []string{"SOFTWARE_ENGINEER", "SECURITY_ENGINEER", "QA_TESTER", "ENGINEERING_DIRECTOR"}
 }
 
 // Authenticate functionality.
-// Parameters: p *ClaudeProvider (No Constraints)
-// Returns: error
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: p *ClaudeProvider (No Constraints).
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (p *ClaudeProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" {
 		return errors.New("claude provider requires an API key (ANTHROPIC_API_KEY)")
@@ -180,58 +180,58 @@ func (p *ClaudeProvider) Authenticate(creds Credentials) error {
 }
 
 // GetCredentials functionality.
-// Parameters: None
-// Returns: Credentials
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns Credentials.
+// Produces no errors.
+// Has no side effects.
 func (p *ClaudeProvider) GetCredentials() Credentials { return p.load() }
 
 // IsAuthenticated functionality.
-// Parameters: None
-// Returns: bool
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns bool.
+// Produces no errors.
+// Has no side effects.
 func (p *ClaudeProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── Gemini (Google) ───────────────────────────────────────────────────────────
 
 // GeminiProvider implements Provider for Google Gemini CLI.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type GeminiProvider struct{ baseProvider }
 
 // Type functionality.
-// Parameters: None
-// Returns: ProviderType
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns ProviderType.
+// Produces no errors.
+// Has no side effects.
 func (p *GeminiProvider) Type() ProviderType { return ProviderTypeGemini }
 
 // Description functionality.
-// Parameters: None
-// Returns: string
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 func (p *GeminiProvider) Description() string {
 	return "Google Gemini CLI — multimodal assistant agent backed by Gemini Pro/Ultra"
 }
 
 // SupportedRoles functionality.
-// Parameters: None
-// Returns: []string
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns []string.
+// Produces no errors.
+// Has no side effects.
 func (p *GeminiProvider) SupportedRoles() []string {
 	return []string{"PRODUCT_MANAGER", "ANALYTICS_ENGINEER", "MARKETING_MANAGER", "CEO"}
 }
 
 // Authenticate functionality.
-// Parameters: p *GeminiProvider (No Constraints)
-// Returns: error
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: p *GeminiProvider (No Constraints).
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (p *GeminiProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" && creds.OAuthToken == "" {
 		return errors.New("gemini provider requires an API key (GEMINI_API_KEY) or an OAuth token")
@@ -241,58 +241,58 @@ func (p *GeminiProvider) Authenticate(creds Credentials) error {
 }
 
 // GetCredentials functionality.
-// Parameters: None
-// Returns: Credentials
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns Credentials.
+// Produces no errors.
+// Has no side effects.
 func (p *GeminiProvider) GetCredentials() Credentials { return p.load() }
 
 // IsAuthenticated functionality.
-// Parameters: None
-// Returns: bool
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns bool.
+// Produces no errors.
+// Has no side effects.
 func (p *GeminiProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── OpenCode ──────────────────────────────────────────────────────────────────
 
 // OpenCodeProvider implements Provider for the open-source OpenCode SWE agent.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type OpenCodeProvider struct{ baseProvider }
 
 // Type functionality.
-// Parameters: None
-// Returns: ProviderType
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns ProviderType.
+// Produces no errors.
+// Has no side effects.
 func (p *OpenCodeProvider) Type() ProviderType { return ProviderTypeOpenCode }
 
 // Description functionality.
-// Parameters: None
-// Returns: string
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 func (p *OpenCodeProvider) Description() string {
 	return "OpenCode — open-source software-engineering agent with full terminal and file-system access"
 }
 
 // SupportedRoles functionality.
-// Parameters: None
-// Returns: []string
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns []string.
+// Produces no errors.
+// Has no side effects.
 func (p *OpenCodeProvider) SupportedRoles() []string {
 	return []string{"SOFTWARE_ENGINEER", "ENGINEERING_DIRECTOR", "QA_TESTER"}
 }
 
 // Authenticate functionality.
-// Parameters: p *OpenCodeProvider (No Constraints)
-// Returns: error
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: p *OpenCodeProvider (No Constraints).
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (p *OpenCodeProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" {
 		return errors.New("opencode provider requires an API key")
@@ -302,58 +302,58 @@ func (p *OpenCodeProvider) Authenticate(creds Credentials) error {
 }
 
 // GetCredentials functionality.
-// Parameters: None
-// Returns: Credentials
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns Credentials.
+// Produces no errors.
+// Has no side effects.
 func (p *OpenCodeProvider) GetCredentials() Credentials { return p.load() }
 
 // IsAuthenticated functionality.
-// Parameters: None
-// Returns: bool
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns bool.
+// Produces no errors.
+// Has no side effects.
 func (p *OpenCodeProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── OpenClaw ──────────────────────────────────────────────────────────────────
 
 // OpenClawProvider implements Provider for the OpenClaw assistant agent.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type OpenClawProvider struct{ baseProvider }
 
 // Type functionality.
-// Parameters: None
-// Returns: ProviderType
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns ProviderType.
+// Produces no errors.
+// Has no side effects.
 func (p *OpenClawProvider) Type() ProviderType { return ProviderTypeOpenClaw }
 
 // Description functionality.
-// Parameters: None
-// Returns: string
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 func (p *OpenClawProvider) Description() string {
 	return "OpenClaw — general-purpose assistant agent optimised for content strategy and growth tasks"
 }
 
 // SupportedRoles functionality.
-// Parameters: None
-// Returns: []string
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns []string.
+// Produces no errors.
+// Has no side effects.
 func (p *OpenClawProvider) SupportedRoles() []string {
 	return []string{"GROWTH_AGENT", "CONTENT_STRATEGIST", "MARKETING_MANAGER", "PRODUCT_MANAGER"}
 }
 
 // Authenticate functionality.
-// Parameters: p *OpenClawProvider (No Constraints)
-// Returns: error
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: p *OpenClawProvider (No Constraints).
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (p *OpenClawProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" {
 		return errors.New("openclaw provider requires an API key")
@@ -363,58 +363,58 @@ func (p *OpenClawProvider) Authenticate(creds Credentials) error {
 }
 
 // GetCredentials functionality.
-// Parameters: None
-// Returns: Credentials
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns Credentials.
+// Produces no errors.
+// Has no side effects.
 func (p *OpenClawProvider) GetCredentials() Credentials { return p.load() }
 
 // IsAuthenticated functionality.
-// Parameters: None
-// Returns: bool
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns bool.
+// Produces no errors.
+// Has no side effects.
 func (p *OpenClawProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── IronClaw ──────────────────────────────────────────────────────────────────
 
 // IronClawProvider implements Provider for the IronClaw agent.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type IronClawProvider struct{ baseProvider }
 
 // Type functionality.
-// Parameters: None
-// Returns: ProviderType
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns ProviderType.
+// Produces no errors.
+// Has no side effects.
 func (p *IronClawProvider) Type() ProviderType { return ProviderTypeIronClaw }
 
 // Description functionality.
-// Parameters: None
-// Returns: string
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 func (p *IronClawProvider) Description() string {
 	return "IronClaw — security and audit-focused agent with deep static-analysis capabilities"
 }
 
 // SupportedRoles functionality.
-// Parameters: None
-// Returns: []string
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns []string.
+// Produces no errors.
+// Has no side effects.
 func (p *IronClawProvider) SupportedRoles() []string {
 	return []string{"SECURITY_ENGINEER", "AUDIT_MANAGER", "QA_TESTER"}
 }
 
 // Authenticate functionality.
-// Parameters: p *IronClawProvider (No Constraints)
-// Returns: error
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: p *IronClawProvider (No Constraints).
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (p *IronClawProvider) Authenticate(creds Credentials) error {
 	if creds.APIKey == "" {
 		return errors.New("ironclaw provider requires an API key")
@@ -424,49 +424,49 @@ func (p *IronClawProvider) Authenticate(creds Credentials) error {
 }
 
 // GetCredentials functionality.
-// Parameters: None
-// Returns: Credentials
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns Credentials.
+// Produces no errors.
+// Has no side effects.
 func (p *IronClawProvider) GetCredentials() Credentials { return p.load() }
 
 // IsAuthenticated functionality.
-// Parameters: None
-// Returns: bool
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns bool.
+// Produces no errors.
+// Has no side effects.
 func (p *IronClawProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── Builtin ───────────────────────────────────────────────────────────────────
 
 // BuiltinProvider implements Provider for the platform's own lightweight agent. It requires no external credentials and is always considered authenticated.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type BuiltinProvider struct{}
 
 // Type functionality.
-// Parameters: None
-// Returns: ProviderType
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns ProviderType.
+// Produces no errors.
+// Has no side effects.
 func (p *BuiltinProvider) Type() ProviderType { return ProviderTypeBuiltin }
 
 // Description functionality.
-// Parameters: None
-// Returns: string
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 func (p *BuiltinProvider) Description() string {
 	return "Built-in — platform-native agent; no external credentials required"
 }
 
 // SupportedRoles functionality.
-// Parameters: None
-// Returns: []string
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns []string.
+// Produces no errors.
+// Has no side effects.
 func (p *BuiltinProvider) SupportedRoles() []string {
 	return []string{
 		"CEO", "PRODUCT_MANAGER", "SOFTWARE_ENGINEER", "ENGINEERING_DIRECTOR",
@@ -478,22 +478,22 @@ func (p *BuiltinProvider) SupportedRoles() []string {
 }
 
 // Authenticate functionality.
-// Parameters: p *BuiltinProvider (No Constraints)
-// Returns: error
-// Errors: Explicit error handling
-// Side Effects: None
+// Accepts parameters: p *BuiltinProvider (No Constraints).
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (p *BuiltinProvider) Authenticate(_ Credentials) error { return nil }
 
 // GetCredentials functionality.
-// Parameters: None
-// Returns: Credentials
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns Credentials.
+// Produces no errors.
+// Has no side effects.
 func (p *BuiltinProvider) GetCredentials() Credentials { return Credentials{} }
 
 // IsAuthenticated functionality.
-// Parameters: None
-// Returns: bool
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns bool.
+// Produces no errors.
+// Has no side effects.
 func (p *BuiltinProvider) IsAuthenticated() bool { return true }

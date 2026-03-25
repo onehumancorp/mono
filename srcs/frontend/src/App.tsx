@@ -402,12 +402,11 @@ function HireAgentForm({
  * @remarks Side Effects: None
  */
 /**
- * Summary: Main Application component rendering the dashboard.
- * Intent: Main Application component rendering the dashboard.
- * Params: None
- * Returns: JSX.Element
- * Errors: None
- * Side Effects: Fetches state from API, manages intervals.
+ * @summary Main Application component rendering the dashboard.
+ * @param None
+ * @returns JSX.Element
+ * @throws None
+ * @remarks Side Effects: Fetches state from API, manages intervals.
  */
 export function App() {
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);

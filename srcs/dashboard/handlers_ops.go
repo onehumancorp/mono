@@ -294,10 +294,10 @@ func (s *Server) handlePipelineStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // ScaleRequest defines the payload for scaling a team member role.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type ScaleRequest struct {
 	Role  string `json:"role"`
 	Count int    `json:"count"`
@@ -378,10 +378,10 @@ func (s *Server) handleScale(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleScaleStream streams real-time scaling trace events to the dashboard.
-// Parameters: s *Server (No Constraints)
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts parameters: s *Server (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) handleScaleStream(w http.ResponseWriter, r *http.Request) {
 	// Set headers for SSE
 	w.Header().Set("Content-Type", "text/event-stream")

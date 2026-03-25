@@ -3,130 +3,130 @@ package domain
 import "time"
 
 // Role defines an operational role with an associated array of access permissions for Role-Based Access Control (RBAC).
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Role string
 
 const (
 	// RoleCEO defines the standard operational responsibilities and system access boundaries for the CEO persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleCEO Role = "CEO"
 	// RoleProductManager defines the standard operational responsibilities and system access boundaries for the ProductManager persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleProductManager Role = "PRODUCT_MANAGER"
 	// RoleSoftwareEngineer defines the standard operational responsibilities and system access boundaries for the SoftwareEngineer persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleSoftwareEngineer Role = "SOFTWARE_ENGINEER"
 	// RoleEngineeringDirector defines the standard operational responsibilities and system access boundaries for the EngineeringDirector persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleEngineeringDirector Role = "ENGINEERING_DIRECTOR"
 	// RoleQATester defines the standard operational responsibilities and system access boundaries for the QATester persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleQATester Role = "QA_TESTER"
 	// RoleSecurityEngineer defines the standard operational responsibilities and system access boundaries for the SecurityEngineer persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleSecurityEngineer Role = "SECURITY_ENGINEER"
 	// RoleDesigner defines the standard operational responsibilities and system access boundaries for the Designer persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleDesigner Role = "DESIGNER"
 	// RoleMarketingManager defines the standard operational responsibilities and system access boundaries for the MarketingManager persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleMarketingManager Role = "MARKETING_MANAGER"
 
 	// RoleGrowthAgent Digital Marketing Agency roles.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleGrowthAgent Role = "GROWTH_AGENT"
 	// RoleContentStrategist defines the standard operational responsibilities and system access boundaries for the ContentStrategist persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleContentStrategist Role = "CONTENT_STRATEGIST"
 	// RoleSEOSpecialist defines the standard operational responsibilities and system access boundaries for the SEOSpecialist persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleSEOSpecialist Role = "SEO_SPECIALIST"
 	// RolePaidMediaManager defines the standard operational responsibilities and system access boundaries for the PaidMediaManager persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RolePaidMediaManager Role = "PAID_MEDIA_MANAGER"
 	// RoleAnalyticsEngineer defines the standard operational responsibilities and system access boundaries for the AnalyticsEngineer persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleAnalyticsEngineer Role = "ANALYTICS_ENGINEER"
 
 	// RoleCFO Accounting Firm roles.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleCFO Role = "CFO"
 	// RoleBookkeeper defines the standard operational responsibilities and system access boundaries for the Bookkeeper persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleBookkeeper Role = "BOOKKEEPER"
 	// RoleTaxSpecialist defines the standard operational responsibilities and system access boundaries for the TaxSpecialist persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleTaxSpecialist Role = "TAX_SPECIALIST"
 	// RoleAuditManager defines the standard operational responsibilities and system access boundaries for the AuditManager persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RoleAuditManager Role = "AUDIT_MANAGER"
 	// RolePayrollManager defines the standard operational responsibilities and system access boundaries for the PayrollManager persona.
-	// Parameters: None
-	// Returns: None
-	// Errors: None
-	// Side Effects: None
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
 	RolePayrollManager Role = "PAYROLL_MANAGER"
 )
 
 // Member represents a distinct individual (human or AI agent) assigned to a specific role within the organizational hierarchy.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Member struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
@@ -136,10 +136,10 @@ type Member struct {
 }
 
 // RoleProfile defines the operational responsibilities, expected skill set, and default tools for a specific archetype within the organization.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type RoleProfile struct {
 	Role          Role     `json:"role"`
 	BasePrompt    string   `json:"basePrompt"`
@@ -148,10 +148,10 @@ type RoleProfile struct {
 }
 
 // Organization represents the top-level structural entity, maintaining the hierarchy of members, active roles, and cross-team workflows.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Organization struct {
 	ID           string        `json:"id"`
 	Name         string        `json:"name"`
@@ -164,13 +164,13 @@ type Organization struct {
 
 // NewSoftwareCompany constructs a pre-configured engineering organisation with standard tech roles.
 //
-// Parameters:
+// Accepts parameters:
 //   - id: string; Unique identifier for the organization.
 //   - name: string; The display name for the company.
 //   - ceoName: string; The human CEO's name.
 //   - now: time.Time; The organization's creation timestamp.
 //
-// Returns: A fully populated software company Organization ready for the orchestration Hub.
+// Returns A fully populated software company Organization ready for the orchestration Hub.
 func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	directorID := id + "-director-eng"
@@ -200,10 +200,10 @@ func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 
 // MemberByID retrieves a specific team member from the organisation by ID.
 //
-// Parameters:
+// Accepts parameters:
 //   - id: string; The unique identifier of the member.
 //
-// Returns: The Member and a boolean indicating if the member was found.
+// Returns The Member and a boolean indicating if the member was found.
 func (o Organization) MemberByID(id string) (Member, bool) {
 	for _, member := range o.Members {
 		if member.ID == id {
@@ -216,10 +216,10 @@ func (o Organization) MemberByID(id string) (Member, bool) {
 
 // MembersByManager fetches all direct reports for a given manager ID.
 //
-// Parameters:
+// Accepts parameters:
 //   - managerID: string; The unique identifier of the manager.
 //
-// Returns: A slice of Member objects representing the direct reports.
+// Returns A slice of Member objects representing the direct reports.
 func (o Organization) MembersByManager(managerID string) []Member {
 	var members []Member
 	for _, member := range o.Members {
@@ -233,10 +233,10 @@ func (o Organization) MembersByManager(managerID string) []Member {
 
 // RoleProfile retrieves the execution playbook for a specific role within this organisation.
 //
-// Parameters:
+// Accepts parameters:
 //   - role: Role; The role archetype to lookup.
 //
-// Returns: The RoleProfile and a boolean indicating if the playbook exists.
+// Returns The RoleProfile and a boolean indicating if the playbook exists.
 func (o Organization) RoleProfile(role Role) (RoleProfile, bool) {
 	for _, profile := range o.RoleProfiles {
 		if profile.Role == role {
@@ -366,13 +366,13 @@ func defaultSoftwareCompanyRoleProfiles() []RoleProfile {
 
 // NewDigitalMarketingAgency constructs a pre-configured marketing organisation with standard growth roles.
 //
-// Parameters:
+// Accepts parameters:
 //   - id: string; Unique identifier for the organization.
 //   - name: string; The display name for the agency.
 //   - ceoName: string; The human CEO's name.
 //   - now: time.Time; The organization's creation timestamp.
 //
-// Returns: A fully populated marketing agency Organization.
+// Returns A fully populated marketing agency Organization.
 func NewDigitalMarketingAgency(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	marketingDirectorID := id + "-director-mkt"
@@ -454,13 +454,13 @@ func defaultDigitalMarketingRoleProfiles() []RoleProfile {
 
 // NewAccountingFirm constructs a pre-configured financial services organisation with audit and tax roles.
 //
-// Parameters:
+// Accepts parameters:
 //   - id: string; Unique identifier for the organization.
 //   - name: string; The display name for the firm.
 //   - ceoName: string; The human CEO's name.
 //   - now: time.Time; The organization's creation timestamp.
 //
-// Returns: A fully populated accounting firm Organization.
+// Returns A fully populated accounting firm Organization.
 func NewAccountingFirm(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	cfoID := id + "-cfo"

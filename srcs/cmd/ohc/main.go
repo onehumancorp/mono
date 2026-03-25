@@ -22,12 +22,11 @@ const defaultAddress = ":8080"
 
 type listenFunc func(string, http.Handler) error
 
-// Summary: Retrieves an environment variable or returns a fallback value.
-// Intent: Retrieves an environment variable or returns a fallback value.
-// Params: key, fallback
-// Returns: string
-// Errors: None
-// Side Effects: None
+// Retrieves an environment variable or returns a fallback value.
+// Accepts parameters: key, fallback.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 func getEnvOrDefault(key, fallback string) string {
 	if val, ok := os.LookupEnv(key); ok && val != "" {
 		return ":" + val
@@ -45,12 +44,11 @@ var (
 	initTelemetry = telemetry.InitTelemetry
 )
 
-// Summary: Initializes structured JSON logging.
-// Intent: Initializes structured JSON logging.
-// Params: None
-// Returns: None
-// Errors: None
-// Side Effects: Sets the default logger
+// Initializes structured JSON logging.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has side effects: Sets the default logger.
 func init() {
 	// Initialize structured JSON logging
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -59,12 +57,11 @@ func init() {
 	slog.SetDefault(logger)
 }
 
-// Summary: Creates a new demo system.
-// Intent: Creates a new demo system.
-// Params: now
-// Returns: (domain.Organization, *orchestration.Hub, *billing.Tracker)
-// Errors: None
-// Side Effects: None
+// Creates a new demo system.
+// Accepts parameters: now.
+// Returns (domain.Organization, *orchestration.Hub, *billing.Tracker).
+// Produces no errors.
+// Has no side effects.
 func newDemoSystem(now time.Time) (domain.Organization, *orchestration.Hub, *billing.Tracker) {
 	org := domain.NewSoftwareCompany("demo", "Demo Software Company", "Human CEO", now.UTC())
 	hub := orchestration.NewHub()
@@ -86,12 +83,11 @@ func newDemoSystem(now time.Time) (domain.Organization, *orchestration.Hub, *bil
 	return org, hub, tracker
 }
 
-// Summary: Creates a new demo handler.
-// Intent: Creates a new demo handler.
-// Params: now
-// Returns: (http.Handler, *orchestration.Hub)
-// Errors: None
-// Side Effects: None
+// Creates a new demo handler.
+// Accepts parameters: now.
+// Returns (http.Handler, *orchestration.Hub).
+// Produces no errors.
+// Has no side effects.
 func newDemoHandler(now time.Time) (http.Handler, *orchestration.Hub) {
 	org, hub, tracker := newDemoSystem(now)
 	authStore := auth.NewStore()
@@ -109,12 +105,11 @@ func newDemoHandler(now time.Time) (http.Handler, *orchestration.Hub) {
 	return dashboard.NewServer(org, hub, tracker, authStore), hub
 }
 
-// Summary: Runs the API server.
-// Intent: Runs the API server.
-// Params: now, listen
-// Returns: error
-// Errors: Returns an error if applicable
-// Side Effects: None
+// Runs the API server.
+// Accepts parameters: now, listen.
+// Returns error.
+// Produces errors: Returns an error if applicable.
+// Has no side effects.
 func run(now time.Time, listen listenFunc) error {
 	handler, hub := newDemoHandler(now)
 
@@ -143,12 +138,11 @@ func run(now time.Time, listen listenFunc) error {
 	return listen(httpAddress, handler)
 }
 
-// Summary: Entry point for the application.
-// Intent: Entry point for the application.
-// Params: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Entry point for the application.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 func main() {
 	shutdown, err := initTelemetry()
 	if err != nil {

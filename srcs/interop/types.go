@@ -8,10 +8,10 @@ import (
 )
 
 // State represents shared agent state.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type State struct {
 	ID    string
 	Data  map[string]interface{}
@@ -19,10 +19,10 @@ type State struct {
 }
 
 // LogCheckpoint logs a state synchronization checkpoint for LangGraph.
-// Parameters: state *State (No Constraints), identity string (No Constraints)
-// Returns: None
-// Errors: None
-// Side Effects: Modifies state.Data by appending to the checkpoints list.
+// Accepts parameters: state *State (No Constraints), identity string (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has side effects: Modifies state.Data by appending to the checkpoints list.
 func LogCheckpoint(state *State, identity string) {
 	if state.Data == nil {
 		state.Data = make(map[string]interface{})
@@ -43,10 +43,10 @@ func LogCheckpoint(state *State, identity string) {
 }
 
 // UniversalAdapter defines the interface for interacting with different agent frameworks.
-// Parameters: None
-// Returns: None
-// Errors: None
-// Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type UniversalAdapter interface {
 	// SyncState synchronizes the agent's local state with the central shared state.
 	SyncState(ctx context.Context, state *State) error
@@ -56,10 +56,10 @@ type UniversalAdapter interface {
 }
 
 // ValidateSPIFFEID strictly validates SPIFFE IDs for agent identity.
-// Parameters: id string (No Constraints)
-// Returns: error
-// Errors: Returns an error if the SPIFFE ID is invalid or spoofed.
-// Side Effects: None
+// Accepts parameters: id string (No Constraints).
+// Returns error.
+// Produces errors: Returns an error if the SPIFFE ID is invalid or spoofed.
+// Has no side effects.
 func ValidateSPIFFEID(id string) error {
 	u, err := url.Parse(id)
 	if err != nil {
