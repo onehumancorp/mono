@@ -5,7 +5,7 @@
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide Model Weight Scheduling capabilities seamlessly across all active Swarm Agents. It utilizes LangGraph Checkpointing backed by our native Kubernetes CSI Snapshotting.
+Integrates with the K8s device plugin and local inference servers (e.g., vLLM). When an agent requiring a specific LoRA adapter or fine-tuned model is scheduled, the system pre-fetches the weights from persistent storage and hot-swaps them into VRAM.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

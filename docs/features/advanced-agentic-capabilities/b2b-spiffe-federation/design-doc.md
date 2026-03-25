@@ -1,11 +1,11 @@
-# Design Document: B2B SPIFFE Federation
+# Design Document: B2b Spiffe Federation
 
 ## 1. Executive Summary
-**Objective:** Architect and implement B2B SPIFFE Federation to empower autonomous agents and human operators.
+**Objective:** Architect and implement B2b Spiffe Federation to empower autonomous agents and human operators.
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Extends the holding company CRD to specify federated trust domains, updating the SPIRE server configuration automatically via the K8s Operator. Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide B2B SPIFFE Federation capabilities seamlessly across all active Swarm Agents.
+Configures SPIRE Federation across two distinct Kubernetes clusters. Trust bundles are exchanged, allowing the MCP Gateway in Cluster A to cryptographically verify the JWT-SVIDs presented by agents running in Cluster B.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.
@@ -15,7 +15,7 @@ Extends the holding company CRD to specify federated trust domains, updating the
 
 ## 4. API & Data Models
 ```protobuf
-message B2bSpiffeFederationEvent {
+message B2BSpiffeFederationEvent {
   string event_id = 1;
   string agent_id = 2;
   bytes payload = 3;

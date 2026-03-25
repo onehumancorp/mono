@@ -1,11 +1,11 @@
-# Design Document: GraphQL Schema Introspection
+# Design Document: Graphql Schema Introspection
 
 ## 1. Executive Summary
-**Objective:** Architect and implement GraphQL Schema Introspection to empower autonomous agents and human operators.
+**Objective:** Architect and implement Graphql Schema Introspection to empower autonomous agents and human operators.
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-The MCP Gateway performs an introspection query on startup and maps the GraphQL schema directly to standard MCP tool schemas. Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide GraphQL Schema Introspection capabilities seamlessly across all active Swarm Agents.
+The MCP Gateway includes a generic GraphQL adapter. Upon receiving a new endpoint URL, it fetches the schema, constructs AST representations, and dynamically maps Queries and Mutations to JSON Schema parameters for the agent's LLM.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

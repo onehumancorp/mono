@@ -1,11 +1,11 @@
-# Design Document: OIDC Issuer Verification
+# Design Document: Oidc Issuer Verification
 
 ## 1. Executive Summary
-**Objective:** Architect and implement OIDC Issuer Verification to empower autonomous agents and human operators.
+**Objective:** Architect and implement Oidc Issuer Verification to empower autonomous agents and human operators.
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Implements strict `aud` and `iss` claim checking in the Go backend middleware using the `go-oidc` package. Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide OIDC Issuer Verification capabilities seamlessly across all active Swarm Agents.
+Implements rigid `aud` (audience) and `iss` (issuer) claim checking in the Go backend middleware using the `go-oidc` package. It fetches and caches the provider's JWKS to cryptographically verify the signature of every incoming JWT.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

@@ -1,18 +1,18 @@
-# CUJ: OIDC Issuer Verification
+# CUJ: Oidc Issuer Verification
 
 **Persona:** Autonomous Agent / Human Manager
-**Context:** Leveraging OIDC Issuer Verification during standard operational workflows or cross-team collaboration.
+**Context:** Leveraging Oidc Issuer Verification during standard operational workflows or cross-team collaboration.
 **Success Metrics:** Task completion latency under 50ms, zero unauthorized access, and complete observability via the event log.
 
 ## 1. User Journey Overview
-When a human manager logs into the dashboard, the system securely validates their identity token against the configured OIDC provider.
+When a human manager attempts to access the dashboard or manually approve a high-risk handoff, the system securely validates their identity token against the configured corporate OIDC provider, ensuring strict access control.
 
 ## 2. Detailed Step-by-Step Breakdown
 | Step | Action | System Trigger | Resulting State | Verification |
 |------|--------|----------------|-----------------|--------------|
 | 1 | Action initiated by Agent/User | API call to Orchestration Hub | Request queued | Database Check |
 | 2 | SPIFFE Authentication | Gateway verifies `AuthRole` | Request authorized | Log Check |
-| 3 | Core Processing | The OIDC Issuer Verification logic is executed | Operation completed | DB Check |
+| 3 | Core Processing | The workflow integrates Oidc Issuer Verification securely | Operation completed | DB Check |
 | 4 | Audit & Telemetry | Result appended to `events.jsonl` | Metric logged | DB Check |
 
 ## 3. Edge Cases & Error Recovery

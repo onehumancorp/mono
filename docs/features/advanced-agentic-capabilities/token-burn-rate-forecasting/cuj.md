@@ -5,14 +5,14 @@
 **Success Metrics:** Task completion latency under 50ms, zero unauthorized access, and complete observability via the event log.
 
 ## 1. User Journey Overview
-When an AI agent or human operator needs to execute a task involving Token Burn Rate Forecasting, the system seamlessly provisions the necessary context, authenticates the request via SPIFFE, and processes the operation without breaking the established Zero-Lock toolchain or risking context bloat.
+When managing a massive AI workforce, the human CEO uses real-time forecasting to predict end-of-month compute costs, allowing them to proactively throttle non-critical agents before budgets are blown.
 
 ## 2. Detailed Step-by-Step Breakdown
 | Step | Action | System Trigger | Resulting State | Verification |
 |------|--------|----------------|-----------------|--------------|
 | 1 | Action initiated by Agent/User | API call to Orchestration Hub | Request queued | Database Check |
 | 2 | SPIFFE Authentication | Gateway verifies `AuthRole` | Request authorized | Log Check |
-| 3 | Core Processing | The Token Burn Rate Forecasting logic is executed | Operation completed | DB Check |
+| 3 | Core Processing | The workflow integrates Token Burn Rate Forecasting securely | Operation completed | DB Check |
 | 4 | Audit & Telemetry | Result appended to `events.jsonl` | Metric logged | DB Check |
 
 ## 3. Edge Cases & Error Recovery

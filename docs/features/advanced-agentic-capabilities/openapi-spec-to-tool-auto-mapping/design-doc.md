@@ -1,11 +1,11 @@
-# Design Document: OpenAPI Spec To Tool Auto Mapping
+# Design Document: Openapi Spec To Tool Auto Mapping
 
 ## 1. Executive Summary
-**Objective:** Architect and implement OpenAPI Spec To Tool Auto Mapping to empower autonomous agents and human operators.
+**Objective:** Architect and implement Openapi Spec To Tool Auto Mapping to empower autonomous agents and human operators.
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide OpenAPI Spec To Tool Auto Mapping capabilities seamlessly across all active Swarm Agents. It utilizes LangGraph Checkpointing backed by our native Kubernetes CSI Snapshotting.
+A dedicated ingestion worker fetches the OpenAPI YAML/JSON. It translates the paths, methods, and schemas into the strict Model Context Protocol (MCP) JSON-RPC format, handling authentication abstraction and dynamically generating the required Go handler stubs.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

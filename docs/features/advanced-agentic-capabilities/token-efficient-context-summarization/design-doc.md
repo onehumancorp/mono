@@ -5,7 +5,7 @@
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates deeply with the Model Context Protocol (MCP) and Kubernetes operator to provide Token Efficient Context Summarization capabilities seamlessly across all active Swarm Agents. It utilizes LangGraph Checkpointing backed by our native Kubernetes CSI Snapshotting.
+A background worker monitors the `LangGraphCheckpointer` payload size. Upon hitting a 80% threshold, it triggers a smaller, cheaper LLM (e.g., Llama-3-8B) to summarize the oldest 50% of the context array, updating the checkpoint in-place.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.

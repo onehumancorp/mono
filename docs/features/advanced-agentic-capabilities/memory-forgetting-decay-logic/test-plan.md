@@ -6,7 +6,7 @@ Validate the end-to-end functionality, security boundaries, and performance cons
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the Memory Forgetting Decay Logic functionality.
+- **Action:** Seed the database with a fact dated 1 year ago and never referenced. Run the decay cron job. Verify the fact's score drops below the threshold and is no longer retrieved during generic semantic searches.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation

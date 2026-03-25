@@ -1,12 +1,12 @@
-# Test Plan: OIDC Issuer Verification
+# Test Plan: Oidc Issuer Verification
 
 ## 1. Testing Strategy
-Validate the end-to-end functionality, security boundaries, and performance constraints of the OIDC Issuer Verification feature using hermetic, table-driven tests. Ensure we use the Database Seeder pattern to establish deterministic starting states.
+Validate the end-to-end functionality, security boundaries, and performance constraints of the Oidc Issuer Verification feature using hermetic, table-driven tests. Ensure we use the Database Seeder pattern to establish deterministic starting states.
 
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Provide a mocked JWT with an invalid issuer and verify the backend returns a 401 Unauthorized.
+- **Action:** Provide a mocked JWT signed with a valid key but containing an incorrect `iss` claim. Verify the backend middleware rejects the request immediately with a 401 Unauthorized status.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation

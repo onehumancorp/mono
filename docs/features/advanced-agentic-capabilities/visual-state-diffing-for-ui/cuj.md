@@ -1,18 +1,18 @@
-# CUJ: Visual State Diffing For UI
+# CUJ: Visual State Diffing For Ui
 
 **Persona:** Autonomous Agent / Human Manager
-**Context:** Leveraging Visual State Diffing For UI during standard operational workflows or cross-team collaboration.
+**Context:** Leveraging Visual State Diffing For Ui during standard operational workflows or cross-team collaboration.
 **Success Metrics:** Task completion latency under 50ms, zero unauthorized access, and complete observability via the event log.
 
 ## 1. User Journey Overview
-When an AI agent or human operator needs to execute a task involving Visual State Diffing For UI, the system seamlessly provisions the necessary context, authenticates the request via SPIFFE, and processes the operation without breaking the established Zero-Lock toolchain or risking context bloat.
+When a frontend agent submits a PR modifying the React UI, the QA agent utilizes visual state diffing to compare the rendered output against the baseline snapshot, instantly flagging unintended styling regressions.
 
 ## 2. Detailed Step-by-Step Breakdown
 | Step | Action | System Trigger | Resulting State | Verification |
 |------|--------|----------------|-----------------|--------------|
 | 1 | Action initiated by Agent/User | API call to Orchestration Hub | Request queued | Database Check |
 | 2 | SPIFFE Authentication | Gateway verifies `AuthRole` | Request authorized | Log Check |
-| 3 | Core Processing | The Visual State Diffing For UI logic is executed | Operation completed | DB Check |
+| 3 | Core Processing | The workflow integrates Visual State Diffing For Ui securely | Operation completed | DB Check |
 | 4 | Audit & Telemetry | Result appended to `events.jsonl` | Metric logged | DB Check |
 
 ## 3. Edge Cases & Error Recovery

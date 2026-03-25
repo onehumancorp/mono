@@ -6,7 +6,7 @@ Validate the end-to-end functionality, security boundaries, and performance cons
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the Hierarchical Memory Retrieval functionality.
+- **Action:** Seed the database with 10,000 records across 5 projects. Perform a semantic search restricted to 'Project Alpha' and verify the system executes the pre-filter, completing the search significantly faster than a full table scan.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation

@@ -6,7 +6,7 @@ Validate the end-to-end functionality, security boundaries, and performance cons
 ## 2. Test Cases
 ### 2.1 E2E Integration Test: Standard Execution Flow
 - **Setup:** A mock environment with a deterministic database state via `/api/dev/seed`.
-- **Action:** Simulate an agent invoking the Zero Trust Secret Injection functionality.
+- **Action:** Configure an agent to use an AWS S3 tool. Verify the tool executes successfully, but inspect the agent's prompt history and `events.jsonl` logs to guarantee the actual AWS Secret Key is never exposed in plain text.
 - **Assertion:** Verify the operation completes successfully and the correct events are written to `events.jsonl`.
 
 ### 2.2 Edge Case: Strict Schema and Payload Validation

@@ -1,18 +1,18 @@
-# CUJ: GraphQL Schema Introspection
+# CUJ: Graphql Schema Introspection
 
 **Persona:** Autonomous Agent / Human Manager
-**Context:** Leveraging GraphQL Schema Introspection during standard operational workflows or cross-team collaboration.
+**Context:** Leveraging Graphql Schema Introspection during standard operational workflows or cross-team collaboration.
 **Success Metrics:** Task completion latency under 50ms, zero unauthorized access, and complete observability via the event log.
 
 ## 1. User Journey Overview
-An agent autonomously queries the `/graphql` endpoint of an unknown service to dynamically generate required query payloads.
+When an agent encounters a novel GraphQL endpoint, it autonomously executes an introspection query, parsing the resulting schema into localized MCP tools to enable immediate, type-safe API interactions.
 
 ## 2. Detailed Step-by-Step Breakdown
 | Step | Action | System Trigger | Resulting State | Verification |
 |------|--------|----------------|-----------------|--------------|
 | 1 | Action initiated by Agent/User | API call to Orchestration Hub | Request queued | Database Check |
 | 2 | SPIFFE Authentication | Gateway verifies `AuthRole` | Request authorized | Log Check |
-| 3 | Core Processing | The GraphQL Schema Introspection logic is executed | Operation completed | DB Check |
+| 3 | Core Processing | The workflow integrates Graphql Schema Introspection securely | Operation completed | DB Check |
 | 4 | Audit & Telemetry | Result appended to `events.jsonl` | Metric logged | DB Check |
 
 ## 3. Edge Cases & Error Recovery
