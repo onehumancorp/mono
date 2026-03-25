@@ -963,6 +963,14 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 					OccurredAt: time.Now().UTC(),
 				}
 				_ = s.hub.Publish(msg)
+
+				b, err := json.Marshal(msg)
+				if err == nil {
+					if f, err := os.OpenFile("events.jsonl", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+						f.Write(append(b, '\n'))
+						f.Close()
+					}
+				}
 			}
 
 			s.mu.Unlock()
@@ -997,6 +1005,14 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 				OccurredAt: time.Now().UTC(),
 			}
 			_ = s.hub.Publish(msg)
+
+			b, err := json.Marshal(msg)
+			if err == nil {
+				if f, err := os.OpenFile("events.jsonl", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+					f.Write(append(b, '\n'))
+					f.Close()
+				}
+			}
 		}
 	}
 	s.mu.Unlock()
