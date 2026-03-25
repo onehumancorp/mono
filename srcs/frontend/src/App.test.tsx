@@ -3431,3 +3431,96 @@ describe("App – handoffs tab", () => {
     expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument();
   });
 });
+
+// ── Pipelines (SDLC) tab ──────────────────────────────────────────────────────
+
+describe("App – pipelines tab", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it("UI-01: Verify rendering of the \"Active PRs\" list", async () => {
+    const pipelines = [
+      { id: "pipe-1", name: "feat-analytics", branch: "feature/analytics", status: "IMPLEMENTING", createdAtUnix: 1672531200 },
+      { id: "pipe-2", name: "feat-billing", branch: "feature/billing", status: "STAGING", createdAtUnix: 1672617600 },
+    ];
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/pipelines") return mockJson(pipelines);
+      return mockJson({}, 404);
+    }));
+    render(<App />);
+    await screen.findByText("One Human Corp Dashboard");
+    fireEvent.click(screen.getByRole("button", { name: /pipelines/i }));
+    await screen.findByText("Automated SDLC");
+    await screen.findByText("Active PRs");
+
+    expect(screen.getByText("feat-analytics")).toBeInTheDocument();
+    expect(screen.getByText("IMPLEMENTING")).toBeInTheDocument();
+    expect(screen.getByText("feat-billing")).toBeInTheDocument();
+    expect(screen.getByText("STAGING")).toBeInTheDocument();
+  });
+
+  it("UI-02: Verify \"Approve for Production\" button functionality (Approve Spec / Deployment)", async () => {
+    const pipelines = [
+      { id: "pipe-2", name: "feat-billing", branch: "feature/billing", status: "STAGING", createdAtUnix: 1672617600 },
+    ];
+    let promoteCalled = false;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/pipelines" && init?.method === "POST" && init?.body) {
+         promoteCalled = true;
+         return mockJson({ ...pipelines[0], status: "PROMOTED" });
+      }
+      if (input === "/api/pipelines/promote" && init?.method === "POST") {
+         promoteCalled = true;
+         return mockJson({ ...pipelines[0], status: "PROMOTED" });
+      }
+      if (input === "/api/pipelines") return mockJson(pipelines);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("One Human Corp Dashboard");
+    fireEvent.click(screen.getByRole("button", { name: /pipelines/i }));
+    await screen.findByText("Active PRs");
+
+    const approveBtn = await screen.findByRole("button", { name: /Approve for Production/i });
+    fireEvent.click(approveBtn);
+
+    await waitFor(() => expect(promoteCalled).toBe(true));
+  });
+
+  it("UI-03: Verify \"Start Implementation\" button functionality", async () => {
+    let createCalled = false;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (input === "/api/dashboard") return mockJson(dashboardPayload);
+      if (input === "/api/pipelines" && init?.method === "POST") {
+         createCalled = true;
+         return mockJson({ id: "pipe-new", name: "feat-new", branch: "feature/new", status: "IMPLEMENTING" });
+      }
+      if (input === "/api/pipelines") return mockJson([]);
+      return mockJson({}, 404);
+    }));
+
+    render(<App />);
+    await screen.findByText("One Human Corp Dashboard");
+    fireEvent.click(screen.getByRole("button", { name: /pipelines/i }));
+    await screen.findByText("Active PRs");
+
+    // Open modal
+    const startBtn = await screen.findByRole("button", { name: /\+ Start Implementation/i });
+    fireEvent.click(startBtn);
+
+    // Fill form
+    const nameInput = screen.getByPlaceholderText("e.g. feat-analytics");
+    fireEvent.change(nameInput, { target: { value: "feat-new" } });
+
+    // Submit
+    const createBtn = screen.getByRole("button", { name: "Create Pipeline" });
+    fireEvent.click(createBtn);
+
+    await waitFor(() => expect(createCalled).toBe(true));
+  });
+});
