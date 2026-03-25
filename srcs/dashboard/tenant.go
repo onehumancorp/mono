@@ -166,6 +166,9 @@ func (r *TenantRegistry) HandleOrgRegister(w http.ResponseWriter, req *http.Requ
 		http.Error(w, `{"error":"admin role required"}`, http.StatusForbidden)
 		return
 	}
+
+	req.Body = http.MaxBytesReader(w, req.Body, 1<<20)
+
 	var body orgRegistrationRequest
 	if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
 		http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)
@@ -224,4 +227,3 @@ func NewMultiTenantServer(authStore *auth.Store, factory TenantFactory) http.Han
 
 	return auth.Middleware(authStore)(mux)
 }
-
