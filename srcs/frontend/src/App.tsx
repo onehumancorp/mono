@@ -619,6 +619,8 @@ export function App() {
         errMsg = "Workforce Alert: The assigned agent is inactive. Please hire a new resource or redirect to an active worker.";
       } else if (errMsg.includes("meeting room is not registered")) {
         errMsg = "Context Expired: This virtual war room has been archived. Please navigate to the active meetings panel.";
+      } else if (errMsg.includes("Failed to fetch") || errMsg.includes("NetworkError")) {
+        errMsg = "Network Alert: Re-establishing secure tunnel to orchestration hub...";
       }
       setError(errMsg);
       throw new Error(errMsg);
@@ -1748,16 +1750,22 @@ export function App() {
                         </div>
 
                         <div className="handoff-card__section">
-                          <h4 className="handoff-card__label">Current State</h4>
+                          <h4 className="handoff-card__label">Execution Trace</h4>
                           {(() => {
                             try {
                               const parsed = JSON.parse(handoff.currentState);
                               return (
-                                <div className="handoff-property-list">
-                                  {Object.entries(parsed).map(([key, value]) => (
-                                    <div key={key} className="handoff-property-row">
-                                      <span className="handoff-property-key">{key}</span>
-                                      <span className="handoff-property-value">{String(value)}</span>
+                                <div className="handoff-trace">
+                                  {Object.entries(parsed).map(([key, value], idx, arr) => (
+                                    <div key={key} className="handoff-trace-item">
+                                      <div className="handoff-trace-marker">
+                                        <div className={`handoff-trace-dot ${String(value).toUpperCase().includes("FAIL") || String(value).toUpperCase().includes("ERROR") || String(value).toUpperCase().includes("SIGKILL") ? "handoff-trace-dot--error" : String(value).toUpperCase().includes("PASS") || String(value).toUpperCase().includes("SUCCESS") ? "handoff-trace-dot--success" : "handoff-trace-dot--active"}`}></div>
+                                        {idx !== arr.length - 1 && <div className="handoff-trace-line"></div>}
+                                      </div>
+                                      <div className="handoff-trace-content">
+                                        <span className="handoff-trace-key">{key.replace(/_/g, " ")}</span>
+                                        <span className="handoff-trace-value">{String(value)}</span>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
@@ -1808,6 +1816,8 @@ export function App() {
                               let errMsg = err instanceof Error ? err.message : "Failed to resolve handoff";
                               if (errMsg.toLowerCase().includes("conflict") || errMsg.includes("State Changed")) {
                                 errMsg = "Action Required: The organizational state has shifted. Please review the updated meeting transcript before providing direction.";
+                              } else if (errMsg.includes("Failed to fetch") || errMsg.includes("NetworkError")) {
+                                errMsg = "Network Alert: Re-establishing secure tunnel to orchestration hub...";
                               }
                               setError(errMsg);
                             }).finally(() => {
@@ -1825,6 +1835,8 @@ export function App() {
                               let errMsg = err instanceof Error ? err.message : "Failed to acknowledge handoff";
                               if (errMsg.toLowerCase().includes("conflict") || errMsg.includes("State Changed")) {
                                 errMsg = "Action Required: The organizational state has shifted. Please review the updated meeting transcript before providing direction.";
+                              } else if (errMsg.includes("Failed to fetch") || errMsg.includes("NetworkError")) {
+                                errMsg = "Network Alert: Re-establishing secure tunnel to orchestration hub...";
                               }
                               setError(errMsg);
                             }).finally(() => {

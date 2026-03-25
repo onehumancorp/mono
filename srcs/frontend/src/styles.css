@@ -2520,41 +2520,95 @@ select.input {
   overflow-y: auto;
 }
 
-.handoff-property-list {
+.handoff-trace {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  padding: 1rem 1.25rem;
   background: rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: var(--r-md);
-  padding: 0.75rem;
 }
 
-.handoff-property-row {
+.handoff-trace-item {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
   gap: 1rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-.handoff-property-row:last-child {
-  border-bottom: none;
+  position: relative;
 }
 
-.handoff-property-key {
-  font-size: 10px;
+.handoff-trace-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.handoff-trace-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  border: 2px solid rgba(26, 30, 36, 1);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 2;
+  margin-top: 4px;
+}
+
+.handoff-trace-dot--success {
+  background: var(--green);
+  box-shadow: 0 0 0 1px rgba(63, 185, 80, 0.3);
+}
+
+.handoff-trace-dot--error {
+  background: var(--red);
+  box-shadow: 0 0 0 1px rgba(248, 81, 73, 0.3);
+}
+
+.handoff-trace-dot--active {
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgba(47, 129, 247, 0.3);
+}
+
+.handoff-trace-line {
+  width: 2px;
+  flex-grow: 1;
+  background: rgba(255, 255, 255, 0.1);
+  margin-top: -2px;
+  margin-bottom: -4px;
+  z-index: 1;
+  min-height: 1.5rem;
+}
+
+.handoff-trace-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-bottom: 1.25rem;
+  flex-grow: 1;
+  margin-top: 1px;
+}
+
+.handoff-trace-item:last-child .handoff-trace-content {
+  padding-bottom: 0;
+}
+
+.handoff-trace-key {
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
-  width: 100px;
-  flex-shrink: 0;
 }
 
-.handoff-property-value {
-  font-size: 13px;
+.handoff-trace-value {
+  font-size: 13.5px;
   color: var(--text-primary);
+  line-height: 1.5;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--r-sm);
   word-break: break-word;
 }
 

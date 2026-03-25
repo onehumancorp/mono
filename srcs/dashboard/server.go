@@ -583,6 +583,20 @@ func (s *Server) handleDevSeed(w http.ResponseWriter, r *http.Request) {
 	s.org = org
 	s.hub = hub
 	s.tracker = tracker
+
+	mockHandoff := HandoffPackage{
+		ID:             "handoff-" + time.Now().UTC().Format("20060102150405"),
+		FromAgentID:    "swe-1",
+		ToHumanRole:    "CEO",
+		Intent:         "Merge conflict resolution required for legacy billing module.",
+		FailedAttempts: 3,
+		CurrentState:   `{"Step_1_Code_Checkout": "SUCCESS", "Step_2_Dependency_Install": "SUCCESS", "Step_3_Test_Suite": "FAIL: TypeError in billing_test.go", "Step_4_Auto_Remediation": "SIGKILL: Timeout after 30s"}`,
+		Status:         "pending",
+		CreatedAt:      time.Now().UTC(),
+	}
+	s.handoffs = append(s.handoffs, mockHandoff)
+	s.hub.LogEvent(mockHandoff)
+
 	snapshot := s.snapshotLocked()
 	s.mu.Unlock()
 
