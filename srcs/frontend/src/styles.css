@@ -2642,6 +2642,21 @@ select.input {
   transform: scale(1.1);
 }
 
+.spinner-mini {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #1a1a1a;
+  border-radius: 50%;
+  animation: spinner-mini-spin 0.8s linear infinite;
+}
+
+@keyframes spinner-mini-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .handoff-resolved-stamp {
   display: flex;
   flex-direction: column;

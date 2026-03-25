@@ -193,7 +193,9 @@ function SlideToApprove({
     <div className="slide-action-area">
       <div className={`slide-approve-container ${disabled && sliderPos === maxDrag ? "processing" : ""}`}>
         <div className="slide-track">
-          <span className="slide-text">{disabled && sliderPos === maxDrag ? "Processing..." : "Slide to Approve"}</span>
+          <span className="slide-text">
+            {disabled && sliderPos === maxDrag ? "Authorizing..." : (disabled && sliderPos === 0 ? "Rejecting..." : "Slide to Approve")}
+          </span>
           <div
             ref={sliderRef}
             className={`slide-thumb ${isDragging ? "dragging" : ""} ${disabled ? "disabled" : ""}`}
@@ -207,6 +209,8 @@ function SlideToApprove({
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#30d158" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
+            ) : disabled && sliderPos === 0 ? (
+              <div className="spinner-mini" />
             ) : (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6"></polyline>
@@ -223,7 +227,7 @@ function SlideToApprove({
         onClick={onReject}
         style={{ width: "100%", marginTop: "0.75rem", background: "rgba(255, 59, 48, 0.1)", color: "rgb(255, 69, 58)", border: "1px solid rgba(255, 59, 48, 0.2)" }}
       >
-        Reject
+        {disabled && sliderPos === 0 ? "Rejecting..." : "Reject"}
       </button>
     </div>
   );
@@ -1587,7 +1591,11 @@ export function App() {
                                             setResolvedApprovals(prev => ({ ...prev, [msg.id]: "approved" }));
                                             setNotice("Approval successfully recorded.");
                                           }).catch(e => {
-                                            setError(e instanceof Error ? e.message : "Failed to record approval");
+                                            let errMsg = e instanceof Error ? e.message : "Failed to record approval";
+                                            if (errMsg.includes("State Changed") || errMsg.includes("approval not found")) {
+                                              errMsg = "Conflict: This approval has already been addressed by another director or the state has changed. Please refresh to view the latest sequence.";
+                                            }
+                                            setError(errMsg);
                                           }).finally(() => {
                                             setApprovalLoading(prev => ({ ...prev, [msg.id]: false }));
                                           });
@@ -1608,7 +1616,11 @@ export function App() {
                                             setResolvedApprovals(prev => ({ ...prev, [msg.id]: "rejected" }));
                                             setNotice("Rejection successfully recorded.");
                                           }).catch(e => {
-                                            setError(e instanceof Error ? e.message : "Failed to record rejection");
+                                            let errMsg = e instanceof Error ? e.message : "Failed to record rejection";
+                                            if (errMsg.includes("State Changed") || errMsg.includes("approval not found")) {
+                                              errMsg = "Conflict: This approval has already been addressed by another director or the state has changed. Please refresh to view the latest sequence.";
+                                            }
+                                            setError(errMsg);
                                           }).finally(() => {
                                             setApprovalLoading(prev => ({ ...prev, [msg.id]: false }));
                                           });
@@ -1766,8 +1778,8 @@ export function App() {
                               setNotice("Handoff resolved and agent execution resumed.");
                             }).catch(err => {
                               let errMsg = err instanceof Error ? err.message : "Failed to resolve handoff";
-                              if (errMsg.includes("State Changed")) {
-                                errMsg = "Conflict: This handoff was already addressed by another manager. Refreshing state...";
+                              if (errMsg.includes("State Changed") || errMsg.includes("handoff not found")) {
+                                errMsg = "Conflict: This handoff has already been addressed by another director or the state has changed. Please refresh to view the latest sequence.";
                               }
                               setError(errMsg);
                             }).finally(() => {
@@ -1783,8 +1795,8 @@ export function App() {
                               setNotice("Handoff rejected.");
                             }).catch(err => {
                               let errMsg = err instanceof Error ? err.message : "Failed to acknowledge handoff";
-                              if (errMsg.includes("State Changed")) {
-                                errMsg = "Conflict: This handoff was already addressed by another manager. Refreshing state...";
+                              if (errMsg.includes("State Changed") || errMsg.includes("handoff not found")) {
+                                errMsg = "Conflict: This handoff has already been addressed by another director or the state has changed. Please refresh to view the latest sequence.";
                               }
                               setError(errMsg);
                             }).finally(() => {
