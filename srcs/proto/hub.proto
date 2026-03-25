@@ -77,6 +77,12 @@ message TokenEfficientContextSummarizationEvent {
   bytes payload = 3;
 }
 
+message SharedOrganizationalMemoryBankEvent {
+  string event_id = 1;
+  string agent_id = 2;
+  bytes payload = 3;
+}
+
 message StreamMessagesRequest {
   string agent_id = 1;
 }
@@ -89,6 +95,10 @@ message ReasonResponse {
   string content = 1;
 }
 
+message SharedOrganizationalMemoryBankResponse {
+  bool success = 1;
+}
+
 service HubService {
   rpc RegisterAgent(RegisterAgentRequest) returns (RegisterAgentResponse);
   rpc OpenMeeting(OpenMeetingRequest) returns (MeetingRoom);
@@ -97,4 +107,5 @@ service HubService {
   rpc StreamMessages(StreamMessagesRequest) returns (stream Message);
   rpc Reason(ReasonRequest) returns (ReasonResponse);
   rpc DelegateSubTask(SubTask) returns (DelegateTaskResponse);
+  rpc SharedOrganizationalMemoryBank(SharedOrganizationalMemoryBankEvent) returns (SharedOrganizationalMemoryBankResponse);
 }

@@ -968,6 +968,97 @@ func TestHubServiceServer_Publish(t *testing.T) {
 	}
 }
 
+func TestHub_SharedOrganizationalMemoryBank(t *testing.T) {
+	hub := NewHub()
+	agentID := "test-agent"
+	validPayload := []byte(`{"context": "solved database locking issue"}`)
+	invalidPayload := []byte(`{"context": "some data", "unknown_field": "bad data"}`)
+
+	defer func() {
+		os.Remove("events.jsonl")
+	}()
+
+	tests := []struct {
+		name        string
+		eventID     string
+		payload     []byte
+		setup       func()
+		expectError bool
+		expectedErr string
+	}{
+		{
+			name:        "Edge Case: Strict Schema and Payload Validation",
+			eventID:     "event-2",
+			payload:     invalidPayload,
+			setup:       func() {},
+			expectError: true,
+			expectedErr: "invalid payload",
+		},
+		{
+			name:    "Edge Case: Memory and Resource Bounding",
+			eventID: "event-4",
+			payload: validPayload,
+			setup: func() {
+				hub.mu.Lock()
+				hub.tokenTrackers["event-4"] = struct{}{}
+				hub.mu.Unlock()
+			},
+			expectError: true,
+			expectedErr: "event already being processed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+			err := hub.SharedOrganizationalMemoryBank(tt.eventID, agentID, tt.payload)
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("expected error containing %q, got nil", tt.expectedErr)
+				} else if !strings.Contains(err.Error(), tt.expectedErr) {
+					t.Errorf("expected error containing %q, got %q", tt.expectedErr, err.Error())
+				}
+			} else if err != nil {
+				t.Errorf("expected no error, got %v", err)
+			}
+		})
+	}
+}
+
+func TestHub_SharedOrganizationalMemoryBank_SuccessFlow(t *testing.T) {
+	hub := NewHub()
+
+	agentID := "test-agent-2"
+	eventID := "event-123"
+	payload := []byte(`{"context": "solved database locking issue"}`)
+
+	defer os.Remove("events.jsonl")
+
+	err := hub.SharedOrganizationalMemoryBank(eventID, agentID, payload)
+	if err != nil {
+		t.Fatalf("expected success, got error: %v", err)
+	}
+
+	time.Sleep(100 * time.Millisecond)
+
+	b, err := os.ReadFile("events.jsonl")
+	if err != nil {
+		t.Fatalf("failed to read events.jsonl: %v", err)
+	}
+
+	var logEntry map[string]interface{}
+	if err := json.Unmarshal(b, &logEntry); err != nil {
+		t.Fatalf("failed to unmarshal log entry: %v", err)
+	}
+
+	if logEntry["type"] != "SharedOrganizationalMemoryBank" {
+		t.Errorf("expected type %q, got %q", "SharedOrganizationalMemoryBank", logEntry["type"])
+	}
+	if logEntry["context"] != "solved database locking issue" {
+		t.Errorf("expected context %q, got %q", "solved database locking issue", logEntry["context"])
+	}
+}
+
 func TestHub_TokenEfficientContextSummarization(t *testing.T) {
 	hub := NewHub()
 	agentID := "test-agent"

@@ -278,6 +278,49 @@ func (h *Hub) eventLogWorker() {
 	}
 }
 
+// SharedOrganizationalMemoryBank securely processes shared organizational memory bank.
+//
+// Accepts:
+//   eventID string
+//   agentID string
+//   payload []byte
+//
+// Returns error.
+// Produces errors: Returns an error if the payload is invalid.
+func (h *Hub) SharedOrganizationalMemoryBank(eventID, agentID string, payload []byte) error {
+	h.mu.Lock()
+	if _, exists := h.tokenTrackers[eventID]; exists {
+		h.mu.Unlock()
+		return errors.New("event already being processed")
+	}
+	h.tokenTrackers[eventID] = struct{}{}
+	h.mu.Unlock()
+
+	defer func() {
+		h.mu.Lock()
+		delete(h.tokenTrackers, eventID)
+		h.mu.Unlock()
+	}()
+
+	var temp struct {
+		Context string `json:"context"`
+	}
+	dec := json.NewDecoder(bytes.NewReader(payload))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&temp); err != nil {
+		return fmt.Errorf("invalid payload: %w", err)
+	}
+
+	h.eventLogChan <- map[string]interface{}{
+		"event_id": eventID,
+		"agent_id": agentID,
+		"type":     "SharedOrganizationalMemoryBank",
+		"context":  temp.Context,
+	}
+
+	return nil
+}
+
 // TokenEfficientContextSummarization securely processes token efficient context summarization.
 //
 // Parameters:
@@ -784,6 +827,19 @@ func (s *HubServiceServer) DelegateTask(ctx context.Context, req *pb.DelegateTas
 	}
 
 	return pb.DelegateTaskResponse_builder{Success: true}.Build(), nil
+}
+
+// SharedOrganizationalMemoryBank functionality.
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns (*pb.SharedOrganizationalMemoryBankResponse, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *HubServiceServer) SharedOrganizationalMemoryBank(ctx context.Context, req *pb.SharedOrganizationalMemoryBankEvent) (*pb.SharedOrganizationalMemoryBankResponse, error) {
+	err := s.hub.SharedOrganizationalMemoryBank(req.GetEventId(), req.GetAgentId(), req.GetPayload())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "shared organizational memory bank processing failed: %v", err)
+	}
+	return pb.SharedOrganizationalMemoryBankResponse_builder{Success: true}.Build(), nil
 }
 
 // StreamMessages functionality.

@@ -238,6 +238,44 @@ func (b TokenEfficientContextSummarizationEvent_builder) Build() *TokenEfficient
 	}
 }
 
+// ─── SharedOrganizationalMemoryBankEvent ───────────────────────────────────────────────────
+
+type SharedOrganizationalMemoryBankEvent struct {
+	eventId string
+	agentId string
+	payload []byte
+}
+
+func (s *SharedOrganizationalMemoryBankEvent) GetEventId() string { return s.eventId }
+func (s *SharedOrganizationalMemoryBankEvent) GetAgentId() string { return s.agentId }
+func (s *SharedOrganizationalMemoryBankEvent) GetPayload() []byte { return s.payload }
+
+type SharedOrganizationalMemoryBankEvent_builder struct {
+	EventId string
+	AgentId string
+	Payload []byte
+}
+
+func (b SharedOrganizationalMemoryBankEvent_builder) Build() *SharedOrganizationalMemoryBankEvent {
+	return &SharedOrganizationalMemoryBankEvent{
+		eventId: b.EventId,
+		agentId: b.AgentId,
+		payload: b.Payload,
+	}
+}
+
+// ─── SharedOrganizationalMemoryBankResponse ───────────────────────────────────────────────────
+
+type SharedOrganizationalMemoryBankResponse struct{ success bool }
+
+func (r *SharedOrganizationalMemoryBankResponse) GetSuccess() bool { return r.success }
+
+type SharedOrganizationalMemoryBankResponse_builder struct{ Success bool }
+
+func (b SharedOrganizationalMemoryBankResponse_builder) Build() *SharedOrganizationalMemoryBankResponse {
+	return &SharedOrganizationalMemoryBankResponse{success: b.Success}
+}
+
 // ─── StreamMessagesRequest ───────────────────────────────────────────────────
 
 type StreamMessagesRequest struct{ agentId string }
@@ -315,6 +353,7 @@ type HubServiceServer interface {
 	StreamMessages(*StreamMessagesRequest, HubService_StreamMessagesServer) error
 	Reason(context.Context, *ReasonRequest) (*ReasonResponse, error)
 	DelegateSubTask(context.Context, *SubTask) (*DelegateTaskResponse, error)
+	SharedOrganizationalMemoryBank(context.Context, *SharedOrganizationalMemoryBankEvent) (*SharedOrganizationalMemoryBankResponse, error)
 	mustEmbedUnimplementedHubServiceServer()
 }
 
@@ -341,6 +380,9 @@ func (UnimplementedHubServiceServer) Reason(context.Context, *ReasonRequest) (*R
 }
 func (UnimplementedHubServiceServer) DelegateSubTask(context.Context, *SubTask) (*DelegateTaskResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DelegateSubTask not implemented")
+}
+func (UnimplementedHubServiceServer) SharedOrganizationalMemoryBank(context.Context, *SharedOrganizationalMemoryBankEvent) (*SharedOrganizationalMemoryBankResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SharedOrganizationalMemoryBank not implemented")
 }
 func (UnimplementedHubServiceServer) mustEmbedUnimplementedHubServiceServer() {}
 
@@ -389,6 +431,10 @@ var HubService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "DelegateSubTask",
 			Handler:    _HubService_DelegateSubTask_Handler,
 		},
+		{
+			MethodName: "SharedOrganizationalMemoryBank",
+			Handler:    _HubService_SharedOrganizationalMemoryBank_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -411,6 +457,21 @@ func _HubService_RegisterAgent_Handler(srv interface{}, ctx context.Context, dec
 	info := &grpc.UnaryServerInfo{Server: srv, FullMethod: "/ohc.orchestration.HubService/RegisterAgent"}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(HubServiceServer).RegisterAgent(ctx, req.(*RegisterAgentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HubService_SharedOrganizationalMemoryBank_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SharedOrganizationalMemoryBankEvent)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HubServiceServer).SharedOrganizationalMemoryBank(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{Server: srv, FullMethod: "/ohc.orchestration.HubService/SharedOrganizationalMemoryBank"}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HubServiceServer).SharedOrganizationalMemoryBank(ctx, req.(*SharedOrganizationalMemoryBankEvent))
 	}
 	return interceptor(ctx, in, info, handler)
 }
