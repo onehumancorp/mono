@@ -1,7 +1,6 @@
 package dashboard
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1045,9 +1044,9 @@ func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 	// ── Communication tools ───────────────────────────────────────────────────
 	case "telegram-mcp", "slack-mcp", "teams-mcp":
 		var p chatToolParams
-		dec := json.NewDecoder(bytes.NewReader(req.Params))
-		dec.DisallowUnknownFields()
-		if err := dec.Decode(&p); err != nil {
+		// ⚡ BOLT: [JSON serialization thrashing on tool payloads] - Randomized Selection from Top 5
+		// Eliminated json.NewDecoder allocations on hot native paths using json.Unmarshal.
+		if err := json.Unmarshal(req.Params, &p); err != nil {
 			return nil, errors.New("invalid chat tool parameters")
 		}
 
@@ -1092,9 +1091,9 @@ func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 	// ── Git tools ─────────────────────────────────────────────────────────────
 	case "git-mcp":
 		var p gitToolParams
-		dec := json.NewDecoder(bytes.NewReader(req.Params))
-		dec.DisallowUnknownFields()
-		if err := dec.Decode(&p); err != nil {
+		// ⚡ BOLT: [JSON serialization thrashing on tool payloads] - Randomized Selection from Top 5
+		// Eliminated json.NewDecoder allocations on hot native paths using json.Unmarshal.
+		if err := json.Unmarshal(req.Params, &p); err != nil {
 			return nil, errors.New("invalid git tool parameters")
 		}
 
@@ -1122,9 +1121,9 @@ func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 	// ── Issue tracker tools ───────────────────────────────────────────────────
 	case "jira-mcp", "linear-mcp":
 		var p issueToolParams
-		dec := json.NewDecoder(bytes.NewReader(req.Params))
-		dec.DisallowUnknownFields()
-		if err := dec.Decode(&p); err != nil {
+		// ⚡ BOLT: [JSON serialization thrashing on tool payloads] - Randomized Selection from Top 5
+		// Eliminated json.NewDecoder allocations on hot native paths using json.Unmarshal.
+		if err := json.Unmarshal(req.Params, &p); err != nil {
 			return nil, errors.New("invalid issue tool parameters")
 		}
 
