@@ -1,3 +1,4 @@
+import type { ApiPipeline, ApiPipelinePromoteRequest } from "./proto_types";
 import type {
   AnalyticsSummary,
   AgentIdentity,
@@ -338,6 +339,33 @@ export function createHandoff(body: {
  */
 export function resolveHandoff(handoffId: string, status: "acknowledged" | "resolved"): Promise<HandoffPackage[]> {
   return authedPostJSON<HandoffPackage[]>("/api/handoffs/resolve", { handoffId, status });
+}
+
+// ── Pipelines (Automated SDLC) ────────────────────────────────────────────────
+/**
+ * @summary Retrieves all automated SDLC pipelines.
+ * @returns Promise<ApiPipeline[]>
+ */
+export function fetchPipelines(): Promise<ApiPipeline[]> {
+  return authedGetJSON<ApiPipeline[]>("/api/pipelines");
+}
+
+/**
+ * @summary Creates a new automated implementation pipeline.
+ * @param body Pipeline details
+ * @returns Promise<ApiPipeline>
+ */
+export function createPipeline(body: { name: string; branch: string; initiatedBy: string }): Promise<ApiPipeline> {
+  return authedPostJSON<ApiPipeline>("/api/pipelines", body);
+}
+
+/**
+ * @summary Promotes a pipeline to production.
+ * @param body Promotion request
+ * @returns Promise<ApiPipeline>
+ */
+export function promotePipeline(body: ApiPipelinePromoteRequest): Promise<ApiPipeline> {
+  return authedPostJSON<ApiPipeline>("/api/pipelines/promote", body);
 }
 
 // ── Identity Management ───────────────────────────────────────────────────────

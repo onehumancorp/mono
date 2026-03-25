@@ -24,7 +24,11 @@ import {
   fetchHandoffs,
   resolveHandoff,
   decideApproval,
+  fetchPipelines,
+  createPipeline,
+  promotePipeline,
 } from "./api";
+import type { ApiPipeline } from "./proto_types";
 import type {
   AgentRuntime,
   DashboardSnapshot,
@@ -39,7 +43,7 @@ import type {
 } from "./types";
 
 type LoadState = "idle" | "loading" | "ready" | "error";
-type NavSection = "overview" | "meetings" | "agents" | "handoffs" | "cost" | "playbooks" | "integrations" | "scaling" | "settings" | "users";
+type NavSection = "overview" | "meetings" | "agents" | "handoffs" | "pipelines" | "cost" | "playbooks" | "integrations" | "scaling" | "settings" | "users";
 
 function formatCost(value: number): string {
   if (value === 0) return "$0.000000";
@@ -96,6 +100,7 @@ const ICONS: Record<string, string> = {
   handoffs: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><path d="M12 7v6"></path><path d="M12 17h.01"></path></svg>`,
   cost: `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.736 6.979C9.208 6.193 9.696 6 10 6c.304 0 .792.193 1.264.979a1 1 0 001.715-1.029C12.279 4.784 11.232 4 10 4s-2.279.784-2.979 1.95c-.285.475-.507 1-.67 1.55H6a1 1 0 000 2h.013a9.135 9.135 0 000 1h-.013a1 1 0 100 2h.351c.163.55.385 1.075.67 1.55C7.721 15.216 8.768 16 10 16s2.279-.784 2.979-1.95a1 1 0 10-1.715-1.029c-.472.786-.96.979-1.264.979-.304 0-.792-.193-1.264-.979a4.265 4.265 0 01-.264-.521H10a1 1 0 100-2H8.017a7.36 7.36 0 010-1H10a1 1 0 100-2H8.472c.08-.185.167-.36.264-.521z" clip-rule="evenodd"/></svg>`,
   playbooks: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/></svg>`,
+  pipelines: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6"/><path d="M8 6l-6 6 6 6"/></svg>`,
   integrations: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 7H7v6h6V7z"/><path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"/></svg>`,
   settings: `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>`,
   scaling: `<svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg>`,
@@ -457,6 +462,14 @@ export function App() {
   const [handoffList, setHandoffList] = useState<HandoffPackage[]>([]);
   const [handoffLoading, setHandoffLoading] = useState<Record<string, boolean>>({});
 
+  // Pipelines State
+  const [pipelinesList, setPipelinesList] = useState<ApiPipeline[]>([]);
+  const [pipelinesLoading, setPipelinesLoading] = useState(false);
+  const [pipelineActionLoading, setPipelineActionLoading] = useState<Record<string, boolean>>({});
+  const [showCreatePipelineModal, setShowCreatePipelineModal] = useState(false);
+  const [newPipelineName, setNewPipelineName] = useState("");
+  const [newPipelineBranch, setNewPipelineBranch] = useState("feature/new-pipeline");
+
   // ── Virtualization State ───────────────────────────────────────────────────
   // We simplify virtualization to just slicing the transcript array, since full absolute positioning
   // breaks on variable-height components like the complex Approval cards. We limit the rendered
@@ -578,6 +591,10 @@ export function App() {
     }
     if (activeNav === "handoffs") {
       void fetchHandoffs().then(setHandoffList).catch(() => { });
+    }
+    if (activeNav === "pipelines") {
+      setPipelinesLoading(true);
+      void fetchPipelines().then(setPipelinesList).catch(() => { }).finally(() => setPipelinesLoading(false));
     }
   }, [activeNav]);
 
@@ -738,6 +755,7 @@ export function App() {
     { key: "meetings", label: "Meetings" },
     { key: "agents", label: "Agents" },
     { key: "handoffs", label: "Handoffs" },
+    { key: "pipelines", label: "Pipelines" },
     { key: "cost", label: "Cost" },
     { key: "playbooks", label: "Playbooks" },
     { key: "integrations", label: "Integrations" },
@@ -1592,7 +1610,7 @@ export function App() {
                                           }).then(() => {
                                             setResolvedApprovals(prev => ({ ...prev, [msg.id]: "approved" }));
                                             setNotice("Approval successfully recorded.");
-                                          }).catch(e => {
+                                          }).catch((e: unknown) => {
                                             setError(e instanceof Error ? e.message : "Failed to record approval");
                                           }).finally(() => {
                                             setApprovalLoading(prev => ({ ...prev, [msg.id]: false }));
@@ -1613,7 +1631,7 @@ export function App() {
                                           }).then(() => {
                                             setResolvedApprovals(prev => ({ ...prev, [msg.id]: "rejected" }));
                                             setNotice("Rejection successfully recorded.");
-                                          }).catch(e => {
+                                          }).catch((e: unknown) => {
                                             setError(e instanceof Error ? e.message : "Failed to record rejection");
                                           }).finally(() => {
                                             setApprovalLoading(prev => ({ ...prev, [msg.id]: false }));
@@ -1783,7 +1801,7 @@ export function App() {
                             setHandoffLoading(prev => ({ ...prev, [handoff.id]: true }));
                             void resolveHandoff(handoff.id, "resolved").then(() => {
                               return fetchHandoffs();
-                            }).then(list => {
+                            }).then((list: HandoffPackage[]) => {
                               setHandoffList(list);
                               setNotice("Direction provided. Agent operations have resumed.");
                             }).catch(err => {
@@ -1800,7 +1818,7 @@ export function App() {
                             setHandoffLoading(prev => ({ ...prev, [handoff.id]: true }));
                             void resolveHandoff(handoff.id, "acknowledged").then(() => {
                               return fetchHandoffs();
-                            }).then(list => {
+                            }).then((list: HandoffPackage[]) => {
                               setHandoffList(list);
                               setNotice("Direction provided. Task has been recalled.");
                             }).catch(err => {
@@ -2891,6 +2909,147 @@ export function App() {
                   </form>
                 </div>
               </article>
+            </div>
+          </>
+        )}
+
+        {/* ────────────────── Pipelines (SDLC) ────────────────── */}
+        {activeNav === "pipelines" && (
+          <>
+            <div className="page-header">
+              <div>
+                <h2 className="page-heading">Automated SDLC</h2>
+                <p className="page-sub">Monitor and approve automated implementation pipelines.</p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setShowCreatePipelineModal(true)}
+                disabled={pipelinesLoading}
+              >
+                + Start Implementation
+              </button>
+            </div>
+
+            <article className="panel">
+              <header className="panel-head">
+                <h2 className="panel-title">Active PRs</h2>
+              </header>
+              <div className="panel-body">
+                {pipelinesLoading && (!pipelinesList || pipelinesList.length === 0) ? (
+                  <p className="empty-state">Loading pipelines…</p>
+                ) : (!pipelinesList || pipelinesList.length === 0) ? (
+                  <p className="empty-state">No active pipelines found.</p>
+                ) : (
+                  <ul className="pipeline-list">
+                    {(pipelinesList || []).map(pipeline => (
+                      <li key={pipeline.id} className="pipeline-item">
+                        <div className="pipeline-item__info">
+                          <h3 className="pipeline-item__name">{pipeline.name}</h3>
+                          <span className={`status-badge status-badge--${pipeline.status === "PROMOTED" ? "active" : pipeline.status === "FAILED" ? "blocked" : pipeline.status === "STAGING" ? "meeting" : "idle"}`}>
+                            <span className="status-badge__dot"></span>
+                            {pipeline.status}
+                          </span>
+                        </div>
+                        <div className="pipeline-item__meta">
+                          <span>Branch: {pipeline.branch}</span>
+                          <span>Started: {new Date(pipeline.createdAtUnix ? pipeline.createdAtUnix * 1000 : Date.now()).toLocaleDateString()}</span>
+                        </div>
+                        <div className="pipeline-item__actions">
+                          {pipeline.status === "STAGING" && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              disabled={pipelineActionLoading[pipeline.id!]}
+                              onClick={() => {
+                                const pid = pipeline.id;
+                                setPipelineActionLoading(prev => ({ ...prev, [pid!]: true }));
+                                void promotePipeline({
+                                  pipelineId: pid,
+                                  approvedBy: ceoMember?.id || "CEO"
+                                }).then(() => fetchPipelines()).then((list: ApiPipeline[]) => {
+                                  setPipelinesList(list);
+                                  setNotice("Pipeline approved for production.");
+                                }).catch((e: unknown) => {
+                                  setError(e instanceof Error ? e.message : "Failed to promote pipeline");
+                                }).finally(() => setPipelineActionLoading(prev => ({ ...prev, [pid!]: false })));
+                              }}
+                            >
+                              {pipelineActionLoading[pipeline.id!] ? "Promoting..." : "Approve for Production"}
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </article>
+
+            {/* Create Pipeline Modal */}
+            <div className={`modal-overlay ${showCreatePipelineModal ? "open" : ""}`}>
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h3 className="modal-title">Start Implementation</h3>
+                  <button type="button" className="btn-close" onClick={() => setShowCreatePipelineModal(false)}>✕</button>
+                </div>
+                <div className="modal-body">
+                  <p className="modal-desc" style={{ marginBottom: "1rem", color: "var(--text-secondary)" }}>
+                    Kick off a new feature branch. PM and SWE agents will automatically break down the task, implement it, run tests, and deploy to staging.
+                  </p>
+                  <label className="field">
+                    <span className="field-label">Feature Name</span>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="e.g. feat-analytics"
+                      value={newPipelineName}
+                      onChange={e => setNewPipelineName(e.target.value)}
+                    />
+                  </label>
+                  <label className="field">
+                    <span className="field-label">Branch Name</span>
+                    <input
+                      type="text"
+                      className="input"
+                      value={newPipelineBranch}
+                      onChange={e => setNewPipelineBranch(e.target.value)}
+                    />
+                  </label>
+                </div>
+                <div className="modal-footer" style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowCreatePipelineModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={!newPipelineName}
+                    onClick={() => {
+                      setShowCreatePipelineModal(false);
+                      setPipelinesLoading(true);
+                      void createPipeline({
+                        name: newPipelineName,
+                        branch: newPipelineBranch,
+                        initiatedBy: ceoMember?.id || "CEO",
+                      }).then(() => fetchPipelines()).then((list: ApiPipeline[]) => {
+                        setPipelinesList(list);
+                        setNotice("Implementation pipeline started.");
+                        setNewPipelineName("");
+                        setNewPipelineBranch("feature/new-pipeline");
+                      }).catch((e: unknown) => {
+                        setError(e instanceof Error ? e.message : "Failed to start pipeline");
+                      }).finally(() => setPipelinesLoading(false));
+                    }}
+                  >
+                    Create Pipeline
+                  </button>
+                </div>
+              </div>
             </div>
           </>
         )}
