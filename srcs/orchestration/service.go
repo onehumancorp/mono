@@ -9,6 +9,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"os"
 	"sort"
 	"sync"
 	"time"
@@ -235,18 +236,96 @@ type Hub struct {
 	minimaxAPIKey string
 	subs          map[string][]chan struct{}
 	sipDB         *SIPDB
+	tokenTrackers map[string]struct{}
+	eventLogChan  chan map[string]interface{}
 }
 
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
 //
 // Returns: An instantiated *Hub ready to register agents and route events.
 func NewHub() *Hub {
-	return &Hub{
-		agents:   map[string]Agent{},
-		inbox:    map[string][]Message{},
-		meetings: map[string]MeetingRoom{},
-		subs:     map[string][]chan struct{}{},
+	h := &Hub{
+		agents:        map[string]Agent{},
+		inbox:         map[string][]Message{},
+		meetings:      map[string]MeetingRoom{},
+		subs:          map[string][]chan struct{}{},
+		tokenTrackers: map[string]struct{}{},
+		eventLogChan:  make(chan map[string]interface{}, 100),
 	}
+	go h.eventLogWorker()
+	return h
+}
+
+// eventLogWorker processes event logs and writes them sequentially to events.jsonl
+func (h *Hub) eventLogWorker() {
+	f, err := os.OpenFile("events.jsonl", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		slog.Error("failed to open events.jsonl", "error", err)
+		return
+	}
+	defer f.Close()
+
+	for logEntry := range h.eventLogChan {
+		b, err := json.Marshal(logEntry)
+		if err != nil {
+			slog.Error("failed to marshal event log", "error", err)
+			continue
+		}
+		b = append(b, '\n')
+		if _, err := f.Write(b); err != nil {
+			slog.Error("failed to write to events.jsonl", "error", err)
+		}
+	}
+}
+
+// TokenEfficientContextSummarization securely processes token efficient context summarization.
+//
+// Parameters:
+//   - eventID: string; Unique event identifier.
+//   - agentID: string; Identifier of the invoking agent.
+//   - payload: []byte; The operation payload containing specific context instructions.
+//
+// Returns:
+//   - error: Error object if validation or processing fails.
+func (h *Hub) TokenEfficientContextSummarization(eventID, agentID string, payload []byte) error {
+	h.mu.Lock()
+	if _, exists := h.tokenTrackers[eventID]; exists {
+		h.mu.Unlock()
+		return errors.New("event already being processed")
+	}
+	h.tokenTrackers[eventID] = struct{}{}
+	h.mu.Unlock()
+
+	defer func() {
+		h.mu.Lock()
+		delete(h.tokenTrackers, eventID)
+		h.mu.Unlock()
+	}()
+
+	var temp struct {
+		Context string `json:"context"`
+	}
+	dec := json.NewDecoder(bytes.NewReader(payload))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&temp); err != nil {
+		return fmt.Errorf("invalid payload: %w", err)
+	}
+
+	client := NewMinimaxClient(h.MinimaxAPIKey())
+	prompt := fmt.Sprintf("Summarize the following context efficiently to save tokens: %s", temp.Context)
+	summarizedContext, err := client.Reason(context.Background(), prompt)
+	if err != nil {
+		return fmt.Errorf("summarization failed: %w", err)
+	}
+
+	h.eventLogChan <- map[string]interface{}{
+		"event_id":           eventID,
+		"agent_id":           agentID,
+		"type":               "TokenEfficientContextSummarization",
+		"summarized_context": summarizedContext,
+	}
+
+	return nil
 }
 
 // SetSIPDB injects a database-driven Swarm Intelligence Protocol interface.
