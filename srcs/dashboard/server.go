@@ -910,6 +910,13 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 		req.Params = []byte("{}")
 	}
 
+	if req.SPIFFEID != "" {
+		if err := interop.ValidateSPIFFEID(req.SPIFFEID); err != nil {
+			http.Error(w, "invalid SPIFFE ID: "+err.Error(), http.StatusForbidden)
+			return
+		}
+	}
+
 	// Check if the agent is rate-limited for this tool
 	rateLimitKey := req.AgentID + ":" + req.ToolID
 	s.mu.Lock()
