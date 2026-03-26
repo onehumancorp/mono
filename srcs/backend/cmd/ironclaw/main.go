@@ -120,6 +120,10 @@ func runAuth(args []string, out *os.File) error {
 // ── scan ─────────────────────────────────────────────────────────────────────
 
 // ScanResult is returned by runScan and is JSON-serialisable.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type ScanResult struct {
 	Target   string        `json:"target"`
 	Findings []ScanFinding `json:"findings"`
@@ -127,6 +131,10 @@ type ScanResult struct {
 }
 
 // ScanFinding represents a single security finding.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type ScanFinding struct {
 	Severity string `json:"severity"`
 	File     string `json:"file"`

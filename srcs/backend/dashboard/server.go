@@ -51,6 +51,11 @@ type Server struct {
 	rateLimitStates       map[string]*RateLimitState
 }
 
+// RateLimitState functionality.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type RateLimitState struct {
 	Failures    int
 	LastFailure time.Time
@@ -374,12 +379,14 @@ var statusOrder = []orchestration.Status{
 
 // NewServer initializes a new Dashboard HTTP handler that routes all API and frontend requests.
 //
-// Accepts parameters:
 //   - org: domain.Organization; The base organizational structure.
 //   - hub: *orchestration.Hub; The agent communication and meeting room registry.
 //   - tracker: *billing.Tracker; The cost and token tracking engine.
 //
-// Returns An http.Handler that serves the dashboard REST APIs and static React frontend.
+// Accepts parameters: org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker, authStore ...*auth.Store (No Constraints).
+// Returns http.Handler.
+// Produces no errors.
+// Has no side effects.
 func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker, authStore ...*auth.Store) http.Handler {
 	var store *auth.Store
 	if len(authStore) > 0 && authStore[0] != nil {

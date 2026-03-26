@@ -117,6 +117,10 @@ func jsonString(s string) string {
 // OrganizationIDFromContext returns the organisation ID embedded in the JWT
 // claims, or an empty string when not authenticated or not set.
 // This is the primary tenant isolation key for multi-tenant deployments.
+// Accepts parameters: ctx context.Context (No Constraints).
+// Returns string.
+// Produces no errors.
+// Has no side effects.
 func OrganizationIDFromContext(ctx context.Context) string {
 	if c := ClaimsFromContext(ctx); c != nil {
 		return c.OrganizationID

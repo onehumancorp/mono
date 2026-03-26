@@ -14,13 +14,20 @@ import (
 // specialized sub-agents. It enforces VRAM quota limits before creating the agent,
 // and isolates the sub-agent with its own thread ID and instructions.
 //
-// Accepts no parameters.
 //   ctx context.Context
 //   req *pb.HubSubTask
 //
+<<<<<<< HEAD:srcs/backend/orchestration/delegation.go
 // Returns (*pb.HubDelegateTaskResponse, error).
 // Produces errors: Returns ResourceExhausted if VRAM quota is exceeded.
 func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.HubSubTask) (*pb.HubDelegateTaskResponse, error) {
+=======
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns DelegateSubTask(ctx context.Context, req *pb.SubTask) (*pb.DelegateTaskResponse, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask) (*pb.DelegateTaskResponse, error) {
+>>>>>>> 2ee4f93 (docs: Overhaul documentation for READMEs, Go API, and TSDoc (#371)):srcs/orchestration/delegation.go
 	if req.GetTaskId() == "" || req.GetTargetRole() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "task_id and target_role are required")
 	}

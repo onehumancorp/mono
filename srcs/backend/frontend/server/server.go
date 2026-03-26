@@ -12,9 +12,12 @@ import (
 
 // Server encapsulates the HTTP routing logic, REST middleware, and cross-module state required to expose the One Human Corp dashboard to the human CEO.
 // Parameters: None
-// Returns: None
 // Errors: None
 // Side Effects: None
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Server struct {
 	staticDir string
 	proxy     *httputil.ReverseProxy
@@ -22,9 +25,12 @@ type Server struct {
 
 // New constructs and initializes a new instance of the core service component, wiring together necessary dependencies like static directories, proxy endpoints, or storage backends.
 // Parameters: None
-// Returns: (*Server, error)
 // Errors: Explicit error handling
 // Side Effects: None
+// Accepts no parameters.
+// Returns (*Server, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func New() (*Server, error) {
 	backendURL := os.Getenv("BACKEND_URL")
 	if backendURL == "" {
@@ -49,9 +55,12 @@ func New() (*Server, error) {
 
 // Handler returns a multiplexed HTTP handler configured with the necessary API routes and static asset serving capabilities for the module.
 // Parameters: None
-// Returns: http.Handler
 // Errors: None
 // Side Effects: None
+// Accepts parameters: s *Server (No Constraints).
+// Returns Handler() http.Handler.
+// Produces no errors.
+// Has no side effects.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {

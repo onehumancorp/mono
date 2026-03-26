@@ -1,15 +1,7 @@
 # OHC App — Flutter Cross-Platform Client
 
-Cross-platform front-end for **One Human Corp** that runs on:
-
-| Platform | Status |
-|----------|--------|
-| Android  | ✅ |
-| iOS      | ✅ |
-| macOS    | ✅ |
-| Windows  | ✅ |
-| Linux    | ✅ |
-| Web      | ✅ |
+## Identity
+The `app` module is a cross-platform front-end for **One Human Corp** that runs on Android, iOS, macOS, Windows, Linux, and Web, providing a unified mobile and desktop experience for the CEO.
 
 ## Architecture
 
@@ -38,15 +30,14 @@ srcs/app/
 └── web/                    # Web-specific files
 ```
 
-## Prerequisites
+## Quick Start
 
+### Prerequisites
 - Flutter SDK ≥ 3.3.0 ([install](https://docs.flutter.dev/get-started/install))
 - Dart SDK ≥ 3.3.0 (bundled with Flutter)
 - For Android: Android Studio + NDK
 - For iOS/macOS: Xcode ≥ 15
 - For Windows: Visual Studio 2022 (Desktop development with C++)
-
-## Getting Started
 
 ```bash
 cd srcs/app
@@ -65,6 +56,12 @@ flutter run -d ios
 flutter run -d chrome    # Web
 ```
 
+## Developer Workflow
+
+- **Run all tests:** `flutter test`
+- **Format code:** `flutter format .`
+- **Build all platforms:** `bazelisk build //...` (Integration in progress)
+
 ## Configuration
 
 The app connects to the OHC backend via the `BACKEND_URL` environment variable.
@@ -81,12 +78,6 @@ flutter build apk --dart-define=BACKEND_URL=https://api.yourcompany.com
 flutter build ipa --dart-define=BACKEND_URL=https://api.yourcompany.com
 flutter build macos --dart-define=BACKEND_URL=https://api.yourcompany.com
 flutter build windows --dart-define=BACKEND_URL=https://api.yourcompany.com
-```
-
-## Running Tests
-
-```bash
-flutter test
 ```
 
 ## Shared Backend Logic

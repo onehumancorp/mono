@@ -1,10 +1,13 @@
 # OHC Core — Rust Library
 
-High-performance core library for One Human Corp.  Written in Rust for maximum
-throughput in single-docker deployments and embedded as a sidecar in
-cloud-native (Kubernetes) deployments.
+## Identity
+The `core` module is a high-performance Rust library for One Human Corp, providing maximum throughput for performance-critical logic such as agent scheduling, meeting rooms, and chat integrations.
 
-## Modules
+## Architecture
+
+It is embedded as a sidecar in cloud-native (Kubernetes) deployments or acts as the main handler in single-docker deployments.
+
+### Modules
 
 | Module | Purpose |
 |--------|---------|
@@ -17,19 +20,14 @@ cloud-native (Kubernetes) deployments.
 All data operations are **tenant-scoped**: every struct carries an
 `organization_id` field, and every store implementation filters by it.
 
-## Building
+### Design Goals
 
-```bash
-cargo build --release
-```
+- **Zero external runtime dependencies** — no JVM, no Python interpreter
+- **Tenant isolation** — every data access is scoped to an `organization_id`
+- **Pluggable storage** — in-memory for desktop/dev; swap in SQLite/PostgreSQL for production via trait objects
+- **Async-first** — built on Tokio for high concurrency without blocking threads
 
-## Testing
-
-```bash
-cargo test
-```
-
-## Running (HTTP server)
+## Quick Start
 
 The `ohc-core` binary exposes a minimal HTTP health endpoint on `$LISTEN_ADDR`
 (default `0.0.0.0:18789`):
@@ -45,9 +43,13 @@ docker build -f deploy/docker/ohc-core/Dockerfile -t ohc-core .
 docker run -p 18789:18789 ohc-core
 ```
 
-## Design Goals
+## Developer Workflow
 
-- **Zero external runtime dependencies** — no JVM, no Python interpreter
-- **Tenant isolation** — every data access is scoped to an `organization_id`
-- **Pluggable storage** — in-memory for desktop/dev; swap in SQLite/PostgreSQL for production via trait objects
-- **Async-first** — built on Tokio for high concurrency without blocking threads
+- **Build**: `cargo build --release`
+- **Test**: `cargo test`
+- **Lint**: `cargo clippy`
+
+## Configuration
+
+The core library uses the following environment variables:
+- `LISTEN_ADDR`: The address and port to listen on (e.g., `0.0.0.0:18789`).

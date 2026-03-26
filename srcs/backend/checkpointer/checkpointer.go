@@ -12,28 +12,48 @@ import (
 )
 
 // Checkpoint represents a single state snapshot for a given LangGraph thread.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type Checkpoint struct {
 	ThreadID string                 `json:"thread_id"`
 	State    map[string]interface{} `json:"state"`
 }
 
 // LangGraphCheckpointer interface defines the required methods for saving and loading.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type LangGraphCheckpointer interface {
 	SaveCheckpoint(ctx context.Context, threadID string, state map[string]interface{}) error
 	LoadCheckpoint(ctx context.Context, threadID string) (*Checkpoint, error)
 }
 
 // PGCheckpointer implements LangGraphCheckpointer using a database backend.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type PGCheckpointer struct {
 	db *sql.DB
 }
 
 // NewPGCheckpointer creates a new instance of PGCheckpointer.
+// Accepts parameters: db *sql.DB (No Constraints).
+// Returns *PGCheckpointer.
+// Produces no errors.
+// Has no side effects.
 func NewPGCheckpointer(db *sql.DB) *PGCheckpointer {
 	return &PGCheckpointer{db: db}
 }
 
 // EnsureTableExists creates the checkpoints table if it does not already exist.
+// Accepts parameters: p *PGCheckpointer (No Constraints).
+// Returns EnsureTableExists(ctx context.Context) error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (p *PGCheckpointer) EnsureTableExists(ctx context.Context) error {
 	query := `
 	CREATE TABLE IF NOT EXISTS checkpoints (
@@ -47,6 +67,10 @@ func (p *PGCheckpointer) EnsureTableExists(ctx context.Context) error {
 }
 
 // SaveCheckpoint serializes and persists the given state for the specified threadID.
+// Accepts parameters: p *PGCheckpointer (No Constraints).
+// Returns SaveCheckpoint(ctx context.Context, threadID string, state map[string]interface{}) error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (p *PGCheckpointer) SaveCheckpoint(ctx context.Context, threadID string, state map[string]interface{}) error {
 	if threadID == "" {
 		return errors.New("threadID cannot be empty")
@@ -71,6 +95,10 @@ func (p *PGCheckpointer) SaveCheckpoint(ctx context.Context, threadID string, st
 }
 
 // LoadCheckpoint retrieves and deserializes the state for a given threadID.
+// Accepts parameters: p *PGCheckpointer (No Constraints).
+// Returns LoadCheckpoint(ctx context.Context, threadID string) (*Checkpoint, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (p *PGCheckpointer) LoadCheckpoint(ctx context.Context, threadID string) (*Checkpoint, error) {
 	if threadID == "" {
 		return nil, errors.New("threadID cannot be empty")

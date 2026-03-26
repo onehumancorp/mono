@@ -185,25 +185,25 @@ export async function sendMessage(form: {
   return normalizeDashboard(raw);
 }
 /**
- * @summary Instantiates a new agent and assigns it to the organizational workforce.
+ * @summary Executes the hireAgent operation.
  * @param name
  * @param role
- * @returns Promise<DashboardSnapshot>
- * @throws May throw an error
- * @remarks Side Effects: None
+ * @returns Promise with operation result
+ * @throws May throw an error if the API request fails
+ * @remarks Side Effects: Mutates server state
  */
 export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
   return authedPostJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
 }
 /**
- * @summary Delegates a task from one agent to a specialist agent.
+ * @summary Executes the delegateTask operation.
  * @param fromAgentId
  * @param toAgentId
  * @param content
  * @param meetingId
- * @returns Promise<DashboardSnapshot>
- * @throws May throw an error
- * @remarks Side Effects: None
+ * @returns Promise with operation result
+ * @throws May throw an error if the API request fails
+ * @remarks Side Effects: Mutates server state
  */
 export function delegateTask(
   fromAgentId: string,
@@ -330,12 +330,12 @@ export function createHandoff(body: {
 }
 
 /**
- * @summary Updates the status of a handoff escalation (e.g. acknowledged or resolved).
+ * @summary Executes the resolveHandoff operation.
  * @param handoffId
  * @param status
- * @returns Promise<HandoffPackage[]>
- * @throws May throw an error
- * @remarks Side Effects: None
+ * @returns Promise with operation result
+ * @throws May throw an error if the API request fails
+ * @remarks Side Effects: Mutates server state
  */
 export function resolveHandoff(handoffId: string, status: "acknowledged" | "resolved"): Promise<HandoffPackage[]> {
   return authedPostJSON<HandoffPackage[]>("/api/handoffs/resolve", { handoffId, status });
@@ -343,26 +343,33 @@ export function resolveHandoff(handoffId: string, status: "acknowledged" | "reso
 
 // ── Pipelines (Automated SDLC) ────────────────────────────────────────────────
 /**
- * @summary Retrieves all automated SDLC pipelines.
- * @returns Promise<ApiPipeline[]>
+ * @summary Executes the fetchPipelines operation.
+ * @param None
+ * @returns Promise with operation result
+ * @throws May throw an error if the API request fails
+ * @remarks Side Effects: Mutates server state
  */
 export function fetchPipelines(): Promise<ApiPipeline[]> {
   return authedGetJSON<ApiPipeline[]>("/api/pipelines");
 }
 
 /**
- * @summary Creates a new automated implementation pipeline.
- * @param body Pipeline details
- * @returns Promise<ApiPipeline>
+ * @summary Executes the createPipeline operation.
+ * @param body
+ * @returns Promise with operation result
+ * @throws May throw an error if the API request fails
+ * @remarks Side Effects: Mutates server state
  */
 export function createPipeline(body: { name: string; branch: string; initiatedBy: string }): Promise<ApiPipeline> {
   return authedPostJSON<ApiPipeline>("/api/pipelines", body);
 }
 
 /**
- * @summary Promotes a pipeline to production.
- * @param body Promotion request
- * @returns Promise<ApiPipeline>
+ * @summary Executes the promotePipeline operation.
+ * @param body
+ * @returns Promise with operation result
+ * @throws May throw an error if the API request fails
+ * @remarks Side Effects: Mutates server state
  */
 export function promotePipeline(body: ApiPipelinePromoteRequest): Promise<ApiPipeline> {
   return authedPostJSON<ApiPipeline>("/api/pipelines/promote", body);
@@ -641,23 +648,23 @@ export function createIssue(body: {
   return authedPostJSON<Issue>("/api/integrations/issues/create", body);
 }
 /**
- * @summary Updates the status phase of an existing ticket.
+ * @summary Executes the updateIssueStatus operation.
  * @param issueId
  * @param status
- * @returns Promise<Issue>
- * @throws May throw an error
- * @remarks Side Effects: None
+ * @returns Promise with operation result
+ * @throws May throw an error if the API request fails
+ * @remarks Side Effects: Mutates server state
  */
 export function updateIssueStatus(issueId: string, status: string): Promise<Issue> {
   return authedPostJSON<Issue>("/api/integrations/issues/status", { issueId, status });
 }
 /**
- * @summary Assigns ownership of a ticket to a specific agent or human manager.
+ * @summary Executes the assignIssue operation.
  * @param issueId
  * @param assignee
- * @returns Promise<Issue>
- * @throws May throw an error
- * @remarks Side Effects: None
+ * @returns Promise with operation result
+ * @throws May throw an error if the API request fails
+ * @remarks Side Effects: Mutates server state
  */
 export function assignIssue(issueId: string, assignee: string): Promise<Issue> {
   return authedPostJSON<Issue>("/api/integrations/issues/assign", { issueId, assignee });
@@ -781,12 +788,12 @@ async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
   return (await response.json()) as T;
 }
 /**
- * @summary Authenticates a user and retrieves a JWT token.
+ * @summary Executes the login operation.
  * @param username
  * @param password
- * @returns Promise<LoginResponse>
- * @throws May throw an error
- * @remarks Side Effects: None
+ * @returns Promise with operation result
+ * @throws May throw an error if the API request fails
+ * @remarks Side Effects: Mutates server state
  */
 export async function login(username: string, password: string): Promise<LoginResponse> {
   const resp = await fetch("/api/auth/login", {
@@ -886,12 +893,12 @@ export function createRole(body: { name: string; permissions?: string[] }): Prom
   return authedPostJSON<Role>("/api/roles", body);
 }
 /**
- * @summary Scales the number of agents for a specific role dynamically.
+ * @summary Executes the scaleAgents operation.
  * @param role
  * @param count
- * @returns Promise<{ status: string; role: string; count: number }>
- * @throws May throw an error
- * @remarks Side Effects: None
+ * @returns Promise with operation result
+ * @throws May throw an error if the API request fails
+ * @remarks Side Effects: Mutates server state
  */
 export function scaleAgents(
   role: string,
