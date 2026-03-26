@@ -1284,3 +1284,44 @@ func TestHub_ToolParameterAutoCorrection_SuccessFlow(t *testing.T) {
 		t.Errorf("expected map entry %q to be deleted, but it still exists", eventID)
 	}
 }
+
+func TestSetSIPDB(t *testing.T) {
+	hub := NewHub()
+	db, _ := NewSIPDB(":memory:")
+	hub.SetSIPDB(db)
+	if hub.GetSIPDB() != db {
+		t.Fatal("SetSIPDB/GetSIPDB failed")
+	}
+}
+
+func TestDelegateTask_AgentNotRegistered(t *testing.T) {
+	hub := NewHub()
+	err := hub.DelegateTask("task-1", "ROLE", Message{Content: "instruction"})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestEventLogWorker_Coverage(t *testing.T) {
+	hub := NewHub()
+
+	// Create temp file for events
+	tmpFile, err := os.CreateTemp("", "events-*.jsonl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+
+	// Wait a bit to let it start processing
+	time.Sleep(100 * time.Millisecond)
+
+	// Log an event
+	hub.LogEvent(Message{ID: "m1", Content: "test"})
+
+	// Give it time to flush
+	time.Sleep(100 * time.Millisecond)
+
+	// Force close to stop loop
+	close(hub.eventLogChan)
+}
