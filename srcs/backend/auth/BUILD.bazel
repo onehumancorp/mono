@@ -19,6 +19,7 @@ go_library(
 go_test(
     name = "auth_test",
     srcs = [
+        "auth_extra_test.go",
         "auth_test.go",
         "jwt_extra_test.go",
         "oidc_test.go",
