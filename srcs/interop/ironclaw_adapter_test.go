@@ -163,3 +163,12 @@ func TestIronClawAdapter_ImplementsUniversalAdapter(t *testing.T) {
 	}
 	var _ UniversalAdapter = a
 }
+
+// Test empty string in trimSPIFFEPath to cover the missing line.
+// It's unexported so we test it directly or pass "" to ExecuteCommand. Wait, NewIronClawAdapter validates SPIFFE so we can't easily pass empty string to ExecuteCommand unless we create IronClawAdapter manually.
+
+func TestIronClawAdapter_TrimSPIFFEPath(t *testing.T) {
+	if trimSPIFFEPath("") != "" {
+		t.Errorf("trimSPIFFEPath empty failed")
+	}
+}
