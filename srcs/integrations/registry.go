@@ -382,7 +382,10 @@ type Registry struct {
 // NewRegistry returns an initialised Registry pre-populated with the default
 // set of supported integrations (all marked as disconnected until configured).
 //
-// Returns A newly instantiated Registry pointer.
+// Accepts no parameters.
+// Returns *Registry.
+// Produces no errors.
+// Has no side effects.
 func NewRegistry() *Registry {
 	return &Registry{
 		integrations: defaultIntegrations(),
@@ -397,7 +400,10 @@ func NewRegistry() *Registry {
 
 // Integrations retrieves a snapshot of all registered external service integrations.
 //
-// Returns A slice of Integration objects representing the current connection states.
+// Accepts parameters: r *Registry (No Constraints).
+// Returns Integrations() []Integration.
+// Produces no errors.
+// Has no side effects.
 func (r *Registry) Integrations() []Integration {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -407,10 +413,12 @@ func (r *Registry) Integrations() []Integration {
 
 // IntegrationsByCategory returns integrations filtered by their service category.
 //
-// Accepts parameters:
 //   - cat: Category; The category to filter by (e.g., CategoryChat).
 //
-// Returns A slice of Integration objects belonging to the specified category.
+// Accepts parameters: r *Registry (No Constraints).
+// Returns IntegrationsByCategory(cat Category) []Integration.
+// Produces no errors.
+// Has no side effects.
 func (r *Registry) IntegrationsByCategory(cat Category) []Integration {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -426,10 +434,12 @@ func (r *Registry) IntegrationsByCategory(cat Category) []Integration {
 
 // Integration looks up a specific integration by its unique ID.
 //
-// Accepts parameters:
 //   - id: string; The identifier of the integration.
 //
-// Returns The matching Integration and a boolean indicating if it was found.
+// Accepts parameters: r *Registry (No Constraints).
+// Returns Integration(id string) (Integration, bool).
+// Produces no errors.
+// Has no side effects.
 func (r *Registry) Integration(id string) (Integration, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -556,12 +566,14 @@ var safeClient = initSafeHTTPClient()
 // An optional IntegrationCredentials value stores secrets (e.g. bot tokens)
 // for integrations that make real outbound API calls.
 //
-// Accepts parameters:
 //   - id: string; The identifier of the integration to connect.
 //   - baseURL: string; The API base URL to use for requests.
 //   - creds: IntegrationCredentials; Optional credentials for outbound API calls.
 //
-// Returns The updated Integration, or an error if it was not found.
+// Accepts parameters: r *Registry (No Constraints).
+// Returns Connect(id, baseURL string, creds ...IntegrationCredentials) (Integration, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (r *Registry) Connect(id, baseURL string, creds ...IntegrationCredentials) (Integration, error) {
 	if baseURL != "" {
 		if err := validateURL(baseURL); err != nil {
@@ -600,10 +612,12 @@ func (r *Registry) Connect(id, baseURL string, creds ...IntegrationCredentials) 
 
 // Disconnect marks a previously connected integration as disconnected.
 //
-// Accepts parameters:
 //   - id: string; The identifier of the integration to disconnect.
 //
-// Returns The updated Integration, or an error if it was not found.
+// Accepts parameters: r *Registry (No Constraints).
+// Returns Disconnect(id string) (Integration, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (r *Registry) Disconnect(id string) (Integration, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -621,7 +635,6 @@ func (r *Registry) Disconnect(id string) (Integration, error) {
 
 // SendChatMessage records the dispatch of a message through the specified chat integration.
 //
-// Accepts parameters:
 //   - integrationID: string; The ID of the chat integration (e.g., "slack").
 //   - channel: string; The target channel or space.
 //   - fromAgent: string; The ID of the agent sending the message.
@@ -629,7 +642,10 @@ func (r *Registry) Disconnect(id string) (Integration, error) {
 //   - threadID: string; The thread context, if applicable.
 //   - now: time.Time; The current timestamp.
 //
-// Returns A ChatMessage record of the action, or an error if the integration is invalid.
+// Accepts parameters: r *Registry (No Constraints).
+// Returns SendChatMessage(integrationID, channel, fromAgent, content, threadID string, now time.Time) (ChatMessage, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (r *Registry) SendChatMessage(integrationID, channel, fromAgent, content, threadID string, now time.Time) (ChatMessage, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

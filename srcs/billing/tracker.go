@@ -136,10 +136,12 @@ func getShardIndex(orgID string) uint32 {
 
 // NewTracker constructs a Tracker configured with the specified model pricing catalog.
 //
-// Accepts parameters:
 //   - catalog: map[string]Price; A dictionary mapping model names to pricing structures.
 //
-// Returns A thread-safe instance of Tracker initialized with a copied catalog.
+// Accepts parameters: catalog map[string]Price (No Constraints).
+// Returns *Tracker.
+// Produces no errors.
+// Has no side effects.
 func NewTracker(catalog map[string]Price) *Tracker {
 	copied := make(map[string]Price, len(catalog))
 	for model, price := range catalog {
@@ -186,10 +188,12 @@ func (t *Tracker) Track(usage Usage) (Usage, error) {
 
 // Summary collates all recorded usage events to compute aggregate costs for an organisation.
 //
-// Accepts parameters:
 //   - organizationID: string; The UUID of the organization to filter usage metrics by.
 //
-// Returns A Summary record detailing the organization's total spend, token count, and per-agent metrics.
+// Accepts parameters: t *Tracker (No Constraints).
+// Returns Summary(organizationID string) Summary.
+// Produces no errors.
+// Has no side effects.
 func (t *Tracker) Summary(organizationID string) Summary {
 	shard := t.shards[getShardIndex(organizationID)]
 	shard.mu.RLock()

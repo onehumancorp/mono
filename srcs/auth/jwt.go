@@ -37,12 +37,13 @@ type Claims struct {
 
 // HasRole checks whether the token's claims include authorization for a specific role.
 //
-// Accepts parameters:
 //   - role: string; The target role identifier to check for.
 //
-// Returns A boolean indicating if the role is present (true if present or if the user is an admin).
 //
-// Has side effects: None. Executes a read-only iteration over the claims.
+// Accepts parameters: c *Claims (No Constraints).
+// Returns HasRole(role string) bool.
+// Produces no errors.
+// Has no side effects.
 func (c *Claims) HasRole(role string) bool {
 	for _, r := range c.Roles {
 		if r == role || r == RoleAdmin {
