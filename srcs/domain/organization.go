@@ -164,13 +164,15 @@ type Organization struct {
 
 // NewSoftwareCompany constructs a pre-configured engineering organisation with standard tech roles.
 //
-// Accepts parameters:
 //   - id: string; Unique identifier for the organization.
 //   - name: string; The display name for the company.
 //   - ceoName: string; The human CEO's name.
 //   - now: time.Time; The organization's creation timestamp.
 //
-// Returns A fully populated software company Organization ready for the orchestration Hub.
+// Accepts parameters: id, name, ceoName string, now time.Time (No Constraints).
+// Returns Organization.
+// Produces no errors.
+// Has no side effects.
 func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	directorID := id + "-director-eng"
@@ -200,10 +202,12 @@ func NewSoftwareCompany(id, name, ceoName string, now time.Time) Organization {
 
 // MemberByID retrieves a specific team member from the organisation by ID.
 //
-// Accepts parameters:
 //   - id: string; The unique identifier of the member.
 //
-// Returns The Member and a boolean indicating if the member was found.
+// Accepts parameters: o Organization (No Constraints).
+// Returns MemberByID(id string) (Member, bool).
+// Produces no errors.
+// Has no side effects.
 func (o Organization) MemberByID(id string) (Member, bool) {
 	for _, member := range o.Members {
 		if member.ID == id {
@@ -216,10 +220,12 @@ func (o Organization) MemberByID(id string) (Member, bool) {
 
 // MembersByManager fetches all direct reports for a given manager ID.
 //
-// Accepts parameters:
 //   - managerID: string; The unique identifier of the manager.
 //
-// Returns A slice of Member objects representing the direct reports.
+// Accepts parameters: o Organization (No Constraints).
+// Returns MembersByManager(managerID string) []Member.
+// Produces no errors.
+// Has no side effects.
 func (o Organization) MembersByManager(managerID string) []Member {
 	var members []Member
 	for _, member := range o.Members {
@@ -233,10 +239,12 @@ func (o Organization) MembersByManager(managerID string) []Member {
 
 // RoleProfile retrieves the execution playbook for a specific role within this organisation.
 //
-// Accepts parameters:
 //   - role: Role; The role archetype to lookup.
 //
-// Returns The RoleProfile and a boolean indicating if the playbook exists.
+// Accepts parameters: o Organization (No Constraints).
+// Returns RoleProfile(role Role) (RoleProfile, bool).
+// Produces no errors.
+// Has no side effects.
 func (o Organization) RoleProfile(role Role) (RoleProfile, bool) {
 	for _, profile := range o.RoleProfiles {
 		if profile.Role == role {
@@ -366,13 +374,15 @@ func defaultSoftwareCompanyRoleProfiles() []RoleProfile {
 
 // NewDigitalMarketingAgency constructs a pre-configured marketing organisation with standard growth roles.
 //
-// Accepts parameters:
 //   - id: string; Unique identifier for the organization.
 //   - name: string; The display name for the agency.
 //   - ceoName: string; The human CEO's name.
 //   - now: time.Time; The organization's creation timestamp.
 //
-// Returns A fully populated marketing agency Organization.
+// Accepts parameters: id, name, ceoName string, now time.Time (No Constraints).
+// Returns Organization.
+// Produces no errors.
+// Has no side effects.
 func NewDigitalMarketingAgency(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	marketingDirectorID := id + "-director-mkt"
@@ -454,13 +464,15 @@ func defaultDigitalMarketingRoleProfiles() []RoleProfile {
 
 // NewAccountingFirm constructs a pre-configured financial services organisation with audit and tax roles.
 //
-// Accepts parameters:
 //   - id: string; Unique identifier for the organization.
 //   - name: string; The display name for the firm.
 //   - ceoName: string; The human CEO's name.
 //   - now: time.Time; The organization's creation timestamp.
 //
-// Returns A fully populated accounting firm Organization.
+// Accepts parameters: id, name, ceoName string, now time.Time (No Constraints).
+// Returns Organization.
+// Produces no errors.
+// Has no side effects.
 func NewAccountingFirm(id, name, ceoName string, now time.Time) Organization {
 	ceoID := id + "-ceo"
 	cfoID := id + "-cfo"

@@ -12,6 +12,10 @@ import (
 )
 
 // SIPDB encapsulates the Swarm Intelligence Protocol database interactions.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type SIPDB struct {
 	db *sql.DB
 }
@@ -44,6 +48,10 @@ func withRetry(ctx context.Context, op func() error) error {
 }
 
 // NewSIPDB initializes a new database connection and creates required tables.
+// Accepts parameters: dbPath string (No Constraints).
+// Returns (*SIPDB, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func NewSIPDB(dbPath string) (*SIPDB, error) {
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
@@ -90,6 +98,10 @@ func initializeTables(db *sql.DB) error {
 }
 
 // SyncMemory retrieves the global state for architectural alignment.
+// Accepts parameters: s *SIPDB (No Constraints).
+// Returns SyncMemory(ctx context.Context, key string) (string, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *SIPDB) SyncMemory(ctx context.Context, key string) (string, error) {
 	var value string
 	err := withRetry(ctx, func() error {
@@ -103,6 +115,10 @@ func (s *SIPDB) SyncMemory(ctx context.Context, key string) (string, error) {
 }
 
 // UpdateMemory updates the global state.
+// Accepts parameters: s *SIPDB (No Constraints).
+// Returns UpdateMemory(ctx context.Context, key, value string) error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *SIPDB) UpdateMemory(ctx context.Context, key, value string) error {
 	return withRetry(ctx, func() error {
 		_, err := s.db.ExecContext(ctx,
@@ -114,6 +130,10 @@ func (s *SIPDB) UpdateMemory(ctx context.Context, key, value string) error {
 }
 
 // GetPendingMissions proactively seeks tasks assigned to the role.
+// Accepts parameters: s *SIPDB (No Constraints).
+// Returns GetPendingMissions(ctx context.Context, role string) ([]Message, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *SIPDB) GetPendingMissions(ctx context.Context, role string) ([]Message, error) {
 	var missions []Message
 	err := withRetry(ctx, func() error {
@@ -147,6 +167,10 @@ func (s *SIPDB) GetPendingMissions(ctx context.Context, role string) ([]Message,
 }
 
 // CompleteMission updates the mission status to COMPLETED.
+// Accepts parameters: s *SIPDB (No Constraints).
+// Returns CompleteMission(ctx context.Context, missionID string) error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *SIPDB) CompleteMission(ctx context.Context, missionID string) error {
 	return withRetry(ctx, func() error {
 		res, err := s.db.ExecContext(ctx, "UPDATE agent_missions SET status = 'COMPLETED', updated_at = CURRENT_TIMESTAMP WHERE id = ?", missionID)
@@ -165,6 +189,10 @@ func (s *SIPDB) CompleteMission(ctx context.Context, missionID string) error {
 }
 
 // Heartbeat maintains the agent's heartbeat and domain-health metrics.
+// Accepts parameters: s *SIPDB (No Constraints).
+// Returns Heartbeat(ctx context.Context, agentID, role, status string) error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *SIPDB) Heartbeat(ctx context.Context, agentID, role, status string) error {
 	return withRetry(ctx, func() error {
 		_, err := s.db.ExecContext(ctx,
@@ -176,6 +204,10 @@ func (s *SIPDB) Heartbeat(ctx context.Context, agentID, role, status string) err
 }
 
 // DelegateMission delegates specialized tasks via the agent_missions table.
+// Accepts parameters: s *SIPDB (No Constraints).
+// Returns DelegateMission(ctx context.Context, missionID, role string, task Message) error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *SIPDB) DelegateMission(ctx context.Context, missionID, role string, task Message) error {
 	taskBytes, err := json.Marshal(task)
 	if err != nil {
@@ -191,6 +223,10 @@ func (s *SIPDB) DelegateMission(ctx context.Context, missionID, role string, tas
 }
 
 // Close closes the database connection.
+// Accepts parameters: s *SIPDB (No Constraints).
+// Returns Close() error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (s *SIPDB) Close() error {
 	return s.db.Close()
 }

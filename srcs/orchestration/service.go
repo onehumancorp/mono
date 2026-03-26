@@ -194,12 +194,14 @@ type Message struct {
 // It inspects an incoming task, updates the sender and recipient fields,
 // and forwards the task to the best-fit specialist agent from the registry.
 //
-// Accepts parameters:
 //   - fromAgentID: string; The unique identifier of the delegating agent.
 //   - toAgentID: string; The unique identifier of the specialist agent.
 //   - task: Message; The task payload to be delegated.
 //
-// Returns An error if either the delegating agent or the specialist agent does not exist.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns DelegateTask(fromAgentID, toAgentID string, task Message) error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
 	h.mu.RLock()
 	if _, ok := h.agents[fromAgentID]; !ok {
@@ -257,7 +259,10 @@ type Hub struct {
 
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
 //
-// Returns An instantiated *Hub ready to register agents and route events.
+// Accepts no parameters.
+// Returns *Hub.
+// Produces no errors.
+// Has no side effects.
 func NewHub() *Hub {
 	h := &Hub{
 		agents:        map[string]Agent{},
@@ -295,6 +300,10 @@ func (h *Hub) eventLogWorker() {
 }
 
 // LogEvent queues an event to be written sequentially to events.jsonl via the background worker.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns LogEvent(event interface{}).
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) LogEvent(event interface{}) {
 	select {
 	case h.eventLogChan <- event:
@@ -310,8 +319,11 @@ func (h *Hub) LogEvent(event interface{}) {
 //   - agentID: string; Identifier of the invoking agent.
 //   - payload: []byte; The operation payload containing specific context instructions.
 //
-// Returns:
 //   - error: Error object if validation or processing fails.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns TokenEfficientContextSummarization(eventID, agentID string, payload []byte) error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (h *Hub) TokenEfficientContextSummarization(eventID, agentID string, payload []byte) error {
 	h.mu.Lock()
 	if _, exists := h.tokenTrackers[eventID]; exists {
@@ -360,8 +372,11 @@ func (h *Hub) TokenEfficientContextSummarization(eventID, agentID string, payloa
 //   - agentID: string; Identifier of the invoking agent.
 //   - payload: []byte; The operation payload containing tool parameters.
 //
-// Returns:
 //   - error: Error object if validation or processing fails.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns ToolParameterAutoCorrection(eventID, agentID string, payload []byte) error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (h *Hub) ToolParameterAutoCorrection(eventID, agentID string, payload []byte) error {
 	h.mu.Lock()
 	if _, exists := h.autoCorTrack[eventID]; exists {
@@ -419,6 +434,10 @@ func (h *Hub) ToolParameterAutoCorrection(eventID, agentID string, payload []byt
 }
 
 // SetSIPDB injects a database-driven Swarm Intelligence Protocol interface.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns SetSIPDB(sipDB *SIPDB).
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) SetSIPDB(sipDB *SIPDB) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -426,6 +445,10 @@ func (h *Hub) SetSIPDB(sipDB *SIPDB) {
 }
 
 // GetSIPDB retrieves the current SIP database interface.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns GetSIPDB() *SIPDB.
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) GetSIPDB() *SIPDB {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -478,10 +501,12 @@ func (h *Hub) MinimaxAPIKey() string {
 
 // Agent retrieves the runtime state of a specific worker by ID.
 //
-// Accepts parameters:
 //   - id: string; The unique identifier of the agent.
 //
-// Returns The matching Agent object and a boolean indicating if it exists in the registry.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns Agent(id string) (Agent, bool).
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) Agent(id string) (Agent, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -492,11 +517,13 @@ func (h *Hub) Agent(id string) (Agent, bool) {
 
 // OpenMeeting instantiates a new collaborative context window and marks all participants as InMeeting.
 //
-// Accepts parameters:
 //   - id: string; Unique identifier for the room.
 //   - participants: []string; A list of agent IDs to be enrolled in the discussion.
 //
-// Returns The instantiated MeetingRoom.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns OpenMeeting(id string, participants []string) MeetingRoom.
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -515,12 +542,14 @@ func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 
 // OpenMeetingWithAgenda creates a meeting room with an explicit agenda descriptor.
 //
-// Accepts parameters:
 //   - id: string; Unique identifier for the room.
 //   - agenda: string; The primary objective guiding the agents' conversation.
 //   - participants: []string; A list of agent IDs to be enrolled in the discussion.
 //
-// Returns The instantiated MeetingRoom.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns OpenMeetingWithAgenda(id, agenda string, participants []string) MeetingRoom.
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) MeetingRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -552,10 +581,12 @@ func (h *Hub) FireAgent(id string) {
 
 // Publish validates and routes a message to a direct recipient, a meeting room, or both.
 //
-// Accepts parameters:
 //   - message: Message; The event payload containing routing headers and content.
 //
-// Returns An error if the sender or recipient agents do not exist, or if the target meeting is unrecognised.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns Publish(message Message) error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
 func (h *Hub) Publish(message Message) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -701,10 +732,12 @@ func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 
 // Inbox retrieves all undelivered or direct messages routed exclusively to a single agent.
 //
-// Accepts parameters:
 //   - agentID: string; The unique identifier of the worker.
 //
-// Returns A slice of direct Message objects.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns Inbox(agentID string) []Message.
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) Inbox(agentID string) []Message {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -720,10 +753,12 @@ func (h *Hub) Inbox(agentID string) []Message {
 
 // Meeting retrieves the current state and transcript of a specified virtual meeting room.
 //
-// Accepts parameters:
 //   - id: string; The unique identifier of the room.
 //
-// Returns The matching MeetingRoom object and a boolean indicating if it exists.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns Meeting(id string) (MeetingRoom, bool).
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -735,7 +770,10 @@ func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 
 // Meetings fetches a point-in-time snapshot of all active meeting rooms.
 //
-// Returns A slice containing all MeetingRoom objects.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns Meetings() []MeetingRoom.
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) Meetings() []MeetingRoom {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
@@ -751,7 +789,10 @@ func (h *Hub) Meetings() []MeetingRoom {
 
 // Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID.
 //
-// Returns A slice of all active Agent objects in the orchestration Hub.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns Agents() []Agent.
+// Produces no errors.
+// Has no side effects.
 func (h *Hub) Agents() []Agent {
 	h.mu.RLock()
 	agents := make([]Agent, 0, len(h.agents))

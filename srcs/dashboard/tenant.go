@@ -23,11 +23,19 @@ import (
 // TenantFactory is a function that creates a new Server (http.Handler) for
 // the given organisation.  Callers can customise the factory to inject
 // different hubs, trackers, or auth stores per tenant.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type TenantFactory func(org domain.Organization) http.Handler
 
 // TenantRegistry is a thread-safe registry that holds one http.Handler per
 // tenant (organisation).  It implements http.Handler itself so it can be
 // used as a drop-in replacement for a single-tenant Server.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
 type TenantRegistry struct {
 	mu        sync.RWMutex
 	tenants   map[string]http.Handler // orgID → handler
@@ -38,6 +46,10 @@ type TenantRegistry struct {
 // NewTenantRegistry creates a new registry.  The provided factory is called
 // the first time a request arrives for an unknown organisation (lazy
 // provisioning).  If factory is nil, a sensible default is used.
+// Accepts parameters: authStore *auth.Store, factory TenantFactory (No Constraints).
+// Returns *TenantRegistry.
+// Produces no errors.
+// Has no side effects.
 func NewTenantRegistry(authStore *auth.Store, factory TenantFactory) *TenantRegistry {
 	if factory == nil {
 		factory = func(org domain.Organization) http.Handler {
@@ -55,6 +67,10 @@ func NewTenantRegistry(authStore *auth.Store, factory TenantFactory) *TenantRegi
 
 // Register pre-registers an existing handler for an organisation.  Useful
 // for testing or for seeding well-known tenants at startup.
+// Accepts parameters: r *TenantRegistry (No Constraints).
+// Returns Register(orgID string, handler http.Handler).
+// Produces no errors.
+// Has no side effects.
 func (r *TenantRegistry) Register(orgID string, handler http.Handler) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -63,6 +79,10 @@ func (r *TenantRegistry) Register(orgID string, handler http.Handler) {
 
 // Provision lazily creates and registers a tenant handler for the given
 // organisation if one does not already exist.  It returns the handler.
+// Accepts parameters: r *TenantRegistry (No Constraints).
+// Returns Provision(org domain.Organization) http.Handler.
+// Produces no errors.
+// Has no side effects.
 func (r *TenantRegistry) Provision(org domain.Organization) http.Handler {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -87,6 +107,10 @@ func (r *TenantRegistry) handler(orgID string) http.Handler {
 //
 // If the claims are missing (public routes) or the organisation is not yet
 // provisioned, appropriate responses are returned.
+// Accepts parameters: r *TenantRegistry (No Constraints).
+// Returns ServeHTTP(w http.ResponseWriter, req *http.Request).
+// Produces no errors.
+// Has no side effects.
 func (r *TenantRegistry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	claims := auth.ClaimsFromContext(req.Context())
 
@@ -134,6 +158,10 @@ func (r *TenantRegistry) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // ProvisionOrg is a convenience function that provisions a tenant from an
 // organisation registration request and returns the organisation ID.
 // It is called by the /api/orgs/register endpoint (cloud-native mode only).
+// Accepts parameters: r *TenantRegistry (No Constraints).
+// Returns ProvisionOrg(orgID, orgName, orgDomain string) (http.Handler, string).
+// Produces no errors.
+// Has no side effects.
 func (r *TenantRegistry) ProvisionOrg(orgID, orgName, orgDomain string) (http.Handler, string) {
 	org := domain.Organization{
 		ID:     orgID,
@@ -156,6 +184,10 @@ type orgRegistrationRequest struct {
 // POST /api/orgs/register on the cloud-native multi-tenant server.
 //
 // Security: callers must present a valid JWT with the "admin" role.
+// Accepts parameters: r *TenantRegistry (No Constraints).
+// Returns HandleOrgRegister(w http.ResponseWriter, req *http.Request).
+// Produces no errors.
+// Has no side effects.
 func (r *TenantRegistry) HandleOrgRegister(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
@@ -186,6 +218,10 @@ func (r *TenantRegistry) HandleOrgRegister(w http.ResponseWriter, req *http.Requ
 
 // HandleOrgList returns a JSON array of all registered organisation IDs.
 // Security: callers must present a valid JWT with the "admin" role.
+// Accepts parameters: r *TenantRegistry (No Constraints).
+// Returns HandleOrgList(w http.ResponseWriter, req *http.Request).
+// Produces no errors.
+// Has no side effects.
 func (r *TenantRegistry) HandleOrgList(w http.ResponseWriter, req *http.Request) {
 	claims := auth.ClaimsFromContext(req.Context())
 	if claims == nil || !claims.HasRole(auth.RoleAdmin) {
@@ -213,6 +249,10 @@ func (r *TenantRegistry) HandleOrgList(w http.ResponseWriter, req *http.Request)
 //	registry := handler.(*dashboard.TenantRegistry)
 //	registry.ProvisionOrg("org-1", "Acme Corp", "acme.com")
 //	http.ListenAndServe(":8080", handler)
+// Accepts parameters: authStore *auth.Store, factory TenantFactory (No Constraints).
+// Returns http.Handler.
+// Produces no errors.
+// Has no side effects.
 func NewMultiTenantServer(authStore *auth.Store, factory TenantFactory) http.Handler {
 	registry := NewTenantRegistry(authStore, factory)
 

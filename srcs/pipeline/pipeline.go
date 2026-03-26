@@ -97,12 +97,13 @@ type Orchestrator struct {
 
 // NewOrchestrator creates a new pipeline Orchestrator configured with the provided Hub.
 //
-// Accepts parameters:
 //   - hub: *orchestration.Hub; The communication hub used to publish and receive orchestration messages.
 //
-// Returns A new instance of Orchestrator initialized with empty pipelines and CI jobs.
 //
-// Has side effects: None.
+// Accepts parameters: hub *orchestration.Hub (No Constraints).
+// Returns *Orchestrator.
+// Produces no errors.
+// Has no side effects.
 func NewOrchestrator(hub *orchestration.Hub) *Orchestrator {
 	return &Orchestrator{
 		hub:       hub,
@@ -423,9 +424,11 @@ func (o *Orchestrator) GetPipelineState(branch string) (PipelineState, error) {
 
 // GetCIJobs safely retrieves a snapshot of all CI jobs triggered by the orchestrator.
 //
-// Returns A cloned slice of CIJob structures.
 //
-// Has side effects: None. Executes a read-only lock and allocates a new slice.
+// Accepts parameters: o *Orchestrator (No Constraints).
+// Returns GetCIJobs() []CIJob.
+// Produces no errors.
+// Has no side effects.
 func (o *Orchestrator) GetCIJobs() []CIJob {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
