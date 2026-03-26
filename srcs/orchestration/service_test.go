@@ -1042,6 +1042,11 @@ func TestHub_TokenEfficientContextSummarization(t *testing.T) {
 					t.Errorf("expected map entry %q to be deleted, but it still exists", tt.eventID)
 				}
 			}
+
+			// Clean up state manually for cases like Concurrent Execution where it returns error and doesn't run the defer logic inside the target func
+			hub.mu.Lock()
+			delete(hub.autoCorTrack, tt.eventID)
+			hub.mu.Unlock()
 		})
 	}
 }
@@ -1116,6 +1121,162 @@ func TestHub_TokenEfficientContextSummarization_SuccessFlow(t *testing.T) {
 	// Verify memory leak fix (map deletion)
 	hub.mu.RLock()
 	_, exists := hub.tokenTrackers[eventID]
+	hub.mu.RUnlock()
+	if exists {
+		t.Errorf("expected map entry %q to be deleted, but it still exists", eventID)
+	}
+}
+
+func TestHub_ToolParameterAutoCorrection(t *testing.T) {
+	hub := NewHub()
+	agentID := "test-agent"
+
+	defer func() {
+		os.Remove("events.jsonl")
+	}()
+
+	tests := []struct {
+		name        string
+		eventID     string
+		payload     []byte
+		setup       func()
+		expectError bool
+		expectedErr string
+	}{
+		{
+			name:        "E2E Integration Test: Standard Execution Flow",
+			eventID:     "event-ac-1",
+			payload:     []byte(`{"id": "123", "value": "456", "name": "test"}`),
+			setup:       func() {},
+			expectError: false,
+		},
+		{
+			name:        "Edge Case: Strict Schema and Payload Validation",
+			eventID:     "event-ac-2",
+			payload:     []byte(`{"id": "123", "value": "456", "name": "test", "unknown_field": "bad data"}`),
+			setup:       func() {},
+			expectError: false,
+		},
+		{
+			name:    "Edge Case: Concurrent Execution on same eventID",
+			eventID: "event-ac-4",
+			payload: []byte(`{"id": "123", "value": "456", "name": "test"}`),
+			setup: func() {
+				hub.mu.Lock()
+				hub.autoCorTrack["event-ac-4"] = struct{}{}
+				hub.mu.Unlock()
+			},
+			expectError: true,
+			expectedErr: "event already being processed",
+		},
+		{
+			name:        "Edge Case: Invalid JSON payload",
+			eventID:     "event-ac-invalid",
+			payload:     []byte(`{invalid`),
+			setup:       func() {},
+			expectError: true,
+			expectedErr: "invalid payload",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+
+			err := hub.ToolParameterAutoCorrection(tt.eventID, agentID, tt.payload)
+
+			if tt.expectError {
+				if err == nil {
+					t.Fatalf("expected error containing %q, got nil", tt.expectedErr)
+				} else if tt.expectedErr != "" && !strings.Contains(err.Error(), tt.expectedErr) {
+					t.Fatalf("expected error containing %q, got %q", tt.expectedErr, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("expected success, got error: %v", err)
+				}
+
+				// Verify map entry is deleted (bounded memory growth)
+				hub.mu.RLock()
+				_, exists := hub.autoCorTrack[tt.eventID]
+				hub.mu.RUnlock()
+				if exists {
+					t.Errorf("expected map entry %q to be deleted, but it still exists", tt.eventID)
+				}
+			}
+		})
+	}
+}
+
+func TestHub_ToolParameterAutoCorrection_SuccessFlow(t *testing.T) {
+	hub := NewHub()
+
+	agentID := "test-agent-2"
+	eventID := "event-123"
+	payload := []byte(`{"value": "123", "name": "test"}`)
+
+	defer os.Remove("events.jsonl")
+
+	// 3. Execute the function
+	err := hub.ToolParameterAutoCorrection(eventID, agentID, payload)
+	if err != nil {
+		t.Fatalf("expected success, got error: %v", err)
+	}
+
+	// Wait briefly for the background worker to write to the file
+	time.Sleep(100 * time.Millisecond)
+
+	// 4. Verify log entry was written
+	b, err := os.ReadFile("events.jsonl")
+	if err != nil {
+		t.Fatalf("failed to read events.jsonl: %v", err)
+	}
+
+	// Read lines to get the specific event
+	lines := strings.Split(strings.TrimSpace(string(b)), "\n")
+	var logEntry map[string]interface{}
+	var found bool
+	for i := len(lines)-1; i >= 0; i-- {
+		var entry map[string]interface{}
+		if err := json.Unmarshal([]byte(lines[i]), &entry); err == nil {
+			if entry["type"] == "ToolParameterAutoCorrection" && entry["event_id"] == eventID {
+				logEntry = entry
+				found = true
+				break
+			}
+		}
+	}
+
+	if !found {
+		t.Fatalf("could not find ToolParameterAutoCorrection event in events.jsonl")
+	}
+
+	if logEntry["event_id"] != eventID {
+		t.Errorf("expected event_id %q, got %q", eventID, logEntry["event_id"])
+	}
+	if logEntry["agent_id"] != agentID {
+		t.Errorf("expected agent_id %q, got %q", agentID, logEntry["agent_id"])
+	}
+	if logEntry["type"] != "ToolParameterAutoCorrection" {
+		t.Errorf("expected type %q, got %q", "ToolParameterAutoCorrection", logEntry["type"])
+	}
+	if logEntry["corrected"] != true {
+		t.Errorf("expected corrected to be true")
+	}
+
+	pl, ok := logEntry["payload"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("payload is not a map")
+	}
+
+	// 'value' should now be an integer
+	if val, ok := pl["value"].(float64); !ok || val != 123 {
+		t.Errorf("expected value to be 123, got %v", pl["value"])
+	}
+
+	// Verify memory leak fix (map deletion)
+	hub.mu.RLock()
+	_, exists := hub.autoCorTrack[eventID]
 	hub.mu.RUnlock()
 	if exists {
 		t.Errorf("expected map entry %q to be deleted, but it still exists", eventID)

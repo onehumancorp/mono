@@ -238,6 +238,32 @@ func (b TokenEfficientContextSummarizationEvent_builder) Build() *TokenEfficient
 	}
 }
 
+// ─── ToolParameterAutoCorrectionEvent ───────────────────────────────────────────────────
+
+type ToolParameterAutoCorrectionEvent struct {
+	eventId string
+	agentId string
+	payload []byte
+}
+
+func (t *ToolParameterAutoCorrectionEvent) GetEventId() string { return t.eventId }
+func (t *ToolParameterAutoCorrectionEvent) GetAgentId() string { return t.agentId }
+func (t *ToolParameterAutoCorrectionEvent) GetPayload() []byte { return t.payload }
+
+type ToolParameterAutoCorrectionEvent_builder struct {
+	EventId string
+	AgentId string
+	Payload []byte
+}
+
+func (b ToolParameterAutoCorrectionEvent_builder) Build() *ToolParameterAutoCorrectionEvent {
+	return &ToolParameterAutoCorrectionEvent{
+		eventId: b.EventId,
+		agentId: b.AgentId,
+		payload: b.Payload,
+	}
+}
+
 // ─── StreamMessagesRequest ───────────────────────────────────────────────────
 
 type StreamMessagesRequest struct{ agentId string }
