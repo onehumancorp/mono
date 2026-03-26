@@ -1,0 +1,176 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+# ── Source filegroup ──────────────────────────────────────────────────────────
+
+filegroup(
+    name = "srcs",
+    srcs = glob(
+        [
+            "lib/**",
+            "test/**",
+            "pubspec.yaml",
+            "pubspec.lock",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+# ── Layout / structure test (no Flutter required) ─────────────────────────────
+# Verifies all expected source files are present in the app tree.
+# Always runs; no Flutter SDK needed.
+
+sh_test(
+    name = "app_layout_test",
+    srcs = ["tests/flutter_layout_test.sh"],
+    data = [":srcs"],
+)
+
+# ── All-in-one unit test ──────────────────────────────────────────────────────
+# Runs `flutter test` for every file under test/.
+# Gracefully skips when Flutter is not installed.
+
+sh_test(
+    name = "app_unit_test",
+    srcs = ["tests/flutter_unit_test.sh"],
+    data = [":srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+# ── Per-file targets for improved Bazel caching ──────────────────────────────
+# A change to one model only invalidates that model's test target, not the
+# whole suite.  Pattern mirrors //srcs/frontend:frontend_api_test etc.
+
+sh_test(
+    name = "app_agent_model_test",
+    srcs = ["tests/flutter_single_test.sh"],
+    args = ["test/agent_model_test.dart"],
+    data = [":srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "app_ai_provider_model_test",
+    srcs = ["tests/flutter_single_test.sh"],
+    args = ["test/ai_provider_model_test.dart"],
+    data = [":srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "app_channel_model_test",
+    srcs = ["tests/flutter_single_test.sh"],
+    args = ["test/channel_model_test.dart"],
+    data = [":srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "app_skill_model_test",
+    srcs = ["tests/flutter_single_test.sh"],
+    args = ["test/skill_model_test.dart"],
+    data = [":srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "app_security_issue_model_test",
+    srcs = ["tests/flutter_single_test.sh"],
+    args = ["test/security_issue_model_test.dart"],
+    data = [":srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "app_auth_service_test",
+    srcs = ["tests/flutter_single_test.sh"],
+    args = ["test/auth_service_test.dart"],
+    data = [":srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "app_api_service_test",
+    srcs = ["tests/flutter_single_test.sh"],
+    args = ["test/api_service_test.dart"],
+    data = [":srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "app_centrifuge_service_test",
+    srcs = ["tests/flutter_single_test.sh"],
+    args = ["test/centrifuge_service_test.dart"],
+    data = [":srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "app_centrifuge_service_full_test",
+    srcs = ["tests/flutter_single_test.sh"],
+    args = ["test/centrifuge_service_full_test.dart"],
+    data = [":srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "app_widget_test",
+    srcs = ["tests/flutter_single_test.sh"],
+    args = ["test/widget_test.dart"],
+    data = [":srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "app_advanced_widget_test",
+    srcs = ["tests/flutter_single_test.sh"],
+    args = ["test/advanced_widget_test.dart"],
+    data = [":srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "app_widget_interactions_test",
+    srcs = ["tests/flutter_single_test.sh"],
+    args = ["test/widget_interactions_test.dart"],
+    data = [":srcs"],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
