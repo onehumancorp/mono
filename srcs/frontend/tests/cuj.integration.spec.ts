@@ -319,3 +319,49 @@ test("CUJ 9: approval execution flows end-to-end", async ({ page, request }) => 
 
   await saveShot(page, "cuj-09-approval-execution");
 });
+
+test("CUJ 10: E2E Pipelines UI interactions with seeded data", async ({ page, request }) => {
+  const loginResp = await request.post("http://127.0.0.1:8080/api/auth/login", {
+    data: { username: "admin", password: "adminpass123" }
+  });
+  const { token } = await loginResp.json();
+
+  // Seed the database to get the default mock pipeline in staging state
+  await request.post("http://127.0.0.1:8080/api/dev/seed", {
+    headers: { Authorization: "Bearer " + token },
+    data: { scenario: "launch-readiness" }
+  });
+
+  // Navigate and login
+  await page.goto("/");
+  await page.fill("#login-username", "admin");
+  await page.fill("#login-password", "adminpass123");
+  await page.click("button:has-text('Sign in')");
+
+  // Wait for dashboard to load
+  await expect(page.locator("text=One Human Corp Dashboard")).toBeVisible();
+
+  // Navigate to pipelines tab
+  await page.click("button:has-text('Automated SDLC (Pipelines)')");
+  await expect(page.locator("text=Active PRs")).toBeVisible();
+
+  // Verify the seeded pipeline is visible (from the backend seed)
+  await expect(page.locator("text=feat-billing-seed")).toBeVisible();
+  await expect(page.locator("text=STAGING").first()).toBeVisible();
+
+  // Approve for production (Promote)
+  await page.click("button:has-text('Approve for Production')");
+
+  // Verify the status changed to PROMOTED
+  await expect(page.locator("text=PROMOTED").first()).toBeVisible();
+
+  // Create a new pipeline
+  await page.click("button:has-text('+ Start Implementation')");
+  await page.fill("input[placeholder='e.g. feat-analytics']", "feat-e2e-playwright");
+  await page.click("button:has-text('Create Pipeline')");
+
+  // Verify pipeline was created
+  await expect(page.locator("text=feat-e2e-playwright")).toBeVisible();
+
+  await saveShot(page, "cuj-10-pipelines");
+});
