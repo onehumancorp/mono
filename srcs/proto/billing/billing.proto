@@ -1,0 +1,24 @@
+edition = "2024";
+
+package billing;
+
+option go_package = "github.com/onehumancorp/mono/srcs/proto/billing;billing";
+
+message TokenUsage {
+  string agent_id = 1;
+  string organization_id = 2;
+  int64 prompt_tokens = 3;
+  int64 completion_tokens = 4;
+  string model = 5;
+  int64 timestamp_unix = 6;
+}
+
+message CostSummary {
+  string organization_id = 1;
+  double total_cost_usd = 2;
+  int64 total_tokens = 3;
+}
+
+service BillingService {
+  rpc TrackUsage(TokenUsage) returns (CostSummary);
+}

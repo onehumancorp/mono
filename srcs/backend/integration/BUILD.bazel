@@ -1,0 +1,35 @@
+load("@rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "frontend_backend_test",
+    srcs = ["frontend_backend_test.go"],
+    deps = [
+        "//srcs/backend/auth",
+        "//srcs/backend/billing",
+        "//srcs/backend/dashboard",
+        "//srcs/backend/domain",
+        "//srcs/backend/frontend/server:server_lib",
+        "//srcs/backend/integrations",
+        "//srcs/backend/orchestration",
+    ],
+)
+
+go_test(
+    name = "integration_test",
+    srcs = [
+        "agent_interaction_test.go",
+        "feature_integration_test.go",
+        "frontend_backend_test.go",
+        "minimax_e2e_test.go",
+    ],
+    deps = [
+        "//srcs/backend/auth",
+        "//srcs/backend/billing",
+        "//srcs/backend/dashboard",
+        "//srcs/backend/domain",
+        "//srcs/backend/frontend/server:server_lib",
+        "//srcs/backend/integrations",
+        "//srcs/backend/integrations/chatwoot",
+        "//srcs/backend/orchestration",
+    ],
+)

@@ -1,0 +1,140 @@
+load("@npm//:defs.bzl", "npm_link_all_packages")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+npm_link_all_packages(name = "node_modules")
+
+# Copy generated proto TypeScript types into the frontend source tree so they
+# are available to the npm build and vitest test runner.
+# End of file
+
+filegroup(
+    name = "srcs",
+    srcs = glob(
+        [
+            "src/**",
+            "*.json",
+            "*.html",
+            "*.ts",
+        ],
+        exclude = [
+            "node_modules/**",
+            "dist/**",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(
+        [
+            "src/**",
+            "tests/**",
+            "*.json",
+            "*.html",
+            "*.ts",
+        ],
+        exclude = [
+            "node_modules/**",
+            "dist/**",
+            "tests/screenshots/**",
+        ],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+sh_test(
+    name = "frontend_layout_test",
+    srcs = ["tests/layout_test.sh"],
+    data = [
+        "package.json",
+        ":srcs",
+    ],
+)
+
+# Run npm unit tests (vitest) via Bazel – runs all test files in one pass.
+# Requires node and npm on PATH (inherited from the host via .bazelrc test_env).
+sh_test(
+    name = "frontend_unit_test",
+    srcs = ["tests/unit_test.sh"],
+    data = [
+        ":all_srcs",
+        "//:go.mod",
+        "//:go.sum",
+        "//srcs/backend/cmd/ohc",
+    ],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+# ── Per-file vitest targets for improved Bazel caching ───────────────────────
+# Each target runs exactly one test file so that Bazel can cache results
+# individually – a change to App.tsx only invalidates frontend_app_test.
+
+sh_test(
+    name = "frontend_api_test",
+    srcs = ["tests/vitest_test.sh"],
+    args = ["src/api.test.ts"],
+    data = [
+        ":all_srcs",
+        "//:go.mod",
+        "//:go.sum",
+        "//srcs/backend/cmd/ohc",
+    ],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "frontend_app_test",
+    srcs = ["tests/vitest_test.sh"],
+    args = ["src/App.test.tsx"],
+    data = [
+        ":all_srcs",
+        "//:go.mod",
+        "//:go.sum",
+        "//srcs/backend/cmd/ohc",
+    ],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+sh_test(
+    name = "frontend_main_test",
+    srcs = ["tests/vitest_test.sh"],
+    args = ["src/main.test.tsx"],
+    data = [
+        ":all_srcs",
+        "//:go.mod",
+        "//:go.sum",
+        "//srcs/backend/cmd/ohc",
+    ],
+    tags = [
+        "no-remote-exec",
+        "requires-network",
+    ],
+)
+
+# Run Playwright e2e tests via Bazel.
+# Requires node, npm, go on PATH and a display (headless Chromium).
+sh_test(
+    name = "frontend_e2e_test",
+    srcs = ["tests/e2e_test.sh"],
+    data = [
+        ":all_srcs",
+        "//:go.mod",
+        "//:go.sum",
+        "//srcs/backend/cmd/ohc",
+    ],
+    tags = [
+        "manual",
+        "no-remote-exec",
+        "requires-network",
+    ],
+)

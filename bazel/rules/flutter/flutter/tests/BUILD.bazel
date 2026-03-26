@@ -1,0 +1,22 @@
+load(":versions_test.bzl", "versions_test_suite")
+
+# Unit test for versions
+versions_test_suite(name = "versions_test")
+
+# Toolchain-focused smoke tests that still live in the main workspace
+test_suite(
+    name = "toolchain_tests",
+    tests = [
+        "//flutter/tests/toolchain:dart_library_test",
+        "//flutter/tests/toolchain:toolchain_resolution_test",
+    ],
+)
+
+# All tests in the main workspace (integration tests live under //e2e/smoke)
+test_suite(
+    name = "all_tests",
+    tests = [
+        ":toolchain_tests",
+        ":versions_test",
+    ],
+)

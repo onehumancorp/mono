@@ -1,0 +1,27 @@
+edition = "2024";
+
+package skills;
+
+option go_package = "github.com/onehumancorp/mono/srcs/proto/skills;skills";
+
+message Skill {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  repeated string capabilities = 4;
+}
+
+message SkillExecutionRequest {
+  string agent_id = 1;
+  string skill_id = 2;
+  bytes input_payload = 3;
+}
+
+message SkillExecutionResponse {
+  bool success = 1;
+  bytes output_payload = 2;
+}
+
+service SkillService {
+  rpc ExecuteSkill(SkillExecutionRequest) returns (SkillExecutionResponse);
+}

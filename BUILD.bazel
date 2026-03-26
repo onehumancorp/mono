@@ -1,4 +1,4 @@
-load("@gazelle//:def.bzl", "gazelle")
+load("@bazel_gazelle//:def.bzl", "gazelle")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 # gazelle:prefix github.com/onehumancorp/mono
@@ -7,7 +7,7 @@ exports_files([
     "go.sum",
 ])
 
-# gazelle:exclude srcs/proto
+# gazelle:exclude srcs/backend/frontend/node_modules
 gazelle(name = "gazelle")
 
 gazelle(

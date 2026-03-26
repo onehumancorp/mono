@@ -1,0 +1,128 @@
+edition = "2024";
+
+package orchestration;
+
+import "srcs/proto/common/common.proto";
+
+option go_package = "github.com/onehumancorp/mono/srcs/proto/orchestration;orchestration";
+
+message HubAgent {
+  string id = 1;
+  string name = 2;
+  string role = 3;
+  string organization_id = 4;
+  string status = 5;
+  string provider_type = 6;
+}
+
+message HubParticipant {
+  string id = 1;
+  string name = 2;
+  bool is_agent = 3;
+  int64 joined_at_unix = 4;
+}
+
+message HubMeetingRoom {
+  string id = 1;
+  string organization_id = 2;
+  string name = 3;
+  string agenda = 4;
+  string status = 5; // ACTIVE, CLOSED
+  repeated HubParticipant participants = 6;
+  repeated common.Message transcript = 7;
+  int64 created_at_unix = 8;
+  int64 closed_at_unix = 9;
+}
+
+message HubRegisterAgentRequest {
+  HubAgent agent = 1;
+}
+
+message HubRegisterAgentResponse {
+  bool success = 1;
+}
+
+message HubOpenMeetingRequest {
+  string meeting_id = 1;
+  string organization_id = 2;
+  string name = 3;
+  string agenda = 4;
+  repeated string participants = 5;
+}
+
+message HubPublishMessageRequest {
+  common.Message message = 1;
+}
+
+message HubPublishMessageResponse {
+  bool success = 1;
+}
+
+message HubDelegateTaskRequest {
+  string from_agent_id = 1;
+  string to_agent_id = 2;
+  common.Message task = 3;
+}
+
+message HubDelegateTaskResponse {
+  bool success = 1;
+}
+
+message HubSubTask {
+  string task_id = 1;
+  string target_role = 2;
+  string instruction = 3;
+  string parent_thread_id = 4;
+}
+
+message HubTokenEfficientContextSummarizationEvent {
+  string event_id = 1;
+  string agent_id = 2;
+  bytes payload = 3;
+}
+
+message HubToolParameterAutoCorrectionEvent {
+  string event_id = 1;
+  string agent_id = 2;
+  bytes payload = 3;
+}
+
+message HubStreamMessagesRequest {
+  string agent_id = 1;
+}
+
+message HubReasonRequest {
+  string prompt = 1;
+}
+
+message HubReasonResponse {
+  string content = 1;
+}
+
+service HubService {
+  rpc RegisterAgent(HubRegisterAgentRequest) returns (HubRegisterAgentResponse);
+  rpc OpenMeeting(HubOpenMeetingRequest) returns (HubMeetingRoom);
+  rpc Publish(HubPublishMessageRequest) returns (HubPublishMessageResponse);
+  rpc DelegateTask(HubDelegateTaskRequest) returns (HubDelegateTaskResponse);
+  rpc StreamMessages(HubStreamMessagesRequest) returns (stream common.Message);
+  rpc Reason(HubReasonRequest) returns (HubReasonResponse);
+  rpc DelegateSubTask(HubSubTask) returns (HubDelegateTaskResponse);
+  rpc UnregisterAgent(HubUnregisterAgentRequest) returns (HubUnregisterAgentResponse);
+  rpc ListAgents(HubListAgentsRequest) returns (HubListAgentsResponse);
+}
+
+message HubUnregisterAgentRequest {
+  string agent_id = 1;
+}
+
+message HubUnregisterAgentResponse {
+  bool success = 1;
+}
+
+message HubListAgentsRequest {
+  string organization_id = 1;
+}
+
+message HubListAgentsResponse {
+  repeated HubAgent agents = 1;
+}

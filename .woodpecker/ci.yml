@@ -31,21 +31,34 @@ steps:
       BUILDBUDDY_API_KEY:
         from_secret: BUILDBUDDY_API_KEY
     commands:
-      # ── Set up bazelisk (pre-installed in act-24.04, or easy install) ──────
-      # Note: act-24.04 often has bazelisk, but let's ensure 'bazel' works.
+      # ── Set up toolchains (Bazelisk, Go, Flutter, Node) ─────────────────────
       - |
+        # 1. Bazelisk (already ensures 'bazel' works)
         if ! command -v bazelisk &> /dev/null; then
           curl -fsSL https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 -o /usr/local/bin/bazelisk
           chmod +x /usr/local/bin/bazelisk
         fi
         ln -sf /usr/local/bin/bazelisk /usr/local/bin/bazel
 
+        # 2. Go (required by dynamic Bazel tests)
+        if ! command -v go &> /dev/null; then
+          curl -fsSL https://go.dev/dl/go1.22.2.linux-amd64.tar.gz -o go.tar.gz
+          tar -C /usr/local -xzf go.tar.gz && rm go.tar.gz
+        fi
+        export PATH="/usr/local/go/bin:$PATH"
+
+        # 3. Flutter (required by //srcs/app tests)
+        if ! command -v flutter &> /dev/null; then
+          git clone --depth 1 --branch stable https://github.com/flutter/flutter.git /usr/local/flutter
+        fi
+        export PATH="/usr/local/flutter/bin:$PATH"
+        # Pre-download Flutter artifacts to speed up tests
+        flutter precache
+
+        # 4. Node/npm (act-24.04 has them, but ensure they're available)
+        export PATH="$PATH:$(npm config get prefix)/bin"
+
       # ── Run all tests ───────────────────────────────────────────────────────
-      # --disk_cache / --repository_cache  → local volume-backed caches
-      # --remote_header                     → authenticates BuildBuddy remote
-      #                                       cache (defined in .bazelrc's
-      #                                       build:buildbuddy-official config,
-      #                                       overridden here with the secret).
       - >-
         bazelisk test //...
         --test_output=errors
@@ -54,3 +67,4 @@ steps:
         --disk_cache=/root/.cache/bazel-disk
         --repository_cache=/root/.cache/bazel-repo
         --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY
+        --action_env=PATH=$PATH

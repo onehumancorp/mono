@@ -1,0 +1,9 @@
+# gazelle:exclude server_test.go
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "server_lib",
+    srcs = ["server.go"],
+    importpath = "github.com/onehumancorp/mono/srcs/backend/frontend/server",
+    visibility = ["//visibility:public"],
+)

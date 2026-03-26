@@ -1,17 +1,27 @@
+load("@rules_flutter//flutter:defs.bzl", "flutter_app", "flutter_library", "flutter_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 # ── Source filegroup ──────────────────────────────────────────────────────────
 
-filegroup(
-    name = "srcs",
+flutter_library(
+    name = "ohc_app_lib",
     srcs = glob(
         [
             "lib/**",
-            "test/**",
             "pubspec.yaml",
             "pubspec.lock",
         ],
     ),
+    pubspec = "pubspec.yaml",
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "srcs",
+    srcs = glob([
+        "lib/**",
+        "test/**",
+    ]) + ["pubspec.yaml"],
     visibility = ["//visibility:public"],
 )
 
@@ -29,14 +39,10 @@ sh_test(
 # Runs `flutter test` for every file under test/.
 # Gracefully skips when Flutter is not installed.
 
-sh_test(
+flutter_test(
     name = "app_unit_test",
-    srcs = ["tests/flutter_unit_test.sh"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = glob(["test/**"]),
+    embed = [":ohc_app_lib"],
 )
 
 # ── Per-file targets for improved Bazel caching ──────────────────────────────

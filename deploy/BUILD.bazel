@@ -92,16 +92,39 @@ oci_push(
 # Build frontend static assets in a rule
 # Note: npm build in a genrule is slightly discouraged but kept here for simplicity
 # unless we move to rules_js.
+# Build frontend static assets in a rule using the hermetic Node.js toolchain
 genrule(
     name = "frontend_static_assets",
-    srcs = ["//srcs/frontend:all_srcs"],
+    srcs = [
+        "//srcs/frontend:all_srcs",
+        "//srcs/frontend:node_modules",
+    ],
     outs = ["frontend_dist.tar"],
-    cmd = "export HOME=/tmp && cd srcs/frontend && npm install --engine-strict=false && npm run build && tar -C dist -cf ../../$@ .",
+    cmd = """
+        export HOME=/tmp
+        # Use the hermetic node/npm from the toolchain
+        # rules_js handles the PATH automatically if we use its rules, 
+        # but for a genrule we'll point to the linked node_modules/.bin
+        # Pick the node binary from the toolchain locations
+        LOCS=($(locations @rules_nodejs//nodejs:current_node_toolchain))
+        for loc in "$${LOCS[@]}"; do
+            if [[ $$loc == */node ]]; then
+                NODE_EXE=$$(realpath $$loc)
+                break
+            fi
+        done
+        NODE_BIN=$$(dirname $$NODE_EXE)
+        export PATH=$$NODE_BIN:$$PATH
+        cd srcs/frontend
+        # npm install is NOT needed because rules_js linked everything
+        npm run build
+        tar -C dist -cf ../../$@ .
+    """,
     tags = [
         "local",
         "no-remote-exec",
-        "requires-network",
     ],
+    tools = ["@rules_nodejs//nodejs:current_node_toolchain"],
 )
 
 pkg_tar(

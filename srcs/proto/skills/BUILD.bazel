@@ -1,0 +1,25 @@
+load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//proto:def.bzl", "go_proto_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+proto_library(
+    name = "skillspb_proto",
+    srcs = ["skills.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["//srcs/proto/common:commonpb_proto"],
+)
+
+go_proto_library(
+    name = "skillspb_go_proto",
+    importpath = "github.com/onehumancorp/mono/srcs/proto/skills",
+    proto = ":skillspb_proto",
+    visibility = ["//visibility:public"],
+    deps = ["//srcs/proto/common"],
+)
+
+go_library(
+    name = "skills",
+    embed = [":skillspb_go_proto"],
+    importpath = "github.com/onehumancorp/mono/srcs/proto/skills",
+    visibility = ["//visibility:public"],
+)

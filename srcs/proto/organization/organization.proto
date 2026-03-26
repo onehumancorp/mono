@@ -1,0 +1,23 @@
+edition = "2024";
+
+package organization;
+
+option go_package = "github.com/onehumancorp/mono/srcs/proto/organization;organization";
+
+message Organization {
+  string id = 1;
+  string name = 2;
+  string domain = 3;
+  int64 created_at_unix = 4;
+}
+
+message Workspace {
+  string id = 1;
+  string organization_id = 2;
+  string name = 3;
+  string description = 4;
+}
+
+service OrganizationService {
+  rpc GetOrganization(Organization) returns (Organization);
+}

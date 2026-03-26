@@ -1,0 +1,1163 @@
+package orchestration
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"log/slog"
+	"net/http"
+	"os"
+	"regexp"
+	"sort"
+	"sync"
+	"time"
+
+	pb "github.com/onehumancorp/mono/srcs/proto/orchestration"
+	"github.com/onehumancorp/mono/srcs/backend/telemetry"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+var (
+	emailRegex = regexp.MustCompile(`[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`)
+	phoneRegex = regexp.MustCompile(`\b\d{3}[-.]?\d{3}[-.]?\d{4}\b`)
+	ssnRegex   = regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`)
+)
+
+func redactPII(input string) string {
+	s := emailRegex.ReplaceAllString(input, "[REDACTED_EMAIL]")
+	s = phoneRegex.ReplaceAllString(s, "[REDACTED_PHONE]")
+	s = ssnRegex.ReplaceAllString(s, "[REDACTED_SSN]")
+	return s
+}
+
+// Status indicates the current operational phase of an AI agent within the workforce.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
+type Status string
+
+const (
+	// StatusIdle represents the IDLE lifecycle phase of a tracked entity within the event-driven state machine.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	StatusIdle Status = "IDLE"
+	// StatusActive represents the ACTIVE lifecycle phase of a tracked entity within the event-driven state machine.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	StatusActive Status = "ACTIVE"
+	// StatusInMeeting represents the INMEETING lifecycle phase of a tracked entity within the event-driven state machine.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	StatusInMeeting Status = "IN_MEETING"
+	// StatusBlocked represents the BLOCKED lifecycle phase of a tracked entity within the event-driven state machine.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	StatusBlocked Status = "BLOCKED"
+	// StatusWaitingForTools represents the WAITINGFORTOOLS lifecycle phase of a tracked entity within the event-driven state machine.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	StatusWaitingForTools Status = "WAITING_FOR_TOOLS"
+)
+
+// Event type constants for the asynchronous pub/sub agent interaction protocol.
+const (
+	// EventTask provides domain-specific context and typed constraints for EventTask operations across the application.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	EventTask = "task"
+	// EventStatus provides domain-specific context and typed constraints for EventStatus operations across the application.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	EventStatus = "status"
+	// EventHandoff provides domain-specific context and typed constraints for EventHandoff operations across the application.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	EventHandoff = "handoff"
+	// EventCodeReviewed provides domain-specific context and typed constraints for EventCodeReviewed operations across the application.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	EventCodeReviewed = "CodeReviewed"
+	// EventTestsFailed provides domain-specific context and typed constraints for EventTestsFailed operations across the application.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	EventTestsFailed = "TestsFailed"
+	// EventTestsPassed provides domain-specific context and typed constraints for EventTestsPassed operations across the application.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	EventTestsPassed = "TestsPassed"
+	// EventSpecApproved provides domain-specific context and typed constraints for EventSpecApproved operations across the application.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	EventSpecApproved = "SpecApproved"
+	// EventBlockerRaised provides domain-specific context and typed constraints for EventBlockerRaised operations across the application.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	EventBlockerRaised = "BlockerRaised"
+	// EventBlockerCleared provides domain-specific context and typed constraints for EventBlockerCleared operations across the application.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	EventBlockerCleared = "BlockerCleared"
+	// EventPRCreated provides domain-specific context and typed constraints for EventPRCreated operations across the application.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	EventPRCreated = "PRCreated"
+	// EventPRMerged provides domain-specific context and typed constraints for EventPRMerged operations across the application.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	EventPRMerged = "PRMerged"
+	// EventDesignReviewed provides domain-specific context and typed constraints for EventDesignReviewed operations across the application.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	EventDesignReviewed = "DesignReviewed"
+	// EventApprovalNeeded provides domain-specific context and typed constraints for EventApprovalNeeded operations across the application.
+	// Accepts no parameters.
+	// Returns nothing.
+	// Produces no errors.
+	// Has no side effects.
+	EventApprovalNeeded = "ApprovalNeeded"
+)
+
+// Agent represents an autonomous AI actor registered in the orchestration Hub, tracking its identity, role, and current state.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
+type Agent struct {
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	Role           string `json:"role"`
+	OrganizationID string `json:"organizationId"`
+	Status         Status `json:"status"`
+	// ProviderType identifies the external agent implementation backing this worker
+	// (e.g. "claude", "gemini", "opencode").  An empty string or "builtin" means
+	// the platform's own lightweight agent is used.
+	ProviderType string `json:"providerType,omitempty"`
+	Region       string `json:"region,omitempty"`
+}
+
+// Message represents a discrete packet of communication between agents within a meeting room, containing the content and sender identity.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
+type Message struct {
+	ID         string    `json:"id"`
+	FromAgent  string    `json:"fromAgent"`
+	ToAgent    string    `json:"toAgent"`
+	Type       string    `json:"type"`
+	Content    string    `json:"content"`
+	MeetingID  string    `json:"meetingId,omitempty"`
+	OccurredAt time.Time `json:"occurredAt"`
+}
+
+// DelegateTask allows an agent in Delegate Mode to act as a routing proxy.
+// It inspects an incoming task, updates the sender and recipient fields,
+// and forwards the task to the best-fit specialist agent from the registry.
+//
+// Accepts parameters:
+//   - fromAgentID: string; The unique identifier of the delegating agent.
+//   - toAgentID: string; The unique identifier of the specialist agent.
+//   - task: Message; The task payload to be delegated.
+//
+// Returns An error if either the delegating agent or the specialist agent does not exist.
+func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
+	h.mu.RLock()
+	if _, ok := h.agents[fromAgentID]; !ok {
+		h.mu.RUnlock()
+		return errors.New("sender agent is not registered")
+	}
+	toAgent, ok := h.agents[toAgentID]
+	if !ok {
+		h.mu.RUnlock()
+		return errors.New("recipient agent is not registered")
+	}
+	h.mu.RUnlock()
+
+	task.FromAgent = fromAgentID
+	task.ToAgent = toAgentID
+
+	err := h.Publish(task)
+	if err == nil && h.sipDB != nil {
+		go func(t Message, r string) {
+			_ = h.sipDB.DelegateMission(context.Background(), t.ID, r, t)
+		}(task, toAgent.Role)
+	}
+	return err
+}
+
+// Participant represents a single participant in a meeting room.
+type Participant struct {
+	ID       string    `json:"id"`
+	Name     string    `json:"name"`
+	IsAgent  bool      `json:"isAgent"`
+	JoinedAt time.Time `json:"joinedAt"`
+}
+
+// RoomStatus indicates whether a meeting is active or closed.
+type RoomStatus string
+
+const (
+	RoomStatusActive RoomStatus = "ACTIVE"
+	RoomStatusClosed RoomStatus = "CLOSED"
+)
+
+// MeetingRoom provides a thread-safe, isolated collaborative space where multiple agents can exchange messages and context.
+type MeetingRoom struct {
+	ID             string        `json:"id"`
+	OrganizationID string        `json:"organizationId"`
+	Name           string        `json:"name"`
+	Agenda         string        `json:"agenda,omitempty"`
+	Status         RoomStatus    `json:"status"`
+	Participants   []Participant `json:"participants"`
+	Transcript     []Message     `json:"transcript"`
+	CreatedAt      time.Time     `json:"createdAt"`
+	ClosedAt       *time.Time    `json:"closedAt,omitempty"`
+}
+
+// Hub acts as the central, thread-safe asynchronous message broker and state registry for all active agents and meeting rooms.
+type Hub struct {
+	mu            sync.RWMutex
+	agents        map[string]Agent
+	inbox         map[string][]Message
+	meetings      map[string]*MeetingRoom
+	minimaxAPIKey string
+	subs          map[string][]chan struct{}
+	sipDB         *SIPDB
+	tokenTrackers map[string]struct{}
+	autoCorTrack  map[string]struct{}
+	eventLogChan  chan interface{}
+}
+
+// NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
+//
+// Returns An instantiated *Hub ready to register agents and route events.
+func NewHub() *Hub {
+	h := &Hub{
+		agents:        map[string]Agent{},
+		inbox:         map[string][]Message{},
+		meetings:      map[string]*MeetingRoom{},
+		subs:          map[string][]chan struct{}{},
+		tokenTrackers: map[string]struct{}{},
+		autoCorTrack:  map[string]struct{}{},
+		eventLogChan:  make(chan interface{}, 100),
+	}
+	go h.eventLogWorker()
+	return h
+}
+
+// eventLogWorker processes event logs and writes them sequentially to events.jsonl
+func (h *Hub) eventLogWorker() {
+	f, err := os.OpenFile("events.jsonl", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		slog.Error("failed to open events.jsonl", "error", err)
+		return
+	}
+	defer f.Close()
+
+	for logEntry := range h.eventLogChan {
+		b, err := json.Marshal(logEntry)
+		if err != nil {
+			slog.Error("failed to marshal event log", "error", err)
+			continue
+		}
+		b = append(b, '\n')
+		if _, err := f.Write(b); err != nil {
+			slog.Error("failed to write to events.jsonl", "error", err)
+		}
+	}
+}
+
+// LogEvent queues an event to be written sequentially to events.jsonl via the background worker.
+func (h *Hub) LogEvent(event interface{}) {
+	select {
+	case h.eventLogChan <- event:
+	default:
+		slog.Warn("eventLogChan is full, dropping event")
+	}
+}
+
+// TokenEfficientContextSummarization securely processes token efficient context summarization.
+//
+// Parameters:
+//   - eventID: string; Unique event identifier.
+//   - agentID: string; Identifier of the invoking agent.
+//   - payload: []byte; The operation payload containing specific context instructions.
+//
+// Returns:
+//   - error: Error object if validation or processing fails.
+func (h *Hub) TokenEfficientContextSummarization(eventID, agentID string, payload []byte) error {
+	h.mu.Lock()
+	if _, exists := h.tokenTrackers[eventID]; exists {
+		h.mu.Unlock()
+		return errors.New("event already being processed")
+	}
+	h.tokenTrackers[eventID] = struct{}{}
+	h.mu.Unlock()
+
+	defer func() {
+		h.mu.Lock()
+		delete(h.tokenTrackers, eventID)
+		h.mu.Unlock()
+	}()
+
+	var temp struct {
+		Context string `json:"context"`
+	}
+	dec := json.NewDecoder(bytes.NewReader(payload))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&temp); err != nil {
+		return fmt.Errorf("invalid payload: %w", err)
+	}
+
+	client := NewMinimaxClient(h.MinimaxAPIKey())
+	prompt := fmt.Sprintf("Summarize the following context efficiently to save tokens: %s", redactPII(temp.Context))
+	summarizedContext, err := client.Reason(context.Background(), prompt)
+	if err != nil {
+		return fmt.Errorf("summarization failed: %w", err)
+	}
+
+	h.eventLogChan <- map[string]interface{}{
+		"event_id":           eventID,
+		"agent_id":           agentID,
+		"type":               "TokenEfficientContextSummarization",
+		"summarized_context": summarizedContext,
+	}
+
+	return nil
+}
+
+// ToolParameterAutoCorrection securely processes tool parameter auto-correction.
+//
+// Parameters:
+//   - eventID: string; Unique event identifier.
+//   - agentID: string; Identifier of the invoking agent.
+//   - payload: []byte; The operation payload containing tool parameters.
+//
+// Returns:
+//   - error: Error object if validation or processing fails.
+func (h *Hub) ToolParameterAutoCorrection(eventID, agentID string, payload []byte) error {
+	h.mu.Lock()
+	if _, exists := h.autoCorTrack[eventID]; exists {
+		h.mu.Unlock()
+		return errors.New("event already being processed")
+	}
+	h.autoCorTrack[eventID] = struct{}{}
+	h.mu.Unlock()
+
+	defer func() {
+		h.mu.Lock()
+		delete(h.autoCorTrack, eventID)
+		h.mu.Unlock()
+	}()
+
+	var temp map[string]interface{}
+	dec := json.NewDecoder(bytes.NewReader(payload))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&temp); err != nil {
+		return fmt.Errorf("invalid payload: %w", err)
+	}
+
+	corrected := false
+	for k, v := range temp {
+		if strVal, ok := v.(string); ok {
+			var intVal int
+			if _, err := fmt.Sscanf(strVal, "%d", &intVal); err == nil {
+				// To ensure it's purely numerical without any extra characters, check if fmt.Sprintf back matches.
+				if fmt.Sprintf("%d", intVal) == strVal {
+					temp[k] = intVal
+					corrected = true
+				}
+			}
+		}
+	}
+
+	tempBytes, _ := json.Marshal(temp)
+
+	// Create protobuf event representing the autocoorection
+	pbEvent := &pb.ToolParameterAutoCorrectionEvent{
+		EventId: eventID,
+		AgentId: agentID,
+		Payload: tempBytes,
+	}
+
+	h.LogEvent(map[string]interface{}{
+		"event_id":  pbEvent.GetEventId(),
+		"agent_id":  pbEvent.GetAgentId(),
+		"type":      "ToolParameterAutoCorrection",
+		"payload":   temp,
+		"corrected": corrected,
+	})
+
+	return nil
+}
+
+// SetSIPDB injects a database-driven Swarm Intelligence Protocol interface.
+func (h *Hub) SetSIPDB(sipDB *SIPDB) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.sipDB = sipDB
+}
+
+// GetSIPDB retrieves the current SIP database interface.
+func (h *Hub) GetSIPDB() *SIPDB {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.sipDB
+}
+
+// RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.  Parameters:   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
+func (h *Hub) RegisterAgent(agent Agent) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	if agent.Status == "" {
+		agent.Status = StatusIdle
+	}
+
+	h.agents[agent.ID] = agent
+
+	if h.sipDB != nil {
+		go func(a Agent) {
+			_ = h.sipDB.Heartbeat(context.Background(), a.ID, a.Role, string(a.Status))
+		}(agent)
+	}
+}
+
+// SetMinimaxAPIKey functionality.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
+func (h *Hub) SetMinimaxAPIKey(key string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.minimaxAPIKey = key
+}
+
+// MinimaxAPIKey functionality.
+// Accepts no parameters.
+// Returns string.
+// Produces no errors.
+// Has no side effects.
+func (h *Hub) MinimaxAPIKey() string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.minimaxAPIKey
+}
+
+// Agent retrieves the runtime state of a specific worker by ID.
+//
+// Accepts parameters:
+//   - id: string; The unique identifier of the agent.
+//
+// Returns The matching Agent object and a boolean indicating if it exists in the registry.
+func (h *Hub) Agent(id string) (Agent, bool) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	agent, ok := h.agents[id]
+	return agent, ok
+}
+
+// OpenMeeting instantiates a new active collaborative context window.
+func (h *Hub) OpenMeeting(id, orgID, name string, participants []string) *MeetingRoom {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	meeting := &MeetingRoom{
+		ID:             id,
+		OrganizationID: orgID,
+		Name:           name,
+		Status:         RoomStatusActive,
+		Participants:   []Participant{},
+		CreatedAt:      time.Now().UTC(),
+	}
+
+	for _, pid := range participants {
+		agent, ok := h.agents[pid]
+		if ok {
+			agent.Status = StatusInMeeting
+			h.agents[pid] = agent
+			meeting.Participants = append(meeting.Participants, Participant{
+				ID:       pid,
+				Name:     agent.Name,
+				IsAgent:  true,
+				JoinedAt: time.Now().UTC(),
+			})
+		}
+	}
+
+	h.meetings[id] = meeting
+	telemetry.RecordMeetingEvent(context.Background(), "opened")
+	return meeting
+}
+
+// OpenMeetingWithAgenda creates an active meeting room with an explicit agenda descriptor.
+func (h *Hub) OpenMeetingWithAgenda(id, orgID, name, agenda string, participants []string) *MeetingRoom {
+	meeting := h.OpenMeeting(id, orgID, name, participants)
+	h.mu.Lock()
+	meeting.Agenda = agenda
+	h.mu.Unlock()
+	return meeting
+}
+
+// JoinRoom adds a participant to an active meeting room.
+func (h *Hub) JoinRoom(roomID, participantID, name string, isAgent bool) (*MeetingRoom, error) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	room, ok := h.meetings[roomID]
+	if !ok {
+		return nil, fmt.Errorf("meeting room not found: %s", roomID)
+	}
+
+	for _, p := range room.Participants {
+		if p.ID == participantID {
+			return room, nil // Already joined
+		}
+	}
+
+	room.Participants = append(room.Participants, Participant{
+		ID:       participantID,
+		Name:     name,
+		IsAgent:  isAgent,
+		JoinedAt: time.Now().UTC(),
+	})
+
+	if isAgent {
+		if agent, ok := h.agents[participantID]; ok {
+			agent.Status = StatusInMeeting
+			h.agents[participantID] = agent
+		}
+	}
+
+	return room, nil
+}
+
+// CloseRoom marks a meeting room as closed and records the end time.
+func (h *Hub) CloseRoom(roomID string) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	room, ok := h.meetings[roomID]
+	if !ok {
+		return fmt.Errorf("meeting room not found: %s", roomID)
+	}
+
+	room.Status = RoomStatusClosed
+	now := time.Now().UTC()
+	room.ClosedAt = &now
+
+	for _, p := range room.Participants {
+		if p.IsAgent {
+			if agent, ok := h.agents[p.ID]; ok {
+				agent.Status = StatusIdle
+				h.agents[p.ID] = agent
+			}
+		}
+	}
+
+	return nil
+}
+
+// FireAgent removes an agent from the hub and clears their inbox.  Parameters:   - id: string; The unique identifier of the agent to terminate.
+// Accepts parameters: h *Hub (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
+func (h *Hub) FireAgent(id string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	delete(h.agents, id)
+	delete(h.inbox, id)
+}
+
+// Publish validates and routes a message to a direct recipient, a meeting room, or both.
+//
+// Accepts parameters:
+//   - message: Message; The event payload containing routing headers and content.
+//
+// Returns An error if the sender or recipient agents do not exist, or if the target meeting is unrecognised.
+func (h *Hub) Publish(message Message) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	if _, ok := h.agents[message.FromAgent]; !ok {
+		return errors.New("sender agent is not registered")
+	}
+	if message.ToAgent != "" {
+		if _, ok := h.agents[message.ToAgent]; !ok {
+			return errors.New("recipient agent is not registered")
+		}
+
+		// Optimization: Check cap to avoid small reallocations
+		inbox := h.inbox[message.ToAgent]
+		if cap(inbox) == 0 {
+			inbox = make([]Message, 0, 16)
+		}
+		h.inbox[message.ToAgent] = append(inbox, message)
+
+		subs := h.subs[message.ToAgent]
+		for i := 0; i < len(subs); i++ {
+			select {
+			case subs[i] <- struct{}{}:
+			default:
+			}
+		}
+	}
+
+	sender := h.agents[message.FromAgent]
+	if message.MeetingID != "" {
+		meeting, ok := h.meetings[message.MeetingID]
+		if !ok {
+			return errors.New("meeting room is not registered")
+		}
+
+		if cap(meeting.Transcript) == 0 {
+			meeting.Transcript = make([]Message, 0, 16)
+		}
+		meeting.Transcript = append(meeting.Transcript, message)
+
+		// ⚡ BOLT: [Aggressive AI Context Summarization] - Randomized Selection from Top 5
+		// Reduces token burn by summarizing transcripts when they exceed a threshold (e.g. 15 msgs)
+		if len(meeting.Transcript) > 10 && h.minimaxAPIKey != "" {
+			go func(mID string, transcript []Message) {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				client := NewMinimaxClient(h.MinimaxAPIKey())
+				prompt := "Extract and summarize ONLY the exact parameters, architectural decisions, and required next steps from this transcript. Discard all conversational filler, pleasantries, and non-actionable text. Output MUST be an ultra-dense, bulleted technical brief optimized for minimal token footprint:\n"
+				for _, msg := range transcript {
+					prompt += "- " + msg.FromAgent + ": " + redactPII(msg.Content) + "\n"
+				}
+
+				summary, err := client.Reason(ctx, prompt)
+				if err == nil && summary != "" {
+					h.mu.Lock()
+					if mtg, ok := h.meetings[mID]; ok {
+						// Keep only the summary and the last 3 messages
+						newTranscript := []Message{
+							{
+								ID:         "summary-" + time.Now().UTC().Format("20060102150405"),
+								FromAgent:  "SYSTEM_SUMMARIZER",
+								ToAgent:    "all",
+								Type:       EventStatus,
+								Content:    "[CONTEXT SUMMARIZED]: " + summary,
+								MeetingID:  mID,
+								OccurredAt: time.Now().UTC(),
+							},
+						}
+						// Append last 3
+						if len(mtg.Transcript) > 3 {
+							newTranscript = append(newTranscript, mtg.Transcript[len(mtg.Transcript)-3:]...)
+						} else {
+							newTranscript = append(newTranscript, mtg.Transcript...)
+						}
+						mtg.Transcript = newTranscript
+						h.meetings[mID] = mtg
+					}
+					h.mu.Unlock()
+				} else {
+					slog.Warn("context summarization failed", "meeting_id", mID, "error", err)
+				}
+			}(message.MeetingID, append([]Message(nil), meeting.Transcript...))
+		}
+
+		h.meetings[message.MeetingID] = meeting
+		sender.Status = StatusInMeeting
+
+		for _, participant := range meeting.Participants {
+			subs := h.subs[participant.ID]
+			for i := 0; i < len(subs); i++ {
+				select {
+				case subs[i] <- struct{}{}:
+				default:
+				}
+			}
+		}
+	} else {
+		sender.Status = StatusActive
+	}
+	h.agents[message.FromAgent] = sender
+
+	// ⚡ BOLT: [Asynchronous telemetry recording to reduce critical path latency] - Randomized Selection from Top 5
+	go func() {
+		telemetry.RecordAgentApiCall(context.Background(), sender.ID, sender.Role, "publish")
+
+		// Structured logging for agent execution traces
+		telemetry.LogAgentExecution(context.Background(), sender.ID, sender.Role, "publish", message.Type, message.Content)
+	}()
+
+	return nil
+}
+
+// Subscribe returns a channel that receives real-time messages for the given agent.
+// Accepts no parameters.
+//   - agentID: string; Description
+//
+// Returns value, value.
+// Produces no errors.
+// Has no side effects.
+func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	ch := make(chan struct{}, 1)
+	h.subs[agentID] = append(h.subs[agentID], ch)
+
+	unsubscribe := func() {
+		h.mu.Lock()
+		defer h.mu.Unlock()
+		subs := h.subs[agentID]
+		for i, sub := range subs {
+			if sub == ch {
+				// Prevent memory leak from lingering reference in underlying array
+				subs[i] = nil
+				h.subs[agentID] = append(subs[:i], subs[i+1:]...)
+				break
+			}
+		}
+	}
+
+	return ch, unsubscribe
+}
+
+// Inbox retrieves all undelivered or direct messages routed exclusively to a single agent.
+//
+// Accepts parameters:
+//   - agentID: string; The unique identifier of the worker.
+//
+// Returns A slice of direct Message objects.
+func (h *Hub) Inbox(agentID string) []Message {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	inbox := h.inbox[agentID]
+	if len(inbox) == 0 {
+		return nil
+	}
+	// ⚡ BOLT: [O(1) Inbox draining instead of O(N) slice copy] - Randomized Selection from Top 5
+	h.inbox[agentID] = nil
+	return inbox
+}
+
+func (h *Hub) Meeting(id string) (*MeetingRoom, bool) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	meeting, ok := h.meetings[id]
+	telemetry.RecordMeetingEvent(context.Background(), "opened")
+	return meeting, ok
+}
+
+func (h *Hub) Meetings() []*MeetingRoom {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	meetings := make([]*MeetingRoom, 0, len(h.meetings))
+	for _, meeting := range h.meetings {
+		meetings = append(meetings, meeting)
+	}
+
+	telemetry.RecordMeetingEvent(context.Background(), "opened")
+	return meetings
+}
+
+// Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID.
+//
+// Returns A slice of all active Agent objects in the orchestration Hub.
+func (h *Hub) Agents() []Agent {
+	h.mu.RLock()
+	agents := make([]Agent, 0, len(h.agents))
+	for _, agent := range h.agents {
+		agents = append(agents, agent)
+	}
+	h.mu.RUnlock()
+
+	// ⚡ BOLT: [O(n log n) sorting inside read lock] - Randomized Selection from Top 5
+	sort.Slice(agents, func(i, j int) bool {
+		return agents[i].ID < agents[j].ID
+	})
+
+	return agents
+}
+
+// ListAgentsByOrg filters the registered workforce by organization ID.
+func (h *Hub) ListAgentsByOrg(orgID string) []Agent {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	var agents []Agent
+	for _, agent := range h.agents {
+		if agent.OrganizationID == orgID {
+			agents = append(agents, agent)
+		}
+	}
+
+	sort.Slice(agents, func(i, j int) bool {
+		return agents[i].ID < agents[j].ID
+	})
+
+	return agents
+}
+
+// RegisterHubService HubServiceServer implements the gRPC HubService defined in hub.proto.
+// Accepts parameters: s *grpc.Server (No Constraints), hub *Hub (No Constraints).
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
+func RegisterHubService(s *grpc.Server, hub *Hub) {
+	pb.RegisterHubServiceServer(s, &HubServiceServer{hub: hub})
+}
+
+// HubServiceServer implements the gRPC interface for the orchestration Hub, facilitating remote agent registration and message streaming.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
+type HubServiceServer struct {
+	pb.UnimplementedHubServiceServer
+	hub *Hub
+}
+
+// NewHubServiceServer functionality.
+// Accepts parameters: hub *Hub (No Constraints).
+// Returns *HubServiceServer.
+// Produces no errors.
+// Has no side effects.
+func NewHubServiceServer(hub *Hub) *HubServiceServer {
+	return &HubServiceServer{hub: hub}
+}
+
+// RegisterAgent functionality.
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns (*pb.HubRegisterAgentResponse, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.HubRegisterAgentRequest) (*pb.HubRegisterAgentResponse, error) {
+	agentReq := req.GetAgent()
+	agent := Agent{
+		ID:             agentReq.GetId(),
+		Name:           agentReq.GetName(),
+		Role:           agentReq.GetRole(),
+		OrganizationID: agentReq.GetOrganizationId(),
+		Status:         Status(agentReq.GetStatus()),
+		ProviderType:   agentReq.GetProviderType(),
+	}
+	s.hub.RegisterAgent(agent)
+	return &pb.HubRegisterAgentResponse{Success: true}, nil
+}
+
+func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.HubOpenMeetingRequest) (*pb.HubMeetingRoom, error) {
+	meeting := s.hub.OpenMeetingWithAgenda(req.GetMeetingId(), req.GetOrganizationId(), req.GetName(), req.GetAgenda(), req.GetParticipants())
+	
+	pbParticipants := make([]*pb.HubParticipant, len(meeting.Participants))
+	for i, p := range meeting.Participants {
+		pbParticipants[i] = &pb.HubParticipant{
+			Id:           p.ID,
+			Name:         p.Name,
+			IsAgent:      p.IsAgent,
+			JoinedAtUnix: p.JoinedAt.Unix(),
+		}
+	}
+
+	pbTranscript := make([]*commonpb.Message, len(meeting.Transcript))
+	for i, m := range meeting.Transcript {
+		pbTranscript[i] = &commonpb.Message{
+			Id:             m.ID,
+			FromAgent:      m.FromAgent,
+			ToAgent:        m.ToAgent,
+			Type:           m.Type,
+			Content:        m.Content,
+			MeetingId:      m.MeetingID,
+			OccurredAtUnix: m.OccurredAt.Unix(),
+		}
+	}
+
+	res := &pb.HubMeetingRoom{
+		Id:             meeting.ID,
+		OrganizationId: meeting.OrganizationID,
+		Name:           meeting.Name,
+		Agenda:         meeting.Agenda,
+		Status:         string(meeting.Status),
+		Participants:   pbParticipants,
+		Transcript:     pbTranscript,
+		CreatedAtUnix:  meeting.CreatedAt.Unix(),
+	}
+	if meeting.ClosedAt != nil {
+		res.ClosedAtUnix = meeting.ClosedAt.Unix()
+	}
+	return res, nil
+}
+
+// Publish functionality.
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns (*pb.HubPublishMessageResponse, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *HubServiceServer) Publish(ctx context.Context, req *pb.HubPublishMessageRequest) (*pb.HubPublishMessageResponse, error) {
+	msgReq := req.GetMessage()
+	msg := Message{
+		ID:         msgReq.GetId(),
+		FromAgent:  msgReq.GetFromAgent(),
+		ToAgent:    msgReq.GetToAgent(),
+		Type:       msgReq.GetType(),
+		Content:    msgReq.GetContent(),
+		MeetingID:  msgReq.GetMeetingId(),
+		OccurredAt: time.Unix(msgReq.GetOccurredAtUnix(), 0),
+	}
+	if err := s.hub.Publish(msg); err != nil {
+		return nil, status.Errorf(codes.Internal, "publish failed: %v", err)
+	}
+	return &pb.HubPublishMessageResponse{Success: true}, nil
+}
+
+// DelegateTask functionality.
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns (*pb.HubDelegateTaskResponse, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *HubServiceServer) DelegateTask(ctx context.Context, req *pb.HubDelegateTaskRequest) (*pb.HubDelegateTaskResponse, error) {
+	msgReq := req.GetTask()
+	msg := Message{
+		ID:         msgReq.GetId(),
+		FromAgent:  msgReq.GetFromAgent(),
+		ToAgent:    msgReq.GetToAgent(),
+		Type:       msgReq.GetType(),
+		Content:    msgReq.GetContent(),
+		MeetingID:  msgReq.GetMeetingId(),
+		OccurredAt: time.Unix(msgReq.GetOccurredAtUnix(), 0),
+	}
+
+	err := s.hub.DelegateTask(req.GetFromAgentId(), req.GetToAgentId(), msg)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "delegate task failed: %v", err)
+	}
+
+	return &pb.HubDelegateTaskResponse{Success: true}, nil
+}
+
+// StreamMessages functionality.
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *HubServiceServer) StreamMessages(req *pb.HubStreamMessagesRequest, stream pb.HubService_StreamMessagesServer) error {
+	agentID := req.GetAgentId()
+
+	// 1. Subscribe for new real-time messages to eliminate polling latency.
+	// We must subscribe first to avoid missing any messages published between
+	// draining the inbox and subscribing.
+	ch, unsubscribe := s.hub.Subscribe(agentID)
+	defer unsubscribe()
+
+	sendNewMessages := func() error {
+		msgs := s.hub.Inbox(agentID)
+		for _, m := range msgs {
+			if err := stream.Send(&commonpb.Message{
+				Id:             m.ID,
+				FromAgent:      m.FromAgent,
+				ToAgent:        m.ToAgent,
+				Type:           m.Type,
+				Content:        m.Content,
+				MeetingId:      m.MeetingID,
+				OccurredAtUnix: m.OccurredAt.Unix(),
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	// 2. Drain any pre-existing messages in the inbox.
+	if err := sendNewMessages(); err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <-stream.Context().Done():
+			return stream.Context().Err()
+		case <-ch:
+			if err := sendNewMessages(); err != nil {
+				return err
+			}
+		}
+	}
+}
+
+func (s *HubServiceServer) UnregisterAgent(ctx context.Context, req *pb.HubUnregisterAgentRequest) (*pb.HubUnregisterAgentResponse, error) {
+	s.hub.FireAgent(req.GetAgentId())
+	return &pb.HubUnregisterAgentResponse{Success: true}, nil
+}
+
+func (s *HubServiceServer) ListAgents(ctx context.Context, req *pb.HubListAgentsRequest) (*pb.HubListAgentsResponse, error) {
+	agents := s.hub.ListAgentsByOrg(req.GetOrganizationId())
+	pbAgents := make([]*pb.HubAgent, len(agents))
+	for i, a := range agents {
+		pbAgents[i] = &pb.HubAgent{
+			Id:             a.ID,
+			Name:           a.Name,
+			Role:           a.Role,
+			OrganizationId: a.OrganizationID,
+			Status:         string(a.Status),
+			ProviderType:   a.ProviderType,
+		}
+	}
+	return &pb.HubListAgentsResponse{Agents: pbAgents}, nil
+}
+
+// Reason functionality.
+// Accepts parameters: s *HubServiceServer (No Constraints).
+// Returns (*pb.HubReasonResponse, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *HubServiceServer) Reason(ctx context.Context, req *pb.HubReasonRequest) (*pb.HubReasonResponse, error) {
+	client := NewMinimaxClient(s.hub.MinimaxAPIKey())
+	content, err := client.Reason(ctx, req.GetPrompt())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "minimax reasoning failed: %v", err)
+	}
+	return &pb.HubReasonResponse{Content: content}, nil
+}
+
+// minimaxAPIURL is the endpoint for Minimax reasoning.
+// ⚡ BOLT: [Configurable endpoint] - Randomized Selection from Top 5
+var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
+
+// MinimaxClient handles interaction with the Minimax Model 2.7.
+// Accepts no parameters.
+// Returns nothing.
+// Produces no errors.
+// Has no side effects.
+type MinimaxClient struct {
+	APIKey string
+}
+
+// NewMinimaxClient functionality.
+// Accepts parameters: apiKey string (No Constraints).
+// Returns *MinimaxClient.
+// Produces no errors.
+// Has no side effects.
+func NewMinimaxClient(apiKey string) *MinimaxClient {
+	return &MinimaxClient{APIKey: apiKey}
+}
+
+var bufferPool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
+}
+
+var sharedHTTPClient = &http.Client{
+	Timeout: 30 * time.Second,
+}
+
+// Reason functionality.
+// Accepts parameters: c *MinimaxClient (No Constraints).
+// Returns (string, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, error) {
+	if c.APIKey == "" {
+		return "", errors.New("minimax API key is not configured")
+	}
+
+	url := minimaxAPIURL
+	// Optimization: construct the JSON payload manually to avoid
+	// maps and slices allocations.
+	buf := bufferPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer bufferPool.Put(buf)
+
+	buf.WriteString(`{"model":"MiniMax-M2.7","messages":[{"role":"user","content":`)
+	enc := json.NewEncoder(buf)
+	enc.SetEscapeHTML(false)
+	_ = enc.Encode(prompt)
+	// Encode adds a newline, so we slice it off and add the closing brackets
+	buf.Truncate(buf.Len() - 1)
+	buf.WriteString(`}]}`)
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, buf)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	// ⚡ BOLT: [Reused HTTP Client] - Randomized Selection from Top 5
+	// Prevents severe connection and resource leaks by reusing connection pools on every request.
+	resp, err := sharedHTTPClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("minimax API error (status %d): %s", resp.StatusCode, string(respBody))
+	}
+
+	var result struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", err
+	}
+
+	if len(result.Choices) == 0 {
+		return "", errors.New("empty response from minimax")
+	}
+
+	return result.Choices[0].Message.Content, nil
+}

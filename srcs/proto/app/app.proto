@@ -1,0 +1,15 @@
+edition = "2024";
+
+package app;
+
+option go_package = "github.com/onehumancorp/mono/srcs/proto/app;app";
+
+message AppConfig {
+  string app_id = 1;
+  string version = 2;
+  map<string, string> settings = 3;
+}
+
+service AppService {
+  rpc GetConfig(AppConfig) returns (AppConfig);
+}

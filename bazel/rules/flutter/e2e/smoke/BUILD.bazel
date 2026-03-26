@@ -1,0 +1,78 @@
+"""Provides a simple way to test your rules as an external workspace.
+Add a basic smoke-test target below.
+"""
+
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@gazelle//:def.bzl", "gazelle", "gazelle_binary")
+load("@rules_flutter//flutter:defs.bzl", "dart_library")
+load("@rules_python//python:defs.bzl", "py_test")
+
+gazelle_binary(
+    name = "gazelle_bin",
+    languages = [
+        "@bazel_skylib_gazelle_plugin//bzl",
+        "@gazelle//language/proto",
+        "//gazelle/flutter",
+        "//gazelle/dartproto",
+    ],
+)
+
+gazelle(
+    name = "gazelle",
+    gazelle = "gazelle_bin",
+)
+
+filegroup(
+    name = "gazelle_app_fixture",
+    srcs = glob(["gazelle_app/**"]),
+)
+
+py_test(
+    name = "gazelle_generation_test",
+    srcs = ["gazelle_generation_test.py"],
+    args = ["$(rootpath :gazelle_bin)"],
+    data = [
+        ":gazelle_app_fixture",
+        ":gazelle_bin",
+    ],
+    main = "gazelle_generation_test.py",
+    tags = ["no-sandbox"],
+    deps = ["@bazel_tools//tools/python/runfiles"],
+)
+
+# Test basic rule functionality
+dart_library(
+    name = "test_dart_lib",
+    srcs = ["test_lib.dart"],
+)
+
+build_test(
+    name = "smoke_test",
+    targets = [
+        ":test_dart_lib",
+        # Test that we can load the main rules
+        "//flutter:resolved_toolchain",
+    ],
+)
+
+build_test(
+    name = "single_pub_dependency_build_test",
+    targets = ["@pub_intl_utils//:intl_utils"],
+)
+
+test_suite(
+    name = "integration_tests",
+    tests = [
+        ":gazelle_generation_test",
+        ":single_pub_dependency_build_test",
+        ":smoke_test",
+        "//e2e/smoke/dart_package:dart_package_test",
+        "//e2e/smoke/flutter_app:app_build_test",
+        "//e2e/smoke/proto_service:proto_generation_test",
+    ],
+)
+
+alias(
+    name = "go",
+    actual = "@rules_go//go",
+)
