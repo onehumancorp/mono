@@ -73,26 +73,248 @@ jobs:
           path: dist/
           retention-days: 7
 
+  # ── Build Flutter Android APK + App Bundle ──────────────────────────────────
+  build-flutter-android:
+    name: Build Flutter Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Set up Java (for Android build tools)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build Android APK
+        run: bazelisk run //release:flutter-build-android-apk
+
+      - name: Build Android App Bundle
+        run: bazelisk run //release:flutter-build-android-aab
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-android
+          path: |
+            srcs/app/build/app/outputs/flutter-apk/*.apk
+            srcs/app/build/app/outputs/bundle/release/*.aab
+          retention-days: 7
+
+  # ── Build Flutter iOS app (macOS runner) ────────────────────────────────────
+  build-flutter-ios:
+    name: Build Flutter iOS
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Build iOS (no code sign)
+        run: bazelisk run //release:flutter-build-ios
+
+      - name: Upload iOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-ios
+          path: srcs/app/build/ios/iphoneos/
+          retention-days: 7
+
+  # ── Build Flutter macOS desktop app ─────────────────────────────────────────
+  build-flutter-macos:
+    name: Build Flutter macOS
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Build macOS app
+        run: bazelisk run //release:flutter-build-macos
+
+      - name: Archive macOS .app
+        run: |
+          cd srcs/app/build/macos/Build/Products/Release
+          zip -r ../../../../../../../dist/ohc-app-macos.zip *.app
+          mkdir -p "$GITHUB_WORKSPACE/dist"
+          cp ../../../../../../../dist/ohc-app-macos.zip "$GITHUB_WORKSPACE/dist/" 2>/dev/null || \
+            zip -r "$GITHUB_WORKSPACE/dist/ohc-app-macos.zip" .
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-macos
+          path: dist/ohc-app-macos.zip
+          retention-days: 7
+
+  # ── Build Flutter Windows desktop app ───────────────────────────────────────
+  build-flutter-windows:
+    name: Build Flutter Windows
+    runs-on: windows-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Build Windows app
+        run: bazelisk run //release:flutter-build-windows
+
+      - name: Archive Windows build
+        run: |
+          mkdir -p dist
+          cd srcs/app/build/windows/x64/runner/Release
+          7z a ../../../../../../../dist/ohc-app-windows.zip . || \
+            powershell Compress-Archive -Path . -DestinationPath "$GITHUB_WORKSPACE/dist/ohc-app-windows.zip"
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-windows
+          path: dist/ohc-app-windows.zip
+          retention-days: 7
+
+  # ── Build Flutter Linux desktop app ─────────────────────────────────────────
+  build-flutter-linux:
+    name: Build Flutter Linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Linux desktop dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libstdc++-12-dev
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Build Linux app
+        run: bazelisk run //release:flutter-build-linux
+
+      - name: Archive Linux build
+        run: |
+          mkdir -p dist
+          tar -C srcs/app/build/linux/x64/release/bundle \
+            -czf dist/ohc-app-linux-x86_64.tar.gz .
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-linux
+          path: dist/ohc-app-linux-x86_64.tar.gz
+          retention-days: 7
+
+  # ── Build Flutter Web app ────────────────────────────────────────────────────
+  build-flutter-web:
+    name: Build Flutter Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Build Web app
+        run: bazelisk run //release:flutter-build-web
+
+      - name: Archive Web build
+        run: |
+          mkdir -p dist
+          tar -C srcs/app/build/web -czf dist/ohc-app-web.tar.gz .
+
+      - name: Upload Web artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-web
+          path: dist/ohc-app-web.tar.gz
+          retention-days: 7
+
   # ── Publish GitHub Release ──────────────────────────────────────────────────
   publish-release:
     name: Publish GitHub Release
     runs-on: ubuntu-latest
-    needs: build-archives
+    needs:
+      - build-archives
+      - build-flutter-android
+      - build-flutter-ios
+      - build-flutter-macos
+      - build-flutter-windows
+      - build-flutter-linux
+      - build-flutter-web
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
 
-      - name: Download archives
+      - name: Download all artifacts
         uses: actions/download-artifact@v4.1.3
         with:
-          name: release-archives
           path: dist/
+
+      - name: Flatten artifact directories
+        run: |
+          find dist -mindepth 2 -type f -exec mv -t dist/ {} +
+          ls -lh dist/
+
+      - name: Generate combined checksums
+        run: |
+          cd dist
+          # Build a list of all release files and generate checksums.
+          # Individual patterns are checked separately so a missing platform
+          # (e.g. no APK when the Android job was skipped) does not abort.
+          files=()
+          for pat in "*.tar.gz" "*.zip" "*.aab" "*.apk"; do
+            # shellcheck disable=SC2206
+            found=( $pat ) 2>/dev/null || true
+            for f in "${found[@]}"; do
+              [[ -f "${f}" ]] && files+=("${f}")
+            done
+          done
+          if [[ ${#files[@]} -gt 0 ]]; then
+            sha256sum "${files[@]}" > checksums.txt
+          else
+            echo "(no release files found)" > checksums.txt
+          fi
+          cat checksums.txt
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/*.tar.gz
+            dist/*.zip
+            dist/*.aab
             dist/checksums.txt
           generate_release_notes: true
           draft: false
