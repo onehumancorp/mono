@@ -1664,7 +1664,29 @@ export function App() {
                                 <span className="transcript-time">{formatTime(msg.occurredAt)}</span>
                               </div>
                               <div className="transcript-bubble">
-                                <p className="transcript-body">{msg.content}</p>
+                                {(() => {
+                                  try {
+                                    // Make sure it's actually an object to prevent parsing simple numbers/booleans.
+                                    const parsed = JSON.parse(msg.content);
+                                    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                                      return (
+                                        <div className="agent-standup-visualizer">
+                                          {Object.entries(parsed).map(([key, value]) => (
+                                            <div key={key} className="agent-standup-row">
+                                              <span className="agent-standup-key">{key.replace(/_/g, " ").toUpperCase()}:</span>
+                                              <span className="agent-standup-value">
+                                                {typeof value === "object" ? JSON.stringify(value, null, 2) : String(value)}
+                                              </span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      );
+                                    }
+                                  } catch {
+                                    // Fallback to plain text
+                                  }
+                                  return <p className="transcript-body" data-testid="transcript-body-text">{msg.content}</p>;
+                                })()}
                               </div>
                             </li>
                           );
