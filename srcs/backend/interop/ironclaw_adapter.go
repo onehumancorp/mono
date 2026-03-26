@@ -79,8 +79,5 @@ func (a *IronClawAdapter) ExecuteCommand(ctx context.Context, cmd string) (strin
 // logging (e.g. "spiffe://ohc.local/agent/ironclaw-1" → "ironclaw-1").
 func trimSPIFFEPath(id string) string {
 	parts := strings.Split(id, "/")
-	if len(parts) == 0 {
-		return id
-	}
 	return parts[len(parts)-1]
 }

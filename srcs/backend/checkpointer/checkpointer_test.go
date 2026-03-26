@@ -324,3 +324,104 @@ func TestPGCheckpointer_LoadCheckpoint_DecodeError(t *testing.T) {
 		t.Errorf("expected error to contain 'failed to decode state', got: %v", err)
 	}
 }
+
+func TestPGCheckpointer_LoadCheckpoint_DBError(t *testing.T) {
+	db := setupTestDB(t)
+	checkpointer := NewPGCheckpointer(db)
+	ctx := context.Background()
+	_ = checkpointer.EnsureTableExists(ctx)
+	db.Close()
+
+	_, err := checkpointer.LoadCheckpoint(ctx, "fail-thread")
+	if err == nil {
+		t.Fatalf("expected error from closed db, got nil")
+	}
+}
+
+// A mock struct with an Error() method that returns "database is locked" to test the retry loop logic
+type mockError string
+
+func (e mockError) Error() string { return string(e) }
+
+func TestWithRetry_DatabaseLocked(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	p := NewPGCheckpointer(db)
+
+	attempts := 0
+	err := p.withRetry(func() error {
+		attempts++
+		if attempts < 3 {
+			return mockError("database is locked")
+		}
+		return nil
+	})
+
+	if err != nil {
+		t.Fatalf("expected success after retries, got %v", err)
+	}
+
+	if attempts != 3 {
+		t.Fatalf("expected 3 attempts, got %d", attempts)
+	}
+}
+
+func TestWithRetry_MaxRetriesExceeded(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	p := NewPGCheckpointer(db)
+
+	attempts := 0
+	err := p.withRetry(func() error {
+		attempts++
+		return mockError("database is locked")
+	})
+
+	if err == nil {
+		t.Fatal("expected error after max retries exceeded, got nil")
+	}
+
+	if attempts != 5 {
+		t.Fatalf("expected 5 attempts (maxRetries), got %d", attempts)
+	}
+}
+
+func TestWithRetry_OtherError(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+
+	p := NewPGCheckpointer(db)
+
+	attempts := 0
+	expectedErr := fmt.Errorf("some other error")
+	err := p.withRetry(func() error {
+		attempts++
+		return expectedErr
+	})
+
+	if err != expectedErr {
+		t.Fatalf("expected '%v', got '%v'", expectedErr, err)
+	}
+
+	if attempts != 1 {
+		t.Fatalf("expected 1 attempt (no retry for other errors), got %d", attempts)
+	}
+}
+
+func TestWithRetry_MaxDelay(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	p := NewPGCheckpointer(db)
+
+	attempts := 0
+	err := p.withRetry(func() error {
+		attempts++
+		return mockError("database is locked")
+	})
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
