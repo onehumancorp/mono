@@ -1352,7 +1352,7 @@ func TestSendDiscordWebhookErrors(t *testing.T) {
 
 	// Trigger NewRequestWithContext error by passing an invalid method character implicitly via url
 	// Actually NewRequestWithContext fails on bad URL. But validateURL catches bad URLs first.
-	// We can skip NewRequestWithContext test as it is covered by validateURL or just test client.Do error
+
 
 	// 3. Client Do error
 	// A closed server will cause Do to fail

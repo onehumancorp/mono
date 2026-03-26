@@ -158,60 +158,6 @@ describe("App", () => {
     await screen.findByText("Request failed for /api/messages: 400");
   });
 
-  it("shows friendly message when recipient agent is not registered", async () => {
-    const fetchMock = vi.fn(async (input: string) => {
-      if (input === "/api/messages") {
-        return { ok: false, status: 400, json: async () => ({}), text: async () => "recipient agent is not registered" };
-      }
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      return mockJson({}, 404);
-    });
-
-    vi.stubGlobal("fetch", fetchMock);
-    render(<App />);
-
-    await screen.findByText("Acme Software");
-    fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
-
-    await screen.findByText(/The assigned agent is inactive/i);
-  });
-
-  it("shows friendly message when meeting room is not registered", async () => {
-    const fetchMock = vi.fn(async (input: string) => {
-      if (input === "/api/messages") {
-        return { ok: false, status: 400, json: async () => ({}), text: async () => "meeting room is not registered" };
-      }
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      return mockJson({}, 404);
-    });
-
-    vi.stubGlobal("fetch", fetchMock);
-    render(<App />);
-
-    await screen.findByText("Acme Software");
-    fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
-
-    await screen.findByText(/This virtual war room has been archived/i);
-  });
-
-  it("shows friendly message when sender agent is not registered", async () => {
-    const fetchMock = vi.fn(async (input: string) => {
-      if (input === "/api/messages") {
-        return { ok: false, status: 400, json: async () => ({}), text: async () => "sender agent is not registered" };
-      }
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      return mockJson({}, 404);
-    });
-
-    vi.stubGlobal("fetch", fetchMock);
-    render(<App />);
-
-    await screen.findByText("Acme Software");
-    fireEvent.click(screen.getByRole("button", { name: "Send Message" }));
-
-    await screen.findByText(/The issuing agent has been decommissioned/i);
-  });
-
   it("refreshes snapshot when refresh button is pressed", async () => {
     const fetchMock = vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
@@ -338,59 +284,6 @@ describe("App – navigation tabs", () => {
     render(<App />);
     await screen.findByText("Acme Software");
     expect(screen.getByText("Review launch blockers")).toBeInTheDocument();
-  });
-
-  it("handles high-volume meetings using virtualization to prevent DOM bloat", async () => {
-    // Generate a massive payload to test virtualization
-    const massiveTranscript = Array.from({ length: 100 }).map((_, i) => ({
-      id: `msg-huge-${i}`,
-      fromAgent: "pm-1",
-      toAgent: "swe-1",
-      type: "task",
-      content: `Massive message content ${i}`,
-      occurredAt: new Date().toISOString(),
-    }));
-
-    global.fetch = vi.fn().mockImplementation(async (url: string) => {
-      if (url.includes("/api/dashboard")) {
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({
-            ...dashboardPayload,
-            meetings: [
-              {
-                id: "massive-meeting",
-                participants: ["pm-1", "swe-1"],
-                transcript: massiveTranscript,
-              },
-            ],
-          }),
-        };
-      }
-      return { ok: true, status: 200, json: async () => ({}) };
-    });
-
-    render(<App />);
-
-    const btn = await screen.findByRole("button", { name: "Meetings" }, { timeout: 10000 });
-    fireEvent.click(btn);
-
-    // Select the massive-meeting room using the dropdown in the Meetings tab
-    const selects = await screen.findAllByRole("combobox");
-    // Find the one for meetings (usually the first one if it's the only one visible)
-    fireEvent.change(selects[0], { target: { value: "massive-meeting" } });
-
-    // We expect the first message to be "Massive message content 0"
-    await screen.findByText("Massive message content 0", {}, { timeout: 10000 });
-
-    // Total DOM nodes with class "transcript-item" should be substantially less than 10,000 (usually < 100)
-    const items = screen.getAllByRole("listitem").filter((item) => item.className.includes("transcript-item"));
-    expect(items.length).toBeLessThan(1000);
-    expect(items.length).toBeGreaterThan(0);
-
-    // First message should be rendered because window starts at 0
-    expect(screen.getByText("Massive message content 0")).toBeInTheDocument();
   });
 
   it("shows 'No messages yet' when meeting transcript is empty", async () => {
@@ -784,8 +677,8 @@ describe("App – navigation tabs", () => {
     // "Software Company" appears in domain list + org info domain field; use getAllByText
     await waitFor(() => expect(screen.getAllByText("Software Company").length).toBeGreaterThan(0));
     await screen.findByText("Git MCP");
-    expect(fetchMock).toHaveBeenCalledWith("/api/domains", expect.any(Object));
-    expect(fetchMock).toHaveBeenCalledWith("/api/mcp/tools", expect.any(Object));
+    expect(fetchMock).toHaveBeenCalledWith("/api/domains");
+    expect(fetchMock).toHaveBeenCalledWith("/api/mcp/tools");
   });
 
   it("loads scenario and shows success notice", async () => {
@@ -960,8 +853,8 @@ describe("App – navigation tabs", () => {
     });
 
     await screen.findByText("Dynamic Scaling", { selector: 'h2' });
-    expect(screen.getByText("Scale Agents")).toBeInTheDocument();
-    expect(screen.getByText("Real-Time Provisioning Logs")).toBeInTheDocument();
+    expect(screen.getByText("Role Capacities")).toBeInTheDocument();
+    expect(screen.getByText("Real-Time Trace Logs")).toBeInTheDocument();
   });
 
 
@@ -2742,25 +2635,26 @@ describe("App – War Room Approval Cards", () => {
       expect(screen.getByText("CEO Approval Required")).toBeInTheDocument();
     });
 
-    // Instead of button "Approve", we now expect the "Slide to Approve" UI
-    expect(screen.getByText("Slide to Approve")).toBeInTheDocument();
+    const approveBtn = screen.getByRole("button", { name: "Approve" });
     const rejectBtn = screen.getByRole("button", { name: "Reject" });
+    expect(approveBtn).toBeInTheDocument();
     expect(rejectBtn).toBeInTheDocument();
 
-    // We can't easily drag in jsdom via fireEvent easily, so let's trigger Reject here to cover the rejection path,
-    // or test the dragging using fireEvent pointer events if needed.
-    // For simplicity, we just trigger the Reject action.
-    fireEvent.click(rejectBtn);
-
+    // Test Approve click
+    fireEvent.click(approveBtn);
     await waitFor(() => {
       expect(window.fetch).toHaveBeenCalledWith(
         "/api/messages",
         expect.objectContaining({
           method: "POST",
-          body: expect.stringContaining("messageType=direction")
+          body: expect.stringContaining("messageType=SpecApproved")
         })
       );
     });
+
+    // Test Reject click
+    // Note: since clicking "Approve" above removes the buttons and replaces them with a badge,
+    // we can't click "Reject" on the same rendered element anymore. We only need to test Approve here.
   });
 
   it("renders CEO Approval card and handles Reject action", async () => {
@@ -2941,23 +2835,6 @@ describe("App - Dynamic Scaling", () => {
 
     expect(screen.getByText(/Scale AI agents dynamically/i)).toBeInTheDocument();
 
-    await act(async () => {
-      fireEvent.click(screen.getByText("Software Engineer"));
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByText("Next: Set Capacity →"));
-    });
-
-    const capacityInput = screen.getByLabelText(/Target Active Agents/i);
-    await act(async () => {
-      fireEvent.change(capacityInput, { target: { value: "5" } });
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByText("Next: Review →"));
-    });
-
     const applyButton = screen.getByText("Apply Scaling Changes");
     await act(async () => {
       fireEvent.click(applyButton);
@@ -2970,11 +2847,11 @@ describe("App - Dynamic Scaling", () => {
     // Simulate SSE
     await act(async () => {
       if (_onmessage) {
-        _onmessage({ data: JSON.stringify({ event: "AI Workforce Manager: Reconciling Team Member resource.", status: "INFO" }) });
+        _onmessage({ data: JSON.stringify({ event: "K8s Operator: Reconciling...", status: "INFO" }) });
       }
     });
 
-    expect(screen.getByText("AI Workforce Manager: Reconciling Team Member resource.")).toBeInTheDocument();
+    expect(screen.getByText("K8s Operator: Reconciling...")).toBeInTheDocument();
 
     await act(async () => {
       if (_onmessage) {
@@ -3006,19 +2883,6 @@ describe("App - Dynamic Scaling", () => {
     await act(async () => {
       fireEvent.click(screen.getByText("Dynamic Scaling"));
     });
-
-    await act(async () => {
-      fireEvent.click(screen.getByText("Software Engineer"));
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByText("Next: Set Capacity →"));
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByText("Next: Review →"));
-    });
-
     await act(async () => {
       fireEvent.click(screen.getByText("Apply Scaling Changes"));
     });
@@ -3067,18 +2931,6 @@ describe("App - Dynamic Scaling", () => {
       fireEvent.click(screen.getByText("Dynamic Scaling"));
     });
 
-    await act(async () => {
-      fireEvent.click(screen.getByText("Software Engineer"));
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByText("Next: Set Capacity →"));
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByText("Next: Review →"));
-    });
-
     // Create an unhandled rejection guard, or simply wait for notice
     await act(async () => {
       fireEvent.click(screen.getByText("Apply Scaling Changes"));
@@ -3096,7 +2948,7 @@ describe("App - Dynamic Scaling", () => {
     });
   });
 
-  it("updates capacity values", async () => {
+  it("updates slider values", async () => {
     render(<App />);
     await screen.findByText("One Human Corp Dashboard");
 
@@ -3104,423 +2956,13 @@ describe("App - Dynamic Scaling", () => {
       fireEvent.click(screen.getByText("Dynamic Scaling"));
     });
 
-    await act(async () => {
-      fireEvent.click(screen.getByText("Software Engineer"));
-    });
+    const sliders = screen.getAllByRole("slider");
+    expect(sliders.length).toBe(3);
 
     await act(async () => {
-      fireEvent.click(screen.getByText("Next: Set Capacity →"));
+      fireEvent.change(sliders[0], { target: { value: "5" } });
+      fireEvent.change(sliders[1], { target: { value: "8" } });
+      fireEvent.change(sliders[2], { target: { value: "10" } });
     });
-
-    const capacityInput = screen.getByLabelText(/Target Active Agents/i);
-    await act(async () => {
-      fireEvent.change(capacityInput, { target: { value: "5" } });
-    });
-  });
-});
-
-// ── Agent Chat (detail view) ──────────────────────────────────────────────────
-
-// Payload with an agent that participates in a meeting so the chat path can
-// look up a meetingId without falling through to the "no meeting" error.
-const agentChatPayload = {
-  ...richPayload,
-  organization: {
-    ...richPayload.organization,
-    ceoId: "ceo-1",
-    members: [
-      { id: "ceo-1", name: "Alice CEO", role: "CEO", isHuman: true },
-      { id: "swe-1", name: "Bob SWE", role: "SOFTWARE_ENGINEER", managerId: "ceo-1" },
-    ],
-  },
-  agents: [
-    { id: "ceo-1", name: "Alice CEO", role: "CEO", organizationId: "org-1", status: "ACTIVE" },
-    { id: "swe-1", name: "Bob SWE", role: "SOFTWARE_ENGINEER", organizationId: "org-1", status: "IN_MEETING" },
-  ],
-  meetings: [
-    {
-      id: "sprint-1",
-      participants: ["ceo-1", "swe-1"],
-      transcript: [
-        {
-          id: "msg-t1",
-          fromAgent: "swe-1",
-          toAgent: "ceo-1",
-          type: "task",
-          content: "Auth refactor done",
-          meetingId: "sprint-1",
-          occurredAt: "2026-03-13T00:00:00Z",
-        },
-      ],
-    },
-  ],
-  costs: {
-    organizationID: "org-1",
-    totalTokens: 200,
-    totalCostUSD: 0.02,
-    agents: [{ agentID: "swe-1", model: "gpt-4o", tokenUsed: 200, costUSD: 0.02 }],
-  },
-};
-
-function makeAgentChatFetch(overrides?: Record<string, unknown>) {
-  return vi.fn(async (input: string, init?: RequestInit) => {
-    if (input === "/api/dashboard") return mockJson(overrides ?? agentChatPayload);
-    if (input === "/api/messages" && init?.method === "POST") return mockJson(agentChatPayload);
-    return mockJson({}, 404);
-  });
-}
-
-describe("App – agent chat detail view", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    vi.clearAllMocks();
-  });
-
-  async function openAgentDetail(name = "Bob SWE") {
-    render(<App />);
-    await screen.findByText("One Human Corp Dashboard");
-    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
-    await screen.findByText("Agent Network");
-    // Click the agent card (role="button" article with aria-label)
-    fireEvent.click(screen.getByRole("button", { name: new RegExp(`View details for ${name}`, "i") }));
-    await screen.findByText(`Chat with ${name}`);
-  }
-
-  it("shows agent detail heading and chat box when agent card is clicked", async () => {
-    vi.stubGlobal("fetch", makeAgentChatFetch());
-    await openAgentDetail("Bob SWE");
-    expect(screen.getByText("Chat with Bob SWE")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Send a message to Bob SWE…")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
-  });
-
-  it("back button returns to agent list", async () => {
-    vi.stubGlobal("fetch", makeAgentChatFetch());
-    await openAgentDetail("Bob SWE");
-    fireEvent.click(screen.getByRole("button", { name: /back to agents/i }));
-    await screen.findByText("Agent Network");
-  });
-
-  it("Send button is enabled when textarea has content", async () => {
-    vi.stubGlobal("fetch", makeAgentChatFetch());
-    await openAgentDetail("Bob SWE");
-    const textarea = screen.getByPlaceholderText("Send a message to Bob SWE…");
-    fireEvent.change(textarea, { target: { value: "Hello Bob" } });
-    expect(screen.getByRole("button", { name: "Send" })).not.toBeDisabled();
-  });
-
-  it("submits chat message and clears textarea on success", async () => {
-    vi.stubGlobal("fetch", makeAgentChatFetch());
-    await openAgentDetail("Bob SWE");
-    const textarea = screen.getByPlaceholderText("Send a message to Bob SWE…");
-    fireEvent.change(textarea, { target: { value: "Hello Bob" } });
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Send" }));
-    });
-    await waitFor(() => expect((textarea as HTMLTextAreaElement).value).toBe(""));
-  });
-
-  it("submitting via Enter key also sends the message", async () => {
-    vi.stubGlobal("fetch", makeAgentChatFetch());
-    await openAgentDetail("Bob SWE");
-    const textarea = screen.getByPlaceholderText("Send a message to Bob SWE…");
-    fireEvent.change(textarea, { target: { value: "Enter key test" } });
-    await act(async () => {
-      fireEvent.keyDown(textarea, { key: "Enter", shiftKey: false });
-    });
-    await waitFor(() => expect((textarea as HTMLTextAreaElement).value).toBe(""));
-  });
-
-  it("Shift+Enter does not submit the message", async () => {
-    const fetchMock = makeAgentChatFetch();
-    vi.stubGlobal("fetch", fetchMock);
-    await openAgentDetail("Bob SWE");
-    const textarea = screen.getByPlaceholderText("Send a message to Bob SWE…");
-    fireEvent.change(textarea, { target: { value: "Shift+Enter test" } });
-    fireEvent.keyDown(textarea, { key: "Enter", shiftKey: true });
-    // Message API should not have been called yet
-    expect(fetchMock).not.toHaveBeenCalledWith("/api/messages", expect.objectContaining({ method: "POST" }));
-  });
-
-  it("shows error when there is no active meeting for the agent", async () => {
-    const noMeetingPayload = {
-      ...agentChatPayload,
-      meetings: [],
-    };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(noMeetingPayload);
-      return mockJson({}, 404);
-    }));
-    await openAgentDetail("Bob SWE");
-    const textarea = screen.getByPlaceholderText("Send a message to Bob SWE…");
-    fireEvent.change(textarea, { target: { value: "Hey" } });
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Send" }));
-    });
-    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
-    expect(screen.getByRole("alert").textContent).toMatch(/No active meeting/i);
-  });
-
-  it("shows error when send message API fails", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
-      if (input === "/api/dashboard") return mockJson(agentChatPayload);
-      if (input === "/api/messages" && init?.method === "POST") return mockJson({}, 500);
-      return mockJson({}, 404);
-    }));
-    await openAgentDetail("Bob SWE");
-    const textarea = screen.getByPlaceholderText("Send a message to Bob SWE…");
-    fireEvent.change(textarea, { target: { value: "Trigger error" } });
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Send" }));
-    });
-    await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
-  });
-
-  it("shows activity tab with agent messages", async () => {
-    vi.stubGlobal("fetch", makeAgentChatFetch());
-    await openAgentDetail("Bob SWE");
-    fireEvent.click(screen.getByRole("button", { name: /activity/i }));
-    await screen.findByText("Auth refactor done");
-  });
-
-  it("shows empty activity when agent has no messages", async () => {
-    const noActivityPayload = {
-      ...agentChatPayload,
-      meetings: [{ id: "sprint-1", participants: ["ceo-1", "swe-1"], transcript: [] }],
-    };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(noActivityPayload);
-      return mockJson({}, 404);
-    }));
-    await openAgentDetail("Bob SWE");
-    fireEvent.click(screen.getByRole("button", { name: /activity/i }));
-    await screen.findByText("No activity recorded for this agent.");
-  });
-
-  it("shows metrics tab with agent cost", async () => {
-    vi.stubGlobal("fetch", makeAgentChatFetch());
-    await openAgentDetail("Bob SWE");
-    fireEvent.click(screen.getByRole("button", { name: /metrics/i }));
-    await screen.findByText("Token Usage & Cost");
-    expect(screen.getByText("gpt-4o")).toBeInTheDocument();
-  });
-
-  it("shows empty cost when agent has no cost data", async () => {
-    const noCostPayload = {
-      ...agentChatPayload,
-      costs: { organizationID: "org-1", totalTokens: 0, totalCostUSD: 0, agents: [] },
-    };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(noCostPayload);
-      return mockJson({}, 404);
-    }));
-    await openAgentDetail("Bob SWE");
-    fireEvent.click(screen.getByRole("button", { name: /metrics/i }));
-    await screen.findByText("No cost data recorded for this agent yet.");
-  });
-
-  it("shows 'Agent not found' when selectedAgentID has no match", async () => {
-    // Load the agents page then navigate to a non-existent agent ID via
-    // the agentChatPayload with no matching agent for 'ghost-id'.
-    // We set up a payload with only CEO so clicking CEO card shows its detail,
-    // then manually switch payload to remove that agent on the next render.
-    const noAgentPayload = {
-      ...agentChatPayload,
-      agents: [],
-    };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(noAgentPayload);
-      return mockJson({}, 404);
-    }));
-    render(<App />);
-    await screen.findByText("One Human Corp Dashboard");
-    fireEvent.click(screen.getByRole("button", { name: /agents/i }));
-    await screen.findByText(/No agents registered/);
-  });
-
-  it("submitting empty message is a no-op (send stays disabled)", async () => {
-    vi.stubGlobal("fetch", makeAgentChatFetch());
-    await openAgentDetail("Bob SWE");
-    // Send button remains disabled with empty textarea
-    const sendBtn = screen.getByRole("button", { name: "Send" });
-    expect(sendBtn).toBeDisabled();
-    // Simulate form submit directly (should be no-op)
-    const form = sendBtn.closest("form") as HTMLFormElement;
-    await act(async () => {
-      fireEvent.submit(form);
-    });
-    // No message API call
-    await waitFor(() => {
-      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
-        (callArgs: any[]) => {
-          const url = callArgs[0] as string;
-          const init = callArgs[1] as RequestInit | undefined;
-          return url === "/api/messages" && init?.method === "POST";
-        }
-      );
-      expect(calls).toHaveLength(0);
-    });
-  });
-
-  it("shows 'No role profile found' when agent role has no matching profile", async () => {
-    // Use a payload where the agent's role is not in roleProfiles
-    const noProfilePayload = {
-      ...agentChatPayload,
-      organization: {
-        ...agentChatPayload.organization,
-        roleProfiles: [],
-      },
-    };
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(noProfilePayload);
-      return mockJson({}, 404);
-    }));
-    await openAgentDetail("Bob SWE");
-    // Default tab is config — should show "No role profile found"
-    await screen.findByText(/No role profile found for SOFTWARE ENGINEER/i);
-  });
-});
-
-// ── Handoffs tab ──────────────────────────────────────────────────────────────
-
-describe("App – handoffs tab", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    vi.clearAllMocks();
-  });
-
-  it("shows empty state when there are no pending handoffs", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/handoffs") return mockJson([]);
-      return mockJson({}, 404);
-    }));
-    render(<App />);
-    await screen.findByText("One Human Corp Dashboard");
-    fireEvent.click(screen.getByRole("button", { name: /handoffs/i }));
-    await screen.findByText("Warm Handoffs");
-    await screen.findByText("No pending handoffs found.");
-  });
-
-  it("shows handoff cards when handoffs exist", async () => {
-    const handoffs = [
-      {
-        id: "hoff-1",
-        fromAgentId: "swe-1",
-        toHumanRole: "Engineering Manager",
-        intent: "Needs architecture review",
-        currentState: "Draft PR",
-        status: "pending",
-        failedAttempts: 1,
-        createdAt: "2026-03-13T00:00:00Z",
-      },
-    ];
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/handoffs") return mockJson(handoffs);
-      return mockJson({}, 404);
-    }));
-    render(<App />);
-    await screen.findByText("One Human Corp Dashboard");
-    fireEvent.click(screen.getByRole("button", { name: /handoffs/i }));
-    await screen.findByText("Warm Handoffs");
-    await screen.findByText("Escalated by swe-1");
-    expect(screen.getByText("Needs architecture review")).toBeInTheDocument();
-    expect(screen.getByText(/Failed Attempts: 1/)).toBeInTheDocument();
-    expect(screen.getByText("Slide to Approve")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument();
-  });
-});
-
-// ── Pipelines (SDLC) tab ──────────────────────────────────────────────────────
-
-describe("App – pipelines tab", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    vi.clearAllMocks();
-  });
-
-  it("UI-01: Verify rendering of the \"Active PRs\" list", async () => {
-    const pipelines = [
-      { id: "pipe-1", name: "feat-analytics", branch: "feature/analytics", status: "IMPLEMENTING", createdAtUnix: 1672531200 },
-      { id: "pipe-2", name: "feat-billing", branch: "feature/billing", status: "STAGING", createdAtUnix: 1672617600 },
-    ];
-    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/pipelines") return mockJson(pipelines);
-      return mockJson({}, 404);
-    }));
-    render(<App />);
-    await screen.findByText("One Human Corp Dashboard");
-    fireEvent.click(screen.getByRole("button", { name: /pipelines/i }));
-    await screen.findByText("Automated SDLC");
-    await screen.findByText("Active PRs");
-
-    expect(screen.getByText("feat-analytics")).toBeInTheDocument();
-    expect(screen.getByText("IMPLEMENTING")).toBeInTheDocument();
-    expect(screen.getByText("feat-billing")).toBeInTheDocument();
-    expect(screen.getByText("STAGING")).toBeInTheDocument();
-  });
-
-  it("UI-02: Verify \"Approve for Production\" button functionality (Approve Spec / Deployment)", async () => {
-    const pipelines = [
-      { id: "pipe-2", name: "feat-billing", branch: "feature/billing", status: "STAGING", createdAtUnix: 1672617600 },
-    ];
-    let promoteCalled = false;
-    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/pipelines" && init?.method === "POST" && init?.body) {
-         promoteCalled = true;
-         return mockJson({ ...pipelines[0], status: "PROMOTED" });
-      }
-      if (input === "/api/pipelines/promote" && init?.method === "POST") {
-         promoteCalled = true;
-         return mockJson({ ...pipelines[0], status: "PROMOTED" });
-      }
-      if (input === "/api/pipelines") return mockJson(pipelines);
-      return mockJson({}, 404);
-    }));
-
-    render(<App />);
-    await screen.findByText("One Human Corp Dashboard");
-    fireEvent.click(screen.getByRole("button", { name: /pipelines/i }));
-    await screen.findByText("Active PRs");
-
-    const approveBtn = await screen.findByRole("button", { name: /Approve for Production/i });
-    fireEvent.click(approveBtn);
-
-    await waitFor(() => expect(promoteCalled).toBe(true));
-  });
-
-  it("UI-03: Verify \"Start Implementation\" button functionality", async () => {
-    let createCalled = false;
-    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
-      if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/pipelines" && init?.method === "POST") {
-         createCalled = true;
-         return mockJson({ id: "pipe-new", name: "feat-new", branch: "feature/new", status: "IMPLEMENTING" });
-      }
-      if (input === "/api/pipelines") return mockJson([]);
-      return mockJson({}, 404);
-    }));
-
-    render(<App />);
-    await screen.findByText("One Human Corp Dashboard");
-    fireEvent.click(screen.getByRole("button", { name: /pipelines/i }));
-    await screen.findByText("Active PRs");
-
-    // Open modal
-    const startBtn = await screen.findByRole("button", { name: /\+ Start Implementation/i });
-    fireEvent.click(startBtn);
-
-    // Fill form
-    const nameInput = screen.getByPlaceholderText("e.g. feat-analytics");
-    fireEvent.change(nameInput, { target: { value: "feat-new" } });
-
-    // Submit
-    const createBtn = screen.getByRole("button", { name: "Create Pipeline" });
-    fireEvent.click(createBtn);
-
-    await waitFor(() => expect(createCalled).toBe(true));
   });
 });

@@ -42,7 +42,7 @@ describe("api", () => {
   });
 
   it("normalizes missing costs fields", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({}), text: async () => "" })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 200, json: async () => ({}) })));
 
     await expect(fetchCosts()).resolves.toEqual({
       organizationID: "",
@@ -311,7 +311,7 @@ describe("api – new endpoints", () => {
   });
 
   it("fetchDomains throws on non-OK response", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}), text: async () => "" })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}) })));
     await expect(fetchDomains()).rejects.toThrow("500");
   });
 
@@ -322,7 +322,7 @@ describe("api – new endpoints", () => {
   });
 
   it("fetchMCPTools throws on non-OK response", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 503, json: async () => ({}), text: async () => "" })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 503, json: async () => ({}) })));
     await expect(fetchMCPTools()).rejects.toThrow("503");
   });
 
@@ -781,7 +781,7 @@ describe("user management api", () => {
   });
 
   it("deleteUser sends DELETE request and completes without error", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 204, json: async () => ({}), text: async () => "" })));
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, status: 204, json: async () => ({}) })));
     await expect(deleteUser("u-1")).resolves.toBeUndefined();
     const fetchMock = vi.mocked(fetch as ReturnType<typeof vi.fn>);
     expect(fetchMock).toHaveBeenCalledWith("/api/users/u-1", expect.objectContaining({ method: "DELETE" }));
