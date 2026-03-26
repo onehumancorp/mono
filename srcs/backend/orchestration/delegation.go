@@ -17,6 +17,7 @@ import (
 //   ctx context.Context
 //   req *pb.HubSubTask
 //
+<<<<<<< HEAD
 <<<<<<< HEAD:srcs/backend/orchestration/delegation.go
 // Returns (*pb.HubDelegateTaskResponse, error).
 // Produces errors: Returns ResourceExhausted if VRAM quota is exceeded.
@@ -28,6 +29,11 @@ func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.HubSubTa
 // Has no side effects.
 func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask) (*pb.DelegateTaskResponse, error) {
 >>>>>>> 2ee4f93 (docs: Overhaul documentation for READMEs, Go API, and TSDoc (#371)):srcs/orchestration/delegation.go
+=======
+// Returns (*pb.HubDelegateTaskResponse, error).
+// Produces errors: Returns ResourceExhausted if VRAM quota is exceeded.
+func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.HubSubTask) (*pb.HubDelegateTaskResponse, error) {
+>>>>>>> 7132956 (feat: Remove desktop application and add Bazel rules for Flutter, including new application services and screens.)
 	if req.GetTaskId() == "" || req.GetTargetRole() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "task_id and target_role are required")
 	}

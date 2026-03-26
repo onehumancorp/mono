@@ -528,6 +528,7 @@ func (h *Hub) Agent(id string) (Agent, bool) {
 	return agent, ok
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD:srcs/backend/orchestration/service.go
 // OpenMeeting instantiates a new active collaborative context window.
 func (h *Hub) OpenMeeting(id, orgID, name string, participants []string) *MeetingRoom {
@@ -543,6 +544,10 @@ func (h *Hub) OpenMeeting(id, orgID, name string, participants []string) *Meetin
 // Has no side effects.
 func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 >>>>>>> 2ee4f93 (docs: Overhaul documentation for READMEs, Go API, and TSDoc (#371)):srcs/orchestration/service.go
+=======
+// OpenMeeting instantiates a new active collaborative context window.
+func (h *Hub) OpenMeeting(id, orgID, name string, participants []string) *MeetingRoom {
+>>>>>>> 7132956 (feat: Remove desktop application and add Bazel rules for Flutter, including new application services and screens.)
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -574,7 +579,10 @@ func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 	return meeting
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD:srcs/backend/orchestration/service.go
+=======
+>>>>>>> 7132956 (feat: Remove desktop application and add Bazel rules for Flutter, including new application services and screens.)
 // OpenMeetingWithAgenda creates an active meeting room with an explicit agenda descriptor.
 func (h *Hub) OpenMeetingWithAgenda(id, orgID, name, agenda string, participants []string) *MeetingRoom {
 	meeting := h.OpenMeeting(id, orgID, name, participants)
@@ -586,6 +594,7 @@ func (h *Hub) OpenMeetingWithAgenda(id, orgID, name, agenda string, participants
 
 // JoinRoom adds a participant to an active meeting room.
 func (h *Hub) JoinRoom(roomID, participantID, name string, isAgent bool) (*MeetingRoom, error) {
+<<<<<<< HEAD
 =======
 // OpenMeetingWithAgenda creates a meeting room with an explicit agenda descriptor.
 //
@@ -599,6 +608,8 @@ func (h *Hub) JoinRoom(roomID, participantID, name string, isAgent bool) (*Meeti
 // Has no side effects.
 func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) MeetingRoom {
 >>>>>>> 2ee4f93 (docs: Overhaul documentation for READMEs, Go API, and TSDoc (#371)):srcs/orchestration/service.go
+=======
+>>>>>>> 7132956 (feat: Remove desktop application and add Bazel rules for Flutter, including new application services and screens.)
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -841,6 +852,7 @@ func (h *Hub) Inbox(agentID string) []Message {
 	return inbox
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD:srcs/backend/orchestration/service.go
 func (h *Hub) Meeting(id string) (*MeetingRoom, bool) {
 =======
@@ -854,6 +866,9 @@ func (h *Hub) Meeting(id string) (*MeetingRoom, bool) {
 // Has no side effects.
 func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 >>>>>>> 2ee4f93 (docs: Overhaul documentation for READMEs, Go API, and TSDoc (#371)):srcs/orchestration/service.go
+=======
+func (h *Hub) Meeting(id string) (*MeetingRoom, bool) {
+>>>>>>> 7132956 (feat: Remove desktop application and add Bazel rules for Flutter, including new application services and screens.)
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
@@ -862,6 +877,7 @@ func (h *Hub) Meeting(id string) (MeetingRoom, bool) {
 	return meeting, ok
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD:srcs/backend/orchestration/service.go
 func (h *Hub) Meetings() []*MeetingRoom {
 =======
@@ -873,6 +889,9 @@ func (h *Hub) Meetings() []*MeetingRoom {
 // Has no side effects.
 func (h *Hub) Meetings() []MeetingRoom {
 >>>>>>> 2ee4f93 (docs: Overhaul documentation for READMEs, Go API, and TSDoc (#371)):srcs/orchestration/service.go
+=======
+func (h *Hub) Meetings() []*MeetingRoom {
+>>>>>>> 7132956 (feat: Remove desktop application and add Bazel rules for Flutter, including new application services and screens.)
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
