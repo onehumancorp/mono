@@ -62,9 +62,9 @@ sh_test(
     srcs = ["tests/unit_test.sh"],
     data = [
         ":all_srcs",
-        "//srcs/cmd/ohc",
         "//:go.mod",
         "//:go.sum",
+        "//srcs/cmd/ohc",
     ],
     tags = [
         "no-remote-exec",
@@ -82,9 +82,9 @@ sh_test(
     args = ["src/api.test.ts"],
     data = [
         ":all_srcs",
-        "//srcs/cmd/ohc",
         "//:go.mod",
         "//:go.sum",
+        "//srcs/cmd/ohc",
     ],
     tags = [
         "no-remote-exec",
@@ -98,9 +98,9 @@ sh_test(
     args = ["src/App.test.tsx"],
     data = [
         ":all_srcs",
-        "//srcs/cmd/ohc",
         "//:go.mod",
         "//:go.sum",
+        "//srcs/cmd/ohc",
     ],
     tags = [
         "no-remote-exec",
@@ -114,9 +114,9 @@ sh_test(
     args = ["src/main.test.tsx"],
     data = [
         ":all_srcs",
-        "//srcs/cmd/ohc",
         "//:go.mod",
         "//:go.sum",
+        "//srcs/cmd/ohc",
     ],
     tags = [
         "no-remote-exec",
@@ -131,9 +131,9 @@ sh_test(
     srcs = ["tests/e2e_test.sh"],
     data = [
         ":all_srcs",
-        "//srcs/cmd/ohc",
         "//:go.mod",
         "//:go.sum",
+        "//srcs/cmd/ohc",
     ],
     tags = [
         "manual",

@@ -39,10 +39,13 @@ var (
 	nowUTC        = time.Now
 	listenForMain = http.ListenAndServe
 	fatalForMain  = func(err error) {
-		slog.Error("fatal error", "error", err)
-		os.Exit(1)
+		panic(err)
 	}
 	initTelemetry = telemetry.InitTelemetry
+	netListen     = net.Listen
+	chatwootSetup = func(c *chatwoot.Client) error {
+		return c.Setup()
+	}
 )
 
 // Summary: Initializes structured JSON logging.
@@ -100,7 +103,7 @@ func newDemoHandler(now time.Time) (http.Handler, *orchestration.Hub) {
 	if chatwoot.IsEnabled() {
 		go func() {
 			c := chatwoot.NewClientFromEnv()
-			if err := c.Setup(); err != nil {
+			if err := chatwootSetup(c); err != nil {
 				slog.Error("chatwoot setup", "error", err)
 			}
 		}()
@@ -123,7 +126,7 @@ func run(now time.Time, listen listenFunc) error {
 
 	// Start gRPC server
 	go func() {
-		lis, err := net.Listen("tcp", grpcAddress)
+		lis, err := netListen("tcp", grpcAddress)
 		if err != nil {
 			slog.Error("failed to listen for gRPC", "error", err)
 			return
