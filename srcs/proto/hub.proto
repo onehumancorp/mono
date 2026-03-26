@@ -77,6 +77,12 @@ message TokenEfficientContextSummarizationEvent {
   bytes payload = 3;
 }
 
+message ToolExecutionRateLimitingEvent {
+  string event_id = 1;
+  string agent_id = 2;
+  bytes payload = 3;
+}
+
 message StreamMessagesRequest {
   string agent_id = 1;
 }

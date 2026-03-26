@@ -238,6 +238,32 @@ func (b TokenEfficientContextSummarizationEvent_builder) Build() *TokenEfficient
 	}
 }
 
+// ─── ToolExecutionRateLimitingEvent ───────────────────────────────────────────────────
+
+type ToolExecutionRateLimitingEvent struct {
+	eventId string
+	agentId string
+	payload []byte
+}
+
+func (t *ToolExecutionRateLimitingEvent) GetEventId() string { return t.eventId }
+func (t *ToolExecutionRateLimitingEvent) GetAgentId() string { return t.agentId }
+func (t *ToolExecutionRateLimitingEvent) GetPayload() []byte { return t.payload }
+
+type ToolExecutionRateLimitingEvent_builder struct {
+	EventId string
+	AgentId string
+	Payload []byte
+}
+
+func (b ToolExecutionRateLimitingEvent_builder) Build() *ToolExecutionRateLimitingEvent {
+	return &ToolExecutionRateLimitingEvent{
+		eventId: b.EventId,
+		agentId: b.AgentId,
+		payload: b.Payload,
+	}
+}
+
 // ─── StreamMessagesRequest ───────────────────────────────────────────────────
 
 type StreamMessagesRequest struct{ agentId string }

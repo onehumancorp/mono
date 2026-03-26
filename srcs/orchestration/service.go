@@ -328,6 +328,11 @@ func (h *Hub) TokenEfficientContextSummarization(eventID, agentID string, payloa
 	return nil
 }
 
+// LogEvent synchronously submits an event to the background file writer for `events.jsonl`
+func (h *Hub) LogEvent(event map[string]interface{}) {
+	h.eventLogChan <- event
+}
+
 // SetSIPDB injects a database-driven Swarm Intelligence Protocol interface.
 func (h *Hub) SetSIPDB(sipDB *SIPDB) {
 	h.mu.Lock()

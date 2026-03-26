@@ -52,6 +52,10 @@ type Server struct {
 }
 
 type RateLimitState struct {
+	Tokens      float64
+	LastRefill  time.Time
+	Capacity    float64
+	RefillRate  float64
 	Failures    int
 	LastFailure time.Time
 	Backoff     time.Duration
@@ -929,24 +933,76 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 		s.rateLimitStates = make(map[string]*RateLimitState)
 	}
 	state, exists := s.rateLimitStates[rateLimitKey]
+	now := time.Now()
 	if !exists {
-		state = &RateLimitState{Backoff: 1 * time.Second}
+		state = &RateLimitState{
+			Tokens:      5.0, // default capacity
+			Capacity:    5.0,
+			RefillRate:  5.0, // 5 tokens per second
+			LastRefill:  now,
+			Backoff:     1 * time.Second,
+		}
 		s.rateLimitStates[rateLimitKey] = state
 	}
-	s.mu.Unlock()
 
-	s.mu.RLock()
+	// Refill tokens
+	elapsed := now.Sub(state.LastRefill).Seconds()
+	state.Tokens += elapsed * state.RefillRate
+	if state.Tokens > state.Capacity {
+		state.Tokens = state.Capacity
+	}
+	state.LastRefill = now
+
 	if state.Failures >= 3 {
-		s.mu.RUnlock()
+		s.mu.Unlock()
 		http.Error(w, "Max retries exceeded. Hard failure.", http.StatusTooManyRequests)
 		return
 	}
+
 	if time.Since(state.LastFailure) < state.Backoff && state.Failures > 0 {
-		s.mu.RUnlock()
+		s.mu.Unlock()
 		http.Error(w, "Rate limited. Please backoff.", http.StatusTooManyRequests)
 		return
 	}
-	s.mu.RUnlock()
+
+	// Consume a token
+	if state.Tokens < 1.0 {
+		state.Failures++
+		state.LastFailure = now
+		state.Backoff = time.Duration(1<<state.Failures) * time.Second
+
+		s.mu.Unlock()
+
+		// Record failure event due to token exhaustion
+		if req.AgentID != "" {
+			msg := orchestration.Message{
+				ID:         "rl-" + now.UTC().Format("20060102150405.999999999"),
+				FromAgent:  "SYSTEM",
+				ToAgent:    req.AgentID,
+				Type:       "ToolExecutionRateLimiting",
+				Content:    fmt.Sprintf(`{"toolId": "%s", "status": "failed", "reason": "rate_limited", "backoff": "%s", "failures": %d}`, req.ToolID, state.Backoff.String(), state.Failures),
+				OccurredAt: now.UTC(),
+			}
+			_ = s.hub.Publish(msg)
+
+			s.hub.LogEvent(map[string]interface{}{
+				"event_id":   msg.ID,
+				"agent_id":   msg.ToAgent,
+				"type":       msg.Type,
+				"payload":    json.RawMessage(msg.Content),
+			})
+		}
+
+		if state.Failures >= 3 {
+			http.Error(w, "Max retries exceeded. Hard failure.", http.StatusTooManyRequests)
+		} else {
+			http.Error(w, "Rate limited. Please backoff.", http.StatusTooManyRequests)
+		}
+		return
+	}
+
+	state.Tokens -= 1.0
+	s.mu.Unlock()
 
 	result, err := s.invokeMCPTool(req)
 
@@ -957,6 +1013,8 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 			state.Failures++
 			state.LastFailure = time.Now()
 			state.Backoff = time.Duration(1<<state.Failures) * time.Second // Exponential backoff
+
+			s.mu.Unlock()
 
 			// Record failure event
 			if req.AgentID != "" {
@@ -970,16 +1028,14 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 				}
 				_ = s.hub.Publish(msg)
 
-				b, err := json.Marshal(msg)
-				if err == nil {
-					if f, err := os.OpenFile("events.jsonl", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-						f.Write(append(b, '\n'))
-						f.Close()
-					}
-				}
+				s.hub.LogEvent(map[string]interface{}{
+					"event_id":   msg.ID,
+					"agent_id":   msg.ToAgent,
+					"type":       msg.Type,
+					"payload":    json.RawMessage(msg.Content),
+				})
 			}
 
-			s.mu.Unlock()
 			if state.Failures >= 3 {
 				http.Error(w, "Max retries exceeded. Hard failure.", http.StatusTooManyRequests)
 			} else {
@@ -996,10 +1052,14 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 			s.mu.Unlock()
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
+		} else {
+			s.mu.Unlock()
 		}
 	} else {
 		// Reset on success
-		delete(s.rateLimitStates, rateLimitKey) // Prevent unbounded memory leak
+		state.Failures = 0
+
+		s.mu.Unlock()
 
 		if req.AgentID != "" {
 			msg := orchestration.Message{
@@ -1012,18 +1072,21 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 			}
 			_ = s.hub.Publish(msg)
 
-			b, err := json.Marshal(msg)
-			if err == nil {
-				if f, err := os.OpenFile("events.jsonl", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-					f.Write(append(b, '\n'))
-					f.Close()
-				}
-			}
+			s.hub.LogEvent(map[string]interface{}{
+				"event_id":   msg.ID,
+				"agent_id":   msg.ToAgent,
+				"type":       msg.Type,
+				"payload":    json.RawMessage(msg.Content),
+			})
 		}
 	}
-	s.mu.Unlock()
 
+	// Ensure we don't accidentally hold lock if an uncaught error returns
+	// We've already unlocked in the specific branches above.
+	// We just check err here to report it.
 	if err != nil {
+		// Just to be safe, if we hit an unknown error branch, check if it's still locked.
+		// In Go, we can't easily check if locked, but our branches above cover all explicit returns.
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
