@@ -11,6 +11,7 @@ import 'package:ohc_app/screens/skills_screen.dart';
 import 'package:ohc_app/screens/logs_screen.dart';
 import 'package:ohc_app/screens/security_screen.dart';
 import 'package:ohc_app/screens/settings_screen.dart';
+import 'package:ohc_app/screens/service_screen.dart';
 import 'package:ohc_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
@@ -75,6 +76,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/settings',
             builder: (context, state) => const SettingsScreen(),
           ),
+          GoRoute(
+            path: '/service',
+            builder: (context, state) => const ServiceScreen(),
+          ),
         ],
       ),
     ],
@@ -125,6 +130,7 @@ class _Sidebar extends StatelessWidget {
         _NavItem(icon: Icons.terminal, label: 'Logs', path: '/logs'),
         const SizedBox(height: 8),
         _NavItem(icon: Icons.settings, label: 'Settings', path: '/settings'),
+        _NavItem(icon: Icons.computer, label: 'Service Management', path: '/service'),
         const SizedBox(height: 16),
       ],
     );

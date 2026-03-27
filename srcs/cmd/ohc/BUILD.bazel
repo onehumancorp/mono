@@ -12,6 +12,8 @@ go_library(
         "//srcs/domain",
         "//srcs/integrations/chatwoot",
         "//srcs/orchestration",
+        "//srcs/scheduler",
+        "//srcs/settings",
         "//srcs/telemetry",
         "@org_golang_google_grpc//:grpc",
     ],

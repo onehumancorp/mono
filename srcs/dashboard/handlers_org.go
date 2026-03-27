@@ -3,6 +3,8 @@ package dashboard
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/onehumancorp/mono/srcs/settings"
 )
 
 // Handles retrieving organization details.
@@ -31,25 +33,33 @@ func (s *Server) handleDomains(w http.ResponseWriter, _ *http.Request) {
 // Produces no errors.
 // Has no side effects.
 func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	if r.Method == http.MethodGet {
-		writeJSON(w, s.settings)
+		writeJSON(w, s.hub.SettingsStore().Get())
 		return
 	}
 
 	if r.Method == http.MethodPost {
-		var req Settings
+		var req settings.AppSettings
 		dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 		dec.DisallowUnknownFields()
 		if err := dec.Decode(&req); err != nil {
 			http.Error(w, "invalid JSON payload", http.StatusBadRequest)
 			return
 		}
+		if err := s.hub.SettingsStore().Update(req); err != nil {
+			http.Error(w, "failed to save settings: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		s.mu.Lock()
 		s.settings = req
-		s.hub.SetMinimaxAPIKey(req.MinimaxAPIKey)
-		writeJSON(w, s.settings)
+		s.mu.Unlock()
+
+		// Update Minimax API key in Hub if present in extras
+		if key, ok := req.Extras["minimax_api_key"]; ok {
+			s.hub.SetMinimaxAPIKey(key)
+		}
+
+		writeJSON(w, req)
 		return
 	}
 

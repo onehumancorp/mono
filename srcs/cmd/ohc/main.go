@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"google.golang.org/grpc"
@@ -13,8 +16,10 @@ import (
 	"github.com/onehumancorp/mono/srcs/billing"
 	"github.com/onehumancorp/mono/srcs/dashboard"
 	"github.com/onehumancorp/mono/srcs/domain"
-	chatwoot "github.com/onehumancorp/mono/srcs/integrations/chatwoot"
+	"github.com/onehumancorp/mono/srcs/integrations/chatwoot"
 	"github.com/onehumancorp/mono/srcs/orchestration"
+	"github.com/onehumancorp/mono/srcs/scheduler"
+	"github.com/onehumancorp/mono/srcs/settings"
 	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
@@ -114,7 +119,50 @@ func newDemoHandler(now time.Time) (http.Handler, *orchestration.Hub) {
 // Produces errors: Returns an error if applicable.
 // Has no side effects.
 func run(now time.Time, listen listenFunc) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// 1. Initialize Settings
+	configPath := filepath.Join(os.Getenv("HOME"), ".openclaw", "openclaw.json")
+	store, err := settings.FromFile(configPath)
+	if err != nil {
+		slog.Warn("failed to load settings from file, using defaults", "path", configPath, "error", err)
+		store = settings.NewStore()
+	}
+
+	// 2. Initialize Hub with Settings
 	handler, hub := newDemoHandler(now)
+	hub.SetSettingsStore(store)
+
+	// 3. Start Scheduler Background Task
+	go hub.Scheduler().StartBackgroundTask(ctx, func(task scheduler.Task) {
+		slog.Info("executing scheduled task", "task_id", task.ID, "name", task.Name)
+		// Mark as running
+		if _, err := hub.Scheduler().MarkRunning(task.ID); err != nil {
+			slog.Error("failed to mark task as running", "task_id", task.ID, "error", err)
+			return
+		}
+
+		// Simulate task execution by publishing a message
+		msg := orchestration.Message{
+			ID:         task.ID + "-" + fmt.Sprintf("%d", time.Now().Unix()),
+			FromAgent:  "system-scheduler",
+			ToAgent:    task.AgentID,
+			Type:       orchestration.EventTask,
+			Content:    fmt.Sprintf("Scheduled Task triggered: %s. Payload: %s", task.Name, string(task.Payload)),
+			OccurredAt: time.Now().UTC(),
+		}
+		
+		// In a real scenario, we'd need to register 'system-scheduler' or similar.
+		// For this migration, we'll just log and mark done for now.
+		err := hub.Publish(msg)
+		if err != nil {
+			slog.Error("failed to publish scheduled task message", "task_id", task.ID, "error", err)
+			_ = hub.Scheduler().MarkDone(task.ID, false)
+		} else {
+			_ = hub.Scheduler().MarkDone(task.ID, true)
+		}
+	})
 
 	grpcAddress := getEnvOrDefault("GRPC_PORT", ":9090")
 	httpAddress := getEnvOrDefault("PORT", defaultAddress)

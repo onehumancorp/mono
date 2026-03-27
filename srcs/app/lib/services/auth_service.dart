@@ -73,9 +73,10 @@ final _prefsProvider = FutureProvider<SharedPreferences>(
   (_) => SharedPreferences.getInstance(),
 );
 
-final backendUrlProvider = Provider<String>(
-  (_) => const String.fromEnvironment('BACKEND_URL', defaultValue: 'http://localhost:8080'),
-);
+final backendUrlProvider = StateProvider<String>((ref) {
+  // We'll manage this in a more complex way in a real app, but for now:
+  return 'http://localhost:18789'; 
+});
 
 final authServiceProvider = Provider<AuthService>((ref) {
   final url = ref.watch(backendUrlProvider);

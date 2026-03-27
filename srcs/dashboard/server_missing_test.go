@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/onehumancorp/mono/srcs/settings"
 )
 
 // Tests for missing coverage in handlers
@@ -797,7 +799,7 @@ func TestHandleSettingsGetAndPost(t *testing.T) {
 	app, _, _ := newTestServer(t)
 
 	// POST settings
-	reqBody := `{"minimaxApiKey":"test-minimax-key"}`
+	reqBody := `{"extras":{"minimax_api_key":"test-minimax-key"}}`
 	req := httptest.NewRequest(http.MethodPost, "/api/settings", strings.NewReader(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
@@ -807,12 +809,12 @@ func TestHandleSettingsGetAndPost(t *testing.T) {
 		t.Fatalf("expected 200, got %d", rec.Code)
 	}
 
-	var postResp Settings
+	var postResp settings.AppSettings
 	if err := json.NewDecoder(rec.Body).Decode(&postResp); err != nil {
 		t.Fatalf("decode post response: %v", err)
 	}
-	if postResp.MinimaxAPIKey != "test-minimax-key" {
-		t.Errorf("expected minimaxApiKey 'test-minimax-key', got %q", postResp.MinimaxAPIKey)
+	if postResp.Extras["minimax_api_key"] != "test-minimax-key" {
+		t.Errorf("expected minimax_api_key 'test-minimax-key', got %q", postResp.Extras["minimax_api_key"])
 	}
 
 	// GET settings
@@ -824,12 +826,12 @@ func TestHandleSettingsGetAndPost(t *testing.T) {
 		t.Fatalf("expected 200, got %d", rec.Code)
 	}
 
-	var getResp Settings
+	var getResp settings.AppSettings
 	if err := json.NewDecoder(rec.Body).Decode(&getResp); err != nil {
 		t.Fatalf("decode get response: %v", err)
 	}
-	if getResp.MinimaxAPIKey != "test-minimax-key" {
-		t.Errorf("expected minimaxApiKey 'test-minimax-key', got %q", getResp.MinimaxAPIKey)
+	if getResp.Extras["minimax_api_key"] != "test-minimax-key" {
+		t.Errorf("expected minimax_api_key 'test-minimax-key', got %q", getResp.Extras["minimax_api_key"])
 	}
 }
 
