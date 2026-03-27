@@ -1,3 +1,4 @@
+bazel/rules/flutter
 srcs/frontend/node_modules
 bazel/rules/flutter/e2e
 bazel/rules/flutter/bazel-bin

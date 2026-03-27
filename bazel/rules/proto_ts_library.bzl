@@ -3,11 +3,10 @@
 Supports Protobuf Edition 2024. Uses:
   - @nodejs//:node_bin (hermetic Node.js toolchain)
   - @protobuf//:protoc (hermetic protoc)
-  - node_modules/@bufbuild/protoc-gen-es (npm package from exec root)
+  - //:node_modules (Bazel-managed npm package tree)
 
 Uses no-sandbox execution strategy because aspect_rules_js npm packages
-cannot be linked into sandboxed actions without the js_binary launcher.
-Both protoc and node binaries are still hermetic (downloaded by Bazel).
+are materialized as symlinked directories under Bazel outputs.
 """
 
 load("@rules_proto//proto:defs.bzl", "ProtoInfo")
@@ -16,6 +15,7 @@ def _proto_ts_library_impl(ctx):
     proto_info = ctx.attr.protos[ProtoInfo]
     srcs = proto_info.direct_sources
     proto_root = proto_info.proto_source_root
+    node_modules_files = ctx.attr._node_modules[DefaultInfo].files.to_list()
 
     outs = []
     for src in srcs:
@@ -25,6 +25,14 @@ def _proto_ts_library_impl(ctx):
 
     protoc = ctx.executable._protoc
     node = ctx.executable._node
+    plugin_package = None
+    for file in node_modules_files:
+        if file.short_path.endswith("node_modules/@bufbuild/protoc-gen-es"):
+            plugin_package = file
+            break
+
+    if plugin_package == None:
+        fail("Could not find Bazel-managed @bufbuild/protoc-gen-es package in //:node_modules outputs")
 
     # Build proto_path args
     proto_paths = {}
@@ -45,8 +53,9 @@ def _proto_ts_library_impl(ctx):
     wrapper = ctx.actions.declare_file(ctx.label.name + "_protoc_wrapper.sh")
     wrapper_content = "#!/bin/bash\nset -euo pipefail\n"
     wrapper_content += "export PATH=\"$(dirname {node}):$PATH\"\n".format(node = node.path)
-    wrapper_content += "{protoc} --plugin=protoc-gen-es=node_modules/.bin/protoc-gen-es --es_out={out_dir} --es_opt=target=ts,keep_empty_files=true {proto_path_args} {proto_files}\n".format(
+    wrapper_content += "{protoc} --plugin=protoc-gen-es={plugin} --es_out={out_dir} --es_opt=target=ts,keep_empty_files=true {proto_path_args} {proto_files}\n".format(
         protoc = protoc.path,
+        plugin = plugin_package.path + "/bin/protoc-gen-es",
         out_dir = out_dir,
         proto_path_args = proto_path_args,
         proto_files = proto_files,
@@ -61,8 +70,11 @@ def _proto_ts_library_impl(ctx):
     ctx.actions.run(
         executable = wrapper,
         inputs = depset(
-            srcs + [protoc, node],
-            transitive = [proto_info.transitive_sources],
+            srcs + [protoc, node, plugin_package],
+            transitive = [
+                proto_info.transitive_sources,
+                ctx.attr._node_modules[DefaultInfo].files,
+            ],
         ),
         outputs = outs,
         execution_requirements = {"no-sandbox": "1"},
@@ -92,6 +104,9 @@ proto_ts_library = rule(
             executable = True,
             cfg = "exec",
             allow_single_file = True,
+        ),
+        "_node_modules": attr.label(
+            default = "//:node_modules",
         ),
     },
     doc = "Generates TypeScript files from a proto_library using @bufbuild/protoc-gen-es. Supports Edition 2024.",
