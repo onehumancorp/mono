@@ -1,5 +1,16 @@
-1. Remove the client-side mocks in `App.test.tsx` for the pipelines tests.
-   - The Real Data Law states: "If you find yourself mocking a network request in the frontend, STOP. Go back and seed the database."
-   - Replace the `vi.stubGlobal("fetch", ...)` mocks with integration tests that rely on the database seeder and backend API.
-   - I need to locate where frontend integration tests are run (e.g. `srcs/integration/frontend_backend_test.go` or similar) and implement them there, or adjust the `App.test.tsx` to not mock the network if it runs against a real backend during tests. Wait, `App.test.tsx` is run via Vitest which runs in jsdom. The Real Data Law says "No client-side mocks. You must integrate with the real MCP Gateway, emit real events to events.jsonl, and use the actual K8s state with the 'Database Seeder' pattern."
-   - Let's check `srcs/integration/frontend_backend_test.go` to see how E2E or integration tests are written.
+1. **Restore json.NewDecoder in `invokeMCPTool`**
+   - The memory states: "When implementing strict JSON schema validation in Go using `json.NewDecoder(reader).DisallowUnknownFields()`, the target payload must be decoded into a strictly defined `struct` rather than a generic `map[string]interface{}`. Otherwise, unknown fields will not be properly rejected."
+   - We must also ensure: "The Trust Boundary (MCP & K8s): SSRF via the MCP Gateway, validating JSON tool payloads (Zod/Pydantic/Go structs)..." and "Sanitization: Strict validation at the edge (MCP inputs/outputs, K8s Operator webhooks). Never trust LLM-generated JSON blindly."
+   - In `srcs/dashboard/server.go`, the tool parameter decoding was optimized to use `json.Unmarshal(req.Params, &p)`. This removes the `DisallowUnknownFields()` validation constraint which is a security hazard (agents could pass additional, unchecked malicious parameters).
+   - I will modify `srcs/dashboard/server.go` to restore the `json.NewDecoder(bytes.NewReader(req.Params))` and `dec.DisallowUnknownFields()` approach for the `chatToolParams`, `gitToolParams`, and `issueToolParams` decoding.
+
+2. **Add negative tests**
+   - In `srcs/dashboard/server_test.go` or equivalent integration test file, I will add a test to ensure `invokeMCPTool` safely blocks a payload with unknown/malformed fields.
+
+3. **Complete pre-commit steps to ensure proper testing, verification, review, and reflection are done.**
+   - Run `bazelisk test //...`
+   - Run `pre_commit_instructions` tool and adhere to it.
+   - Run `frontend_verification_instructions` tool if there are frontend changes. (Not applicable, only backend).
+
+4. **Submit**
+   - Commit and submit changes.
