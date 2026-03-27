@@ -18,6 +18,7 @@ import (
 	"github.com/onehumancorp/mono/srcs/integrations"
 	"github.com/onehumancorp/mono/srcs/interop"
 	"github.com/onehumancorp/mono/srcs/orchestration"
+	"github.com/onehumancorp/mono/srcs/settings"
 	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
@@ -45,7 +46,7 @@ type Server struct {
 	pipelines             []Pipeline
 	authStore             *auth.Store
 	authHandlers          *auth.Handlers
-	settings              Settings
+	settings              settings.AppSettings
 	agentProviderRegistry *agents.Registry
 	dynamicMCPTools       []MCPTool
 	rateLimitStates       map[string]*RateLimitState
@@ -62,15 +63,7 @@ type RateLimitState struct {
 	Backoff     time.Duration
 }
 
-// Settings represents the global platform configuration, dictating UI themes, agent behavioral defaults, and connected integration states.
-// Accepts no parameters.
-// Returns nothing.
-// Produces no errors.
-// Has no side effects.
-type Settings struct {
-	MinimaxAPIKey string `json:"minimaxApiKey"`
-	Theme         string `json:"theme,omitempty"`
-}
+// Initial settings logic is now handled by the settings package.
 
 type statusCount struct {
 	Status orchestration.Status `json:"status"`
@@ -421,10 +414,18 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 		dynamicMCPTools:       append([]MCPTool(nil), defaultMcpTools...),
 		rateLimitStates:       make(map[string]*RateLimitState),
 	}
-	// Load Minimax API key from environment on startup.
-	if key := os.Getenv("MINIMAX_API_KEY"); key != "" {
+	// Load initial settings.
+	initialSettings := hub.SettingsStore().Get()
+	server.settings = initialSettings
+
+	// Load Minimax API key from environment on startup if not already set.
+	if key := os.Getenv("MINIMAX_API_KEY"); key != "" && server.settings.Extras["minimax_api_key"] == "" {
 		hub.SetMinimaxAPIKey(key)
-		server.settings.MinimaxAPIKey = key
+		if server.settings.Extras == nil {
+			server.settings.Extras = make(map[string]string)
+		}
+		server.settings.Extras["minimax_api_key"] = key
+		_ = hub.SettingsStore().SetExtra("minimax_api_key", key)
 		if err := server.agentProviderRegistry.Authenticate(agents.ProviderTypeOpenClaw, agents.Credentials{APIKey: key}); err != nil {
 			slog.Warn("failed to authenticate OpenClaw provider with MINIMAX_API_KEY", "error", err)
 		}
@@ -459,6 +460,8 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/mcp/tools/invoke", server.handleMCPInvoke)
 	mux.HandleFunc("/api/dev/seed", server.handleDevSeed)
 	mux.HandleFunc("/api/settings", server.handleSettings)
+	mux.HandleFunc("/api/scheduler", server.handleSchedulerTasks)
+	mux.HandleFunc("/api/scheduler/cancel", server.handleSchedulerCancel)
 	// Phase 2 – Confidence Gating / Guardian Agent
 	mux.HandleFunc("/api/approvals", server.handleApprovals)
 	mux.HandleFunc("/api/approvals/request", server.handleApprovalRequest)

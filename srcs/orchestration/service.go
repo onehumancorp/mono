@@ -16,6 +16,8 @@ import (
 	"time"
 
 	pb "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration"
+	"github.com/onehumancorp/mono/srcs/scheduler"
+	"github.com/onehumancorp/mono/srcs/settings"
 	"github.com/onehumancorp/mono/srcs/telemetry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -255,6 +257,8 @@ type Hub struct {
 	tokenTrackers map[string]struct{}
 	autoCorTrack  map[string]struct{}
 	eventLogChan  chan interface{}
+	scheduler     *scheduler.Scheduler
+	settingsStore *settings.Store
 }
 
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
@@ -272,29 +276,38 @@ func NewHub() *Hub {
 		tokenTrackers: map[string]struct{}{},
 		autoCorTrack:  map[string]struct{}{},
 		eventLogChan:  make(chan interface{}, 100),
+		scheduler:     scheduler.NewScheduler(),
+		settingsStore: settings.NewStore(),
 	}
-	go h.eventLogWorker()
+	go h.eventLogWorker(context.Background(), "events.jsonl")
 	return h
 }
 
-// eventLogWorker processes event logs and writes them sequentially to events.jsonl
-func (h *Hub) eventLogWorker() {
-	f, err := os.OpenFile("events.jsonl", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+// eventLogWorker processes event logs and writes them sequentially to the specified file.
+func (h *Hub) eventLogWorker(ctx context.Context, filename string) {
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		slog.Error("failed to open events.jsonl", "error", err)
+		slog.Error("failed to open event log file", "filename", filename, "error", err)
 		return
 	}
 	defer f.Close()
 
-	for logEntry := range h.eventLogChan {
-		b, err := json.Marshal(logEntry)
-		if err != nil {
-			slog.Error("failed to marshal event log", "error", err)
-			continue
-		}
-		b = append(b, '\n')
-		if _, err := f.Write(b); err != nil {
-			slog.Error("failed to write to events.jsonl", "error", err)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case logEntry, ok := <-h.eventLogChan:
+			if !ok {
+				return
+			}
+			b, err := json.Marshal(logEntry)
+			if err != nil {
+				slog.Error("failed to marshal event log", "error", err)
+				continue
+			}
+			if _, err := f.Write(append(b, '\n')); err != nil {
+				slog.Error("failed to write to event log file", "filename", filename, "error", err)
+			}
 		}
 	}
 }
@@ -497,6 +510,23 @@ func (h *Hub) MinimaxAPIKey() string {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.minimaxAPIKey
+}
+
+// Scheduler returns the Hub's task scheduler.
+func (h *Hub) Scheduler() *scheduler.Scheduler {
+	return h.scheduler
+}
+
+// SettingsStore returns the Hub's settings store.
+func (h *Hub) SettingsStore() *settings.Store {
+	return h.settingsStore
+}
+
+// SetSettingsStore injects a custom settings store.
+func (h *Hub) SetSettingsStore(s *settings.Store) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.settingsStore = s
 }
 
 // Agent retrieves the runtime state of a specific worker by ID.

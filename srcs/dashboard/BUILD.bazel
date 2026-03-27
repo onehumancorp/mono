@@ -9,6 +9,7 @@ go_library(
         "handlers_integration.go",
         "handlers_ops.go",
         "handlers_org.go",
+        "handlers_scheduler.go",
         "server.go",
         "tenant.go",
     ],
@@ -22,6 +23,8 @@ go_library(
         "//srcs/integrations",
         "//srcs/interop",
         "//srcs/orchestration",
+        "//srcs/scheduler",
+        "//srcs/settings",
         "//srcs/telemetry",
     ],
 )
@@ -45,5 +48,6 @@ go_test(
         "//srcs/domain",
         "//srcs/integrations",
         "//srcs/orchestration",
+        "//srcs/settings",
     ],
 )
