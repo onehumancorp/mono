@@ -19,7 +19,6 @@ bazel_dep(name = "aspect_rules_js", version = "3.0.3")
 
 # ── Flutter rules (vendored fork) ─────────────────────────────────────────────
 bazel_dep(name = "rules_flutter", version = "0.0.0")
-
 local_path_override(
     module_name = "rules_flutter",
     path = "bazel/rules/flutter",
@@ -106,7 +105,27 @@ go_sdk.download(version = "1.26.1")
 
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")
-use_repo(go_deps, "com_github_google_uuid", "com_github_prometheus_client_golang", "in_gopkg_yaml_v3", "io_opentelemetry_go_otel", "io_opentelemetry_go_otel_exporters_prometheus", "io_opentelemetry_go_otel_metric", "io_opentelemetry_go_otel_sdk_metric", "org_golang_google_grpc", "org_golang_google_grpc_cmd_protoc_gen_go_grpc", "org_golang_google_protobuf", "org_golang_x_crypto", "org_modernc_sqlite")
+
+# Fix for centrifuge's vtprotobuf-generated files: disable proto-library generation
+# so that control.pb.go and control_vtproto.pb.go are included together in the
+# same go_library target instead of separate proto_library / go_proto_library rules.
+go_deps.gazelle_override(
+    directives = [
+        "gazelle:proto disable",
+    ],
+    path = "github.com/centrifugal/centrifuge",
+)
+
+# Fix for centrifugal/protocol: disable proto-library generation so that
+# client.pb.go, client.pb_easyjson.go, and client_vtproto.pb.go are all
+# compiled together in one go_library target.
+go_deps.gazelle_override(
+    directives = [
+        "gazelle:proto disable",
+    ],
+    path = "github.com/centrifugal/protocol",
+)
+use_repo(go_deps, "com_github_centrifugal_centrifuge", "com_github_google_uuid", "com_github_prometheus_client_golang", "in_gopkg_yaml_v3", "io_opentelemetry_go_otel", "io_opentelemetry_go_otel_exporters_prometheus", "io_opentelemetry_go_otel_metric", "io_opentelemetry_go_otel_sdk_metric", "org_golang_google_grpc", "org_golang_google_grpc_cmd_protoc_gen_go_grpc", "org_golang_google_protobuf", "org_golang_x_crypto", "org_modernc_sqlite")
 
 npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm")
 npm.npm_translate_lock(

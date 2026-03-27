@@ -196,3 +196,9 @@ flutter_test(
     test_files = ["test/widget_interactions_test.dart"],
 )
 
+flutter_test(
+    name = "app_wizard_screen_test",
+    srcs = ["test/wizard_screen_test.dart"],
+    embed = [":app_lib"],
+    test_files = ["test/wizard_screen_test.dart"],
+)
