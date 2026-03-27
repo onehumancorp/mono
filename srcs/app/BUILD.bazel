@@ -1,6 +1,7 @@
+load("@rules_flutter//flutter:defs.bzl", "flutter_library", "flutter_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
-# ── Source filegroup ──────────────────────────────────────────────────────────
+# ── Source filegroup (non-flutter uses, e.g. layout checks) ──────────────────
 
 filegroup(
     name = "srcs",
@@ -10,9 +11,84 @@ filegroup(
             "test/**",
             "pubspec.yaml",
             "pubspec.lock",
+            "pub_deps.json",
         ],
     ),
     visibility = ["//visibility:public"],
+)
+
+# ── Flutter Library ───────────────────────────────────────────────────────────
+# Prepares a hermetic workspace with all pub dependencies assembled from the
+# toolchain-downloaded Flutter SDK and pre-fetched pub_dev_repository repos.
+
+flutter_library(
+    name = "app_lib",
+    srcs = glob(["lib/**"]),
+    pubspec = "pubspec.yaml",
+    deps = [
+        # Flutter SDK packages
+        "@flutter_sdk//flutter/packages/flutter",
+        "@flutter_sdk//flutter/packages/flutter_test",
+        # Direct main dependencies
+        "@pub_centrifuge//:centrifuge",
+        "@pub_cupertino_icons//:cupertino_icons",
+        "@pub_flutter_riverpod//:flutter_riverpod",
+        "@pub_go_router//:go_router",
+        "@pub_http//:http",
+        "@pub_intl//:intl",
+        "@pub_shared_preferences//:shared_preferences",
+        "@pub_uuid//:uuid",
+        "@pub_web_socket_channel//:web_socket_channel",
+        # Direct dev dependencies
+        "@pub_flutter_lints//:flutter_lints",
+        "@pub_mocktail//:mocktail",
+        # All transitive hosted packages (ensures complete pub cache assembly)
+        "@pub_async//:async",
+        "@pub_boolean_selector//:boolean_selector",
+        "@pub_characters//:characters",
+        "@pub_clock//:clock",
+        "@pub_collection//:collection",
+        "@pub_crypto//:crypto",
+        "@pub_fake_async//:fake_async",
+        "@pub_ffi//:ffi",
+        "@pub_file//:file",
+        "@pub_fixnum//:fixnum",
+        "@pub_http_parser//:http_parser",
+        "@pub_leak_tracker//:leak_tracker",
+        "@pub_leak_tracker_flutter_testing//:leak_tracker_flutter_testing",
+        "@pub_leak_tracker_testing//:leak_tracker_testing",
+        "@pub_lints//:lints",
+        "@pub_logging//:logging",
+        "@pub_matcher//:matcher",
+        "@pub_material_color_utilities//:material_color_utilities",
+        "@pub_meta//:meta",
+        "@pub_path//:path",
+        "@pub_path_provider_linux//:path_provider_linux",
+        "@pub_path_provider_platform_interface//:path_provider_platform_interface",
+        "@pub_path_provider_windows//:path_provider_windows",
+        "@pub_platform//:platform",
+        "@pub_plugin_platform_interface//:plugin_platform_interface",
+        "@pub_protobuf//:protobuf",
+        "@pub_riverpod//:riverpod",
+        "@pub_shared_preferences_android//:shared_preferences_android",
+        "@pub_shared_preferences_foundation//:shared_preferences_foundation",
+        "@pub_shared_preferences_linux//:shared_preferences_linux",
+        "@pub_shared_preferences_platform_interface//:shared_preferences_platform_interface",
+        "@pub_shared_preferences_web//:shared_preferences_web",
+        "@pub_shared_preferences_windows//:shared_preferences_windows",
+        "@pub_source_span//:source_span",
+        "@pub_stack_trace//:stack_trace",
+        "@pub_state_notifier//:state_notifier",
+        "@pub_stream_channel//:stream_channel",
+        "@pub_string_scanner//:string_scanner",
+        "@pub_term_glyph//:term_glyph",
+        "@pub_test_api//:test_api",
+        "@pub_typed_data//:typed_data",
+        "@pub_vector_math//:vector_math",
+        "@pub_vm_service//:vm_service",
+        "@pub_web//:web",
+        "@pub_xdg_directories//:xdg_directories",
+    ],
 )
 
 # ── Layout / structure test (no Flutter required) ─────────────────────────────
@@ -25,152 +101,98 @@ sh_test(
     data = [":srcs"],
 )
 
-# ── All-in-one unit test ──────────────────────────────────────────────────────
-# Runs `flutter test` for every file under test/.
-# Gracefully skips when Flutter is not installed.
+# ── Flutter unit tests (hermetic) ─────────────────────────────────────────────
+# Uses the toolchain-downloaded Flutter SDK + pre-fetched pub cache.
+# No host flutter required; no network access during test execution.
 
-sh_test(
+flutter_test(
     name = "app_unit_test",
-    srcs = ["tests/flutter_unit_test.sh"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = glob(["test/**"]),
+    embed = [":app_lib"],
+    test_files = ["test/"],
 )
 
-# ── Per-file targets for improved Bazel caching ──────────────────────────────
-# A change to one model only invalidates that model's test target, not the
-# whole suite.  Pattern mirrors //srcs/frontend:frontend_api_test etc.
-
-sh_test(
+flutter_test(
     name = "app_agent_model_test",
-    srcs = ["tests/flutter_single_test.sh"],
-    args = ["test/agent_model_test.dart"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = ["test/agent_model_test.dart"],
+    embed = [":app_lib"],
+    test_files = ["test/agent_model_test.dart"],
 )
 
-sh_test(
+flutter_test(
     name = "app_ai_provider_model_test",
-    srcs = ["tests/flutter_single_test.sh"],
-    args = ["test/ai_provider_model_test.dart"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = ["test/ai_provider_model_test.dart"],
+    embed = [":app_lib"],
+    test_files = ["test/ai_provider_model_test.dart"],
 )
 
-sh_test(
+flutter_test(
     name = "app_channel_model_test",
-    srcs = ["tests/flutter_single_test.sh"],
-    args = ["test/channel_model_test.dart"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = ["test/channel_model_test.dart"],
+    embed = [":app_lib"],
+    test_files = ["test/channel_model_test.dart"],
 )
 
-sh_test(
+flutter_test(
     name = "app_skill_model_test",
-    srcs = ["tests/flutter_single_test.sh"],
-    args = ["test/skill_model_test.dart"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = ["test/skill_model_test.dart"],
+    embed = [":app_lib"],
+    test_files = ["test/skill_model_test.dart"],
 )
 
-sh_test(
+flutter_test(
     name = "app_security_issue_model_test",
-    srcs = ["tests/flutter_single_test.sh"],
-    args = ["test/security_issue_model_test.dart"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = ["test/security_issue_model_test.dart"],
+    embed = [":app_lib"],
+    test_files = ["test/security_issue_model_test.dart"],
 )
 
-sh_test(
+flutter_test(
     name = "app_auth_service_test",
-    srcs = ["tests/flutter_single_test.sh"],
-    args = ["test/auth_service_test.dart"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = ["test/auth_service_test.dart"],
+    embed = [":app_lib"],
+    test_files = ["test/auth_service_test.dart"],
 )
 
-sh_test(
+flutter_test(
     name = "app_api_service_test",
-    srcs = ["tests/flutter_single_test.sh"],
-    args = ["test/api_service_test.dart"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = ["test/api_service_test.dart"],
+    embed = [":app_lib"],
+    test_files = ["test/api_service_test.dart"],
 )
 
-sh_test(
+flutter_test(
     name = "app_centrifuge_service_test",
-    srcs = ["tests/flutter_single_test.sh"],
-    args = ["test/centrifuge_service_test.dart"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = ["test/centrifuge_service_test.dart"],
+    embed = [":app_lib"],
+    test_files = ["test/centrifuge_service_test.dart"],
 )
 
-sh_test(
+flutter_test(
     name = "app_centrifuge_service_full_test",
-    srcs = ["tests/flutter_single_test.sh"],
-    args = ["test/centrifuge_service_full_test.dart"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = ["test/centrifuge_service_full_test.dart"],
+    embed = [":app_lib"],
+    test_files = ["test/centrifuge_service_full_test.dart"],
 )
 
-sh_test(
+flutter_test(
     name = "app_widget_test",
-    srcs = ["tests/flutter_single_test.sh"],
-    args = ["test/widget_test.dart"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = ["test/widget_test.dart"],
+    embed = [":app_lib"],
+    test_files = ["test/widget_test.dart"],
 )
 
-sh_test(
+flutter_test(
     name = "app_advanced_widget_test",
-    srcs = ["tests/flutter_single_test.sh"],
-    args = ["test/advanced_widget_test.dart"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = ["test/advanced_widget_test.dart"],
+    embed = [":app_lib"],
+    test_files = ["test/advanced_widget_test.dart"],
 )
 
-sh_test(
+flutter_test(
     name = "app_widget_interactions_test",
-    srcs = ["tests/flutter_single_test.sh"],
-    args = ["test/widget_interactions_test.dart"],
-    data = [":srcs"],
-    tags = [
-        "no-remote-exec",
-        "requires-network",
-    ],
+    srcs = ["test/widget_interactions_test.dart"],
+    embed = [":app_lib"],
+    test_files = ["test/widget_interactions_test.dart"],
 )
+

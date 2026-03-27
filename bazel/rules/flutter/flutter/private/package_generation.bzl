@@ -45,8 +45,13 @@ def _ensure_pub_deps(repository_ctx, package_name, package_dir):
 
     command, tool = _find_pub_command(repository_ctx)
     if not command:
-        fail("""Unable to locate a Dart or Flutter executable while preparing '{}' to run `pub deps --json`.
-Install Flutter or Dart on PATH, or check in pub_deps.json for this package.""".format(package_name))
+        # Flutter/Dart not found on PATH. Fall back to pubspec.yaml-based
+        # dependency generation so the build can proceed without a host SDK.
+        # The BUILD actions themselves use the hermetic toolchain flutter binary.
+        repository_ctx.report_progress(
+            "Flutter/Dart not found for {}; falling back to pubspec.yaml deps".format(package_name),
+        )
+        return False
 
     workdir = str(repository_ctx.path(package_dir if package_dir not in (".", "") else "."))
     run_env = {
@@ -477,6 +482,11 @@ def _sanitize_repo_name(pkg):
     return "".join(pieces)
 
 def _sdk_dep_label(package_dir, pkg, sdk_repo):
+    # When sdk_repo is empty (e.g. pub_dev_repository without explicit sdk_repo),
+    # skip SDK dep labels to avoid invalid repository-relative references.
+    if not sdk_repo:
+        return None
+
     path = _sdk_package_path(pkg)
     if not path:
         return None

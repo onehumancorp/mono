@@ -1,0 +1,3 @@
+# Plugin and rule infrastructure for protobuf TypeScript generation
+
+exports_files(["protoc-gen-es.js"])

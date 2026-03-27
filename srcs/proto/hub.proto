@@ -4,7 +4,6 @@ package ohc.orchestration;
 
 
 option go_package = "github.com/onehumancorp/mono/srcs/proto;orchestrationpb";
-// OPAQUE API is default for edition 2024
 
 message Agent {
   string id = 1;

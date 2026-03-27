@@ -1,6 +1,6 @@
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@rules_go//proto:def.bzl", "go_proto_library")
-load("@aspect_rules_js//js:defs.bzl", "js_library")
+load("//bazel/rules:proto_ts_library.bzl", "proto_ts_library")
 
 proto_library(
     name = "hub_proto",
@@ -16,31 +16,8 @@ go_proto_library(
     visibility = ["//visibility:public"],
 )
 
-# Hermetic TS generation using @bufbuild/protoc-gen-es
-genrule(
-    name = "hub_ts_proto_gen",
-    srcs = [
-        "hub.proto",
-    ],
-    outs = ["hub_pb.ts"],
-    cmd = """
-        export PATH=$$PATH:$$(dirname $(location @nodejs//:node_bin)) && \
-        ./$(location @protobuf//:protoc) \
-        --plugin=protoc-gen-es=node_modules/.bin/protoc-gen-es \
-        --es_out=$(RULEDIR) \
-        --es_opt=target=ts \
-        $(location hub.proto) && \
-        find $(RULEDIR) -name "*hub_pb.ts" -exec mv {} $(RULEDIR)/hub_pb.ts \\;
-    """,
-    tools = [
-        "@protobuf//:protoc",
-        "@nodejs//:node_bin",
-    ],
-    tags = ["no-sandbox"],
-)
-
-js_library(
+proto_ts_library(
     name = "proto_types_ts",
-    srcs = ["hub_pb.ts"],
+    protos = ":hub_proto",
     visibility = ["//visibility:public"],
 )

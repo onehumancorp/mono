@@ -16,7 +16,86 @@ bazel_dep(name = "rules_oci", version = "2.2.0")
 bazel_dep(name = "aspect_bazel_lib", version = "2.22.5")
 bazel_dep(name = "rules_nodejs", version = "6.7.3")
 bazel_dep(name = "aspect_rules_js", version = "3.0.3")
-bazel_dep(name = "rules_proto_grpc_go", version = "5.8.0")
+
+# ── Flutter rules (vendored fork) ─────────────────────────────────────────────
+bazel_dep(name = "rules_flutter", version = "0.0.0")
+
+local_path_override(
+    module_name = "rules_flutter",
+    path = "bazel/rules/flutter",
+)
+
+flutter = use_extension("@rules_flutter//flutter:extensions.bzl", "flutter")
+flutter.toolchain(flutter_version = "3.29.3")
+use_repo(
+    flutter,
+    "flutter_sdk",
+    "flutter_toolchains",
+)
+
+register_toolchains("@flutter_toolchains//:all")
+
+pub = use_extension("@rules_flutter//flutter:extensions.bzl", "pub")
+use_repo(
+    pub,
+    "pub_async",
+    "pub_boolean_selector",
+    "pub_centrifuge",
+    "pub_characters",
+    "pub_clock",
+    "pub_collection",
+    "pub_crypto",
+    "pub_cupertino_icons",
+    "pub_fake_async",
+    "pub_ffi",
+    "pub_file",
+    "pub_fixnum",
+    "pub_flutter_lints",
+    "pub_flutter_riverpod",
+    "pub_go_router",
+    "pub_http",
+    "pub_http_parser",
+    "pub_intl",
+    "pub_leak_tracker",
+    "pub_leak_tracker_flutter_testing",
+    "pub_leak_tracker_testing",
+    "pub_lints",
+    "pub_logging",
+    "pub_matcher",
+    "pub_material_color_utilities",
+    "pub_meta",
+    "pub_mocktail",
+    "pub_path",
+    "pub_path_provider_linux",
+    "pub_path_provider_platform_interface",
+    "pub_path_provider_windows",
+    "pub_platform",
+    "pub_plugin_platform_interface",
+    "pub_protobuf",
+    "pub_riverpod",
+    "pub_shared_preferences",
+    "pub_shared_preferences_android",
+    "pub_shared_preferences_foundation",
+    "pub_shared_preferences_linux",
+    "pub_shared_preferences_platform_interface",
+    "pub_shared_preferences_web",
+    "pub_shared_preferences_windows",
+    "pub_source_span",
+    "pub_stack_trace",
+    "pub_state_notifier",
+    "pub_stream_channel",
+    "pub_string_scanner",
+    "pub_term_glyph",
+    "pub_test_api",
+    "pub_typed_data",
+    "pub_uuid",
+    "pub_vector_math",
+    "pub_vm_service",
+    "pub_web",
+    "pub_web_socket_channel",
+    "pub_xdg_directories",
+)
+# ─────────────────────────────────────────────────────────────────────────────
 
 node = use_extension("@rules_nodejs//nodejs:extensions.bzl", "node")
 node.toolchain(node_version = "23.6.0")
