@@ -7,16 +7,16 @@ go_library(
         "language.go",
         "resolve.go",
     ],
-    importpath = "github.com/spencerconnaughton/rules_flutter/gazelle/dartproto",
+    importpath = "github.com/onehumancorp/mono/bazel/rules/flutter/gazelle/dartproto",
     visibility = ["//visibility:public"],
     deps = [
-        "//gazelle/flutter",
-        "@bazel_gazelle//config",
-        "@bazel_gazelle//label",
-        "@bazel_gazelle//language",
-        "@bazel_gazelle//repo",
-        "@bazel_gazelle//resolve",
-        "@bazel_gazelle//rule",
+        "@gazelle//config",
+        "@gazelle//label",
+        "@gazelle//language",
+        "@gazelle//repo",
+        "@gazelle//resolve",
+        "@gazelle//rule",
+        "@rules_flutter//flutter",
     ],
 )
 
@@ -24,4 +24,10 @@ go_test(
     name = "dartproto_test",
     srcs = ["generate_test.go"],
     embed = [":dartproto"],
+    deps = [
+        "@gazelle//config",
+        "@gazelle//language",
+        "@gazelle//rule",
+        "@rules_flutter//flutter",
+    ],
 )

@@ -195,4 +195,3 @@ flutter_test(
     embed = [":app_lib"],
     test_files = ["test/widget_interactions_test.dart"],
 )
-

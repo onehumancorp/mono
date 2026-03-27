@@ -1,8 +1,10 @@
 load("@gazelle//:def.bzl", "gazelle")
-load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@npm//:defs.bzl", "npm_link_all_packages")
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 npm_link_all_packages(name = "node_modules")
+
 exports_files(["tsconfig.json"])
 
 # gazelle:prefix github.com/onehumancorp/mono
@@ -53,4 +55,18 @@ alias(
 alias(
     name = "hello-world",
     actual = "//examples/hello-world-agent:hello-world-agent",
+)
+
+go_library(
+    name = "mono_lib",
+    srcs = ["patch_sip.go"],
+    importpath = "github.com/onehumancorp/mono",
+    visibility = ["//visibility:private"],
+    deps = ["//srcs/orchestration"],
+)
+
+go_binary(
+    name = "mono",
+    embed = [":mono_lib"],
+    visibility = ["//visibility:public"],
 )
