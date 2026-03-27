@@ -3,6 +3,7 @@ package orchestration
 import (
 	"context"
 	"testing"
+	"path/filepath"
 )
 
 func TestSIPDB_Init(t *testing.T) {
@@ -64,5 +65,207 @@ func TestSIPDB_Init(t *testing.T) {
 	}
 	if len(missions) != 0 {
 		t.Fatalf("expected 0 missions, got %d", len(missions))
+	}
+}
+
+func TestSIPDB_NewSIPDB_Fail(t *testing.T) {
+	// Attempt to create a database on a read-only directory to trigger an error.
+	// We'll just provide a path we know will fail SQLite open.
+	_, err := NewSIPDB("/root/illegal/path/db.sqlite")
+	if err == nil {
+		t.Fatal("Expected error when opening DB in illegal path")
+	}
+}
+
+func TestSIPDB_PollMissions_ScanError(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	defer db.Close()
+
+	// Insert invalid schema data manually to cause a row scan error.
+	// Since we can't easily break the type in sqlite (it's dynamically typed),
+	// this one is hard to hit purely through SQLite without mocking the DB connection.
+	// Instead, we focus on the Unmarshal error line 150-151.
+
+	// Manually insert bad JSON
+	ctx := context.Background()
+	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status) VALUES ('123', 'SOFTWARE_ENGINEER', 'invalid-json', 'PENDING')")
+	if err != nil {
+		t.Fatalf("Failed to insert bad json: %v", err)
+	}
+
+	missions, err := db.GetPendingMissions(ctx, "SOFTWARE_ENGINEER")
+	if err != nil {
+		t.Fatalf("Expected fallback to message string on JSON unmarshal error, got error: %v", err)
+	}
+
+	if len(missions) != 1 {
+		t.Fatalf("Expected 1 mission, got %d", len(missions))
+	}
+
+	if missions[0].Content != "invalid-json" {
+		t.Fatalf("Expected content 'invalid-json', got %s", missions[0].Content)
+	}
+}
+
+func TestSIPDB_CompleteMission_RowsAffectedError(t *testing.T) {
+	// We can't easily trigger RowsAffected() error with go-sqlite3 normally,
+	// but let's at least test the "mission not found" path.
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	defer db.Close()
+
+	err = db.CompleteMission(context.Background(), "non-existent")
+	if err == nil || err.Error() != "mission not found" {
+		t.Fatalf("Expected 'mission not found' error, got %v", err)
+	}
+}
+
+func TestSIPDB_GetPendingMissions_BadData(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status) VALUES ('123', 'SOFTWARE_ENGINEER', 'invalid-json', 'PENDING')")
+	if err != nil {
+		t.Fatalf("Failed to insert bad json: %v", err)
+	}
+
+	// Ensure we handle invalid JSON in GetPendingMissions without blowing up completely
+	missions, err := db.GetPendingMissions(ctx, "SOFTWARE_ENGINEER")
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if len(missions) != 1 {
+		t.Fatalf("Expected 1 mission, got %d", len(missions))
+	}
+
+	if missions[0].Content != "invalid-json" {
+		t.Fatalf("Expected content to be 'invalid-json' fallback, got: %s", missions[0].Content)
+	}
+}
+
+func TestSIPDB_CompleteMission_ExecError(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	defer db.Close()
+
+	// drop table to cause error
+	_, err = db.db.ExecContext(context.Background(), "DROP TABLE agent_missions")
+	if err != nil {
+		t.Fatalf("Failed to drop table: %v", err)
+	}
+
+	err = db.CompleteMission(context.Background(), "some-id")
+	if err == nil {
+		t.Fatal("Expected error updating missing table")
+	}
+}
+
+func TestSIPDB_CompleteMission_ExecErrorAgain(t *testing.T) {
+	// Let's create a test that calls CompleteMission on a closed DB
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	db.Close()
+
+	err = db.CompleteMission(context.Background(), "some-id")
+	if err == nil {
+		t.Fatal("Expected error updating on closed DB")
+	}
+}
+
+func TestSIPDB_GetPendingMissions_DBError(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	db.Close()
+
+	_, err = db.GetPendingMissions(context.Background(), "role")
+	if err == nil {
+		t.Fatal("Expected error querying closed DB")
+	}
+}
+
+func TestSIPDB_UpdateMemory_DBError(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	db.Close()
+
+	err = db.UpdateMemory(context.Background(), "key", "val")
+	if err == nil {
+		t.Fatal("Expected error querying closed DB")
+	}
+}
+
+func TestSIPDB_SyncMemory_DBError(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	db.Close()
+
+	_, err = db.SyncMemory(context.Background(), "key")
+	if err == nil {
+		t.Fatal("Expected error querying closed DB")
+	}
+}
+
+func TestSIPDB_Heartbeat_DBError(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	db.Close()
+
+	err = db.Heartbeat(context.Background(), "agent", "role", "status")
+	if err == nil {
+		t.Fatal("Expected error querying closed DB")
+	}
+}
+
+func TestSIPDB_DelegateMission_DBError(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	db.Close()
+
+	err = db.DelegateMission(context.Background(), "mission", "role", Message{})
+	if err == nil {
+		t.Fatal("Expected error querying closed DB")
+	}
+}
+
+
+func TestSIPDB_InitTables_InvalidDBDir(t *testing.T) {
+	dbPath := t.TempDir()
+	_, err := NewSIPDB(dbPath)
+	if err == nil {
+		t.Fatal("Expected error initializing tables when path is a directory")
 	}
 }

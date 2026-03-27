@@ -154,3 +154,120 @@ func TestTenantRegistry_AuthenticatedWithoutOrgGetsForbidden(t *testing.T) {
 	}
 }
 
+
+func TestTenantRegistry_ServeHTTP_Fallback(t *testing.T) {
+	// Test the fallback to first registered tenant for unauthenticated requests
+	reg := newTestRegistry()
+	// "/api/auth/login" is a valid public route, so we expect 405 Method Not Allowed or 400 Bad Request
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/login", nil)
+	rr := httptest.NewRecorder()
+	reg.ServeHTTP(rr, req)
+	// Fallback hits a tenant, the tenant auth middleware intercepts if it's not a public route.
+	// Since "/api/auth/login" is public, the tenant's router will handle it.
+	// Since we send a GET request to a POST endpoint, we expect 405 Method Not Allowed.
+	if rr.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405 Method Not Allowed for public route, got %d", rr.Code)
+	}
+
+	// Test fallback when no tenants are registered
+	regEmpty := NewTenantRegistry(sharedAuthStore, nil)
+	reqEmpty := httptest.NewRequest(http.MethodGet, "/api/auth/login", nil)
+	rrEmpty := httptest.NewRecorder()
+	regEmpty.ServeHTTP(rrEmpty, reqEmpty)
+	if rrEmpty.Code != http.StatusServiceUnavailable {
+		t.Errorf("expected 503 Service Unavailable, got %d", rrEmpty.Code)
+	}
+}
+
+func TestTenantRegistry_HandleOrgRegister_InvalidMethod(t *testing.T) {
+	reg := NewTenantRegistry(sharedAuthStore, nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/orgs/register", nil)
+	rr := httptest.NewRecorder()
+	reg.HandleOrgRegister(rr, req)
+	if rr.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected 405 Method Not Allowed, got %d", rr.Code)
+	}
+}
+
+func TestTenantRegistry_HandleOrgRegister_NoAdminRole(t *testing.T) {
+	reg := NewTenantRegistry(sharedAuthStore, nil)
+	// Create context with claims but NO admin role
+	ctx := context.WithValue(context.Background(), auth.ClaimsContextKeyForTest, &auth.Claims{
+		Subject:        "user-1",
+		OrganizationID: "org-1",
+		Roles:          []string{"user"},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/orgs/register", strings.NewReader("{}")).WithContext(ctx)
+	rr := httptest.NewRecorder()
+	reg.HandleOrgRegister(rr, req)
+	if rr.Code != http.StatusForbidden {
+		t.Errorf("expected 403 Forbidden, got %d", rr.Code)
+	}
+}
+
+func TestTenantRegistry_HandleOrgRegister_InvalidJSON(t *testing.T) {
+	reg := NewTenantRegistry(sharedAuthStore, nil)
+	ctx := claimsCtx("sys") // has admin role
+	req := httptest.NewRequest(http.MethodPost, "/api/orgs/register", strings.NewReader("invalid-json")).WithContext(ctx)
+	rr := httptest.NewRecorder()
+	reg.HandleOrgRegister(rr, req)
+	if rr.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 Bad Request, got %d", rr.Code)
+	}
+}
+
+func TestTenantRegistry_HandleOrgRegister_MissingFields(t *testing.T) {
+	reg := NewTenantRegistry(sharedAuthStore, nil)
+	ctx := claimsCtx("sys") // has admin role
+	req := httptest.NewRequest(http.MethodPost, "/api/orgs/register", strings.NewReader(`{"id": "test"}`)).WithContext(ctx)
+	rr := httptest.NewRecorder()
+	reg.HandleOrgRegister(rr, req)
+	if rr.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 Bad Request for missing name, got %d", rr.Code)
+	}
+
+	req2 := httptest.NewRequest(http.MethodPost, "/api/orgs/register", strings.NewReader(`{"name": "test"}`)).WithContext(ctx)
+	rr2 := httptest.NewRecorder()
+	reg.HandleOrgRegister(rr2, req2)
+	if rr2.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 Bad Request for missing id, got %d", rr2.Code)
+	}
+}
+
+func TestTenantRegistry_HandleOrgList(t *testing.T) {
+	reg := newTestRegistry()
+	ctx := claimsCtx("sys") // has admin role
+	req := httptest.NewRequest(http.MethodGet, "/api/orgs", nil).WithContext(ctx)
+	rr := httptest.NewRecorder()
+	reg.HandleOrgList(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("expected 200 OK, got %d", rr.Code)
+	}
+	body := rr.Body.String()
+	if !strings.Contains(body, "org-a") || !strings.Contains(body, "org-b") {
+		t.Errorf("expected response to contain org-a and org-b, got: %s", body)
+	}
+}
+
+func TestTenantRegistry_HandleOrgList_NoAdminRole(t *testing.T) {
+	reg := newTestRegistry()
+	ctx := context.WithValue(context.Background(), auth.ClaimsContextKeyForTest, &auth.Claims{
+		Subject:        "user-1",
+		OrganizationID: "org-1",
+		Roles:          []string{"user"},
+	})
+	req := httptest.NewRequest(http.MethodGet, "/api/orgs", nil).WithContext(ctx)
+	rr := httptest.NewRecorder()
+	reg.HandleOrgList(rr, req)
+	if rr.Code != http.StatusForbidden {
+		t.Errorf("expected 403 Forbidden, got %d", rr.Code)
+	}
+}
+
+func TestNewMultiTenantServer(t *testing.T) {
+	handler := NewMultiTenantServer(sharedAuthStore, nil)
+	if handler == nil {
+		t.Fatal("expected NewMultiTenantServer to return a valid handler")
+	}
+}
