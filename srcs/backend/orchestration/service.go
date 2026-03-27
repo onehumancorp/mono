@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/onehumancorp/mono/srcs/proto/orchestration"
 	"github.com/onehumancorp/mono/srcs/backend/telemetry"
+	pb "github.com/onehumancorp/mono/srcs/proto/orchestration"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
