@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration"
+	pb "github.com/onehumancorp/mono/srcs/proto"
 )
 
 // ExtractSPIFFEID gets the SPIFFE ID from the context.

@@ -1,0 +1,26 @@
+load("@bazel_gazelle//:def.bzl", "gazelle", "gazelle_binary")
+load("@rules_go//go:def.bzl", "nogo")
+
+gazelle_binary(
+    name = "gazelle_bin",
+    languages = [
+        "@bazel_skylib_gazelle_plugin//bzl",
+        "//gazelle/flutter",
+    ],
+)
+
+gazelle(
+    name = "gazelle",
+    gazelle = "gazelle_bin",
+)
+
+nogo(
+    name = "ggx_nogo",
+    vet = True,
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "go",
+    actual = "@rules_go//go",
+)

@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration"
+	pb "github.com/onehumancorp/mono/srcs/proto"
 	"github.com/onehumancorp/mono/srcs/scheduler"
 	"github.com/onehumancorp/mono/srcs/settings"
 	"github.com/onehumancorp/mono/srcs/telemetry"
@@ -328,11 +328,15 @@ func (h *Hub) LogEvent(event interface{}) {
 // TokenEfficientContextSummarization securely processes token efficient context summarization.
 //
 // Parameters:
+//
 //   - eventID: string; Unique event identifier.
+//
 //   - agentID: string; Identifier of the invoking agent.
+//
 //   - payload: []byte; The operation payload containing specific context instructions.
 //
 //   - error: Error object if validation or processing fails.
+//
 // Accepts parameters: h *Hub (No Constraints).
 // Returns TokenEfficientContextSummarization(eventID, agentID string, payload []byte) error.
 // Produces errors: Explicit error handling.
@@ -381,11 +385,15 @@ func (h *Hub) TokenEfficientContextSummarization(eventID, agentID string, payloa
 // ToolParameterAutoCorrection securely processes tool parameter auto-correction.
 //
 // Parameters:
+//
 //   - eventID: string; Unique event identifier.
+//
 //   - agentID: string; Identifier of the invoking agent.
+//
 //   - payload: []byte; The operation payload containing tool parameters.
 //
 //   - error: Error object if validation or processing fails.
+//
 // Accepts parameters: h *Hub (No Constraints).
 // Returns ToolParameterAutoCorrection(eventID, agentID string, payload []byte) error.
 // Produces errors: Explicit error handling.

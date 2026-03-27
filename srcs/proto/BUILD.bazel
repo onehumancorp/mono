@@ -1,109 +1,46 @@
-load("@protobuf//bazel:proto_library.bzl", "proto_library")
-load("@rules_go//go:def.bzl", "go_library")
-
-proto_library(
-    name = "common_proto",
-    srcs = ["common.proto"],
-    visibility = ["//visibility:public"],
-    deps = ["@protobuf//:go_features_proto"],
-)
-
-proto_library(
-    name = "agent_proto",
-    srcs = ["agent.proto"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":common_proto",
-        "@protobuf//:go_features_proto",
-    ],
-)
-
-proto_library(
-    name = "organization_proto",
-    srcs = ["organization.proto"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":common_proto",
-        "@protobuf//:go_features_proto",
-    ],
-)
-
-proto_library(
-    name = "billing_proto",
-    srcs = ["billing.proto"],
-    visibility = ["//visibility:public"],
-    deps = ["@protobuf//:go_features_proto"],
-)
-
-proto_library(
-    name = "skills_proto",
-    srcs = ["skills.proto"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":common_proto",
-        "@protobuf//:go_features_proto",
-    ],
-)
-
-proto_library(
-    name = "app_proto",
-    srcs = ["app.proto"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":agent_proto",
-        ":billing_proto",
-        ":organization_proto",
-        ":skills_proto",
-        "@protobuf//:go_features_proto",
-    ],
-)
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_go//proto:def.bzl", "go_proto_library")
+load("@aspect_rules_js//js:defs.bzl", "js_library")
 
 proto_library(
     name = "hub_proto",
     srcs = ["hub.proto"],
     visibility = ["//visibility:public"],
-    deps = ["@protobuf//:go_features_proto"],
 )
 
-# hub_go_proto uses the hand-crafted stub in ohc/orchestration/hub.pb.go
-# (edition 2024 is not yet supported by the bundled protoc-gen-go version).
-go_library(
+go_proto_library(
     name = "hub_go_proto",
-    srcs = ["ohc/orchestration/hub.pb.go"],
-    importpath = "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration",
+    compilers = ["@rules_go//proto:go_grpc"],
+    importpath = "github.com/onehumancorp/mono/srcs/proto",
+    protos = [":hub_proto"],
     visibility = ["//visibility:public"],
-    deps = [
-        "@org_golang_google_grpc//:grpc",
-        "@org_golang_google_grpc//codes",
-        "@org_golang_google_grpc//status",
-    ],
 )
 
-exports_files([
-    "app.proto",
-    "agent.proto",
-    "billing.proto",
-    "common.proto",
-    "organization.proto",
-    "hub.proto",
-    "skills.proto",
-])
-
-# Generate TypeScript type definitions from all proto files.
-# The output is consumed by the frontend build and is NOT stored in the repo.
+# Hermetic TS generation using @bufbuild/protoc-gen-es
 genrule(
-    name = "proto_types_ts",
+    name = "hub_ts_proto_gen",
     srcs = [
-        "common.proto",
-        "agent.proto",
-        "organization.proto",
-        "billing.proto",
         "hub.proto",
-        "app.proto",
-        "skills.proto",
     ],
-    outs = ["proto_types.ts"],
-    cmd = "$(location //srcs/proto/cmd/gen_ts) $(SRCS) > $@",
-    tools = ["//srcs/proto/cmd/gen_ts"],
+    outs = ["hub_pb.ts"],
+    cmd = """
+        export PATH=$$PATH:$$(dirname $(location @nodejs//:node_bin)) && \
+        ./$(location @protobuf//:protoc) \
+        --plugin=protoc-gen-es=node_modules/.bin/protoc-gen-es \
+        --es_out=$(RULEDIR) \
+        --es_opt=target=ts \
+        $(location hub.proto) && \
+        find $(RULEDIR) -name "*hub_pb.ts" -exec mv {} $(RULEDIR)/hub_pb.ts \\;
+    """,
+    tools = [
+        "@protobuf//:protoc",
+        "@nodejs//:node_bin",
+    ],
+    tags = ["no-sandbox"],
+)
+
+js_library(
+    name = "proto_types_ts",
+    srcs = ["hub_pb.ts"],
     visibility = ["//visibility:public"],
 )

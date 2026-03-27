@@ -1,6 +1,6 @@
 load("@rules_go//go:def.bzl", "go_library", "go_test")
 
-# gazelle:resolve go github.com/onehumancorp/mono/srcs/proto/ohc/orchestration //srcs/proto:hub_go_proto
+# gazelle:resolve go github.com/onehumancorp/mono/srcs/proto //srcs/proto:hub_go_proto
 
 go_library(
     name = "orchestration",

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/onehumancorp/mono/srcs/proto/ohc/orchestration"
+	pb "github.com/onehumancorp/mono/srcs/proto"
 	"google.golang.org/grpc"
 )
 
