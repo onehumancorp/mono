@@ -35,8 +35,8 @@ func BenchmarkStreamLatency(b *testing.B) {
 	hub := NewHub()
 	srv := NewHubServiceServer(hub)
 
-	hub.RegisterAgent(Agent{ID: "agent1", Status: proto.String(StatusIdle)})
-	hub.RegisterAgent(Agent{ID: "agent2", Status: proto.String(StatusIdle)})
+	hub.RegisterAgent(Agent{ID: "agent1", Status: StatusIdle})
+	hub.RegisterAgent(Agent{ID: "agent2", Status: StatusIdle})
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -55,10 +55,10 @@ func BenchmarkStreamLatency(b *testing.B) {
 
 	msg := Message{
 		ID:         "msg1",
-		FromAgent:  proto.String("agent1"),
-		ToAgent:    proto.String("agent2"),
-		Type:       proto.String("test"),
-		Content:    proto.String("hello"),
+		FromAgent:  "agent1",
+		ToAgent:    "agent2",
+		Type:       "test",
+		Content:    "hello",
 		OccurredAt: time.Now(),
 	}
 
@@ -73,17 +73,17 @@ func BenchmarkPublish_Concurrent(b *testing.B) {
 	hub := NewHub()
 	numAgents := 100
 	for i := 0; i < numAgents; i++ {
-		hub.RegisterAgent(Agent{ID: fmt.Sprintf("agent%d", i), Status: proto.String(StatusIdle)})
+		hub.RegisterAgent(Agent{ID: fmt.Sprintf("agent%d", i), Status: StatusIdle})
 	}
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		msg := Message{
 			ID:         "msg1",
-			FromAgent:  proto.String("agent1"),
-			ToAgent:    proto.String("agent2"),
-			Type:       proto.String("test"),
-			Content:    proto.String("hello"),
+			FromAgent:  "agent1",
+			ToAgent:    "agent2",
+			Type:       "test",
+			Content:    "hello",
 			OccurredAt: time.Now(),
 		}
 		for pb.Next() {
@@ -94,14 +94,14 @@ func BenchmarkPublish_Concurrent(b *testing.B) {
 
 func BenchmarkInbox(b *testing.B) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "agent1", Status: proto.String(StatusIdle)})
+	hub.RegisterAgent(Agent{ID: "agent1", Status: StatusIdle})
 
 	msg := Message{
 		ID:         "msg1",
-		FromAgent:  proto.String("agent1"),
-		ToAgent:    proto.String("agent1"),
-		Type:       proto.String("test"),
-		Content:    proto.String("hello"),
+		FromAgent:  "agent1",
+		ToAgent:    "agent1",
+		Type:       "test",
+		Content:    "hello",
 		OccurredAt: time.Now(),
 	}
 

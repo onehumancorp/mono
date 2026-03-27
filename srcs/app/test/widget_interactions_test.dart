@@ -43,7 +43,7 @@ void main() {
     test('build returns null when no token in prefs', () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer(overrides: [
-        backendUrlProvider.overrideWithValue('http://localhost'),
+        backendUrlProvider.overrideWith((ref) => 'http://localhost'),
       ]);
       addTearDown(container.dispose);
 
@@ -56,7 +56,7 @@ void main() {
       SharedPreferences.setMockInitialValues({'flutter.auth_token': 'bad-tok'});
       final container = ProviderContainer(overrides: [
         backendUrlProvider
-            .overrideWithValue('http://127.0.0.1:1'), // unreachable
+            .overrideWith((ref) => 'http://127.0.0.1:1'), // unreachable
       ]);
       addTearDown(container.dispose);
 
@@ -86,7 +86,7 @@ void main() {
           ));
 
       final container = ProviderContainer(overrides: [
-        backendUrlProvider.overrideWithValue('http://localhost'),
+        backendUrlProvider.overrideWith((ref) => 'http://localhost'),
         authServiceProvider.overrideWithValue(
             AuthService(baseUrl: 'http://localhost', client: mockClient)),
       ]);
@@ -121,7 +121,7 @@ void main() {
           ));
 
       final container = ProviderContainer(overrides: [
-        backendUrlProvider.overrideWithValue('http://localhost'),
+        backendUrlProvider.overrideWith((ref) => 'http://localhost'),
         authServiceProvider.overrideWithValue(
             AuthService(baseUrl: 'http://localhost', client: mockClient)),
       ]);
@@ -137,7 +137,7 @@ void main() {
     test('logout with no user still clears state', () async {
       SharedPreferences.setMockInitialValues({});
       final container = ProviderContainer(overrides: [
-        backendUrlProvider.overrideWithValue('http://localhost'),
+        backendUrlProvider.overrideWith((ref) => 'http://localhost'),
       ]);
       addTearDown(container.dispose);
 

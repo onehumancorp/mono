@@ -2,10 +2,10 @@ package orchestration
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
-	"fmt"
 
 	pb "github.com/onehumancorp/mono/srcs/proto"
 	"google.golang.org/grpc/codes"
@@ -70,10 +70,10 @@ func TestDelegateSubTask_QuotaExhaustion(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		hub.RegisterAgent(Agent{
 			ID:             fmt.Sprintf("filler-%d", i),
-			Name:           proto.String("Filler Agent"),
-			Role:           proto.String("FILLER"),
+			Name:           "Filler Agent",
+			Role:           "FILLER",
 			OrganizationID: "org-1",
-			Status:         proto.String(StatusIdle),
+			Status:         StatusIdle,
 		})
 	}
 
