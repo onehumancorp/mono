@@ -49,3 +49,21 @@ jobs:
             --disk_cache="$BAZEL_DISK_CACHE" \
             --repository_cache="$BAZEL_REPOSITORY_CACHE" \
             --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY
+
+  # This job is the REQUIRED STATUS CHECK to configure in branch protection.
+  # It always runs and fails if bazel-test was skipped, cancelled, or failed,
+  # ensuring PRs cannot be merged when CI did not fully pass.
+  ci-required:
+    name: CI Required
+    needs: [bazel-test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check bazel-test result
+        run: |
+          result="${{ needs.bazel-test.result }}"
+          echo "bazel-test result: $result"
+          if [[ "$result" != "success" ]]; then
+            echo "::error::bazel-test did not succeed (status: $result). Merging is blocked."
+            exit 1
+          fi
