@@ -6,6 +6,7 @@ go_library(
     name = "orchestration",
     srcs = [
         "auth_interceptor.go",
+        "centrifuge_hub.go",
         "delegation.go",
         "service.go",
         "sip.go",
@@ -17,6 +18,7 @@ go_library(
         "//srcs/scheduler",
         "//srcs/settings",
         "//srcs/telemetry",
+        "@com_github_centrifugal_centrifuge//:centrifuge",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//credentials",
@@ -32,6 +34,7 @@ go_test(
     srcs = [
         "auth_interceptor_test.go",
         "benchmark_test.go",
+        "centrifuge_hub_test.go",
         "delegation_test.go",
         "minimax_client_test.go",
         "service_extra_test.go",

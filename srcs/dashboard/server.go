@@ -534,6 +534,22 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 		_, _ = w.Write([]byte("ok"))
 	})
 	mux.Handle("/metrics", telemetry.MetricsHandler())
+
+	// Centrifuge real-time WebSocket endpoint for Flutter/web clients.
+	// Mounted at /connection/websocket — the default Centrifuge path.
+	cnNode, err := orchestration.NewCentrifugeNode()
+	if err == nil {
+		hub.SetCentrifugeNode(cnNode)
+		mux.Handle("/connection/websocket", cnNode.Handler())
+		slog.Info("centrifuge WebSocket endpoint registered at /connection/websocket")
+	} else {
+		slog.Warn("centrifuge node init failed; real-time WebSocket disabled", "error", err)
+	}
+
+	// Config wizard API endpoints.
+	mux.HandleFunc("/api/wizard/status", server.handleWizardStatus)
+	mux.HandleFunc("/api/wizard/configure", server.handleWizardConfigure)
+
 	return telemetry.Middleware(auth.Middleware(store)(mux))
 }
 

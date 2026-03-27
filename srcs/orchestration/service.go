@@ -248,18 +248,19 @@ type MeetingRoom struct {
 // Produces no errors.
 // Has no side effects.
 type Hub struct {
-	mu            sync.RWMutex
-	agents        map[string]Agent
-	inbox         map[string][]Message
-	meetings      map[string]MeetingRoom
-	minimaxAPIKey string
-	subs          map[string][]chan struct{}
-	sipDB         *SIPDB
-	tokenTrackers map[string]struct{}
-	autoCorTrack  map[string]struct{}
-	eventLogChan  chan interface{}
-	scheduler     *scheduler.Scheduler
-	settingsStore *settings.Store
+	mu             sync.RWMutex
+	agents         map[string]Agent
+	inbox          map[string][]Message
+	meetings       map[string]MeetingRoom
+	minimaxAPIKey  string
+	subs           map[string][]chan struct{}
+	sipDB          *SIPDB
+	tokenTrackers  map[string]struct{}
+	autoCorTrack   map[string]struct{}
+	eventLogChan   chan interface{}
+	scheduler      *scheduler.Scheduler
+	settingsStore  *settings.Store
+	centrifugeNode *CentrifugeNode
 }
 
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
@@ -538,8 +539,22 @@ func (h *Hub) SetSettingsStore(s *settings.Store) {
 	h.settingsStore = s
 }
 
-// Agent retrieves the runtime state of a specific worker by ID.
-//
+// SetCentrifugeNode attaches a CentrifugeNode to the Hub so that every
+// published message is also fanned out to the corresponding Centrifuge
+// channel for real-time client delivery.
+func (h *Hub) SetCentrifugeNode(cn *CentrifugeNode) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.centrifugeNode = cn
+}
+
+// CentrifugeNode returns the currently attached CentrifugeNode (may be nil).
+func (h *Hub) CentrifugeNode() *CentrifugeNode {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.centrifugeNode
+}
+
 //   - id: string; The unique identifier of the agent.
 //
 // Accepts parameters: h *Hub (No Constraints).
@@ -734,6 +749,18 @@ func (h *Hub) Publish(message Message) error {
 		// Structured logging for agent execution traces
 		telemetry.LogAgentExecution(context.Background(), sender.ID, sender.Role, "publish", message.Type, message.Content)
 	}()
+
+	// Forward to Centrifuge for real-time client delivery (non-blocking).
+	if cn := h.centrifugeNode; cn != nil {
+		go func() {
+			if message.MeetingID != "" {
+				cn.PublishMeetingMessage(message.MeetingID, message)
+			}
+			if message.ToAgent != "" {
+				cn.PublishAgentNotification(message.ToAgent, message)
+			}
+		}()
+	}
 
 	return nil
 }

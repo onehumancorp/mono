@@ -86,7 +86,13 @@ def _ensure_pub_deps(repository_ctx, package_name, package_dir):
                 "which doesn't exist" in lower_stderr
             )
         ) or (
-            "from sdk" in lower_stderr and "doesn't match any versions" in lower_stderr
+            "from sdk" in lower_stderr and (
+                "doesn't match any versions" in lower_stderr or
+                "doesn't exist" in lower_stderr
+            )
+        ) or (
+            # Catch-all for SDK version-solving failures (e.g. _macros not in SDK).
+            "version solving failed" in lower_stderr
         ):
             repository_ctx.report_progress(
                 "Skipping pub deps generation for {} due to unsupported dependency source; falling back to pubspec.yaml".format(package_name),

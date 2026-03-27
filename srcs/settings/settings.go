@@ -19,29 +19,32 @@ type AiProvider struct {
 
 // AppSettings represents the global configuration for the OHC platform.
 type AppSettings struct {
-	ListenAddr  string            `json:"listen_addr"`
-	DBPath      string            `json:"db_path,omitempty"`
-	PostgresURL string            `json:"postgres_url,omitempty"`
-	RedisURL    string            `json:"redis_url,omitempty"`
-	AiProviders []AiProvider      `json:"ai_providers"`
-	Extras      map[string]string `json:"extras,omitempty"`
+	ListenAddr    string            `json:"listen_addr"`
+	DBPath        string            `json:"db_path,omitempty"`
+	PostgresURL   string            `json:"postgres_url,omitempty"`
+	RedisURL      string            `json:"redis_url,omitempty"`
+	CentrifugeURL string            `json:"centrifuge_url,omitempty"`
+	MinimaxAPIKey string            `json:"minimax_api_key,omitempty"`
+	AiProviders   []AiProvider      `json:"ai_providers"`
+	Extras        map[string]string `json:"extras,omitempty"`
 }
 
 // DefaultSettings returns the default configuration.
 func DefaultSettings() AppSettings {
 	return AppSettings{
-		ListenAddr: "0.0.0.0:18789",
-		DBPath:     "ohc.db",
-		AiProviders: []AiProvider{},
-		Extras:      make(map[string]string),
+		ListenAddr:    "0.0.0.0:18789",
+		DBPath:        "ohc.db",
+		CentrifugeURL: "ws://localhost:8000/connection/websocket",
+		AiProviders:   []AiProvider{},
+		Extras:        make(map[string]string),
 	}
 }
 
 // Store handles persistence of AppSettings.
 type Store struct {
-	mu     sync.RWMutex
-	data   AppSettings
-	path   string
+	mu   sync.RWMutex
+	data AppSettings
+	path string
 }
 
 // NewStore creates an in-memory store.
@@ -100,7 +103,7 @@ func (s *Store) Save() error {
 func (s *Store) Get() AppSettings {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	// Create a deep copy
 	copy := s.data
 	if s.data.AiProviders != nil {
