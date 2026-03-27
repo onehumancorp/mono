@@ -2171,7 +2171,9 @@ describe("App – Discord wizard", () => {
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /integrations/i }));
     await screen.findByText("Chat Services");
-    const setupBtns = screen.getAllByRole("button", { name: /setup/i });
+    // Wait for integration buttons to render (same pattern as openTelegramWizard)
+    await screen.findByText("Discord");
+    const setupBtns = await screen.findAllByRole("button", { name: /setup/i });
     fireEvent.click(setupBtns[0]);
     await screen.findByText("Connect Discord Webhook");
   }

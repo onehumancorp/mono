@@ -369,7 +369,7 @@ class _ServerStep extends StatelessWidget {
           controller: listenAddrCtrl,
           decoration: const InputDecoration(
             labelText: 'Listen Address',
-            hintText: '0.0.0.0:18789',
+            hintText: 'host:port',
             helperText: 'Host and port the server will bind to',
             border: OutlineInputBorder(),
           ),
