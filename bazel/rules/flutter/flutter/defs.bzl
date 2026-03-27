@@ -872,10 +872,12 @@ export PATH="$FLUTTER_BIN_DIR:$PATH"
 # This ensures package imports resolve correctly in the test environment
 echo "Regenerating package_config.json for test runtime..."
 pushd "$RUNTIME_WORKSPACE" >/dev/null
-if "$FLUTTER_BIN_ABS" --suppress-analytics pub get --offline > /dev/null 2>&1; then
+PUB_GET_OUT="$LOG_ROOT/flutter_pub_get.log"
+if "$FLUTTER_BIN_ABS" --suppress-analytics pub get --offline > "$PUB_GET_OUT" 2>&1; then
     echo "✓ Package config regenerated successfully (offline)" | tee -a "$TEST_LOG"
 else
     echo "✗ flutter pub get --offline failed in test runtime" | tee -a "$TEST_LOG"
+    cat "$PUB_GET_OUT" | tee -a "$TEST_LOG"
     popd >/dev/null
     exit 1
 fi

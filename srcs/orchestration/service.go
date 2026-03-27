@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -438,8 +439,8 @@ func (h *Hub) ToolParameterAutoCorrection(eventID, agentID string, payload []byt
 
 	// Create protobuf event representing the autocoorection
 	pbEvent := pb.ToolParameterAutoCorrectionEvent_builder{
-		EventId: eventID,
-		AgentId: agentID,
+		EventId: proto.String(eventID),
+		AgentId: proto.String(agentID),
 		Payload: tempBytes,
 	}.Build()
 
@@ -891,7 +892,7 @@ func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAg
 		ProviderType:   agentReq.GetProviderType(),
 	}
 	s.hub.RegisterAgent(agent)
-	return pb.RegisterAgentResponse_builder{Success: true}.Build(), nil
+	return pb.RegisterAgentResponse_builder{Success: proto.Bool(true)}.Build(), nil
 }
 
 // OpenMeeting functionality.
@@ -902,8 +903,8 @@ func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAg
 func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingRequest) (*pb.MeetingRoom, error) {
 	meeting := s.hub.OpenMeetingWithAgenda(req.GetMeetingId(), req.GetAgenda(), req.GetParticipants())
 	return pb.MeetingRoom_builder{
-		Id:           meeting.ID,
-		Agenda:       meeting.Agenda,
+		Id:           proto.String(meeting.ID),
+		Agenda:       proto.String(meeting.Agenda),
 		Participants: meeting.Participants,
 	}.Build(), nil
 }
@@ -927,7 +928,7 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 	if err := s.hub.Publish(msg); err != nil {
 		return nil, status.Errorf(codes.Internal, "publish failed: %v", err)
 	}
-	return pb.PublishMessageResponse_builder{Success: true}.Build(), nil
+	return pb.PublishMessageResponse_builder{Success: proto.Bool(true)}.Build(), nil
 }
 
 // DelegateTask functionality.
@@ -952,7 +953,7 @@ func (s *HubServiceServer) DelegateTask(ctx context.Context, req *pb.DelegateTas
 		return nil, status.Errorf(codes.Internal, "delegate task failed: %v", err)
 	}
 
-	return pb.DelegateTaskResponse_builder{Success: true}.Build(), nil
+	return pb.DelegateTaskResponse_builder{Success: proto.Bool(true)}.Build(), nil
 }
 
 // StreamMessages functionality.
@@ -973,13 +974,13 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 		msgs := s.hub.Inbox(agentID)
 		for _, m := range msgs {
 			if err := stream.Send(pb.Message_builder{
-				Id:             m.ID,
-				FromAgent:      m.FromAgent,
-				ToAgent:        m.ToAgent,
-				Type:           m.Type,
-				Content:        m.Content,
-				MeetingId:      m.MeetingID,
-				OccurredAtUnix: m.OccurredAt.Unix(),
+				Id:             proto.String(m.ID),
+				FromAgent:      proto.String(m.FromAgent),
+				ToAgent:        proto.String(m.ToAgent),
+				Type:           proto.String(m.Type),
+				Content:        proto.String(m.Content),
+				MeetingId:      proto.String(m.MeetingID),
+				OccurredAtUnix: proto.Int64(m.OccurredAt.Unix()),
 			}.Build()); err != nil {
 				return err
 			}
@@ -1015,7 +1016,7 @@ func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "minimax reasoning failed: %v", err)
 	}
-	return pb.ReasonResponse_builder{Content: content}.Build(), nil
+	return pb.ReasonResponse_builder{Content: proto.String(content)}.Build(), nil
 }
 
 // minimaxAPIURL is the endpoint for Minimax reasoning.

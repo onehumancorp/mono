@@ -15,20 +15,21 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestPublishRoutesMessagesAndMeetingTranscript(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "pm-1", Name: "PM", Role: "PRODUCT_MANAGER", OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "swe-1", Name: "SWE", Role: "SOFTWARE_ENGINEER", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "pm-1", Name: proto.String("PM"), Role: proto.String("PRODUCT_MANAGER"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "swe-1", Name: proto.String("SWE"), Role: proto.String("SOFTWARE_ENGINEER"), OrganizationID: "org-1"})
 
 	hub.OpenMeeting("kickoff", []string{"pm-1", "swe-1"})
 	err := hub.Publish(Message{
 		ID:         "msg-1",
-		FromAgent:  "pm-1",
-		ToAgent:    "swe-1",
-		Type:       "task",
-		Content:    "Implement the feature",
+		FromAgent:  proto.String("pm-1"),
+		ToAgent:    proto.String("swe-1"),
+		Type:       proto.String("task"),
+		Content:    proto.String("Implement the feature"),
 		MeetingID:  "kickoff",
 		OccurredAt: time.Now().UTC(),
 	})
@@ -68,7 +69,7 @@ func TestNewHubStartsEmpty(t *testing.T) {
 
 func TestRegisterAgentDefaultsStatusAndLookupMiss(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "agent-1", Name: "Agent", Role: "SWE", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "agent-1", Name: proto.String("Agent"), Role: proto.String("SWE"), OrganizationID: "org-1"})
 
 	agent, ok := hub.Agent("agent-1")
 	if !ok {
@@ -84,8 +85,8 @@ func TestRegisterAgentDefaultsStatusAndLookupMiss(t *testing.T) {
 
 func TestOpenMeetingMarksParticipantsInMeeting(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "a", Name: "A", Role: "PM", OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "b", Name: "B", Role: "SWE", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "a", Name: proto.String("A"), Role: proto.String("PM"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "b", Name: proto.String("B"), Role: proto.String("SWE"), OrganizationID: "org-1"})
 
 	meeting := hub.OpenMeeting("m1", []string{"a", "b"})
 	if len(meeting.Participants) != 2 {
@@ -100,13 +101,13 @@ func TestOpenMeetingMarksParticipantsInMeeting(t *testing.T) {
 
 func TestDelegateTask(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "delegate", Name: "Delegate", Role: "ROUTER", OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "specialist", Name: "Specialist", Role: "SWE", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "delegate", Name: proto.String("Delegate"), Role: proto.String("ROUTER"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "specialist", Name: proto.String("Specialist"), Role: proto.String("SWE"), OrganizationID: "org-1"})
 
 	task := Message{
 		ID:         "msg-1",
-		Type:       EventTask,
-		Content:    "Implement feature",
+		Type:       proto.String(EventTask),
+		Content:    proto.String("Implement feature"),
 		OccurredAt: time.Now().UTC(),
 	}
 
@@ -134,12 +135,12 @@ func TestDelegateTask(t *testing.T) {
 
 func TestDelegateTask_AgentNotFound(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "delegate", Name: "Delegate", Role: "ROUTER", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "delegate", Name: proto.String("Delegate"), Role: proto.String("ROUTER"), OrganizationID: "org-1"})
 
 	task := Message{
 		ID:         "msg-1",
-		Type:       EventTask,
-		Content:    "Implement feature",
+		Type:       proto.String(EventTask),
+		Content:    proto.String("Implement feature"),
 		OccurredAt: time.Now().UTC(),
 	}
 
@@ -162,28 +163,28 @@ func TestDelegateTask_AgentNotFound(t *testing.T) {
 
 func TestPublishValidationErrors(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "a", Name: "A", Role: "PM", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "a", Name: proto.String("A"), Role: proto.String("PM"), OrganizationID: "org-1"})
 
-	if err := hub.Publish(Message{FromAgent: "missing"}); err == nil {
+	if err := hub.Publish(Message{FromAgent: proto.String("missing")}); err == nil {
 		t.Fatalf("expected sender validation error")
 	}
-	if err := hub.Publish(Message{FromAgent: "a", ToAgent: "missing"}); err == nil {
+	if err := hub.Publish(Message{FromAgent: proto.String("a"), ToAgent: proto.String("missing")}); err == nil {
 		t.Fatalf("expected recipient validation error")
 	}
-	if err := hub.Publish(Message{FromAgent: "a", MeetingID: "missing"}); err == nil {
+	if err := hub.Publish(Message{FromAgent: proto.String("a"), MeetingID: "missing"}); err == nil {
 		t.Fatalf("expected meeting validation error")
 	}
 }
 
 func TestPublishWithoutMeetingMarksSenderActive(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "a", Name: "A", Role: "PM", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "a", Name: proto.String("A"), Role: proto.String("PM"), OrganizationID: "org-1"})
 
 	if err := hub.Publish(Message{
 		ID:         "m1",
-		FromAgent:  "a",
-		Type:       "status",
-		Content:    "done",
+		FromAgent:  proto.String("a"),
+		Type:       proto.String("status"),
+		Content:    proto.String("done"),
 		OccurredAt: time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC),
 	}); err != nil {
 		t.Fatalf("publish returned error: %v", err)
@@ -204,8 +205,8 @@ func TestMeetingLookupMiss(t *testing.T) {
 
 func TestMeetingsReturnsSnapshot(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "a", Name: "A", Role: "PM", OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "b", Name: "B", Role: "SWE", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "a", Name: proto.String("A"), Role: proto.String("PM"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "b", Name: proto.String("B"), Role: proto.String("SWE"), OrganizationID: "org-1"})
 	hub.OpenMeeting("kickoff", []string{"a", "b"})
 
 	meetings := hub.Meetings()
@@ -219,8 +220,8 @@ func TestMeetingsReturnsSnapshot(t *testing.T) {
 
 func TestAgentsReturnsSortedSnapshot(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "b", Name: "B", Role: "SWE", OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "a", Name: "A", Role: "PM", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "b", Name: proto.String("B"), Role: proto.String("SWE"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "a", Name: proto.String("A"), Role: proto.String("PM"), OrganizationID: "org-1"})
 
 	agents := hub.Agents()
 	if len(agents) != 2 {
@@ -239,15 +240,15 @@ func TestAgentsReturnsSortedSnapshot(t *testing.T) {
 
 func TestFireAgentRemovesFromHubAndInbox(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "a", Name: "A", Role: "PM", OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "b", Name: "B", Role: "SWE", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "a", Name: proto.String("A"), Role: proto.String("PM"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "b", Name: proto.String("B"), Role: proto.String("SWE"), OrganizationID: "org-1"})
 	hub.OpenMeeting("m1", []string{"a", "b"})
 	_ = hub.Publish(Message{
 		ID:        "msg-1",
-		FromAgent: "a",
-		ToAgent:   "b",
-		Type:      EventTask,
-		Content:   "do work",
+		FromAgent: proto.String("a"),
+		ToAgent:   proto.String("b"),
+		Type:      proto.String(EventTask),
+		Content:   proto.String("do work"),
 		MeetingID: "m1",
 	})
 
@@ -266,8 +267,8 @@ func TestFireAgentRemovesFromHubAndInbox(t *testing.T) {
 
 func TestOpenMeetingWithAgendaPreservesAgendaField(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "pm", Name: "PM", Role: "PRODUCT_MANAGER", OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "swe", Name: "SWE", Role: "SOFTWARE_ENGINEER", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "pm", Name: proto.String("PM"), Role: proto.String("PRODUCT_MANAGER"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "swe", Name: proto.String("SWE"), Role: proto.String("SOFTWARE_ENGINEER"), OrganizationID: "org-1"})
 
 	meeting := hub.OpenMeetingWithAgenda("sprint-kickoff", "Plan Q2 features and assign owners", []string{"pm", "swe"})
 
@@ -354,17 +355,17 @@ func (m *mockStreamMessagesServer) Send(msg *pb.Message) error {
 
 func TestHubServiceServer_StreamMessages(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
-	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "sender", Name: proto.String("Sender"), Role: proto.String("R1"), OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: proto.String("Receiver"), Role: proto.String("R2"), OrganizationID: "O1"})
 	server := NewHubServiceServer(hub)
 
 	// Publish a message to the receiver's inbox
 	_ = hub.Publish(Message{
 		ID:         "msg-1",
-		FromAgent:  "sender",
-		ToAgent:    "receiver",
-		Type:       EventTask,
-		Content:    "Hello Streaming",
+		FromAgent:  proto.String("sender"),
+		ToAgent:    proto.String("receiver"),
+		Type:       proto.String(EventTask),
+		Content:    proto.String("Hello Streaming"),
 		OccurredAt: time.Now(),
 	})
 
@@ -372,7 +373,7 @@ func TestHubServiceServer_StreamMessages(t *testing.T) {
 	mockStream := &mockStreamMessagesServer{ctx: ctx}
 
 	req := pb.StreamMessagesRequest_builder{
-		AgentId: "receiver",
+		AgentId: proto.String("receiver"),
 	}.Build()
 
 	errCh := make(chan error, 1)
@@ -401,17 +402,17 @@ func TestHubServiceServer_StreamMessages(t *testing.T) {
 
 func TestHubServiceServer_StreamMessages_SendError(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
-	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "sender", Name: proto.String("Sender"), Role: proto.String("R1"), OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: proto.String("Receiver"), Role: proto.String("R2"), OrganizationID: "O1"})
 	server := NewHubServiceServer(hub)
 
 	// Publish a message that triggers a send error
 	_ = hub.Publish(Message{
 		ID:         "msg-err",
-		FromAgent:  "sender",
-		ToAgent:    "receiver",
-		Type:       EventTask,
-		Content:    "trigger_send_error",
+		FromAgent:  proto.String("sender"),
+		ToAgent:    proto.String("receiver"),
+		Type:       proto.String(EventTask),
+		Content:    proto.String("trigger_send_error"),
 		OccurredAt: time.Now(),
 	})
 
@@ -420,7 +421,7 @@ func TestHubServiceServer_StreamMessages_SendError(t *testing.T) {
 	mockStream := &mockStreamMessagesServer{ctx: ctx}
 
 	req := pb.StreamMessagesRequest_builder{
-		AgentId: "receiver",
+		AgentId: proto.String("receiver"),
 	}.Build()
 
 	err := server.StreamMessages(req, mockStream)
@@ -431,8 +432,8 @@ func TestHubServiceServer_StreamMessages_SendError(t *testing.T) {
 
 func TestHubServiceServer_StreamMessages_ContextDone(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
-	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "sender", Name: proto.String("Sender"), Role: proto.String("R1"), OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: proto.String("Receiver"), Role: proto.String("R2"), OrganizationID: "O1"})
 	server := NewHubServiceServer(hub)
 
 	// Context is cancelled before StreamMessages handles the infinite loop
@@ -441,7 +442,7 @@ func TestHubServiceServer_StreamMessages_ContextDone(t *testing.T) {
 
 	mockStream := &mockStreamMessagesServer{ctx: ctx}
 	req := pb.StreamMessagesRequest_builder{
-		AgentId: "receiver",
+		AgentId: proto.String("receiver"),
 	}.Build()
 
 	err := server.StreamMessages(req, mockStream)
@@ -452,15 +453,15 @@ func TestHubServiceServer_StreamMessages_ContextDone(t *testing.T) {
 
 func TestHubServiceServer_StreamMessages_SendErrorOnWait(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
-	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "sender", Name: proto.String("Sender"), Role: proto.String("R1"), OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: proto.String("Receiver"), Role: proto.String("R2"), OrganizationID: "O1"})
 	server := NewHubServiceServer(hub)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	mockStream := &mockStreamMessagesServer{ctx: ctx}
 	req := pb.StreamMessagesRequest_builder{
-		AgentId: "receiver",
+		AgentId: proto.String("receiver"),
 	}.Build()
 
 	// Wait for the stream to start, then publish the error message
@@ -472,10 +473,10 @@ func TestHubServiceServer_StreamMessages_SendErrorOnWait(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 	_ = hub.Publish(Message{
 		ID:         "msg-err",
-		FromAgent:  "sender",
-		ToAgent:    "receiver",
-		Type:       EventTask,
-		Content:    "trigger_send_error",
+		FromAgent:  proto.String("sender"),
+		ToAgent:    proto.String("receiver"),
+		Type:       proto.String(EventTask),
+		Content:    proto.String("trigger_send_error"),
 		OccurredAt: time.Now(),
 	})
 
@@ -568,7 +569,7 @@ func TestHubServiceServer_Reason_And_MinimaxClient(t *testing.T) {
 			ctx := context.Background()
 
 			req := pb.ReasonRequest_builder{
-				Prompt: "Test prompt",
+				Prompt: proto.String("Test prompt"),
 			}.Build()
 
 			resp, err := server.Reason(ctx, req)
@@ -611,11 +612,11 @@ func TestHubServiceServer_RegisterAgent(t *testing.T) {
 
 	req := pb.RegisterAgentRequest_builder{
 		Agent: pb.Agent_builder{
-			Id:             "grpc-agent-1",
-			Name:           "GRPC Agent",
-			Role:           "TEST_ROLE",
-			OrganizationId: "org-grpc",
-			Status:         string(StatusIdle),
+			Id:             proto.String("grpc-agent-1"),
+			Name:           proto.String("GRPC Agent"),
+			Role:           proto.String("TEST_ROLE"),
+			OrganizationId: proto.String("org-grpc"),
+			Status:         proto.String(string(StatusIdle)),
 		}.Build(),
 	}.Build()
 
@@ -638,14 +639,14 @@ func TestHubServiceServer_RegisterAgent(t *testing.T) {
 
 func TestHubServiceServer_OpenMeeting(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "p1", Name: "P1", Role: "R1", OrganizationID: "O1"})
-	hub.RegisterAgent(Agent{ID: "p2", Name: "P2", Role: "R2", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "p1", Name: proto.String("P1"), Role: proto.String("R1"), OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "p2", Name: proto.String("P2"), Role: proto.String("R2"), OrganizationID: "O1"})
 	server := NewHubServiceServer(hub)
 	ctx := context.Background()
 
 	req := pb.OpenMeetingRequest_builder{
-		MeetingId:    "grpc-meeting-1",
-		Agenda:       "Discuss gRPC",
+		MeetingId:    proto.String("grpc-meeting-1"),
+		Agenda:       proto.String("Discuss gRPC"),
 		Participants: []string{"p1", "p2"},
 	}.Build()
 
@@ -671,8 +672,8 @@ func TestHubServiceServer_OpenMeeting(t *testing.T) {
 
 func TestHubServiceServer_DelegateTask(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "delegate", Name: "Delegate", Role: "ROUTER", OrganizationID: "O1"})
-	hub.RegisterAgent(Agent{ID: "specialist", Name: "Specialist", Role: "SWE", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "delegate", Name: proto.String("Delegate"), Role: proto.String("ROUTER"), OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "specialist", Name: proto.String("Specialist"), Role: proto.String("SWE"), OrganizationID: "O1"})
 	server := NewHubServiceServer(hub)
 	ctx := context.Background()
 
@@ -685,13 +686,13 @@ func TestHubServiceServer_DelegateTask(t *testing.T) {
 		{
 			name: "Valid Delegation",
 			req: pb.DelegateTaskRequest_builder{
-				FromAgentId: "delegate",
-				ToAgentId:   "specialist",
+				FromAgentId: proto.String("delegate"),
+				ToAgentId:   proto.String("specialist"),
 				Task: pb.Message_builder{
-					Id:             "m1",
-					Type:           EventTask,
-					Content:        "Do work",
-					OccurredAtUnix: time.Now().Unix(),
+					Id:             proto.String("m1"),
+					Type:           proto.String(EventTask),
+					Content:        proto.String("Do work"),
+					OccurredAtUnix: proto.Int64(time.Now()).Unix(),
 				}.Build(),
 			}.Build(),
 			expectSuccess: true,
@@ -700,13 +701,13 @@ func TestHubServiceServer_DelegateTask(t *testing.T) {
 		{
 			name: "Invalid Delegate Agent",
 			req: pb.DelegateTaskRequest_builder{
-				FromAgentId: "unknown-delegate",
-				ToAgentId:   "specialist",
+				FromAgentId: proto.String("unknown-delegate"),
+				ToAgentId:   proto.String("specialist"),
 				Task: pb.Message_builder{
-					Id:             "m2",
-					Type:           EventTask,
-					Content:        "Do work",
-					OccurredAtUnix: time.Now().Unix(),
+					Id:             proto.String("m2"),
+					Type:           proto.String(EventTask),
+					Content:        proto.String("Do work"),
+					OccurredAtUnix: proto.Int64(time.Now()).Unix(),
 				}.Build(),
 			}.Build(),
 			expectSuccess: false,
@@ -715,13 +716,13 @@ func TestHubServiceServer_DelegateTask(t *testing.T) {
 		{
 			name: "Invalid Specialist Agent",
 			req: pb.DelegateTaskRequest_builder{
-				FromAgentId: "delegate",
-				ToAgentId:   "unknown-specialist",
+				FromAgentId: proto.String("delegate"),
+				ToAgentId:   proto.String("unknown-specialist"),
 				Task: pb.Message_builder{
-					Id:             "m3",
-					Type:           EventTask,
-					Content:        "Do work",
-					OccurredAtUnix: time.Now().Unix(),
+					Id:             proto.String("m3"),
+					Type:           proto.String(EventTask),
+					Content:        proto.String("Do work"),
+					OccurredAtUnix: proto.Int64(time.Now()).Unix(),
 				}.Build(),
 			}.Build(),
 			expectSuccess: false,
@@ -753,8 +754,8 @@ func TestHubServiceServer_DelegateTask(t *testing.T) {
 
 func TestHub_Publish_UnbufferedChannel(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
-	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "sender", Name: proto.String("Sender"), Role: proto.String("R1"), OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: proto.String("Receiver"), Role: proto.String("R2"), OrganizationID: "O1"})
 
 	// Force the subscriber channel to be "full" to hit the default branch
 	_, cancel := hub.Subscribe("receiver")
@@ -768,7 +769,7 @@ func TestHub_Publish_UnbufferedChannel(t *testing.T) {
 
 	// Create an extra receiver to verify select loop for multiple participants
 	// actually hits the default path too.
-	hub.RegisterAgent(Agent{ID: "receiver2", Name: "Receiver2", Role: "R2", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver2", Name: proto.String("Receiver2"), Role: proto.String("R2"), OrganizationID: "O1"})
 	_, cancel2 := hub.Subscribe("receiver2")
 	defer cancel2()
 	meeting2 := hub.OpenMeeting("m2", []string{"receiver2"})
@@ -778,22 +779,22 @@ func TestHub_Publish_UnbufferedChannel(t *testing.T) {
 
 	// Pre-fill both channels
 	_ = hub.Publish(Message{
-		ID: "m2-1", FromAgent: "sender", ToAgent: "receiver2", Type: EventTask, Content: "fill", OccurredAt: time.Now(),
+		ID: "m2-1", FromAgent: proto.String("sender"), ToAgent: proto.String("receiver2"), Type: proto.String(EventTask), Content: proto.String("fill"), OccurredAt: time.Now(),
 	})
 
 
 	// Fill the channel or just let Publish run twice without draining it
 	_ = hub.Publish(Message{
 		ID:         "msg-1",
-		FromAgent:  "sender",
-		ToAgent:    "receiver",
-		Type:       EventTask,
-		Content:    "fill channel",
+		FromAgent:  proto.String("sender"),
+		ToAgent:    proto.String("receiver"),
+		Type:       proto.String(EventTask),
+		Content:    proto.String("fill channel"),
 		OccurredAt: time.Now(),
 	})
 
 	// Create another meeting receiver to test hitting default branch when publishing to a meeting
-	hub.RegisterAgent(Agent{ID: "receiver3", Name: "Receiver3", Role: "R3", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver3", Name: proto.String("Receiver3"), Role: proto.String("R3"), OrganizationID: "O1"})
 	_, cancel3 := hub.Subscribe("receiver3")
 	defer cancel3()
 	meeting3 := hub.OpenMeeting("m3", []string{"receiver3"})
@@ -804,11 +805,11 @@ func TestHub_Publish_UnbufferedChannel(t *testing.T) {
 	// This one will fill the unbuffered channel for receiver3 in context of meeting message
 	_ = hub.Publish(Message{
 		ID:         "msg-m3-fill",
-		FromAgent:  "sender",
-		ToAgent:    "receiver3",
-		Type:       EventTask,
+		FromAgent:  proto.String("sender"),
+		ToAgent:    proto.String("receiver3"),
+		Type:       proto.String(EventTask),
 		MeetingID:  "m3",
-		Content:    "fill meeting channel",
+		Content:    proto.String("fill meeting channel"),
 		OccurredAt: time.Now(),
 	})
 
@@ -822,21 +823,21 @@ func TestHub_Publish_UnbufferedChannel(t *testing.T) {
 
 	_ = hub.Publish(Message{
 		ID:         "msg-m3-fill-2",
-		FromAgent:  "sender",
-		ToAgent:    "", // broadcast to meeting
-		Type:       EventTask,
+		FromAgent:  proto.String("sender"),
+		ToAgent:    proto.String(""), // broadcast to meeting
+		Type:       proto.String(EventTask),
 		MeetingID:  "m3",
-		Content:    "hit meeting channel default",
+		Content:    proto.String("hit meeting channel default"),
 		OccurredAt: time.Now(),
 	})
 
 	// This publish will hit the select default case since we haven't read from 'ch'
 	err := hub.Publish(Message{
 		ID:         "msg-2",
-		FromAgent:  "sender",
-		ToAgent:    "receiver",
-		Type:       EventTask,
-		Content:    "hit default case",
+		FromAgent:  proto.String("sender"),
+		ToAgent:    proto.String("receiver"),
+		Type:       proto.String(EventTask),
+		Content:    proto.String("hit default case"),
 		OccurredAt: time.Now(),
 	})
 	if err != nil {
@@ -848,11 +849,11 @@ func TestHub_Publish_UnbufferedChannel(t *testing.T) {
 
 	err = hub.Publish(Message{
 		ID:         "msg-3",
-		FromAgent:  "sender",
-		ToAgent:    "receiver",
-		Type:       EventTask,
+		FromAgent:  proto.String("sender"),
+		ToAgent:    proto.String("receiver"),
+		Type:       proto.String(EventTask),
 		MeetingID:  "m1",
-		Content:    "hit meeting default case",
+		Content:    proto.String("hit meeting default case"),
 		OccurredAt: time.Now(),
 	})
 	if err != nil {
@@ -861,11 +862,11 @@ func TestHub_Publish_UnbufferedChannel(t *testing.T) {
 
 	err = hub.Publish(Message{
 		ID:         "msg-4",
-		FromAgent:  "sender",
-		ToAgent:    "receiver2",
-		Type:       EventTask,
+		FromAgent:  proto.String("sender"),
+		ToAgent:    proto.String("receiver2"),
+		Type:       proto.String(EventTask),
 		MeetingID:  "m2",
-		Content:    "hit meeting default case 2",
+		Content:    proto.String("hit meeting default case 2"),
 		OccurredAt: time.Now(),
 	})
 	if err != nil {
@@ -903,8 +904,8 @@ func TestMinimaxClient_Reason_ClientDo_Error(t *testing.T) {
 
 func TestHubServiceServer_Publish(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
-	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "sender", Name: proto.String("Sender"), Role: proto.String("R1"), OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: proto.String("Receiver"), Role: proto.String("R2"), OrganizationID: "O1"})
 	server := NewHubServiceServer(hub)
 	ctx := context.Background()
 
@@ -918,12 +919,12 @@ func TestHubServiceServer_Publish(t *testing.T) {
 			name: "Valid Publish",
 			req: pb.PublishMessageRequest_builder{
 				Message: pb.Message_builder{
-					Id:             "m1",
-					FromAgent:      "sender",
-					ToAgent:        "receiver",
-					Type:           EventTask,
-					Content:        "Hello",
-					OccurredAtUnix: time.Now().Unix(),
+					Id:             proto.String("m1"),
+					FromAgent:      proto.String("sender"),
+					ToAgent:        proto.String("receiver"),
+					Type:           proto.String(EventTask),
+					Content:        proto.String("Hello"),
+					OccurredAtUnix: proto.Int64(time.Now()).Unix(),
 				}.Build(),
 			}.Build(),
 			expectSuccess: true,
@@ -933,12 +934,12 @@ func TestHubServiceServer_Publish(t *testing.T) {
 			name: "Invalid Sender",
 			req: pb.PublishMessageRequest_builder{
 				Message: pb.Message_builder{
-					Id:             "m2",
-					FromAgent:      "unknown",
-					ToAgent:        "receiver",
-					Type:           EventTask,
-					Content:        "Hello",
-					OccurredAtUnix: time.Now().Unix(),
+					Id:             proto.String("m2"),
+					FromAgent:      proto.String("unknown"),
+					ToAgent:        proto.String("receiver"),
+					Type:           proto.String(EventTask),
+					Content:        proto.String("Hello"),
+					OccurredAtUnix: proto.Int64(time.Now()).Unix(),
 				}.Build(),
 			}.Build(),
 			expectSuccess: false,
@@ -1294,7 +1295,7 @@ func TestSetSIPDB(t *testing.T) {
 
 func TestDelegateTask_AgentNotRegistered(t *testing.T) {
 	hub := NewHub()
-	err := hub.DelegateTask("task-1", "ROLE", Message{Content: "instruction"})
+	err := hub.DelegateTask("task-1", "ROLE", Message{Content: proto.String("instruction")})
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -1315,7 +1316,7 @@ func TestEventLogWorker_Coverage(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// Log an event
-	hub.LogEvent(Message{ID: "m1", Content: "test"})
+	hub.LogEvent(Message{ID: "m1", Content: proto.String("test")})
 
 	// Give it time to flush
 	time.Sleep(100 * time.Millisecond)

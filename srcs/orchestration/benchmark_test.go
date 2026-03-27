@@ -10,6 +10,7 @@ import (
 
 	pb "github.com/onehumancorp/mono/srcs/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 type benchStreamMessagesServer struct {
@@ -34,8 +35,8 @@ func BenchmarkStreamLatency(b *testing.B) {
 	hub := NewHub()
 	srv := NewHubServiceServer(hub)
 
-	hub.RegisterAgent(Agent{ID: "agent1", Status: StatusIdle})
-	hub.RegisterAgent(Agent{ID: "agent2", Status: StatusIdle})
+	hub.RegisterAgent(Agent{ID: "agent1", Status: proto.String(StatusIdle)})
+	hub.RegisterAgent(Agent{ID: "agent2", Status: proto.String(StatusIdle)})
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -46,7 +47,7 @@ func BenchmarkStreamLatency(b *testing.B) {
 	}
 
 	go func() {
-		_ = srv.StreamMessages(pb.StreamMessagesRequest_builder{AgentId: "agent2"}.Build(), stream)
+		_ = srv.StreamMessages(pb.StreamMessagesRequest_builder{AgentId: proto.String("agent2")}.Build(), stream)
 	}()
 
 	// wait for stream to start
@@ -54,10 +55,10 @@ func BenchmarkStreamLatency(b *testing.B) {
 
 	msg := Message{
 		ID:         "msg1",
-		FromAgent:  "agent1",
-		ToAgent:    "agent2",
-		Type:       "test",
-		Content:    "hello",
+		FromAgent:  proto.String("agent1"),
+		ToAgent:    proto.String("agent2"),
+		Type:       proto.String("test"),
+		Content:    proto.String("hello"),
 		OccurredAt: time.Now(),
 	}
 
@@ -72,17 +73,17 @@ func BenchmarkPublish_Concurrent(b *testing.B) {
 	hub := NewHub()
 	numAgents := 100
 	for i := 0; i < numAgents; i++ {
-		hub.RegisterAgent(Agent{ID: fmt.Sprintf("agent%d", i), Status: StatusIdle})
+		hub.RegisterAgent(Agent{ID: fmt.Sprintf("agent%d", i), Status: proto.String(StatusIdle)})
 	}
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		msg := Message{
 			ID:         "msg1",
-			FromAgent:  "agent1",
-			ToAgent:    "agent2",
-			Type:       "test",
-			Content:    "hello",
+			FromAgent:  proto.String("agent1"),
+			ToAgent:    proto.String("agent2"),
+			Type:       proto.String("test"),
+			Content:    proto.String("hello"),
 			OccurredAt: time.Now(),
 		}
 		for pb.Next() {
@@ -93,14 +94,14 @@ func BenchmarkPublish_Concurrent(b *testing.B) {
 
 func BenchmarkInbox(b *testing.B) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "agent1", Status: StatusIdle})
+	hub.RegisterAgent(Agent{ID: "agent1", Status: proto.String(StatusIdle)})
 
 	msg := Message{
 		ID:         "msg1",
-		FromAgent:  "agent1",
-		ToAgent:    "agent1",
-		Type:       "test",
-		Content:    "hello",
+		FromAgent:  proto.String("agent1"),
+		ToAgent:    proto.String("agent1"),
+		Type:       proto.String("test"),
+		Content:    proto.String("hello"),
 		OccurredAt: time.Now(),
 	}
 

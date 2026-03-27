@@ -11,6 +11,7 @@ import (
 	pb "github.com/onehumancorp/mono/srcs/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestRegisterAgentViaGRPC(t *testing.T) {
@@ -19,11 +20,11 @@ func TestRegisterAgentViaGRPC(t *testing.T) {
 
 	req := pb.RegisterAgentRequest_builder{
 		Agent: pb.Agent_builder{
-			Id:             "test-agent",
-			Name:           "Test Agent",
-			Role:           "QA_ENGINEER",
-			OrganizationId: "org-1",
-			Status:         "ACTIVE",
+			Id:             proto.String("test-agent"),
+			Name:           proto.String("Test Agent"),
+			Role:           proto.String("QA_ENGINEER"),
+			OrganizationId: proto.String("org-1"),
+			Status:         proto.String("ACTIVE"),
 		}.Build(),
 	}.Build()
 
@@ -46,13 +47,13 @@ func TestRegisterAgentViaGRPC(t *testing.T) {
 
 func TestOpenMeetingViaGRPC(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "p1", Name: "P1", Role: "PM", OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "p2", Name: "P2", Role: "SWE", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "p1", Name: proto.String("P1"), Role: proto.String("PM"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "p2", Name: proto.String("P2"), Role: proto.String("SWE"), OrganizationID: "org-1"})
 	srv := NewHubServiceServer(hub)
 
 	req := pb.OpenMeetingRequest_builder{
-		MeetingId:    "m-1",
-		Agenda:       "Test Agenda",
+		MeetingId:    proto.String("m-1"),
+		Agenda:       proto.String("Test Agenda"),
 		Participants: []string{"p1", "p2"},
 	}.Build()
 
@@ -75,18 +76,18 @@ func TestOpenMeetingViaGRPC(t *testing.T) {
 
 func TestPublishViaGRPC(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "a1", Name: "A1", Role: "PM", OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "a2", Name: "A2", Role: "SWE", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "a1", Name: proto.String("A1"), Role: proto.String("PM"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "a2", Name: proto.String("A2"), Role: proto.String("SWE"), OrganizationID: "org-1"})
 	srv := NewHubServiceServer(hub)
 
 	req := pb.PublishMessageRequest_builder{
 		Message: pb.Message_builder{
-			Id:             "msg-1",
-			FromAgent:      "a1",
-			ToAgent:        "a2",
-			Type:           "task",
-			Content:        "Do it",
-			OccurredAtUnix: time.Now().Unix(),
+			Id:             proto.String("msg-1"),
+			FromAgent:      proto.String("a1"),
+			ToAgent:        proto.String("a2"),
+			Type:           proto.String("task"),
+			Content:        proto.String("Do it"),
+			OccurredAtUnix: proto.Int64(time.Now()).Unix(),
 		}.Build(),
 	}.Build()
 
@@ -123,17 +124,17 @@ func (m *MockStreamServer) RecvMsg(m_ interface{}) error { return nil }
 
 func TestStreamMessagesViaGRPC(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "a1", Name: "A1", Role: "PM", OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "a2", Name: "A2", Role: "SWE", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "a1", Name: proto.String("A1"), Role: proto.String("PM"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "a2", Name: proto.String("A2"), Role: proto.String("SWE"), OrganizationID: "org-1"})
 	srv := NewHubServiceServer(hub)
 
 	// Publish an initial message
 	hub.Publish(Message{
 		ID:         "msg-1",
-		FromAgent:  "a1",
-		ToAgent:    "a2",
-		Type:       "task",
-		Content:    "initial task",
+		FromAgent:  proto.String("a1"),
+		ToAgent:    proto.String("a2"),
+		Type:       proto.String("task"),
+		Content:    proto.String("initial task"),
 		OccurredAt: time.Now(),
 	})
 
@@ -147,17 +148,17 @@ func TestStreamMessagesViaGRPC(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 		hub.Publish(Message{
 			ID:         "msg-2",
-			FromAgent:  "a1",
-			ToAgent:    "a2",
-			Type:       "task",
-			Content:    "new task",
+			FromAgent:  proto.String("a1"),
+			ToAgent:    proto.String("a2"),
+			Type:       proto.String("task"),
+			Content:    proto.String("new task"),
 			OccurredAt: time.Now(),
 		})
 		time.Sleep(50 * time.Millisecond)
 		cancel()
 	}()
 
-	err := srv.StreamMessages(pb.StreamMessagesRequest_builder{AgentId: "a2"}.Build(), stream)
+	err := srv.StreamMessages(pb.StreamMessagesRequest_builder{AgentId: proto.String("a2")}.Build(), stream)
 	if err != nil && err != context.DeadlineExceeded && err != context.Canceled {
 		t.Fatalf("StreamMessages failed: %v", err)
 	}
@@ -190,7 +191,7 @@ func TestReasonViaMinimaxEmptyKey(t *testing.T) {
 	srv := NewHubServiceServer(hub)
 
 	hub.SetMinimaxAPIKey("")
-	req := pb.ReasonRequest_builder{Prompt: "test prompt"}.Build()
+	req := pb.ReasonRequest_builder{Prompt: proto.String("test prompt")}.Build()
 	_, err := srv.Reason(context.Background(), req)
 	if err == nil {
 		t.Fatalf("expected error due to empty API key")
@@ -202,7 +203,7 @@ func TestReasonViaMinimaxDummyKey(t *testing.T) {
 	srv := NewHubServiceServer(hub)
 
 	hub.SetMinimaxAPIKey("dummy-key")
-	req := pb.ReasonRequest_builder{Prompt: "test prompt"}.Build()
+	req := pb.ReasonRequest_builder{Prompt: proto.String("test prompt")}.Build()
 	_, err := srv.Reason(context.Background(), req)
 	if err == nil {
 		t.Fatalf("expected error due to invalid API key")
@@ -221,12 +222,12 @@ func TestPublishViaGRPCError(t *testing.T) {
 
 	req := pb.PublishMessageRequest_builder{
 		Message: pb.Message_builder{
-			Id:             "msg-1",
-			FromAgent:      "missing",
-			ToAgent:        "missing",
-			Type:           "task",
-			Content:        "Do it",
-			OccurredAtUnix: time.Now().Unix(),
+			Id:             proto.String("msg-1"),
+			FromAgent:      proto.String("missing"),
+			ToAgent:        proto.String("missing"),
+			Type:           proto.String("task"),
+			Content:        proto.String("Do it"),
+			OccurredAtUnix: proto.Int64(time.Now()).Unix(),
 		}.Build(),
 	}.Build()
 
@@ -244,7 +245,7 @@ func TestStreamMessagesViaGRPCCancellation(t *testing.T) {
 	cancel() // cancel immediately
 	stream := &MockStreamServer{ctx: ctx, messages: make([]*pb.Message, 0)}
 
-	err := srv.StreamMessages(pb.StreamMessagesRequest_builder{AgentId: "a2"}.Build(), stream)
+	err := srv.StreamMessages(pb.StreamMessagesRequest_builder{AgentId: proto.String("a2")}.Build(), stream)
 	if err != nil && err != context.Canceled {
 		t.Fatalf("expected graceful shutdown or context canceled, got %v", err)
 	}

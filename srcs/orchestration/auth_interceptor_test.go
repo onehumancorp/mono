@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 func mockSPIFFEContext(spiffeID string) context.Context {
@@ -107,7 +108,7 @@ func TestSPIFFEAuthInterceptor_DelegateTask(t *testing.T) {
 	ctx := mockSPIFFEContext("spiffe://onehumancorp.io/org-1/attacker-agent")
 
 	req := pb.DelegateTaskRequest_builder{
-		FromAgentId: "target-agent",
+		FromAgentId: proto.String("target-agent"),
 	}.Build()
 
 	_, err := interceptor(ctx, req, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
@@ -185,7 +186,7 @@ func TestSPIFFEAuthInterceptor_Spoofing_Publish(t *testing.T) {
 
 	req := pb.PublishMessageRequest_builder{
 		Message: pb.Message_builder{
-			FromAgent: "target-agent",
+			FromAgent: proto.String("target-agent"),
 		}.Build(),
 	}.Build()
 
@@ -212,7 +213,7 @@ func TestSPIFFEAuthInterceptor_BoundaryEscape_Publish(t *testing.T) {
 
 	req := pb.PublishMessageRequest_builder{
 		Message: pb.Message_builder{
-			FromAgent: "target-agent",
+			FromAgent: proto.String("target-agent"),
 		}.Build(),
 	}.Build()
 
@@ -239,7 +240,7 @@ func TestSPIFFEAuthInterceptor_BoundaryEscape_OHCOSDomain(t *testing.T) {
 
 	req := pb.PublishMessageRequest_builder{
 		Message: pb.Message_builder{
-			FromAgent: "target-agent",
+			FromAgent: proto.String("target-agent"),
 		}.Build(),
 	}.Build()
 
@@ -265,7 +266,7 @@ func TestSPIFFEAuthInterceptor_Spoofing_Register(t *testing.T) {
 
 	req := pb.RegisterAgentRequest_builder{
 		Agent: pb.Agent_builder{
-			Id: "target-agent",
+			Id: proto.String("target-agent"),
 		}.Build(),
 	}.Build()
 
@@ -291,7 +292,7 @@ func TestSPIFFEAuthInterceptor_Valid(t *testing.T) {
 
 	req := pb.PublishMessageRequest_builder{
 		Message: pb.Message_builder{
-			FromAgent: "a1",
+			FromAgent: proto.String("a1"),
 		}.Build(),
 	}.Build()
 
@@ -412,7 +413,7 @@ func TestSPIFFEAuthInterceptor_OHCLocalDomain(t *testing.T) {
 			// Must use _builder and .Build()
 			req := pb.RegisterAgentRequest_builder{
 				Agent: pb.Agent_builder{
-					Id: tc.reqAgentID,
+					Id: proto.String(tc.reqAgentID),
 				}.Build(),
 			}.Build()
 
@@ -495,7 +496,7 @@ func TestSPIFFEAuthInterceptor_OHCOSDomain(t *testing.T) {
 			ctx := mockSPIFFEContext(tc.spiffeID)
 			req := pb.RegisterAgentRequest_builder{
 				Agent: pb.Agent_builder{
-					Id: tc.reqAgentID,
+					Id: proto.String(tc.reqAgentID),
 				}.Build(),
 			}.Build()
 
@@ -590,7 +591,7 @@ func TestSPIFFEAuthInterceptor_OHCGlobalDomain(t *testing.T) {
 			ctx := mockSPIFFEContext(tc.spiffeID)
 			req := pb.RegisterAgentRequest_builder{
 				Agent: pb.Agent_builder{
-					Id: tc.reqAgentID,
+					Id: proto.String(tc.reqAgentID),
 				}.Build(),
 			}.Build()
 
@@ -620,7 +621,7 @@ func TestSPIFFEAuthInterceptor_UnsupportedTrustDomain(t *testing.T) {
 	ctx := mockSPIFFEContext("spiffe://unknown.domain/agent/agent-1")
 	req := pb.RegisterAgentRequest_builder{
 		Agent: pb.Agent_builder{
-			Id: "agent-1",
+			Id: proto.String("agent-1"),
 		}.Build(),
 	}.Build()
 
@@ -848,7 +849,7 @@ func TestSPIFFEStreamInterceptor(t *testing.T) {
 			ss := &mockServerStream{
 				ctx: tc.setupCtx(),
 				req: pb.StreamMessagesRequest_builder{
-					AgentId: tc.reqAgentID,
+					AgentId: proto.String(tc.reqAgentID),
 				}.Build(),
 			}
 
@@ -963,7 +964,7 @@ func TestSPIFFEAuthInterceptor_CoverageGaps(t *testing.T) {
 			} else {
 				req = pb.RegisterAgentRequest_builder{
 					Agent: pb.Agent_builder{
-						Id: tc.reqAgentID,
+						Id: proto.String(tc.reqAgentID),
 					}.Build(),
 				}.Build()
 			}
@@ -994,7 +995,7 @@ func TestSPIFFEAuthInterceptor_DelegateTaskRequest_Spoofing(t *testing.T) {
 	ctx := mockSPIFFEContext("spiffe://onehumancorp.io/org-1/attacker-agent")
 
 	req := pb.DelegateTaskRequest_builder{
-		FromAgentId: "target-agent",
+		FromAgentId: proto.String("target-agent"),
 	}.Build()
 
 	_, err := interceptor(ctx, req, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
@@ -1018,7 +1019,7 @@ func TestSPIFFEAuthInterceptor_DelegateTaskRequest_Valid(t *testing.T) {
 	ctx := mockSPIFFEContext("spiffe://onehumancorp.io/org-1/agent-1")
 
 	req := pb.DelegateTaskRequest_builder{
-		FromAgentId: "agent-1",
+		FromAgentId: proto.String("agent-1"),
 	}.Build()
 
 	_, err := interceptor(ctx, req, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
@@ -1121,7 +1122,7 @@ func TestSPIFFEStreamInterceptor_CoverageGaps(t *testing.T) {
 			ss := &mockServerStream{
 				ctx: tc.setupCtx(),
 				req: pb.StreamMessagesRequest_builder{
-					AgentId: tc.reqAgentID,
+					AgentId: proto.String(tc.reqAgentID),
 				}.Build(),
 			}
 

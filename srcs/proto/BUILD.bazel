@@ -1,5 +1,5 @@
 load("@rules_proto//proto:defs.bzl", "proto_library")
-load("@rules_go//proto:def.bzl", "go_proto_library")
+load("//bazel/rules:proto_go_grpc_library.bzl", "proto_go_grpc_library")
 load("//bazel/rules:proto_ts_library.bzl", "proto_ts_library")
 
 proto_library(
@@ -8,11 +8,10 @@ proto_library(
     visibility = ["//visibility:public"],
 )
 
-go_proto_library(
+proto_go_grpc_library(
     name = "hub_go_proto",
-    compilers = ["@rules_go//proto:go_grpc"],
+    protos = ":hub_proto",
     importpath = "github.com/onehumancorp/mono/srcs/proto",
-    protos = [":hub_proto"],
     visibility = ["//visibility:public"],
 )
 
