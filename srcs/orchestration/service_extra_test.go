@@ -26,18 +26,18 @@ func TestPublish_ContextSummarization_Success(t *testing.T) {
 
 	hub := NewHub()
 	hub.SetMinimaxAPIKey("test-key")
-	hub.RegisterAgent(Agent{ID: "pm-1", Name: proto.String("PM"), Role: proto.String("PRODUCT_MANAGER"), OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "swe-1", Name: proto.String("SWE"), Role: proto.String("SOFTWARE_ENGINEER"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "pm-1", Name: "PM", Role: "PRODUCT_MANAGER", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "swe-1", Name: "SWE", Role: "SOFTWARE_ENGINEER", OrganizationID: "org-1"})
 
 	meeting := hub.OpenMeeting("kickoff", []string{"pm-1", "swe-1"})
 
 	for i := 0; i < 16; i++ {
 		err := hub.Publish(Message{
 			ID:         "msg-" + string(rune(i)),
-			FromAgent:  proto.String("pm-1"),
-			ToAgent:    proto.String(""), // Broadcast to meeting
-			Type:       proto.String("task"),
-			Content:    proto.String("Implement feature ") + string(rune(i)),
+			FromAgent:  "pm-1",
+			ToAgent:    "", // Broadcast to meeting
+			Type:       "task",
+			Content:    "Implement feature " + string(rune(i)),
 			MeetingID:  meeting.ID,
 			OccurredAt: time.Now().UTC(),
 		})
@@ -75,8 +75,8 @@ func TestPublish_ContextSummarization_Success(t *testing.T) {
 
 func TestPublish_ChannelFull(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "pm-1", Name: proto.String("PM"), Role: proto.String("PRODUCT_MANAGER"), OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "swe-1", Name: proto.String("SWE"), Role: proto.String("SOFTWARE_ENGINEER"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "pm-1", Name: "PM", Role: "PRODUCT_MANAGER", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "swe-1", Name: "SWE", Role: "SOFTWARE_ENGINEER", OrganizationID: "org-1"})
 
 	hub.mu.Lock()
 	ch := make(chan struct{}, 1)
@@ -87,10 +87,10 @@ func TestPublish_ChannelFull(t *testing.T) {
 
 	err := hub.Publish(Message{
 		ID:         "msg-1",
-		FromAgent:  proto.String("pm-1"),
-		ToAgent:    proto.String("swe-1"),
-		Type:       proto.String("task"),
-		Content:    proto.String("Implement the feature"),
+		FromAgent:  "pm-1",
+		ToAgent:    "swe-1",
+		Type:       "task",
+		Content:    "Implement the feature",
 		OccurredAt: time.Now().UTC(),
 	})
 	if err != nil {
@@ -100,8 +100,8 @@ func TestPublish_ChannelFull(t *testing.T) {
 
 func TestPublish_MeetingChannelFull(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "pm-1", Name: proto.String("PM"), Role: proto.String("PRODUCT_MANAGER"), OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "swe-1", Name: proto.String("SWE"), Role: proto.String("SOFTWARE_ENGINEER"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "pm-1", Name: "PM", Role: "PRODUCT_MANAGER", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "swe-1", Name: "SWE", Role: "SOFTWARE_ENGINEER", OrganizationID: "org-1"})
 
 	hub.mu.Lock()
 	ch := make(chan struct{}, 1)
@@ -114,10 +114,10 @@ func TestPublish_MeetingChannelFull(t *testing.T) {
 
 	err := hub.Publish(Message{
 		ID:         "msg-1",
-		FromAgent:  proto.String("pm-1"),
-		ToAgent:    proto.String("swe-1"),
-		Type:       proto.String("task"),
-		Content:    proto.String("Implement the feature"),
+		FromAgent:  "pm-1",
+		ToAgent:    "swe-1",
+		Type:       "task",
+		Content:    "Implement the feature",
 		MeetingID:  "kickoff",
 		OccurredAt: time.Now().UTC(),
 	})
@@ -128,11 +128,11 @@ func TestPublish_MeetingChannelFull(t *testing.T) {
 
 func TestMinimaxClient_Reason_NewRequestError(t *testing.T) {
 	client := NewMinimaxClient("test")
-    originalURL := minimaxAPIURL
+	originalURL := minimaxAPIURL
 	minimaxAPIURL = string([]byte{0x7f}) // Control character to fail http.NewRequestWithContext
 	defer func() { minimaxAPIURL = originalURL }()
 
-    _, err := client.Reason(context.Background(), "test")
+	_, err := client.Reason(context.Background(), "test")
 	if err == nil {
 		t.Fatalf("expected error from http.NewRequestWithContext")
 	}
@@ -153,16 +153,16 @@ func (m *mockStreamMessagesServerError) Send(msg *pb.Message) error {
 
 func TestStreamMessages_SendErrorOnInitialSend(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "sender", Name: proto.String("Sender"), Role: proto.String("R1"), OrganizationID: "O1"})
-	hub.RegisterAgent(Agent{ID: "receiver", Name: proto.String("Receiver"), Role: proto.String("R2"), OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
 	server := NewHubServiceServer(hub)
 
 	_ = hub.Publish(Message{
 		ID:         "msg-1",
-		FromAgent:  proto.String("sender"),
-		ToAgent:    proto.String("receiver"),
-		Type:       proto.String(EventTask),
-		Content:    proto.String("Hello Streaming"),
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "Hello Streaming",
 		OccurredAt: time.Now(),
 	})
 
@@ -181,38 +181,38 @@ func TestStreamMessages_SendErrorOnInitialSend(t *testing.T) {
 }
 
 func TestStreamMessages_ErrorOnLaterSend(t *testing.T) {
-    hub := NewHub()
-    hub.RegisterAgent(Agent{ID: "sender", Name: proto.String("Sender"), Role: proto.String("R1"), OrganizationID: "O1"})
-    hub.RegisterAgent(Agent{ID: "receiver", Name: proto.String("Receiver"), Role: proto.String("R2"), OrganizationID: "O1"})
-    server := NewHubServiceServer(hub)
+	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender", Name: "Sender", Role: "R1", OrganizationID: "O1"})
+	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
+	server := NewHubServiceServer(hub)
 
-    ctx, cancel := context.WithCancel(context.Background())
-    defer cancel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-    mockStream := &mockStreamMessagesServerError{ctx: ctx}
-    req := pb.StreamMessagesRequest_builder{
-        AgentId: proto.String("receiver"),
-    }.Build()
+	mockStream := &mockStreamMessagesServerError{ctx: ctx}
+	req := pb.StreamMessagesRequest_builder{
+		AgentId: proto.String("receiver"),
+	}.Build()
 
-    errCh := make(chan error, 1)
-    go func() {
-        errCh <- server.StreamMessages(req, mockStream)
-    }()
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- server.StreamMessages(req, mockStream)
+	}()
 
-    time.Sleep(10 * time.Millisecond) // Let stream setup
-    _ = hub.Publish(Message{
-        ID:         "msg-2",
-        FromAgent:  proto.String("sender"),
-        ToAgent:    proto.String("receiver"),
-        Type:       proto.String(EventTask),
-        Content:    proto.String("Hello Streaming"),
-        OccurredAt: time.Now(),
-    })
+	time.Sleep(10 * time.Millisecond) // Let stream setup
+	_ = hub.Publish(Message{
+		ID:         "msg-2",
+		FromAgent:  "sender",
+		ToAgent:    "receiver",
+		Type:       EventTask,
+		Content:    "Hello Streaming",
+		OccurredAt: time.Now(),
+	})
 
-    err := <-errCh
-    if err == nil {
-        t.Fatalf("expected error from Send(), got nil")
-    }
+	err := <-errCh
+	if err == nil {
+		t.Fatalf("expected error from Send(), got nil")
+	}
 }
 
 func TestPublish_ContextSummarization_Failure(t *testing.T) {
@@ -229,18 +229,18 @@ func TestPublish_ContextSummarization_Failure(t *testing.T) {
 
 	hub := NewHub()
 	hub.SetMinimaxAPIKey("test-key")
-	hub.RegisterAgent(Agent{ID: "pm-1", Name: proto.String("PM"), Role: proto.String("PRODUCT_MANAGER"), OrganizationID: "org-1"})
-	hub.RegisterAgent(Agent{ID: "swe-1", Name: proto.String("SWE"), Role: proto.String("SOFTWARE_ENGINEER"), OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "pm-1", Name: "PM", Role: "PRODUCT_MANAGER", OrganizationID: "org-1"})
+	hub.RegisterAgent(Agent{ID: "swe-1", Name: "SWE", Role: "SOFTWARE_ENGINEER", OrganizationID: "org-1"})
 
 	meeting := hub.OpenMeeting("kickoff", []string{"pm-1", "swe-1"})
 
 	for i := 0; i < 16; i++ {
 		err := hub.Publish(Message{
 			ID:         "msg-" + string(rune(i)),
-			FromAgent:  proto.String("pm-1"),
-			ToAgent:    proto.String(""), // Broadcast to meeting
-			Type:       proto.String("task"),
-			Content:    proto.String("Implement feature ") + string(rune(i)),
+			FromAgent:  "pm-1",
+			ToAgent:    "", // Broadcast to meeting
+			Type:       "task",
+			Content:    "Implement feature " + string(rune(i)),
 			MeetingID:  meeting.ID,
 			OccurredAt: time.Now().UTC(),
 		})

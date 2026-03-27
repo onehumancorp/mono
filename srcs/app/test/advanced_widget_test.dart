@@ -137,7 +137,7 @@ void main() {
     test('creates a GoRouter with routes', () {
       final container = ProviderContainer(overrides: [
         authStateProvider.overrideWith(() => _FakeAuthNotifier(null)),
-        backendUrlProvider.overrideWithValue('http://localhost'),
+        backendUrlProvider.overrideWith((ref) => 'http://localhost'),
       ]);
       addTearDown(container.dispose);
 
@@ -383,7 +383,7 @@ void main() {
         overrides: [
           authServiceProvider.overrideWithValue(
               AuthService(baseUrl: 'http://localhost', client: mockClient)),
-          backendUrlProvider.overrideWithValue('http://localhost'),
+          backendUrlProvider.overrideWith((ref) => 'http://localhost'),
         ],
       ));
       await tester.pump();
@@ -409,7 +409,7 @@ void main() {
         overrides: [
           authServiceProvider.overrideWithValue(
               AuthService(baseUrl: 'http://localhost', client: mockClient)),
-          backendUrlProvider.overrideWithValue('http://localhost'),
+          backendUrlProvider.overrideWith((ref) => 'http://localhost'),
         ],
       ));
       await tester.pump();
