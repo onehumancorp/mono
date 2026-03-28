@@ -1155,7 +1155,8 @@ func TestHub_ToolParameterAutoCorrection(t *testing.T) {
 			eventID:     "event-ac-2",
 			payload:     []byte(`{"id": "123", "value": "456", "name": "test", "unknown_field": "bad data"}`),
 			setup:       func() {},
-			expectError: false,
+			expectError: true,
+			expectedErr: "invalid payload",
 		},
 		{
 			name:    "Edge Case: Concurrent Execution on same eventID",

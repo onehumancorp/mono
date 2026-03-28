@@ -459,11 +459,26 @@ func (h *Hub) ToolParameterAutoCorrection(eventID, agentID string, payload []byt
 		h.mu.Unlock()
 	}()
 
-	var temp map[string]interface{}
+	var structTemp struct {
+		ID    string `json:"id,omitempty"`
+		Value string `json:"value,omitempty"`
+		Name  string `json:"name,omitempty"`
+	}
 	dec := json.NewDecoder(bytes.NewReader(payload))
 	dec.DisallowUnknownFields()
-	if err := dec.Decode(&temp); err != nil {
+	if err := dec.Decode(&structTemp); err != nil {
 		return fmt.Errorf("invalid payload: %w", err)
+	}
+
+	temp := make(map[string]interface{})
+	if structTemp.ID != "" {
+		temp["id"] = structTemp.ID
+	}
+	if structTemp.Value != "" {
+		temp["value"] = structTemp.Value
+	}
+	if structTemp.Name != "" {
+		temp["name"] = structTemp.Name
 	}
 
 	corrected := false
