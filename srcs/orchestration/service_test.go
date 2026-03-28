@@ -1322,3 +1322,40 @@ func TestEventLogWorker_Coverage(t *testing.T) {
 	// Force close to stop loop
 	close(hub.eventLogChan)
 }
+
+func TestRedactInterfacePIISlice(t *testing.T) {
+	input := []interface{}{"email is test@test.com", map[string]interface{}{"phone": "555-555-5555"}}
+	output := redactInterfacePII(input)
+
+	sliceOut, ok := output.([]interface{})
+	if !ok {
+		t.Fatalf("Expected []interface{}")
+	}
+
+	if sliceOut[0] != "email is [REDACTED_EMAIL]" {
+		t.Errorf("Expected redacted email, got %v", sliceOut[0])
+	}
+}
+
+func TestDelegateTaskWithSIP(t *testing.T) {
+	hub := NewHub()
+
+	db, err := NewSIPDB(":memory:")
+	if err != nil {
+		t.Fatalf("Failed to create db: %v", err)
+	}
+	defer db.Close()
+
+	hub.SetSIPDB(db)
+
+	hub.RegisterAgent(Agent{ID: "agent1", Role: "role1"})
+	hub.RegisterAgent(Agent{ID: "agent2", Role: "role2"})
+
+	task := Message{ID: "task-1", Type: EventTask, Content: "do work"}
+	err = hub.DelegateTask("agent1", "agent2", task)
+	if err != nil {
+		t.Fatalf("Failed to delegate task: %v", err)
+	}
+
+	time.Sleep(100 * time.Millisecond)
+}

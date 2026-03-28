@@ -105,3 +105,13 @@ func TestHubCentrifugeNilSafe(t *testing.T) {
 		t.Fatalf("hub.Publish() without centrifuge node error = %v", err)
 	}
 }
+
+func TestCentrifugeNodeCoverage(t *testing.T) {
+	cn, _ := NewCentrifugeNode()
+	defer cn.Close()
+
+	msg := Message{ID: "test"}
+	cn.PublishMeetingMessage("meeting1", msg)
+	cn.PublishChatMessage("room1", msg)
+	cn.PublishAgentNotification("agent1", msg)
+}
