@@ -26,10 +26,14 @@ This document breaks down the Strategic Roadmap into discrete, parallelizable ta
   * **Dependencies:** Task 1.1
   * **Status:** Ready
 * **Task 1.3: Dynamic Scaling UI ("Hire/Fire")**
+  * **Documentation Gate:**
+    * Design Doc: `docs/features/dynamic-scaling-ui/design-doc.md` [VERIFIED]
+    * CUJ: `docs/features/dynamic-scaling-ui/cuj.md` [VERIFIED]
+    * Test Plan: `docs/features/dynamic-scaling-ui/test-plan.md` [VERIFIED]
   * **Owner:** Frontend Agent
   * **Description:** Build a real-time React component in the CEO Dashboard that allows replica count adjustments for newly generated roles.
   * **Dependencies:** Task 1.2
-  * **Status:** Blocked
+  * **Status:** Ready
 
 ### Epic 2: Advanced Agentic Capabilities (Phase 8 - "Top 50" Mandate)
 *Goal:* Implement Stateful Episodic Memory, Dynamic Tool Discovery, Native Vision, and Hierarchical Task Delegation to solve "Agent Amnesia" and orchestrator bloat.
