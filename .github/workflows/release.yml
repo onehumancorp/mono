@@ -38,6 +38,7 @@ jobs:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_OFFICIAL_API_KEY }}
         run: |
           bazelisk build \
+            --config=remote \
             //release:ironclaw-x86_64-unknown-linux-gnu \
             //release:ironclaw-aarch64-unknown-linux-gnu \
             //release:ironclaw-x86_64-apple-darwin \
@@ -349,6 +350,7 @@ jobs:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_OFFICIAL_API_KEY }}
         run: |
           bazelisk run //deploy:server_push \
+            --config=remote \
             --disk_cache="$BAZEL_DISK_CACHE" \
             --repository_cache="$BAZEL_REPOSITORY_CACHE" \
             --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
@@ -359,6 +361,7 @@ jobs:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_OFFICIAL_API_KEY }}
         run: |
           bazelisk run //deploy:agent_push \
+            --config=remote \
             --disk_cache="$BAZEL_DISK_CACHE" \
             --repository_cache="$BAZEL_REPOSITORY_CACHE" \
             --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
@@ -369,6 +372,7 @@ jobs:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_OFFICIAL_API_KEY }}
         run: |
           bazelisk run //deploy:ui_push \
+            --config=remote \
             --disk_cache="$BAZEL_DISK_CACHE" \
             --repository_cache="$BAZEL_REPOSITORY_CACHE" \
             --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
