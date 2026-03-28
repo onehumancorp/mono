@@ -8,6 +8,7 @@ import (
 	"time"
 
 	pb "github.com/onehumancorp/mono/srcs/proto"
+	"github.com/onehumancorp/mono/srcs/settings"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
@@ -263,5 +264,80 @@ func TestPublish_ContextSummarization_Failure(t *testing.T) {
 	}
 
 	// Give time for the asynchronous telemetry goroutine to execute
+	time.Sleep(50 * time.Millisecond)
+}
+
+func TestService_CoverageExt(t *testing.T) {
+	// 1. Array in redactInterfacePII (lines 51-55)
+	arr := []interface{}{"555-555-5555"}
+	redacted := redactInterfacePII(arr).([]interface{})
+	if redacted[0] != "[REDACTED_PHONE]" {
+		t.Errorf("Expected phone redaction in array, got %v", redacted[0])
+	}
+
+	// 2. DelegateTask with sipDB
+	hub := NewHub()
+	db, err := NewSIPDB(":memory:")
+	if err != nil {
+		t.Fatalf("Failed to create SIPDB: %v", err)
+	}
+	hub.SetSIPDB(db)
+
+	hub.RegisterAgent(Agent{ID: "del-sender", Role: "ROUTER"})
+	hub.RegisterAgent(Agent{ID: "del-receiver", Role: "WORKER"})
+
+	time.Sleep(10 * time.Millisecond)
+
+	err = hub.DelegateTask("del-sender", "del-receiver", Message{ID: "msg-del"})
+	if err != nil {
+		t.Errorf("DelegateTask failed: %v", err)
+	}
+	time.Sleep(10 * time.Millisecond)
+
+	// 3. SettingsStore / Scheduler coverage
+	if hub.Scheduler() == nil {
+		t.Errorf("Expected scheduler to not be nil")
+	}
+	if hub.SettingsStore() == nil {
+		t.Errorf("Expected settings store to not be nil")
+	}
+	hub.SetSettingsStore(settings.NewStore())
+	if hub.SettingsStore() == nil {
+		t.Errorf("Expected settings store to not be nil after set")
+	}
+
+	// 5. putMessageSlice with cap > 1024
+	largeSlice := make([]Message, 0, 2048)
+	putMessageSlice(largeSlice) // should just return, no assertion needed
+
+	// 6. ToAgent in CentrifugeNode
+	cn, err := NewCentrifugeNode()
+	if err != nil {
+		t.Fatalf("Failed to create centrifuge node: %v", err)
+	}
+	hub.SetCentrifugeNode(cn)
+	err = hub.Publish(Message{FromAgent: "del-sender", ToAgent: "del-receiver"})
+	if err != nil {
+		t.Errorf("Publish failed: %v", err)
+	}
+
+	time.Sleep(10 * time.Millisecond)
+	cn.Close()
+	db.Close()
+}
+
+func TestEventLogWorker_Errors(t *testing.T) {
+	hub := &Hub{
+		eventLogChan: make(chan interface{}, 10),
+	}
+
+	// Open file error branch
+	hub.eventLogWorker(context.Background(), "/root/forbidden_path_test.jsonl")
+	// If it doesn't panic, it passed
+
+	hub2 := NewHub()
+	// Marshal failure branch (func cannot be marshaled in JSON)
+	hub2.LogEvent(func(){})
+
 	time.Sleep(50 * time.Millisecond)
 }
