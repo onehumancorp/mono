@@ -148,6 +148,16 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			if agentID != reqFromAgent {
 				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot delegate task as agent %s", spiffeID, reqFromAgent)
 			}
+		case *pb.SubTask:
+			reqFromAgent := v.GetFromAgentId()
+			if agentID != reqFromAgent {
+				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot delegate subtask as agent %s", spiffeID, reqFromAgent)
+			}
+		case *pb.ReasonRequest:
+			reqFromAgent := v.GetFromAgentId()
+			if agentID != reqFromAgent {
+				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot request reasoning as agent %s", spiffeID, reqFromAgent)
+			}
 		}
 
 		return handler(ctx, req)

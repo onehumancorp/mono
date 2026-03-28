@@ -68,6 +68,7 @@ message SubTask {
   string target_role = 2;
   string instruction = 3;
   string parent_thread_id = 4;
+  string from_agent_id = 5;
 }
 
 message TokenEfficientContextSummarizationEvent {
@@ -88,6 +89,7 @@ message StreamMessagesRequest {
 
 message ReasonRequest {
   string prompt = 1;
+  string from_agent_id = 2;
 }
 
 message ReasonResponse {
