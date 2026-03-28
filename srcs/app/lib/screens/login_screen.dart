@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+// import 'package:flutter_svg/flutter_svg.dart'; // Temporarily disabled for Bazel build
 import 'package:ohc_app/services/auth_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -58,10 +58,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SvgPicture.asset(
-                      'assets/logo.svg',
-                      height: 100,
-                    ),
+                    // SvgPicture.asset(
+                    //   'assets/logo.svg',
+                    //   height: 100,
+                    // ),
+                    const Icon(Icons.person, size: 80, color: Colors.indigo),
                     const SizedBox(height: 24),
                     const Text(
                       'One Human Corp',

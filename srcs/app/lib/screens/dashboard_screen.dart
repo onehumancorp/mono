@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+// import 'package:flutter_svg/flutter_svg.dart'; // Temporarily disabled for Bazel build
 import 'package:ohc_app/services/api_service.dart';
 
 final _dashboardProvider = FutureProvider<Map<String, dynamic>>((ref) async {
@@ -18,9 +18,9 @@ class DashboardScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
-        leading: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: SvgPicture.asset('assets/logo.svg'),
+        leading: const Padding(
+          padding: EdgeInsets.all(10.0),
+          child: Icon(Icons.person),
         ),
       ),
       body: snapshot.when(
