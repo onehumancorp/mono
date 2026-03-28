@@ -285,18 +285,17 @@ function HireAgentForm({
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
-  const [providerType, setProviderType] = useState("minimax");
+  const [providerType, setProviderType] = useState("openclaw");
   const commonRoles = [
     "SOFTWARE_ENGINEER", "PRODUCT_MANAGER", "QA_TESTER", "SECURITY_ENGINEER",
     "DESIGNER", "MARKETING_MANAGER", "GROWTH_AGENT", "CONTENT_STRATEGIST",
     "SEO_SPECIALIST", "BOOKKEEPER", "TAX_SPECIALIST",
   ];
   const providers = [
-    { id: "minimax", label: "MiniMax", desc: "abab series models — best for all roles" },
+    { id: "openclaw", label: "OpenClaw (MiniMax)", desc: "OpenClaw agent powered by MiniMax API — best for all roles" },
     { id: "claude", label: "Claude (Anthropic)", desc: "Claude Sonnet/Opus — best for engineering" },
     { id: "gemini", label: "Gemini (Google)", desc: "Gemini Pro/Ultra — best for PM & analytics" },
     { id: "opencode", label: "OpenCode", desc: "Open-source SWE agent" },
-    { id: "openclaw", label: "OpenClaw", desc: "General-purpose assistant agent" },
     { id: "ironclaw", label: "IronClaw", desc: "Security & audit-focused agent" },
     { id: "builtin", label: "Built-in", desc: "Platform-native agent — no credentials needed" },
   ];
@@ -2636,7 +2635,7 @@ export function App() {
                       onChange={(e) => setSettings({ ...settings, minimax_api_key: e.target.value })}
                       autoComplete="off"
                     />
-                    <span className="field-hint">Required for minimax-m2.7 models.</span>
+                    <span className="field-hint">Required for OpenClaw agents (backed by MiniMax API).</span>
                   </label>
                   <button
                     type="button"

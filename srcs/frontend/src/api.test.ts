@@ -1036,3 +1036,54 @@ describe("api – deleteUser without token branch", () => {
     await expect(du("u-99")).resolves.toBeUndefined();
   });
 });
+
+describe("api – pipeline functions", () => {
+  beforeEach(() => {
+    localStorage.setItem("ohc_token", "test-token");
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+    localStorage.removeItem("ohc_token");
+  });
+
+  it("createPipeline posts body and returns created pipeline", async () => {
+    const created = { id: "pl-1", name: "AI News", branch: "feature/ai-news", status: "PLANNING" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => created,
+      text: async () => JSON.stringify(created),
+    })));
+    const { createPipeline: cp } = await import("./api");
+    await expect(cp({ name: "AI News", branch: "feature/ai-news", initiatedBy: "ceo-1" })).resolves.toEqual(created);
+    const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[0]).toBe("/api/pipelines");
+    expect(JSON.parse((call[1] as RequestInit).body as string)).toMatchObject({ name: "AI News" });
+  });
+
+  it("promotePipeline posts body and returns promoted pipeline", async () => {
+    const promoted = { id: "pl-1", name: "AI News", branch: "feature/ai-news", status: "PROMOTED" };
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => promoted,
+      text: async () => JSON.stringify(promoted),
+    })));
+    const { promotePipeline: pp } = await import("./api");
+    await expect(pp({ pipelineId: "pl-1", approvedBy: "ceo-1" })).resolves.toEqual(promoted);
+    const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[0]).toBe("/api/pipelines/promote");
+  });
+
+  it("resolveHandoff posts and returns updated handoffs", async () => {
+    const handoffs = [{ id: "h-1", status: "resolved" }];
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => handoffs,
+      text: async () => JSON.stringify(handoffs),
+    })));
+    const { resolveHandoff: rh } = await import("./api");
+    await expect(rh("h-1", "resolved")).resolves.toEqual(handoffs);
+    const call = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[0]).toBe("/api/handoffs/resolve");
+  });
+});

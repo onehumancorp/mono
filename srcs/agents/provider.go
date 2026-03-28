@@ -54,13 +54,6 @@ const (
 	// Has no side effects.
 	ProviderTypeIronClaw ProviderType = "ironclaw"
 
-	// ProviderTypeMiniMax targets the MiniMax AI platform. Best suited for all roles; uses the MiniMax abab series models.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	ProviderTypeMiniMax ProviderType = "minimax"
-
 	// ProviderTypeBuiltin is the platform's own lightweight agent implementation. Suitable for any role when no external provider is required.
 	// Accepts no parameters.
 	// Returns nothing.
@@ -443,73 +436,6 @@ func (p *IronClawProvider) GetCredentials() Credentials { return p.load() }
 // Produces no errors.
 // Has no side effects.
 func (p *IronClawProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
-
-// ── MiniMax ───────────────────────────────────────────────────────────────────
-
-// MiniMaxProvider implements Provider for the MiniMax AI platform.
-// Accepts no parameters.
-// Returns nothing.
-// Produces no errors.
-// Has no side effects.
-type MiniMaxProvider struct{ baseProvider }
-
-// Type functionality.
-// Accepts no parameters.
-// Returns ProviderType.
-// Produces no errors.
-// Has no side effects.
-func (p *MiniMaxProvider) Type() ProviderType { return ProviderTypeMiniMax }
-
-// Description functionality.
-// Accepts no parameters.
-// Returns string.
-// Produces no errors.
-// Has no side effects.
-func (p *MiniMaxProvider) Description() string {
-	return "MiniMax — Chinese multimodal AI platform providing abab series models for all agent roles"
-}
-
-// SupportedRoles functionality.
-// Accepts no parameters.
-// Returns []string.
-// Produces no errors.
-// Has no side effects.
-func (p *MiniMaxProvider) SupportedRoles() []string {
-	return []string{
-		"CEO", "PRODUCT_MANAGER", "SOFTWARE_ENGINEER", "ENGINEERING_DIRECTOR",
-		"QA_TESTER", "SECURITY_ENGINEER", "DESIGNER", "MARKETING_MANAGER",
-		"GROWTH_AGENT", "CONTENT_STRATEGIST", "SEO_SPECIALIST", "PAID_MEDIA_MANAGER",
-		"ANALYTICS_ENGINEER", "CFO", "BOOKKEEPER", "TAX_SPECIALIST",
-		"AUDIT_MANAGER", "PAYROLL_MANAGER",
-	}
-}
-
-// Authenticate functionality.
-// Accepts parameters: p *MiniMaxProvider (No Constraints).
-// Returns error.
-// Produces errors: Explicit error handling.
-// Has no side effects.
-func (p *MiniMaxProvider) Authenticate(creds Credentials) error {
-	if creds.APIKey == "" {
-		return errors.New("minimax provider requires an API key (MINIMAX_API_KEY)")
-	}
-	p.store(creds)
-	return nil
-}
-
-// GetCredentials functionality.
-// Accepts no parameters.
-// Returns Credentials.
-// Produces no errors.
-// Has no side effects.
-func (p *MiniMaxProvider) GetCredentials() Credentials { return p.load() }
-
-// IsAuthenticated functionality.
-// Accepts no parameters.
-// Returns bool.
-// Produces no errors.
-// Has no side effects.
-func (p *MiniMaxProvider) IsAuthenticated() bool { return !p.load().IsEmpty() }
 
 // ── Builtin ───────────────────────────────────────────────────────────────────
 
