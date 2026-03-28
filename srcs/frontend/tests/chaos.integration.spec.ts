@@ -45,7 +45,7 @@ test("Chaos: Simulate DB failure and recovery during agent handoff", async ({ pa
   await page.getByRole("button", { name: "Handoffs" }).click();
 
   // Look for our seeded handoff
-  const handoffCard = page.locator('.handoff-card', { hasText: 'Merge conflict resolution required for legacy billing module.' });
+  const handoffCard = page.locator('.handoff-card').filter({ hasText: 'Merge conflict resolution required for legacy billing module.' }).first();
   await expect(handoffCard).toBeVisible();
 
   // Verify visual indicators of failure
@@ -69,7 +69,7 @@ test("Chaos: Simulate DB failure and recovery during agent handoff", async ({ pa
   await page.getByRole("button", { name: "Handoffs" }).click();
 
   // Look for our seeded handoff again, it should be resolved
-  const updatedHandoffCard = page.locator('.handoff-card', { hasText: 'Merge conflict resolution required for legacy billing module.' });
+  const updatedHandoffCard = page.locator('.handoff-card').filter({ hasText: 'Merge conflict resolution required for legacy billing module.' }).first();
   // Looking for the text inside handoff-resolved-stamp
   await expect(updatedHandoffCard.locator('.handoff-resolved-stamp')).toHaveText(/Resolved/);
 
