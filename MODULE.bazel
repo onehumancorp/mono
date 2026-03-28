@@ -51,7 +51,6 @@ use_repo(
     "pub_fixnum",
     "pub_flutter_lints",
     "pub_flutter_riverpod",
-    "pub_flutter_svg",
     "pub_go_router",
     "pub_http",
     "pub_http_parser",

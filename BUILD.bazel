@@ -52,5 +52,5 @@ alias(
 # Alias to run hello-world agent easily
 alias(
     name = "hello-world",
-    actual = "//examples/hello-world-agent:hello-world-agent",
+    actual = "//examples/hello-world-agent:hello-world",
 )

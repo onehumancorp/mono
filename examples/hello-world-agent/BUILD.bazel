@@ -9,7 +9,7 @@ go_library(
 )
 
 go_binary(
-    name = "hello-world-agent",
+    name = "hello-world",
     embed = [":hello-world-agent_lib"],
     visibility = ["//visibility:public"],
 )
