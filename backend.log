@@ -1,6 +1,849 @@
-{"time":"2026-03-25T18:07:56.860651566Z","level":"INFO","msg":"serving API","address":":8080"}
-{"time":"2026-03-25T18:07:56.862258529Z","level":"INFO","msg":"serving gRPC","address":":9090"}
-{"time":"2026-03-25T18:25:10.02894528Z","level":"INFO","msg":"agent execution trace","component":"telemetry","agent_id":"swe-1","role":"SOFTWARE_ENGINEER","api":"publish","event_type":"status","content":"Checklist is 90% complete. Waiting on design assets for the final error states."}
-{"time":"2026-03-25T18:25:10.028998962Z","level":"INFO","msg":"agent execution trace","component":"telemetry","agent_id":"pm-1","role":"PRODUCT_MANAGER","api":"publish","event_type":"task","content":"Ship the reliability checklist before launch."}
-{"time":"2026-03-25T18:25:10.029012774Z","level":"INFO","msg":"agent execution trace","component":"telemetry","agent_id":"ux-1","role":"DESIGNER","api":"publish","event_type":"status","content":"Design QA pass completed with no blockers. Assets pushed to main."}
-{"time":"2026-03-25T18:25:10.029065372Z","level":"INFO","msg":"agent execution trace","component":"telemetry","agent_id":"pm-1","role":"PRODUCT_MANAGER","api":"publish","event_type":"ApprovalNeeded","content":"All pre-launch checks passed. Requesting final CEO approval to deploy to production."}
+INFO: Invocation ID: ed2f35b5-f1c2-4720-9174-681931b239c3
+INFO: Streaming build results to: https://onehumancorp.buildbuddy.io/invocation/ed2f35b5-f1c2-4720-9174-681931b239c3
+INFO: Options provided by the client:
+  Inherited 'common' options: --isatty=0 --terminal_columns=80
+INFO: Reading rc options for 'run' from /app/.bazelrc:
+  Inherited 'build' options: --config=remote --disk_cache=~/.cache/bazel-disk-cache --action_env=CGO_ENABLED=1 --spawn_strategy=sandboxed,local --incompatible_strict_action_env --announce_rc --action_env=GEMINI_API_KEY --action_env=MINIMAX_API_KEY --action_env=MCP_BUNDLE_DIR --action_env=CI
+INFO: Found applicable config definition build:remote in file /app/.bazelrc: --remote_download_all --config=buildbuddy-official
+INFO: Found applicable config definition common:buildbuddy-official in file /app/.bazelrc: --remote_cache=grpcs://onehumancorp.buildbuddy.io --remote_upload_local_results --remote_timeout=10m --remote_executor=grpcs://onehumancorp.buildbuddy.io --remote_cache_compression --jobs=200 --remote_local_fallback --remote_header=x-buildbuddy-api-key=vGFjlQg7X49NwoQHAfRW
+INFO: Found applicable config definition build:buildbuddy-official in file /app/.bazelrc: --bes_results_url=https://onehumancorp.buildbuddy.io/invocation/ --bes_backend=grpcs://onehumancorp.buildbuddy.io
+WARNING: --remote_upload_local_results is set, but the remote cache does not support uploading action results or the current account is not authorized to write local results to the remote cache.
+Computing main repo mapping:
+Loading:
+Loading: 0 packages loaded
+Analyzing: target //srcs/cmd/ohc:ohc (0 packages loaded, 0 targets configured)
+Analyzing: target //srcs/cmd/ohc:ohc (0 packages loaded, 0 targets configured)
+
+INFO: Analyzed target //srcs/cmd/ohc:ohc (0 packages loaded, 0 targets configured).
+[562 / 982] Compiling upb/base/status.c [for tool]; 0s disk-cache, remote-cache ... (200 actions, 0 running)
+INFO: From Compiling src/google/protobuf/compiler/cpp/parse_function_generator.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/parse_function_generator.h:18,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/parse_function_generator.cc:8:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/helpers.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/cpp/helpers.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/compiler/cpp/helpers.cc: In member function 'google::protobuf::compiler::cpp::MessageAnalysis google::protobuf::compiler::cpp::MessageSCCAnalyzer::GetSCCAnalysis(const google::protobuf::compiler::SCC*)':
+external/protobuf+/src/google/protobuf/compiler/cpp/helpers.cc:1802:32: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 1802 |       if (field->options().weak()) {
+      |           ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/enum.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/cpp/enum.cc:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/generator.h:24,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/enum.cc:28:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/wire_format.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/wire_format.cc:31:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h: In constructor 'google::protobuf::internal::MapFieldBase::ReflectionPayload::ReflectionPayload(google::protobuf::Arena*, const google::protobuf::Message*)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h:416:11: warning: 'google::protobuf::RepeatedPtrField<T>::RepeatedPtrField(google::protobuf::Arena*) [with Element = google::protobuf::Message]' is deprecated: Use Arena::Create<RepeatedPtrField<...>>(Arena*) instead [-Wdeprecated-declarations]
+  416 |         : repeated_field_(arena), prototype_(prototype) {}
+      |           ^~~~~~~~~~~~~~~~~~~~~~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_field.h:46,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/parse_context.h:39,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/generated_message_tctable_decl.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/extension_set.h:40,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.h:56,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/wire_format.h:26,
+                 from external/protobuf+/src/google/protobuf/wire_format.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_ptr_field.h:1380:8: note: declared here
+ 1380 | inline RepeatedPtrField<Element>::RepeatedPtrField(Arena* arena)
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/descriptor.cc [for tool]:
+external/protobuf+/src/google/protobuf/descriptor.cc: In member function 'void google::protobuf::FieldDescriptor::DebugString(int, std::string*, const google::protobuf::DebugStringOptions&) const':
+external/protobuf+/src/google/protobuf/descriptor.cc:3953:65: warning: 'bool google::protobuf::FieldDescriptor::has_optional_keyword() const' is deprecated: Use has_presence() instead. [-Wdeprecated-declarations]
+ 3953 |       (!is_required() && !is_repeated() && !has_optional_keyword())) {
+      |                                             ~~~~~~~~~~~~~~~~~~~~^~
+In file included from external/protobuf+/src/google/protobuf/descriptor.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.h:1136:8: note: declared here
+ 1136 |   bool has_optional_keyword() const;
+      |        ^~~~~~~~~~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/descriptor.cc: In member function 'void google::protobuf::DescriptorBuilder::CrossLinkField(google::protobuf::FieldDescriptor*, const google::protobuf::FieldDescriptorProto&)':
+external/protobuf+/src/google/protobuf/descriptor.cc:7982:65: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 7982 |     bool is_weak = !pool_->enforce_weak_ && proto.options().weak();
+      |                                             ~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/cpp_features.pb.h:33,
+                 from external/protobuf+/src/google/protobuf/descriptor.cc:72:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/descriptor.cc: In function 'google::protobuf::internal::cpp::HasbitMode google::protobuf::internal::cpp::GetFieldHasbitModeWithoutProfile(const google::protobuf::FieldDescriptor*)':
+external/protobuf+/src/google/protobuf/descriptor.cc:10700:62: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+10700 |   if (field->real_containing_oneof() || field->options().weak() ||
+      |                                         ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/dynamic_message.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/dynamic_message.cc:66:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h: In constructor 'google::protobuf::internal::MapFieldBase::ReflectionPayload::ReflectionPayload(google::protobuf::Arena*, const google::protobuf::Message*)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h:416:11: warning: 'google::protobuf::RepeatedPtrField<T>::RepeatedPtrField(google::protobuf::Arena*) [with Element = google::protobuf::Message]' is deprecated: Use Arena::Create<RepeatedPtrField<...>>(Arena*) instead [-Wdeprecated-declarations]
+  416 |         : repeated_field_(arena), prototype_(prototype) {}
+      |           ^~~~~~~~~~~~~~~~~~~~~~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_field.h:46,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/parse_context.h:39,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/generated_message_tctable_decl.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/extension_set.h:40,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.h:56,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/dynamic_message.h:27,
+                 from external/protobuf+/src/google/protobuf/dynamic_message.cc:42:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_ptr_field.h:1380:8: note: declared here
+ 1380 | inline RepeatedPtrField<Element>::RepeatedPtrField(Arena* arena)
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/dynamic_message.cc: In member function 'void google::protobuf::DynamicMessage::SharedCtor(bool)':
+external/protobuf+/src/google/protobuf/dynamic_message.cc:574:66: warning: 'google::protobuf::RepeatedPtrField<T>::RepeatedPtrField(google::protobuf::Arena*) [with Element = std::__cxx11::basic_string<char>]' is deprecated: Use Arena::Create<RepeatedPtrField<...>>(Arena*) instead [-Wdeprecated-declarations]
+  574 |               new (field_ptr) RepeatedPtrField<std::string>(arena);
+      |                                                                  ^
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_ptr_field.h:1380:8: note: declared here
+ 1380 | inline RepeatedPtrField<Element>::RepeatedPtrField(Arena* arena)
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/dynamic_message.cc:602:60: warning: 'google::protobuf::RepeatedPtrField<T>::RepeatedPtrField(google::protobuf::Arena*) [with Element = google::protobuf::Message]' is deprecated: Use Arena::Create<RepeatedPtrField<...>>(Arena*) instead [-Wdeprecated-declarations]
+  602 |             new (field_ptr) RepeatedPtrField<Message>(arena);
+      |                                                            ^
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_ptr_field.h:1380:8: note: declared here
+ 1380 | inline RepeatedPtrField<Element>::RepeatedPtrField(Arena* arena)
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/dynamic_message.cc: In member function 'void google::protobuf::DynamicMessage::CrossLinkPrototypes()':
+external/protobuf+/src/google/protobuf/dynamic_message.cc:774:31: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  774 |         !field->options().weak() && !InRealOneof(field) &&
+      |          ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from external/protobuf+/src/google/protobuf/dynamic_message.cc:60:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+[841 / 982] [Prepa] Compiling src/google/protobuf/compiler/csharp/csharp_primitive_field.cc [for tool] ... (94 actions, 0 running)
+INFO: From Compiling src/google/protobuf/compiler/cpp/field.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/field.h:26,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/field.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/extension.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/extension.h:19,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/extension.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/generated_message_reflection.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/generated_message_reflection.cc:51:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h: In constructor 'google::protobuf::internal::MapFieldBase::ReflectionPayload::ReflectionPayload(google::protobuf::Arena*, const google::protobuf::Message*)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h:416:11: warning: 'google::protobuf::RepeatedPtrField<T>::RepeatedPtrField(google::protobuf::Arena*) [with Element = google::protobuf::Message]' is deprecated: Use Arena::Create<RepeatedPtrField<...>>(Arena*) instead [-Wdeprecated-declarations]
+  416 |         : repeated_field_(arena), prototype_(prototype) {}
+      |           ^~~~~~~~~~~~~~~~~~~~~~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_field.h:46,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/parse_context.h:39,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/generated_message_tctable_decl.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/extension_set.h:40,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.h:56,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/generated_message_reflection.h:26,
+                 from external/protobuf+/src/google/protobuf/generated_message_reflection.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_ptr_field.h:1380:8: note: declared here
+ 1380 | inline RepeatedPtrField<Element>::RepeatedPtrField(Arena* arena)
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc: In member function 'const google::protobuf::Message* google::protobuf::Reflection::GetDefaultMessageInstance(const google::protobuf::FieldDescriptor*) const':
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc:2526:55: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 2526 |   if (!field->is_extension() && !field->options().weak() &&
+      |                                  ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from external/protobuf+/src/google/protobuf/generated_message_reflection.cc:41:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+In file included from external/abseil-cpp+/absl/log/internal/check_impl.h:20,
+                 from external/abseil-cpp+/absl/log/absl_check.h:38,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/generated_message_reflection.h:25:
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc: In member function 'bool google::protobuf::Reflection::HasFieldWithHasbits(const google::protobuf::Message&, const google::protobuf::FieldDescriptor*) const':
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc:3290:37: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 3290 |   ABSL_DCHECK(!field->options().weak());
+      |                ~~~~~~~~~~~~~~~~~~~~~^~
+external/abseil-cpp+/absl/log/internal/conditions.h:68:7: note: in definition of macro 'ABSL_LOG_INTERNAL_STATELESS_CONDITION'
+   68 |     !(condition) ? (void)0 : ::absl::log_internal::Voidify() &&
+      |       ^~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:26:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_CONDITION_FATAL'
+   26 |   ABSL_LOG_INTERNAL_CONDITION_FATAL(STATELESS,                        \
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:27:37: note: in expansion of macro 'ABSL_PREDICT_FALSE'
+   27 |                                     ABSL_PREDICT_FALSE(!(condition))) \
+      |                                     ^~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:43:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_CHECK_IMPL'
+   43 |   ABSL_LOG_INTERNAL_CHECK_IMPL(true || (condition), "true")
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/absl_check.h:47:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_DCHECK_IMPL'
+   47 |   ABSL_LOG_INTERNAL_DCHECK_IMPL((condition), #condition)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc:3290:3: note: in expansion of macro 'ABSL_DCHECK'
+ 3290 |   ABSL_DCHECK(!field->options().weak());
+      |   ^~~~~~~~~~~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc: In member function 'void google::protobuf::Reflection::SetHasBit(google::protobuf::Message*, const google::protobuf::FieldDescriptor*) const':
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc:3323:37: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 3323 |   ABSL_DCHECK(!field->options().weak());
+      |                ~~~~~~~~~~~~~~~~~~~~~^~
+external/abseil-cpp+/absl/log/internal/conditions.h:68:7: note: in definition of macro 'ABSL_LOG_INTERNAL_STATELESS_CONDITION'
+   68 |     !(condition) ? (void)0 : ::absl::log_internal::Voidify() &&
+      |       ^~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:26:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_CONDITION_FATAL'
+   26 |   ABSL_LOG_INTERNAL_CONDITION_FATAL(STATELESS,                        \
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:27:37: note: in expansion of macro 'ABSL_PREDICT_FALSE'
+   27 |                                     ABSL_PREDICT_FALSE(!(condition))) \
+      |                                     ^~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:43:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_CHECK_IMPL'
+   43 |   ABSL_LOG_INTERNAL_CHECK_IMPL(true || (condition), "true")
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/absl_check.h:47:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_DCHECK_IMPL'
+   47 |   ABSL_LOG_INTERNAL_DCHECK_IMPL((condition), #condition)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc:3323:3: note: in expansion of macro 'ABSL_DCHECK'
+ 3323 |   ABSL_DCHECK(!field->options().weak());
+      |   ^~~~~~~~~~~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc: In member function 'void google::protobuf::Reflection::ClearHasBit(google::protobuf::Message*, const google::protobuf::FieldDescriptor*) const':
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc:3332:37: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 3332 |   ABSL_DCHECK(!field->options().weak());
+      |                ~~~~~~~~~~~~~~~~~~~~~^~
+external/abseil-cpp+/absl/log/internal/conditions.h:68:7: note: in definition of macro 'ABSL_LOG_INTERNAL_STATELESS_CONDITION'
+   68 |     !(condition) ? (void)0 : ::absl::log_internal::Voidify() &&
+      |       ^~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:26:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_CONDITION_FATAL'
+   26 |   ABSL_LOG_INTERNAL_CONDITION_FATAL(STATELESS,                        \
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:27:37: note: in expansion of macro 'ABSL_PREDICT_FALSE'
+   27 |                                     ABSL_PREDICT_FALSE(!(condition))) \
+      |                                     ^~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:43:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_CHECK_IMPL'
+   43 |   ABSL_LOG_INTERNAL_CHECK_IMPL(true || (condition), "true")
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/absl_check.h:47:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_DCHECK_IMPL'
+   47 |   ABSL_LOG_INTERNAL_DCHECK_IMPL((condition), #condition)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc:3332:3: note: in expansion of macro 'ABSL_DCHECK'
+ 3332 |   ABSL_DCHECK(!field->options().weak());
+      |   ^~~~~~~~~~~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc: In member function 'void google::protobuf::Reflection::NaiveSwapHasBit(google::protobuf::Message*, google::protobuf::Message*, const google::protobuf::FieldDescriptor*) const':
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc:3341:37: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 3341 |   ABSL_DCHECK(!field->options().weak());
+      |                ~~~~~~~~~~~~~~~~~~~~~^~
+external/abseil-cpp+/absl/log/internal/conditions.h:68:7: note: in definition of macro 'ABSL_LOG_INTERNAL_STATELESS_CONDITION'
+   68 |     !(condition) ? (void)0 : ::absl::log_internal::Voidify() &&
+      |       ^~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:26:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_CONDITION_FATAL'
+   26 |   ABSL_LOG_INTERNAL_CONDITION_FATAL(STATELESS,                        \
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:27:37: note: in expansion of macro 'ABSL_PREDICT_FALSE'
+   27 |                                     ABSL_PREDICT_FALSE(!(condition))) \
+      |                                     ^~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:43:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_CHECK_IMPL'
+   43 |   ABSL_LOG_INTERNAL_CHECK_IMPL(true || (condition), "true")
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/absl_check.h:47:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_DCHECK_IMPL'
+   47 |   ABSL_LOG_INTERNAL_DCHECK_IMPL((condition), #condition)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc:3341:3: note: in expansion of macro 'ABSL_DCHECK'
+ 3341 |   ABSL_DCHECK(!field->options().weak());
+      |   ^~~~~~~~~~~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/reflection_visit_fields.h: In instantiation of 'static void google::protobuf::internal::ReflectionVisit::VisitFields(MessageT&, CallbackFn&&, google::protobuf::internal::FieldMask) [with MessageT = google::protobuf::Message; CallbackFn = google::protobuf::internal::ReflectionVisit::VisitMessageFields<google::protobuf::Reflection::MaybePoisonAfterClear(google::protobuf::Message&) const::<lambda(google::protobuf::Message&)> >(google::protobuf::Message&, google::protobuf::Reflection::MaybePoisonAfterClear(google::protobuf::Message&) const::<lambda(google::protobuf::Message&)>&&)::<lambda(auto:42)>]':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/reflection_visit_fields.h:447:31:   required from 'static void google::protobuf::internal::ReflectionVisit::VisitMessageFields(google::protobuf::Message&, CallbackFn&&) [with CallbackFn = google::protobuf::Reflection::MaybePoisonAfterClear(google::protobuf::Message&) const::<lambda(google::protobuf::Message&)>]'
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/reflection_visit_fields.h:502:38:   required from 'void google::protobuf::internal::VisitMutableMessageFields(google::protobuf::Message&, CallbackFn&&) [with CallbackFn = google::protobuf::Reflection::MaybePoisonAfterClear(google::protobuf::Message&) const::<lambda(google::protobuf::Message&)>]'
+external/protobuf+/src/google/protobuf/generated_message_reflection.cc:1390:40:   required from here
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/reflection_visit_fields.h:109:39: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  109 |     ABSL_DCHECK(!field->options().weak()) << "weak fields are not supported";
+      |                  ~~~~~~~~~~~~~~~~~~~~~^~
+external/abseil-cpp+/absl/log/internal/conditions.h:68:7: note: in definition of macro 'ABSL_LOG_INTERNAL_STATELESS_CONDITION'
+   68 |     !(condition) ? (void)0 : ::absl::log_internal::Voidify() &&
+      |       ^~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:26:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_CONDITION_FATAL'
+   26 |   ABSL_LOG_INTERNAL_CONDITION_FATAL(STATELESS,                        \
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:27:37: note: in expansion of macro 'ABSL_PREDICT_FALSE'
+   27 |                                     ABSL_PREDICT_FALSE(!(condition))) \
+      |                                     ^~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:43:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_CHECK_IMPL'
+   43 |   ABSL_LOG_INTERNAL_CHECK_IMPL(true || (condition), "true")
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/absl_check.h:47:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_DCHECK_IMPL'
+   47 |   ABSL_LOG_INTERNAL_DCHECK_IMPL((condition), #condition)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/reflection_visit_fields.h:109:5: note: in expansion of macro 'ABSL_DCHECK'
+  109 |     ABSL_DCHECK(!field->options().weak()) << "weak fields are not supported";
+      |     ^~~~~~~~~~~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/reflection_visit_fields.h:109:39: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  109 |     ABSL_DCHECK(!field->options().weak()) << "weak fields are not supported";
+      |                  ~~~~~~~~~~~~~~~~~~~~~^~
+external/abseil-cpp+/absl/log/internal/conditions.h:68:7: note: in definition of macro 'ABSL_LOG_INTERNAL_STATELESS_CONDITION'
+   68 |     !(condition) ? (void)0 : ::absl::log_internal::Voidify() &&
+      |       ^~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:26:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_CONDITION_FATAL'
+   26 |   ABSL_LOG_INTERNAL_CONDITION_FATAL(STATELESS,                        \
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:27:37: note: in expansion of macro 'ABSL_PREDICT_FALSE'
+   27 |                                     ABSL_PREDICT_FALSE(!(condition))) \
+      |                                     ^~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/internal/check_impl.h:43:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_CHECK_IMPL'
+   43 |   ABSL_LOG_INTERNAL_CHECK_IMPL(true || (condition), "true")
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+external/abseil-cpp+/absl/log/absl_check.h:47:3: note: in expansion of macro 'ABSL_LOG_INTERNAL_DCHECK_IMPL'
+   47 |   ABSL_LOG_INTERNAL_DCHECK_IMPL((condition), #condition)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/reflection_visit_fields.h:109:5: note: in expansion of macro 'ABSL_DCHECK'
+  109 |     ABSL_DCHECK(!field->options().weak()) << "weak fields are not supported";
+      |     ^~~~~~~~~~~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/field_generators/primitive_field.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/field.h:26,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/field_generators/primitive_field.cc:21:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/field_generators/enum_field.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/field.h:26,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/field_generators/enum_field.cc:20:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/generated_message_tctable_gen.cc [for tool]:
+external/protobuf+/src/google/protobuf/generated_message_tctable_gen.cc: In function 'bool google::protobuf::internal::{anonymous}::HasWeakFields(const google::protobuf::Descriptor*)':
+external/protobuf+/src/google/protobuf/generated_message_tctable_gen.cc:699:45: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  699 |     if (descriptor->field(i)->options().weak()) {
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/generated_message_tctable_gen.h:21,
+                 from external/protobuf+/src/google/protobuf/generated_message_tctable_gen.cc:8:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/generated_message_tctable_gen.cc: In function 'bool google::protobuf::internal::IsFieldTypeEligibleForFastParsing(const google::protobuf::FieldDescriptor*)':
+external/protobuf+/src/google/protobuf/generated_message_tctable_gen.cc:738:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  738 |       field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/generated_message_tctable_gen.cc: In lambda function:
+external/protobuf+/src/google/protobuf/generated_message_tctable_gen.cc:773:54: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  773 |            !field->is_map() && !field->options().weak() &&
+      |                                 ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/generated_message_tctable_gen.cc: In static member function 'static std::vector<google::protobuf::internal::TailCallTableInfo::FieldEntryInfo> google::protobuf::internal::TailCallTableInfo::BuildFieldEntries(const google::protobuf::Descriptor*, const MessageOptions&, absl::lts_20250814::Span<const FieldOptions>, std::vector<AuxEntry>&)':
+external/protobuf+/src/google/protobuf/generated_message_tctable_gen.cc:813:39: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  813 |       } else if (field->options().weak()) {
+      |                  ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/field_generators/map_field.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/field.h:26,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/field_generators/map_field.cc:19:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/rust/naming.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/rust/naming.cc:26:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/rust/_virtual_includes/naming/google/protobuf/compiler/rust/naming.h:17,
+                 from external/protobuf+/src/google/protobuf/compiler/rust/naming.cc:8:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/field_generators/string_field.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/field.h:26,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/field_generators/string_field.cc:20:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/rust/oneof.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/rust/oneof.cc:16:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/generator.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/extension.h:19,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/file.h:26,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/generator.cc:31:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/generator.h:24,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/generator.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/message.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/message.cc:40:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h: In constructor 'google::protobuf::internal::MapFieldBase::ReflectionPayload::ReflectionPayload(google::protobuf::Arena*, const google::protobuf::Message*)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h:416:11: warning: 'google::protobuf::RepeatedPtrField<T>::RepeatedPtrField(google::protobuf::Arena*) [with Element = google::protobuf::Message]' is deprecated: Use Arena::Create<RepeatedPtrField<...>>(Arena*) instead [-Wdeprecated-declarations]
+  416 |         : repeated_field_(arena), prototype_(prototype) {}
+      |           ^~~~~~~~~~~~~~~~~~~~~~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_field.h:46,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/parse_context.h:39,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/generated_message_tctable_decl.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/extension_set.h:40,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.h:56,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/message.h:112,
+                 from external/protobuf+/src/google/protobuf/message.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_ptr_field.h:1380:8: note: declared here
+ 1380 | inline RepeatedPtrField<Element>::RepeatedPtrField(Arena* arena)
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/message_layout_helper.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/message_layout_helper.h:20,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/message_layout_helper.cc:1:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/service.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/cpp/service.cc:17:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/rust/accessors/map.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/rust/accessors/map.cc:11:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/field_generators/string_view_field.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/field.h:26,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/field_generators/string_view_field.cc:19:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/file.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/extension.h:19,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/file.h:26,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/file.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/field_chunk.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/field_chunk.h:10,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/field_chunk.cc:1:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/rust/accessors/repeated_field.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/rust/accessors/repeated_field.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/field_generators/message_field.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/field.h:26,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/field_generators/message_field.cc:21:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/message.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/extension.h:19,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/message.h:25,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc: In function 'void google::protobuf::compiler::cpp::{anonymous}::PrintPresenceCheck(const google::protobuf::FieldDescriptor*, const std::vector<int>&, google::protobuf::io::Printer*, int*, const google::protobuf::compiler::cpp::Options&)':
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:176:29: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  176 |   if (!field->options().weak()) {
+      |        ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc: In member function 'void google::protobuf::compiler::cpp::MessageGenerator::GenerateFieldAccessorDeclarations(google::protobuf::io::Printer*)':
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:775:66: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  775 |     if (!field->real_containing_oneof() && !field->options().weak()) {
+      |                                             ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc: In member function 'void google::protobuf::compiler::cpp::MessageGenerator::GenerateSingularFieldHasBits(const google::protobuf::FieldDescriptor*, google::protobuf::io::Printer*)':
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:1140:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 1140 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc: In member function 'void google::protobuf::compiler::cpp::MessageGenerator::MaybeEmitUpdateCachedHasbits(const google::protobuf::FieldDescriptor*, google::protobuf::io::Printer*, int&) const':
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:1396:59: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 1396 |   if (!HasHasbit(field, options_) || field->options().weak()) return;
+      |                                      ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc: In lambda function:
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:2184:64: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 2184 |             if (!field->is_repeated() && !field->options().weak() &&
+      |                                           ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc: In member function 'size_t google::protobuf::compiler::cpp::MessageGenerator::GenerateOffsets(google::protobuf::io::Printer*)':
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:2717:30: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 2717 |     if (field->options().weak()) {
+      |         ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc: In lambda function:
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:4372:39: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 4372 |       } else if (field->options().weak() ||
+      |                  ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc: In member function 'void google::protobuf::compiler::cpp::MessageGenerator::GenerateSerializeOneField(google::protobuf::io::Printer*, const google::protobuf::FieldDescriptor*, int)':
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:4722:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 4722 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc: In lambda function:
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:5029:43: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 5029 |                  if (field->options().weak()) {
+      |                      ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc: In member function 'void google::protobuf::compiler::cpp::MessageGenerator::EmitCheckAndSerializeField(const google::protobuf::FieldDescriptor*, google::protobuf::io::Printer*) const':
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:5572:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 5572 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc: In instantiation of 'void google::protobuf::compiler::cpp::MessageGenerator::EmitCheckAndUpdateByteSizeForField(const google::protobuf::FieldDescriptor*, google::protobuf::io::Printer*) const [with bool kIsV2 = false]':
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:1418:62:   required from here
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:1363:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 1363 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/compiler/cpp/message.cc:1363:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+ 1363 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/map_field.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/map_field.cc:8:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h: In constructor 'google::protobuf::internal::MapFieldBase::ReflectionPayload::ReflectionPayload(google::protobuf::Arena*, const google::protobuf::Message*)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h:416:11: warning: 'google::protobuf::RepeatedPtrField<T>::RepeatedPtrField(google::protobuf::Arena*) [with Element = google::protobuf::Message]' is deprecated: Use Arena::Create<RepeatedPtrField<...>>(Arena*) instead [-Wdeprecated-declarations]
+  416 |         : repeated_field_(arena), prototype_(prototype) {}
+      |           ^~~~~~~~~~~~~~~~~~~~~~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_field.h:46,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/parse_context.h:39,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/generated_message_tctable_decl.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/extension_set.h:40,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.h:56,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h:23:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_ptr_field.h:1380:8: note: declared here
+ 1380 | inline RepeatedPtrField<Element>::RepeatedPtrField(Arena* arena)
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/text_format.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/text_format.cc:54:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h: In constructor 'google::protobuf::internal::MapFieldBase::ReflectionPayload::ReflectionPayload(google::protobuf::Arena*, const google::protobuf::Message*)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h:416:11: warning: 'google::protobuf::RepeatedPtrField<T>::RepeatedPtrField(google::protobuf::Arena*) [with Element = google::protobuf::Message]' is deprecated: Use Arena::Create<RepeatedPtrField<...>>(Arena*) instead [-Wdeprecated-declarations]
+  416 |         : repeated_field_(arena), prototype_(prototype) {}
+      |           ^~~~~~~~~~~~~~~~~~~~~~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_field.h:46,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/parse_context.h:39,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/generated_message_tctable_decl.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/extension_set.h:40,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.h:56,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/text_format.h:27,
+                 from external/protobuf+/src/google/protobuf/text_format.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_ptr_field.h:1380:8: note: declared here
+ 1380 | inline RepeatedPtrField<Element>::RepeatedPtrField(Arena* arena)
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~
+external/protobuf+/src/google/protobuf/text_format.cc: In member function 'bool google::protobuf::TextFormat::Parser::ParserImpl::ConsumeField(google::protobuf::Message*)':
+external/protobuf+/src/google/protobuf/text_format.cc:663:54: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  663 |       if (consumed_semicolon && field->options().weak() &&
+      |                                 ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from external/protobuf+/src/google/protobuf/text_format.cc:46:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/rust/accessors/singular_string.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/rust/accessors/singular_string.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/rust/accessors/singular_cord.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/rust/accessors/singular_cord.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/rust/accessors/singular_message.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/rust/accessors/singular_message.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/rust/accessors/with_presence.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/rust/accessors/with_presence.cc:13:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/field_generators/cord_field.cc [for tool]:
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/cpp/google/protobuf/compiler/cpp/field.h:26,
+                 from external/protobuf+/src/google/protobuf/compiler/cpp/field_generators/cord_field.cc:23:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/reflection_ops.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/reflection_ops.cc:22:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h: In constructor 'google::protobuf::internal::MapFieldBase::ReflectionPayload::ReflectionPayload(google::protobuf::Arena*, const google::protobuf::Message*)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/map_field.h:416:11: warning: 'google::protobuf::RepeatedPtrField<T>::RepeatedPtrField(google::protobuf::Arena*) [with Element = google::protobuf::Message]' is deprecated: Use Arena::Create<RepeatedPtrField<...>>(Arena*) instead [-Wdeprecated-declarations]
+  416 |         : repeated_field_(arena), prototype_(prototype) {}
+      |           ^~~~~~~~~~~~~~~~~~~~~~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_field.h:46,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/parse_context.h:39,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/generated_message_tctable_decl.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/extension_set.h:40,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.h:56,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/message.h:112,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/reflection_ops.h:18,
+                 from external/protobuf+/src/google/protobuf/reflection_ops.cc:11:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf_lite/google/protobuf/repeated_ptr_field.h:1380:8: note: declared here
+ 1380 | inline RepeatedPtrField<Element>::RepeatedPtrField(Arena* arena)
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/cpp/tracker.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/cpp/tracker.cc:20:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/rust/accessors/singular_scalar.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/rust/accessors/singular_scalar.cc:12:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: From Compiling src/google/protobuf/compiler/rust/message.cc [for tool]:
+In file included from external/protobuf+/src/google/protobuf/compiler/rust/message.cc:20:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h: In function 'bool google::protobuf::compiler::cpp::IsWeak(const google::protobuf::FieldDescriptor*, const Options&)':
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:347:28: warning: 'bool google::protobuf::FieldOptions::weak() const' is deprecated [-Wdeprecated-declarations]
+  347 |   if (field->options().weak()) {
+      |       ~~~~~~~~~~~~~~~~~~~~~^~
+In file included from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator_lite/google/protobuf/compiler/code_generator_lite.h:18,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/_virtual_includes/code_generator/google/protobuf/compiler/code_generator.h:25,
+                 from bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/compiler/cpp/_virtual_includes/names_internal/google/protobuf/compiler/cpp/helpers.h:29:
+bazel-out/k8-opt-exec/bin/external/protobuf+/src/google/protobuf/_virtual_includes/protobuf/google/protobuf/descriptor.pb.h:18861:13: note: declared here
+18861 | inline bool FieldOptions::weak() const {
+      |             ^~~~~~~~~~~~
+INFO: Found 1 target...
+Target //srcs/cmd/ohc:ohc up-to-date:
+  bazel-bin/srcs/cmd/ohc/ohc_/ohc
+INFO: Elapsed time: 3.455s, Critical Path: 1.37s
+INFO: 407 processes: 4 action cache hit, 406 remote cache hit, 1 internal.
+INFO: Build completed successfully, 407 total actions
+INFO:
+INFO: Running command line: bazel-bin/srcs/cmd/ohc/ohc_/ohc
+INFO: Streaming build results to: https://onehumancorp.buildbuddy.io/invocation/ed2f35b5-f1c2-4720-9174-681931b239c3
+{"time":"2026-03-28T07:54:58.214731138Z","level":"INFO","msg":"centrifuge WebSocket endpoint registered at /connection/websocket"}
+{"time":"2026-03-28T07:54:58.214873643Z","level":"INFO","msg":"serving API","address":":8080"}
+{"time":"2026-03-28T07:54:58.216074147Z","level":"INFO","msg":"serving gRPC","address":":9090"}

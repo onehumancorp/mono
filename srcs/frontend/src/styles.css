@@ -1,5 +1,11 @@
 /* ── Design Tokens ── */
 :root {
+  /* Next-Generation OHC Design System Tokens (Glassmorphism) */
+  --backdrop-filter: blur(15px) saturate(180%);
+  --background-glass: rgba(255, 255, 255, 0.05);
+  --border-glass: 1px solid rgba(255, 255, 255, 0.1);
+  --font-family-glass: 'Outfit', 'Inter', sans-serif;
+
   /* Backgrounds — deep navy, reminiscent of UniFi Network */
   --bg-base: #0d1117;
   --bg-surface: #161b22;
@@ -185,7 +191,7 @@ body {
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--background-glass);
   color: var(--text-primary);
 }
 
@@ -313,7 +319,7 @@ body {
   padding: 0 1.5rem;
   border-bottom: 1px solid var(--border);
   background: rgba(13, 17, 23, 0.85);
-  backdrop-filter: blur(12px);
+  backdrop-filter: var(--backdrop-filter);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -457,7 +463,7 @@ body {
   border: 1px solid var(--border-card);
   border-radius: var(--r-lg);
   padding: 1rem;
-  backdrop-filter: blur(8px);
+  backdrop-filter: var(--backdrop-filter);
   box-shadow: var(--shadow-xs);
   animation: fadeUp 250ms ease both;
   display: flex;
@@ -957,15 +963,15 @@ body {
   color: var(--text-primary);
   position: relative;
   word-break: break-word;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: var(--backdrop-filter);
+  -webkit-backdrop-filter: var(--backdrop-filter);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .transcript-item--agent .transcript-bubble {
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: var(--border-glass);
   border-bottom-left-radius: 6px;
 }
 
@@ -987,8 +993,8 @@ body {
   flex-direction: column;
   height: calc(100vh - var(--header-h) - 4rem);
   background: rgba(18, 22, 31, 0.65);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  backdrop-filter: var(--backdrop-filter);
+  -webkit-backdrop-filter: var(--backdrop-filter);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--r-2xl);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -999,7 +1005,7 @@ body {
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(8px);
+  backdrop-filter: var(--backdrop-filter);
 }
 
 .war-room-title {
@@ -1118,8 +1124,8 @@ body {
   min-height: 48px;
   max-height: 120px;
   border-radius: var(--r-md);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--background-glass);
+  border: var(--border-glass);
   padding: 0.75rem 1rem;
 }
 
@@ -1171,8 +1177,8 @@ body {
   border: 1px solid rgba(255, 69, 58, 0.5);
   border-radius: var(--r-xl);
   box-shadow: 0 12px 32px rgba(255, 69, 58, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: var(--backdrop-filter);
+  -webkit-backdrop-filter: var(--backdrop-filter);
   overflow: hidden;
   margin-top: 0.5rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -1276,8 +1282,8 @@ body {
 
 .agent-card {
   background: rgba(22, 27, 34, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: var(--backdrop-filter);
+  -webkit-backdrop-filter: var(--backdrop-filter);
   border: 1px solid var(--border-card);
   border-radius: var(--r-lg);
   padding: 1rem;
@@ -1403,7 +1409,7 @@ body {
   font-size: 10px;
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--background-glass);
   color: var(--text-muted);
   border: 1px solid var(--border);
 }
@@ -1632,7 +1638,7 @@ body {
 .settings-dl code {
   font-family: ui-monospace, monospace;
   font-size: 11px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--background-glass);
   padding: 0.1rem 0.4rem;
   border-radius: var(--r-xs);
 }
@@ -1776,7 +1782,7 @@ body {
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--background-glass);
   color: var(--text-secondary);
   border: 1px solid var(--border);
 }
@@ -1884,7 +1890,7 @@ select.input {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  backdrop-filter: var(--backdrop-filter);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2451,9 +2457,9 @@ select.input {
 
 .handoff-card {
   background: rgba(26, 30, 36, 0.65);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: var(--backdrop-filter);
+  -webkit-backdrop-filter: var(--backdrop-filter);
+  border: var(--border-glass);
   border-radius: var(--r-2xl);
   overflow: hidden;
   display: flex;
@@ -2691,8 +2697,8 @@ select.input {
 .slide-approve-container {
   width: 100%;
   height: 52px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--background-glass);
+  border: var(--border-glass);
   border-radius: 26px;
   position: relative;
   overflow: hidden;
@@ -2856,7 +2862,7 @@ select.input {
 .capacity-summary-card {
   flex: 1;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: var(--border-glass);
   border-radius: 12px;
   padding: 1rem;
   display: flex;

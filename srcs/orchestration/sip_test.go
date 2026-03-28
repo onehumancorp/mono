@@ -66,6 +66,46 @@ func TestSIPDB_Init(t *testing.T) {
 	if len(missions) != 0 {
 		t.Fatalf("expected 0 missions, got %d", len(missions))
 	}
+
+	// Test Capability Plugins
+	err = db.RegisterCapabilityPlugin(ctx, "plugin-1", "Plugin A", "v1.0.0", "http://example.com/manifest", "ACTIVE")
+	if err != nil {
+		t.Fatalf("RegisterCapabilityPlugin failed: %v", err)
+	}
+
+	plugins, err := db.GetCapabilityPlugins(ctx)
+	if err != nil {
+		t.Fatalf("GetCapabilityPlugins failed: %v", err)
+	}
+	if len(plugins) != 1 {
+		t.Fatalf("expected 1 capability plugin, got %d", len(plugins))
+	}
+	if plugins[0]["plugin_id"] != "plugin-1" {
+		t.Fatalf("expected plugin_id 'plugin-1', got '%s'", plugins[0]["plugin_id"])
+	}
+	if plugins[0]["name"] != "Plugin A" {
+		t.Fatalf("expected name 'Plugin A', got '%s'", plugins[0]["name"])
+	}
+}
+
+func TestSIPDB_CapabilityPlugins_DBError(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	db.Close()
+
+	ctx := context.Background()
+	err = db.RegisterCapabilityPlugin(ctx, "plugin-1", "Plugin A", "v1.0.0", "http://example.com/manifest", "ACTIVE")
+	if err == nil {
+		t.Fatal("Expected error updating on closed DB")
+	}
+
+	_, err = db.GetCapabilityPlugins(ctx)
+	if err == nil {
+		t.Fatal("Expected error querying closed DB")
+	}
 }
 
 func TestSIPDB_NewSIPDB_Fail(t *testing.T) {

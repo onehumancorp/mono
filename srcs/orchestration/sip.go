@@ -87,6 +87,21 @@ func initializeTables(db *sql.DB) error {
 			status TEXT NOT NULL,
 			last_heartbeat DATETIME DEFAULT CURRENT_TIMESTAMP
 		);`,
+		`CREATE TABLE IF NOT EXISTS capability_plugins (
+			plugin_id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			version TEXT NOT NULL,
+			manifest_url TEXT NOT NULL,
+			status TEXT NOT NULL,
+			registered_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
+		`CREATE TABLE IF NOT EXISTS swarm_memory_embeddings (
+			memory_id TEXT PRIMARY KEY,
+			context TEXT NOT NULL,
+			vector_embedding BLOB,
+			source_plugin TEXT,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
 	}
 
 	for _, q := range queries {
@@ -220,6 +235,54 @@ func (s *SIPDB) DelegateMission(ctx context.Context, missionID, role string, tas
 		)
 		return err
 	})
+}
+
+// RegisterCapabilityPlugin registers a new capability plugin in the database.
+// Accepts parameters: ctx context.Context, pluginID, name, version, manifestURL, status string.
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *SIPDB) RegisterCapabilityPlugin(ctx context.Context, pluginID, name, version, manifestURL, status string) error {
+	return withRetry(ctx, func() error {
+		_, err := s.db.ExecContext(ctx,
+			"INSERT INTO capability_plugins (plugin_id, name, version, manifest_url, status, registered_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(plugin_id) DO UPDATE SET name=excluded.name, version=excluded.version, manifest_url=excluded.manifest_url, status=excluded.status",
+			pluginID, name, version, manifestURL, status,
+		)
+		return err
+	})
+}
+
+// GetCapabilityPlugins retrieves all capability plugins.
+// Accepts parameters: ctx context.Context.
+// Returns map[string]map[string]string.
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *SIPDB) GetCapabilityPlugins(ctx context.Context) ([]map[string]string, error) {
+	var plugins []map[string]string
+	err := withRetry(ctx, func() error {
+		plugins = nil
+		rows, err := s.db.QueryContext(ctx, "SELECT plugin_id, name, version, manifest_url, status FROM capability_plugins")
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var pluginID, name, version, manifestURL, status string
+			if err := rows.Scan(&pluginID, &name, &version, &manifestURL, &status); err != nil {
+				return err
+			}
+			plugins = append(plugins, map[string]string{
+				"plugin_id":    pluginID,
+				"name":         name,
+				"version":      version,
+				"manifest_url": manifestURL,
+				"status":       status,
+			})
+		}
+		return nil
+	})
+	return plugins, err
 }
 
 // Close closes the database connection.
