@@ -40,6 +40,9 @@ func (s *Server) handleMCPRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	// Persist to SIP DB Mesh
 	if s.hub.SIPDB() != nil {
 		plugin := orchestration.CapabilityPlugin{
@@ -54,9 +57,6 @@ func (s *Server) handleMCPRegister(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	// Check if tool already exists
 	for i, t := range s.dynamicMCPTools {
