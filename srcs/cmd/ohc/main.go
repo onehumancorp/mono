@@ -134,6 +134,32 @@ func run(now time.Time, listen listenFunc) error {
 	handler, hub := newDemoHandler(now)
 	hub.SetSettingsStore(store)
 
+	// Set up the SIPDB instance to connect to SQLite
+	dbPath := filepath.Join(os.Getenv("HOME"), ".openclaw", "ohc.db")
+	if sipdb, err := orchestration.NewSIPDB(dbPath); err == nil {
+		hub.SetSIPDB(sipdb)
+		// Hygiene: Prune stale missions in the agent_missions table periodically
+		go func() {
+			ticker := time.NewTicker(1 * time.Hour)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					// Prune missions older than 7 days or marked COMPLETED
+					if err := sipdb.PruneStaleMissions(ctx, 7*24*time.Hour); err != nil {
+						slog.Error("failed to prune stale agent missions", "error", err)
+					} else {
+						slog.Info("successfully pruned stale agent missions")
+					}
+				}
+			}
+		}()
+	} else {
+		slog.Error("failed to initialize SIPDB", "path", dbPath, "error", err)
+	}
+
 	// 3. Start Scheduler Background Task
 	go hub.Scheduler().StartBackgroundTask(ctx, func(task scheduler.Task) {
 		slog.Info("executing scheduled task", "task_id", task.ID, "name", task.Name)

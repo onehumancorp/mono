@@ -222,6 +222,19 @@ func (s *SIPDB) DelegateMission(ctx context.Context, missionID, role string, tas
 	})
 }
 
+// PruneStaleMissions removes completed missions or missions older than a specified duration from the agent_missions table.
+// Accepts parameters: ctx context.Context, ageThreshold time.Duration.
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has side effects: Deletes records from the agent_missions table.
+func (s *SIPDB) PruneStaleMissions(ctx context.Context, ageThreshold time.Duration) error {
+	return withRetry(ctx, func() error {
+		thresholdTime := time.Now().Add(-ageThreshold).UTC().Format("2006-01-02 15:04:05")
+		_, err := s.db.ExecContext(ctx, "DELETE FROM agent_missions WHERE status = 'COMPLETED' OR created_at < ?", thresholdTime)
+		return err
+	})
+}
+
 // Close closes the database connection.
 // Accepts parameters: s *SIPDB (No Constraints).
 // Returns Close() error.

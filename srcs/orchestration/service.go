@@ -791,7 +791,10 @@ func (h *Hub) Publish(message Message) error {
 		telemetry.RecordAgentApiCall(context.Background(), sender.ID, sender.Role, "publish")
 
 		// Structured logging for agent execution traces
-		telemetry.LogAgentExecution(context.Background(), sender.ID, sender.Role, "publish", message.Type, message.Content)
+		// Filter out high-frequency "status" events to reduce signal noise.
+		if message.Type != EventStatus {
+			telemetry.LogAgentExecution(context.Background(), sender.ID, sender.Role, "publish", message.Type, message.Content)
+		}
 	}()
 
 	// Forward to Centrifuge for real-time client delivery (non-blocking).
