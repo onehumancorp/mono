@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 	"path/filepath"
+	"time"
 )
 
 func TestSIPDB_Init(t *testing.T) {
@@ -173,6 +174,67 @@ func TestSIPDB_CompleteMission_ExecError(t *testing.T) {
 	err = db.CompleteMission(context.Background(), "some-id")
 	if err == nil {
 		t.Fatal("Expected error updating missing table")
+	}
+}
+
+func TestSIPDB_PruneStaleMissions(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+
+	// Insert missions:
+	// 1. Pending and new (should not be deleted)
+	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status, created_at) VALUES ('1', 'ROLE', 'task', 'PENDING', datetime('now'))")
+	if err != nil { t.Fatal(err) }
+
+	// 2. Completed (should be deleted regardless of age)
+	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status, created_at) VALUES ('2', 'ROLE', 'task', 'COMPLETED', datetime('now'))")
+	if err != nil { t.Fatal(err) }
+
+	// 3. Pending but old (should be deleted)
+	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status, created_at) VALUES ('3', 'ROLE', 'task', 'PENDING', datetime('now', '-2 days'))")
+	if err != nil { t.Fatal(err) }
+
+	// Prune missions older than 24 hours
+	err = db.PruneStaleMissions(ctx, 24*time.Hour)
+	if err != nil {
+		t.Fatalf("Failed to prune stale missions: %v", err)
+	}
+
+	var count int
+	err = db.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM agent_missions").Scan(&count)
+	if err != nil { t.Fatal(err) }
+
+	if count != 1 {
+		t.Fatalf("Expected 1 mission remaining, got %d", count)
+	}
+
+	// Verify the remaining mission is the correct one
+	var id string
+	err = db.db.QueryRowContext(ctx, "SELECT id FROM agent_missions").Scan(&id)
+	if err != nil { t.Fatal(err) }
+
+	if id != "1" {
+		t.Fatalf("Expected remaining mission to be '1', got '%s'", id)
+	}
+}
+
+func TestSIPDB_PruneStaleMissions_DBError(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	db.Close()
+
+	err = db.PruneStaleMissions(context.Background(), 24*time.Hour)
+	if err == nil {
+		t.Fatal("Expected error when pruning on closed DB")
 	}
 }
 
