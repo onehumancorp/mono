@@ -48,6 +48,15 @@ CREATE TABLE IF NOT EXISTS swarm_memory_embeddings (
 To reflect the fluidity of the new Agentic OS, the OHC frontend must adopt the Next-Generation "Premium Feel" Design System.
 
 ### 3.1 Design System Tokens
+
+> [!NOTE]
+> **Premium Feel Applied:**
+> ```css
+> backdrop-filter: blur(15px) saturate(180%);
+> background: rgba(255, 255, 255, 0.05);
+> border: 1px solid rgba(255, 255, 255, 0.1);
+> ```
+
 The UI must hide infrastructure complexity (K8s, MCP) behind consumer-grade "Apple-level aesthetics".
 
 *   **Backdrop & Depth**: Glassmorphism is the core structural element.
