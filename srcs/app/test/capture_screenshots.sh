@@ -187,7 +187,14 @@ if [[ "${ready}" -ne 1 ]]; then
 fi
 
 echo "Capturing screenshots into ${output_root}"
-"${node_bin}" "${capture_script}"
+# ESM import resolution requires node_modules to be in the script's directory
+# hierarchy.  Copy the script into a temp work dir that has node_modules
+# symlinked so `import '@playwright/test'` can be resolved by Node.js.
+capture_work_dir="${work_tmp}/capture_work"
+mkdir -p "${capture_work_dir}"
+cp "${capture_script}" "${capture_work_dir}/capture_screenshots.mjs"
+ln -sf "${node_modules_dir}" "${capture_work_dir}/node_modules"
+"${node_bin}" "${capture_work_dir}/capture_screenshots.mjs"
 
 if [[ -f "${output_root}/android/login.png" ]]; then
   cp "${output_root}/android/login.png" "${output_root}/andriod/login.png"

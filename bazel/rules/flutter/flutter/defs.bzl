@@ -692,6 +692,10 @@ if command -v rsync >/dev/null 2>&1; then
 else
     cp -RL "$SRC_WORKSPACE/." "$DEST/"
 fi
+# Bazel marks output directories read-only (0555) after actions complete.
+# rsync -a preserves those permissions, so the destination tree may be
+# entirely read-only.  Make it writable so test-file copies below succeed.
+chmod -R u+w "$DEST"
 
 # Copy test files: arguments come in pairs (rel_path, abs_path)
 while [ $# -gt 0 ]; do
