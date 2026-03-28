@@ -151,7 +151,9 @@ func Middleware(next http.Handler) http.Handler {
 			latencyHistogram.Record(r.Context(), duration, attributes)
 		}
 		if Verbosity >= 2 {
-			slog.Info("recorded request", "component", "telemetry", "method", r.Method, "path", r.URL.Path, "duration", duration)
+			if r.URL.Path != "/healthz" && r.URL.Path != "/readyz" {
+				slog.Info("recorded request", "component", "telemetry", "method", r.Method, "path", r.URL.Path, "duration", duration)
+			}
 		}
 	})
 }
