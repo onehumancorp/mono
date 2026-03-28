@@ -56,3 +56,9 @@ go_test(
         "@org_golang_google_protobuf//proto",
     ],
 )
+
+go_test(
+    name = "chaos_test",
+    srcs = ["chaos_test.go"],
+    embed = [":orchestration"],
+)

@@ -21,8 +21,8 @@ type SIPDB struct {
 }
 
 const (
-	maxRetries    = 3
-	retryInterval = 100 * time.Millisecond
+	maxRetries    = 10
+	retryInterval = 50 * time.Millisecond
 )
 
 // withRetry executes a database operation with exponential backoff for transient errors (e.g. database is locked).
@@ -53,10 +53,13 @@ func withRetry(ctx context.Context, op func() error) error {
 // Produces errors: Explicit error handling.
 // Has no side effects.
 func NewSIPDB(dbPath string) (*SIPDB, error) {
-	db, err := sql.Open("sqlite", dbPath)
+	// Enable PRAGMAs for concurrency and resilience
+	db, err := sql.Open("sqlite", dbPath+"?_journal_mode=WAL&_busy_timeout=15000&_txlock=immediate")
 	if err != nil {
 		return nil, err
 	}
+	// Avoid connection pool locking issues in high concurrency testing
+	db.SetMaxOpenConns(1)
 
 	if err := initializeTables(db); err != nil {
 		return nil, err
