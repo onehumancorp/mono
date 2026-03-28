@@ -4,9 +4,25 @@
 **Status:** Approved
 **Last Updated:** 2026-03-28
 
-## 1. Vision Audit: The Autonomy Bottleneck
-**Problem Identification:** The current architectural dependency on hardcoded `Skill Blueprints` (JSON/Protobuf templates) and static Kubernetes CRDs limits 100% agent autonomy. A "stale" feature is the rigid `Organization` model and `RoleProfile` schemas. They require the human CEO or platform engineers to manually map out domains before agents can operate. This structural bottleneck prevents agents from autonomously discovering, synthesizing, and adopting new capabilities on the fly.
+<style>
+  .glass-container {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(15px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    font-family: 'Outfit', 'Inter', sans-serif;
+    color: #e2e8f0;
+  }
+</style>
 
+<div class="glass-container">
+  <h2>Mission Brief: The Autonomy Bottleneck</h2>
+  <p>The current architectural dependency on hardcoded `Skill Blueprints` (JSON/Protobuf templates) and static Kubernetes CRDs limits 100% agent autonomy. A "stale" feature is the rigid `Organization` model and `RoleProfile` schemas. They require the human CEO or platform engineers to manually map out domains before agents can operate. This structural bottleneck prevents agents from autonomously discovering, synthesizing, and adopting new capabilities on the fly.</p>
+</div>
+
+## 1. Vision Audit
 **Resolution:** Transition to a **Modular, Plugin-Based Capability System**. Agents must be able to dynamically ingest "Capability Plugins" at runtime, expanding their own tooling and organizational roles without platform updates.
 
 ## 2. Blueprint: The Modular Agentic OS
