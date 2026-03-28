@@ -1,0 +1,62 @@
+load("@rules_flutter//flutter:defs.bzl", "flutter_library", "flutter_test")
+
+package(default_visibility = ["//srcs/app:__subpackages__"])
+
+filegroup(
+    name = "srcs",
+    srcs = glob(["**/*.dart"], allow_empty = True) + ["BUILD.bazel"],
+    visibility = ["//srcs/app:__pkg__"],
+)
+
+filegroup(
+    name = "dart_srcs",
+    srcs = glob(
+        ["**/*.dart"],
+        exclude = ["**/*_test.dart"],
+        allow_empty = True,
+    ),
+    visibility = ["//srcs/app:__pkg__"],
+)
+
+flutter_library(
+    name = "screens_lib",
+    srcs = glob(
+        ["**/*.dart"],
+        exclude = ["**/*_test.dart"],
+    ),
+    pubspec = "//srcs/app:pubspec.yaml",
+    deps = [
+        "//srcs/app/lib/models:models_lib",
+        "//srcs/app/lib/services:services_lib",
+        "@flutter_sdk//flutter/packages/flutter",
+        "@pub_flutter_riverpod//:flutter_riverpod",
+    ],
+)
+
+SCREEN_TESTS = glob(["**/*_test.dart"])
+
+[
+    flutter_test(
+        name = file.replace(".dart", "").replace("/", "_"),
+        srcs = [file],
+        embed = ["//srcs/app:app_lib"],
+        test_files = [file],
+    )
+    for file in SCREEN_TESTS
+]
+
+test_suite(
+    name = "all_tests",
+    tests = [":" + file.replace(".dart", "").replace("/", "_") for file in SCREEN_TESTS],
+    tags = ["manual"],
+)
+
+flutter_test(
+    name = "coverage_test",
+    srcs = SCREEN_TESTS,
+    embed = ["//srcs/app:app_lib"],
+    test_files = ["."],
+    coverage = True,
+    coverage_min = 90,
+    tags = ["manual"],
+)

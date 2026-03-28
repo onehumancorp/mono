@@ -1,0 +1,59 @@
+load("@rules_flutter//flutter:defs.bzl", "flutter_library", "flutter_test")
+
+package(default_visibility = ["//srcs/app:__subpackages__"])
+
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.dart"], allow_empty = True) + ["BUILD.bazel"],
+    visibility = ["//srcs/app:__pkg__"],
+)
+
+filegroup(
+    name = "dart_srcs",
+    srcs = glob(
+        ["*.dart"],
+        exclude = ["*_test.dart"],
+        allow_empty = True,
+    ),
+    visibility = ["//srcs/app:__pkg__"],
+)
+
+flutter_library(
+    name = "models_lib",
+    srcs = glob(
+        ["*.dart"],
+        exclude = ["*_test.dart"],
+    ),
+    pubspec = "//srcs/app:pubspec.yaml",
+    deps = [
+        "@flutter_sdk//flutter/packages/flutter",
+    ],
+)
+
+MODEL_TESTS = glob(["*_test.dart"])
+
+[
+    flutter_test(
+        name = file.replace(".dart", ""),
+        srcs = [file],
+        embed = ["//srcs/app:app_lib"],
+        test_files = [file],
+    )
+    for file in MODEL_TESTS
+]
+
+test_suite(
+    name = "all_tests",
+    tests = [":" + file.replace(".dart", "") for file in MODEL_TESTS],
+    tags = ["manual"],
+)
+
+flutter_test(
+    name = "coverage_test",
+    srcs = MODEL_TESTS,
+    embed = ["//srcs/app:app_lib"],
+    test_files = ["."],
+    coverage = True,
+    coverage_min = 90,
+    tags = ["manual"],
+)

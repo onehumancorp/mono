@@ -62,3 +62,4 @@ srcs/app/ios/Pods/
 srcs/app/ios/.symlinks/
 srcs/app/macos/Pods/
 node_modules/
+*.log

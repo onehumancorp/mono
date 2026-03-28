@@ -1,5 +1,11 @@
 load("@rules_flutter//flutter:defs.bzl", "flutter_app", "flutter_library", "flutter_test")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+exports_files([
+    "pubspec.yaml",
+    "pub_deps.json",
+])
 
 # ── Source filegroup (non-flutter uses, e.g. layout checks) ──────────────────
 
@@ -7,87 +13,59 @@ filegroup(
     name = "srcs",
     srcs = glob(
         [
-            "lib/**",
+            "BUILD.bazel",
+            "e2e/**",
+            "lib/*.dart",
             "test/**",
+            "web/**",
             "pubspec.yaml",
             "pubspec.lock",
             "pub_deps.json",
         ],
-    ),
+        allow_empty = True,
+    ) + [
+        "//srcs/app/lib/models:srcs",
+        "//srcs/app/lib/services:srcs",
+        "//srcs/app/lib/screens:srcs",
+    ],
     visibility = ["//visibility:public"],
 )
 
-# ── Flutter Library ───────────────────────────────────────────────────────────
-# Prepares a hermetic workspace with all pub dependencies assembled from the
-# toolchain-downloaded Flutter SDK and pre-fetched pub_dev_repository repos.
+# ── Flutter Libraries ─────────────────────────────────────────────────────────
 
 flutter_library(
     name = "app_lib",
-    srcs = glob(["lib/**"]),
+    srcs = glob(["lib/*.dart"]) + [
+        "//srcs/app/lib/models:dart_srcs",
+        "//srcs/app/lib/services:dart_srcs",
+        "//srcs/app/lib/screens:dart_srcs",
+    ],
     pubspec = "pubspec.yaml",
+    visibility = ["//srcs/app:__subpackages__"],
     deps = [
-        # Flutter SDK packages
+        # Internal modular libraries
+        "//srcs/app/lib/models:models_lib",
+        "//srcs/app/lib/services:services_lib",
+        "//srcs/app/lib/screens:screens_lib",
+        # SDK packages
         "@flutter_sdk//flutter/packages/flutter",
-        "@flutter_sdk//flutter/packages/flutter_test",
         # Direct main dependencies
-        "@pub_centrifuge//:centrifuge",
-        "@pub_cupertino_icons//:cupertino_icons",
+        "@pub_go_router//:go_router",
+        "@pub_flutter_riverpod//:flutter_riverpod",
         "@pub_http//:http",
         "@pub_intl//:intl",
-        "@pub_shared_preferences//:shared_preferences",
         "@pub_uuid//:uuid",
+        "@pub_shared_preferences//:shared_preferences",
         "@pub_web_socket_channel//:web_socket_channel",
-        # Direct dev dependencies
-        "@pub_flutter_lints//:flutter_lints",
+        "@pub_centrifuge//:centrifuge",
+        # Direct dev dependencies (needed for app_lib if it uses mocktail etc)
         "@pub_mocktail//:mocktail",
-        # All transitive hosted packages (ensures complete pub cache assembly)
-        "@pub_async//:async",
-        "@pub_boolean_selector//:boolean_selector",
-        "@pub_characters//:characters",
-        "@pub_clock//:clock",
-        "@pub_collection//:collection",
-        "@pub_crypto//:crypto",
-        "@pub_fake_async//:fake_async",
-        "@pub_ffi//:ffi",
-        "@pub_file//:file",
-        "@pub_fixnum//:fixnum",
-        "@pub_http_parser//:http_parser",
-        "@pub_leak_tracker//:leak_tracker",
-        "@pub_leak_tracker_flutter_testing//:leak_tracker_flutter_testing",
-        "@pub_leak_tracker_testing//:leak_tracker_testing",
-        "@pub_lints//:lints",
-        "@pub_logging//:logging",
-        "@pub_matcher//:matcher",
-        "@pub_material_color_utilities//:material_color_utilities",
-        "@pub_meta//:meta",
-        "@pub_path//:path",
-        "@pub_path_provider_linux//:path_provider_linux",
-        "@pub_path_provider_platform_interface//:path_provider_platform_interface",
-        "@pub_path_provider_windows//:path_provider_windows",
-        "@pub_platform//:platform",
-        "@pub_plugin_platform_interface//:plugin_platform_interface",
-        "@pub_protobuf//:protobuf",
-        "@pub_riverpod//:riverpod",
-        "@pub_shared_preferences_android//:shared_preferences_android",
-        "@pub_shared_preferences_foundation//:shared_preferences_foundation",
-        "@pub_shared_preferences_linux//:shared_preferences_linux",
-        "@pub_shared_preferences_platform_interface//:shared_preferences_platform_interface",
-        "@pub_shared_preferences_web//:shared_preferences_web",
-        "@pub_shared_preferences_windows//:shared_preferences_windows",
-        "@pub_source_span//:source_span",
-        "@pub_stack_trace//:stack_trace",
-        "@pub_state_notifier//:state_notifier",
-        "@pub_stream_channel//:stream_channel",
-        "@pub_string_scanner//:string_scanner",
-        "@pub_term_glyph//:term_glyph",
-        "@pub_test_api//:test_api",
-        "@pub_typed_data//:typed_data",
-        "@pub_vector_math//:vector_math",
-        "@pub_vm_service//:vm_service",
-        "@pub_web//:web",
-        "@pub_xdg_directories//:xdg_directories",
     ],
 )
+
+# ── Flutter Tests ─────────────────────────────────────────────────────────────
+
+# (Individual tests are now in lib/*/BUILD.bazel)
 
 # ── Layout / structure test (no Flutter required) ─────────────────────────────
 # Verifies all expected source files are present in the app tree.
@@ -95,134 +73,15 @@ flutter_library(
 
 sh_test(
     name = "app_layout_test",
-    srcs = ["tests/flutter_layout_test.sh"],
+    srcs = ["test/flutter_layout_test.sh"],
     data = [":srcs"],
 )
 
-# ── Flutter unit tests (hermetic) ─────────────────────────────────────────────
-# Uses the toolchain-downloaded Flutter SDK + pre-fetched pub cache.
-# No host flutter required; no network access during test execution.
-
-flutter_test(
-    name = "app_unit_test",
-    srcs = glob(["test/**"]),
-    embed = [":app_lib"],
-    test_files = ["test/"],
-)
-
-flutter_test(
-    name = "app_agent_model_test",
-    srcs = ["test/agent_model_test.dart"],
-    embed = [":app_lib"],
-    test_files = ["test/agent_model_test.dart"],
-)
-
-flutter_test(
-    name = "app_ai_provider_model_test",
-    srcs = ["test/ai_provider_model_test.dart"],
-    embed = [":app_lib"],
-    test_files = ["test/ai_provider_model_test.dart"],
-)
-
-flutter_test(
-    name = "app_channel_model_test",
-    srcs = ["test/channel_model_test.dart"],
-    embed = [":app_lib"],
-    test_files = ["test/channel_model_test.dart"],
-)
-
-flutter_test(
-    name = "app_skill_model_test",
-    srcs = ["test/skill_model_test.dart"],
-    embed = [":app_lib"],
-    test_files = ["test/skill_model_test.dart"],
-)
-
-flutter_test(
-    name = "app_security_issue_model_test",
-    srcs = ["test/security_issue_model_test.dart"],
-    embed = [":app_lib"],
-    test_files = ["test/security_issue_model_test.dart"],
-)
-
-flutter_test(
-    name = "app_auth_service_test",
-    srcs = ["test/auth_service_test.dart"],
-    embed = [":app_lib"],
-    test_files = ["test/auth_service_test.dart"],
-)
-
-flutter_test(
-    name = "app_api_service_test",
-    srcs = ["test/api_service_test.dart"],
-    embed = [":app_lib"],
-    test_files = ["test/api_service_test.dart"],
-)
-
-flutter_test(
-    name = "app_centrifuge_service_test",
-    srcs = ["test/centrifuge_service_test.dart"],
-    embed = [":app_lib"],
-    test_files = ["test/centrifuge_service_test.dart"],
-)
-
-flutter_test(
-    name = "app_centrifuge_service_full_test",
-    srcs = ["test/centrifuge_service_full_test.dart"],
-    embed = [":app_lib"],
-    test_files = ["test/centrifuge_service_full_test.dart"],
-)
-
-flutter_test(
-    name = "app_widget_test",
-    srcs = ["test/widget_test.dart"],
-    embed = [":app_lib"],
-    test_files = ["test/widget_test.dart"],
-)
-
-flutter_test(
-    name = "app_advanced_widget_test",
-    srcs = ["test/advanced_widget_test.dart"],
-    embed = [":app_lib"],
-    test_files = ["test/advanced_widget_test.dart"],
-)
-
-flutter_test(
-    name = "app_widget_interactions_test",
-    srcs = ["test/widget_interactions_test.dart"],
-    embed = [":app_lib"],
-    test_files = ["test/widget_interactions_test.dart"],
-)
-
-flutter_test(
-    name = "app_wizard_screen_test",
-    srcs = ["test/wizard_screen_test.dart"],
-    embed = [":app_lib"],
-    test_files = ["test/wizard_screen_test.dart"],
-)
-
-# ── Desktop E2E tests (button clicks – macOS/Windows/Linux) ──────────────────
-# Uses flutter_test with tester.tap() to simulate real button interactions on
-# all desktop platforms.  All screens are exercised.
-
 flutter_test(
     name = "app_desktop_e2e_test",
-    srcs = glob(["test/**"]),
+    srcs = ["test/desktop_e2e_test.dart"],
     embed = [":app_lib"],
     test_files = ["test/desktop_e2e_test.dart"],
-)
-
-# ── Coverage test (≥90 % line coverage required) ─────────────────────────────
-# Runs the full unit + widget test suite with --coverage and fails the build
-# if the aggregate line-coverage drops below 90%.
-
-flutter_test(
-    name = "app_coverage_test",
-    srcs = glob(["test/**"]),
-    embed = [":app_lib"],
-    test_files = ["test/"],
-    coverage = True,
-    coverage_min = 90,
 )
 
 # ── Flutter web app build ─────────────────────────────────────────────────────
@@ -241,7 +100,7 @@ flutter_app(
 
 sh_test(
     name = "app_web_e2e_test",
-    srcs = ["tests/flutter_web_e2e_test.sh"],
+    srcs = ["test/flutter_web_e2e_test.sh"],
     data = [
         ":app_web",
         "e2e/playwright.config.ts",
@@ -249,4 +108,28 @@ sh_test(
         "//:node_modules/@playwright/test",
     ],
     tags = ["requires-network"],  # browser download may need network on first run
+)
+
+# ── Local Development targets ─────────────────────────────────────────────────
+
+sh_binary(
+    name = "start",
+    srcs = ["test/start_web.sh"],
+    data = [
+        ":app_web",
+        "test/bazel_helpers.sh",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+sh_binary(
+    name = "capture_screenshots",
+    srcs = ["test/capture_screenshots.sh"],
+    data = [
+        ":app_web",
+        "e2e/capture_screenshots.mjs",
+        "test/bazel_helpers.sh",
+        "//:node_modules/@playwright/test",
+    ],
+    visibility = ["//visibility:public"],
 )

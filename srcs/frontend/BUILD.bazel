@@ -1,3 +1,4 @@
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 # Copy generated proto TypeScript types into the frontend source tree so they
@@ -57,6 +58,17 @@ sh_test(
 
 # Run npm unit tests (vitest) via Bazel – runs all test files in one pass.
 # Requires node and npm on PATH (inherited from the host via .bazelrc test_env).
+sh_binary(
+    name = "start",
+    srcs = ["tests/start_dev.sh"],
+    data = [
+        "package.json",
+        "vite.config.ts",
+        ":srcs",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 sh_test(
     name = "frontend_unit_test",
     srcs = ["tests/unit_test.sh"],
