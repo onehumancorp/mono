@@ -1,8 +1,8 @@
 # Design Doc: One Human Corp (OHC) Platform
 
-**Author(s):** Antigravity
-**Status:** In Review
-**Last Updated:** 2026-03-17
+**Author(s):** Antigravity, Principal Product Architect & Visionary (L7)
+**Status:** Approved
+**Last Updated:** 2026-03-28
 
 ## 1. Overview
 One Human Corp (OHC) is an enterprise-grade AI-agent orchestration platform. It enables organisations to define a virtual workforce of AI agents, assign them hierarchical roles, coordinate complex multi-agent tasks through persistence-backed "Meeting Rooms", track granular cost/billing at the token level, and gate high-risk or high-cost actions behind human approval (Confidence Gating).
@@ -56,7 +56,7 @@ The `Hub` is the central coordinator using a thread-safe registry (`sync.RWMutex
 - **Agent Lifecycle**: `RegisterAgent(Agent)`, `FireAgent(id)`.
 - **Communication**: `Publish(Message)` routes events to specific agent inboxes or meeting room transcripts.
 - **Meeting Rooms**: Persisted workspaces for multi-agent collaboration on specific tasks. This is where cross-functional roles (e.g., a PM, UI/UX Designer, and SWE) converse, debate constraints, define scopes, design products, and implement them based on the CEO's goal.
-- **Skill Blueprints**: Importable JSON/Protobuf templates that define specialized expert teams (e.g., "Sentinel" Security Engineers) and new domain knowledge, allowing the CEO to seamlessly extend the framework.
+- **Capability Plugin Mesh**: A decentralized capability system where agents dynamically ingest "Capability Plugins" at runtime. Capabilities are hosted as standalone K8s services exposing a standardized `CapabilityManifest`, enabling agents to discover and adopt new tools and roles on the fly via the MCP Gateway.
 
 ### 3.2 Data Models (Go & Protobuf)
 #### Domain Entities (`srcs/domain/organization.go`)
@@ -156,11 +156,70 @@ Optimize agent throughput by aligning LLM requirements with cluster hardware.
 - **Logging**: Structured JSON logging via `log/slog` for automated log analysis.
 - **Metrics**: Prometheus metrics for system health (CPU, Memory, Request Latency).
 
-## 11. Skill Blueprint Import Flow
+## 11. Modular Capability Expansion Flow
 
-The OHC platform supports industrial-strength team instantiation via Skill Blueprints.
+The OHC platform supports dynamic expansion and industrial-strength team instantiation via the **Modular Capability Plugin Mesh**.
 
-1. **Upload**: CEO uploads a `blueprint.json` (as defined in `skills.proto`).
-2. **Parsing**: The Registry validates the `TeamBlueprint` against the core `SkillSet` schema.
-3. **Hydration**: The Hub provisions agent pods, injecting the specialized `Phase` protocols into their long-term memory.
-4. **Context Loading**: Agents immediately execute the `Core Execution Directive`, reading `[PROJECT_NAME]` and goal context before starting their specific protocols.
+1. **Discovery**: Agents query the MCP Gateway for capabilities matching their intent. Capabilities are standalone K8s services exposing a `CapabilityManifest`.
+2. **Registration**: The Orchestration Hub dynamically registers new endpoints in the `capability_plugins` database table.
+3. **Hydration**: The Hub automatically injects the newly discovered capabilities into the agent's context and persists embeddings into `swarm_memory_embeddings` for future semantic retrieval.
+4. **Execution**: Agents immediately adopt their new roles or utilize newly bound tools to execute their directives autonomously.
+
+## 12. Aesthetics: Next-Generation OHC Design System
+
+To reflect the fluidity of the new Agentic OS, the OHC frontend adopts the Next-Generation "Premium Feel" Design System. The UI must hide infrastructure complexity (K8s, MCP) behind consumer-grade "Apple-level aesthetics".
+
+### 12.1 Design System Tokens
+*   **Backdrop & Depth**: Glassmorphism is the core structural element.
+    *   `backdrop-filter: blur(15px) saturate(180%)`
+*   **Surfaces**: Ghostly, semi-transparent layers to indicate dynamic, ephemeral agent capabilities.
+    *   `background: rgba(255, 255, 255, 0.05)`
+*   **Borders**: Subtle definition.
+    *   `border: 1px solid rgba(255, 255, 255, 0.1)`
+*   **Typography**: Clean, geometric sans-serif for clarity at a glance.
+    *   `font-family: 'Outfit', 'Inter', sans-serif`
+*   **Transitions**: Smooth data transitions for all asynchronous operations (e.g., capability binding).
+
+### 12.2 Architectural Flow Diagram
+
+```mermaid
+graph TD
+    %% Core Infrastructure
+    K8s[Kubernetes Cluster]
+    DB[(OHC SIP Database)]
+    MCP[MCP Gateway]
+
+    %% Plugin Mesh
+    PluginA[Capability Plugin A]
+    PluginB[Capability Plugin B]
+
+    %% Agents
+    Agent1[Autonomous Agent]
+
+    %% UI Components
+    UI[Next-Gen OHC Dashboard]
+
+    %% Relationships
+    PluginA -- Registers Manifest --> MCP
+    PluginB -- Registers Manifest --> MCP
+
+    Agent1 -- Queries Capabilities --> MCP
+    MCP -- Injects Context --> Agent1
+
+    Agent1 -- Updates State --> DB
+
+    UI -- Fetches Real-Time State --> DB
+
+    %% Aesthetic Application
+    subgraph UI Design System
+        Tokens[Glassmorphism Tokens]
+        Tokens -.-> UI
+    end
+
+    %% K8s Bound
+    subgraph "Agentic OS Fabric"
+        K8s --> DB
+        K8s --> MCP
+        K8s --> Agent1
+    end
+```
