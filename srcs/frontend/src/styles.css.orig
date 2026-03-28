@@ -2744,7 +2744,6 @@ select.input {
   background: linear-gradient(90deg, rgba(48, 209, 88, 0.2) 0%, rgba(48, 209, 88, 0.5) 100%);
   z-index: 0;
   border-radius: 26px 0 0 26px;
-  transition: width 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .slide-thumb {

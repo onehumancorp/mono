@@ -390,6 +390,7 @@ func (s *Server) handleScaleStream(w http.ResponseWriter, r *http.Request) {
 
 	rc := http.NewResponseController(w)
 
+	// Simulated events
 	events := []string{
 		`{"event":"AI Workforce Manager: Reconciling Team Member resource.","status":"INFO"}`,
 		`{"event":"AI Workforce Manager: Allocating compute profiles...","status":"INFO"}`,
@@ -399,7 +400,6 @@ func (s *Server) handleScaleStream(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, event := range events {
-		s.hub.LogEvent(map[string]interface{}{"type": "ScalingEventStream", "data": event})
 		data := []byte("data: " + event + "\n\n")
 		w.Write(data)
 		if err := rc.Flush(); err != nil {
