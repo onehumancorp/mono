@@ -1,6 +1,7 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
 	"context"
 	"fmt"
 	"os"
@@ -16,7 +17,7 @@ func TestSIPDB_Chaos(t *testing.T) {
 	tmpDir := t.TempDir()
 	dbPath := filepath.Join(tmpDir, "chaos.db")
 
-	db, err := NewSIPDB(dbPath)
+	db, err := sip.NewSIPDB(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create SIPDB: %v", err)
 	}

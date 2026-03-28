@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -13,6 +15,88 @@ import (
 
 	pb "github.com/onehumancorp/mono/srcs/proto"
 )
+
+
+
+// CircuitBreaker manages simple state-based circuit breaking for gRPC requests.
+type CircuitBreaker struct {
+	mu           sync.RWMutex
+	failures     int
+	maxFailures  int
+	timeout      time.Duration
+	lastFailure  time.Time
+	state        string // "CLOSED", "OPEN", "HALF_OPEN"
+}
+
+func NewCircuitBreaker(maxFailures int, timeout time.Duration) *CircuitBreaker {
+	return &CircuitBreaker{
+		maxFailures: maxFailures,
+		timeout:     timeout,
+		state:       "CLOSED",
+	}
+}
+
+func (cb *CircuitBreaker) Allow() bool {
+	cb.mu.RLock()
+	state := cb.state
+	lastFailure := cb.lastFailure
+	cb.mu.RUnlock()
+
+	if state == "OPEN" {
+		if time.Since(lastFailure) > cb.timeout {
+			cb.mu.Lock()
+			if cb.state == "OPEN" {
+				cb.state = "HALF_OPEN"
+			}
+			cb.mu.Unlock()
+			return true
+		}
+		return false
+	}
+	return true
+}
+
+func (cb *CircuitBreaker) RecordSuccess() {
+	cb.mu.Lock()
+	defer cb.mu.Unlock()
+	cb.failures = 0
+	cb.state = "CLOSED"
+}
+
+func (cb *CircuitBreaker) RecordFailure() {
+	cb.mu.Lock()
+	defer cb.mu.Unlock()
+	cb.failures++
+	cb.lastFailure = time.Now()
+	if cb.failures >= cb.maxFailures {
+		cb.state = "OPEN"
+	}
+}
+
+var globalCB = NewCircuitBreaker(5, 5*time.Second)
+
+// CircuitBreakerInterceptor provides robust error-handling and circuit breaking for internal RPCs.
+func CircuitBreakerInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		if !globalCB.Allow() {
+			return nil, status.Errorf(codes.Unavailable, "circuit breaker open for %s", info.FullMethod)
+		}
+
+		resp, err := handler(ctx, req)
+		if err != nil {
+			// Only record system/internal errors as failures for the breaker
+			st, ok := status.FromError(err)
+			if ok && (st.Code() == codes.Internal || st.Code() == codes.Unavailable || st.Code() == codes.DeadlineExceeded) {
+				globalCB.RecordFailure()
+			}
+		} else {
+			globalCB.RecordSuccess()
+		}
+
+		return resp, err
+	}
+}
+
 
 // ExtractSPIFFEID gets the SPIFFE ID from the context.
 // It extracts the ID exclusively from the mTLS peer certificate.

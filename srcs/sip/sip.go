@@ -1,4 +1,4 @@
-package orchestration
+package sip
 
 import (
 	"context"
@@ -153,7 +153,7 @@ func (s *SIPDB) GetPendingMissions(ctx context.Context, role string) ([]Message,
 			var msg Message
 			if err := json.Unmarshal([]byte(taskStr), &msg); err != nil {
 				// fallback
-				msg = Message{ID: id, Content: taskStr, Type: EventTask}
+				msg = Message{ID: id, Content: taskStr, Type: "task"}
 			} else {
 				if msg.ID == "" {
 					msg.ID = id

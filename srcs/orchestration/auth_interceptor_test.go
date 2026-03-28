@@ -1031,7 +1031,6 @@ func TestSPIFFEAuthInterceptor_DelegateTaskRequest_Valid(t *testing.T) {
 	}
 }
 
-
 func TestSPIFFEStreamInterceptor_CoverageGaps(t *testing.T) {
 	interceptor := SPIFFEStreamInterceptor()
 

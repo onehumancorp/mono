@@ -1,6 +1,7 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
 	"bufio"
 	"bytes"
 	"context"
@@ -244,7 +245,15 @@ func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
 	err := h.Publish(task)
 	if err == nil && h.sipDB != nil {
 		go func(t Message, r string) {
-			_ = h.sipDB.DelegateMission(context.Background(), t.ID, r, t)
+			_ = h.sipDB.DelegateMission(context.Background(), t.ID, r, sip.Message{
+				ID: t.ID,
+				FromAgent: t.FromAgent,
+				ToAgent: t.ToAgent,
+				Type: t.Type,
+				Content: t.Content,
+				MeetingID: t.MeetingID,
+				OccurredAt: t.OccurredAt,
+			})
 		}(task, toAgent.Role)
 	}
 	return err
@@ -274,7 +283,8 @@ type Hub struct {
 	meetings       map[string]MeetingRoom
 	minimaxAPIKey  string
 	subs           map[string][]chan struct{}
-	sipDB          *SIPDB
+	sipDB          *sip.SIPDB
+	sipWorkerCancel context.CancelFunc
 	tokenTrackers  map[string]struct{}
 	autoCorTrack   map[string]struct{}
 	eventLogChan   chan interface{}
@@ -350,6 +360,8 @@ func (h *Hub) eventLogWorker(ctx context.Context, filename string) {
 				bw.Flush()
 			}
 
+		case <-ctx.Done():
+			return
 		case <-ticker.C:
 			if err := bw.Flush(); err != nil {
 				slog.Error("failed to flush event log buffer", "error", err)
@@ -517,21 +529,79 @@ func (h *Hub) ToolParameterAutoCorrection(eventID, agentID string, payload []byt
 
 // SetSIPDB injects a database-driven Swarm Intelligence Protocol interface.
 // Accepts parameters: h *Hub (No Constraints).
-// Returns SetSIPDB(sipDB *SIPDB).
+// Returns SetSIPDB(sipDB *sip.SIPDB).
 // Produces no errors.
 // Has no side effects.
-func (h *Hub) SetSIPDB(sipDB *SIPDB) {
+func (h *Hub) SetSIPDB(sipDB *sip.SIPDB) {
 	h.mu.Lock()
-	defer h.mu.Unlock()
+	if h.sipWorkerCancel != nil {
+		h.sipWorkerCancel()
+	}
 	h.sipDB = sipDB
+	ctx, cancel := context.WithCancel(context.Background())
+	h.sipWorkerCancel = cancel
+	h.mu.Unlock()
+
+	go h.runSIPWorker(ctx)
 }
+
+func (h *Hub) runSIPWorker(ctx context.Context) {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			// 1. Mission Ingestion
+			h.mu.RLock()
+			var agents []Agent
+			for _, agent := range h.agents {
+				agents = append(agents, agent)
+			}
+			h.mu.RUnlock()
+
+			for _, agent := range agents {
+				// Avoid checking if DB is locked frequently; in real environment we'd use contextual tracing.
+				if h.sipDB == nil {
+					continue
+				}
+				missions, err := h.sipDB.GetPendingMissions(ctx, string(agent.Role))
+				if err == nil {
+					for _, m := range missions {
+						_ = h.Publish(Message{
+							ID:         m.ID,
+							FromAgent:  m.FromAgent,
+							ToAgent:    agent.ID,
+							Type:       m.Type,
+							Content:    m.Content,
+							MeetingID:  m.MeetingID,
+							OccurredAt: m.OccurredAt,
+						})
+						_ = h.sipDB.CompleteMission(ctx, m.ID)
+					}
+				}
+
+				// 2. Observability Heartbeat
+				_ = h.sipDB.Heartbeat(ctx, agent.ID, string(agent.Role), string(agent.Status))
+			}
+
+			// 3. Shared Memory alignment check
+			if h.sipDB != nil {
+				_, _ = h.sipDB.SyncMemory(ctx, "architecture")
+			}
+		}
+	}
+}
+
 
 // GetSIPDB retrieves the current SIP database interface.
 // Accepts parameters: h *Hub (No Constraints).
-// Returns GetSIPDB() *SIPDB.
+// Returns GetSIPDB() *sip.SIPDB.
 // Produces no errors.
 // Has no side effects.
-func (h *Hub) GetSIPDB() *SIPDB {
+func (h *Hub) GetSIPDB() *sip.SIPDB {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.sipDB

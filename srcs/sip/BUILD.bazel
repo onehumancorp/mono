@@ -1,0 +1,22 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "sip",
+    srcs = ["sip.go", "message.go"],
+    importpath = "github.com/onehumancorp/mono/srcs/sip",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//srcs/proto:hub_go_proto",
+        "@org_modernc_sqlite//:sqlite",
+    ],
+)
+
+go_test(
+    name = "sip_test",
+    srcs = [
+        "sip_extra_test.go",
+        "sip_test.go",
+    ],
+    embed = [":sip"],
+    deps = ["//srcs/proto:hub_go_proto"],
+)

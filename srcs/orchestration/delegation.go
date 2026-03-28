@@ -15,8 +15,8 @@ import (
 // specialized sub-agents. It enforces VRAM quota limits before creating the agent,
 // and isolates the sub-agent with its own thread ID and instructions.
 //
-//   ctx context.Context
-//   req *pb.SubTask
+//	ctx context.Context
+//	req *pb.SubTask
 //
 // Accepts parameters: s *HubServiceServer (No Constraints).
 // Returns DelegateSubTask(ctx context.Context, req *pb.SubTask) (*pb.DelegateTaskResponse, error).

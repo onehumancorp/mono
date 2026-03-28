@@ -1,9 +1,9 @@
-package orchestration
+package sip
 
 import (
 	"context"
-	"testing"
 	"path/filepath"
+	"testing"
 	"time"
 )
 
@@ -37,7 +37,8 @@ func TestSIPDB_Init(t *testing.T) {
 	}
 
 	// Test Delegation & Mission
-	msg := Message{ID: "m1", Content: "Build a feature", Type: EventTask}
+
+	msg := Message{ID: "m1", Content: "Build a feature", Type: "task"}
 	err = db.DelegateMission(ctx, "m1", "SOFTWARE_ENGINEER", msg)
 	if err != nil {
 		t.Fatalf("DelegateMission failed: %v", err)
@@ -190,15 +191,21 @@ func TestSIPDB_PruneStaleMissions(t *testing.T) {
 	// Insert missions:
 	// 1. Pending and new (should not be deleted)
 	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status, created_at) VALUES ('1', 'ROLE', 'task', 'PENDING', datetime('now'))")
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// 2. Completed (should be deleted regardless of age)
 	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status, created_at) VALUES ('2', 'ROLE', 'task', 'COMPLETED', datetime('now'))")
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// 3. Pending but old (should be deleted)
 	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status, created_at) VALUES ('3', 'ROLE', 'task', 'PENDING', datetime('now', '-2 days'))")
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Prune missions older than 24 hours
 	err = db.PruneStaleMissions(ctx, 24*time.Hour)
@@ -208,7 +215,9 @@ func TestSIPDB_PruneStaleMissions(t *testing.T) {
 
 	var count int
 	err = db.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM agent_missions").Scan(&count)
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if count != 1 {
 		t.Fatalf("Expected 1 mission remaining, got %d", count)
@@ -217,7 +226,9 @@ func TestSIPDB_PruneStaleMissions(t *testing.T) {
 	// Verify the remaining mission is the correct one
 	var id string
 	err = db.db.QueryRowContext(ctx, "SELECT id FROM agent_missions").Scan(&id)
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if id != "1" {
 		t.Fatalf("Expected remaining mission to be '1', got '%s'", id)
@@ -322,7 +333,6 @@ func TestSIPDB_DelegateMission_DBError(t *testing.T) {
 		t.Fatal("Expected error querying closed DB")
 	}
 }
-
 
 func TestSIPDB_InitTables_InvalidDBDir(t *testing.T) {
 	dbPath := t.TempDir()

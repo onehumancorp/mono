@@ -1,6 +1,7 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -1286,7 +1287,7 @@ func TestHub_ToolParameterAutoCorrection_SuccessFlow(t *testing.T) {
 
 func TestSetSIPDB(t *testing.T) {
 	hub := NewHub()
-	db, _ := NewSIPDB(":memory:")
+	db, _ := sip.NewSIPDB(":memory:")
 	hub.SetSIPDB(db)
 	if hub.GetSIPDB() != db {
 		t.Fatal("SetSIPDB/GetSIPDB failed")
