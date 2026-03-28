@@ -247,3 +247,24 @@ Defines how autonomous agents communicate, collaborate, and resolve conflicts.
 - **Human/Agent Ratio**: Target >20 agents per 1 human manager.
 - **Resumption Latency**: Time to restore a Corp from a snapshot (Target: <5s).
 - **Audit Fidelity**: % of agent actions traceable to a human supervisor in the `events.jsonl` log.
+### Epic 3: Modular Plugin System & Aesthetic OS Vision (Phase 9)
+*Goal:* Transition from static Skill Blueprints to a dynamic, decentralized Capability Plugin Mesh, enabling zero-downtime expansion and implementing the Next-Generation "Premium Feel" Design System.
+* **Documentation Gate:**
+  * Design Doc: `docs/features/modular-plugins/design-doc.md` [VERIFIED]
+  * CUJ: `docs/features/modular-plugins/cuj.md` [VERIFIED]
+  * Test Plan: `docs/features/modular-plugins/test-plan.md` [VERIFIED]
+* **Task 3.1: Implement Capability Plugin Mesh (Backend)**
+  * **Owner:** SWE Agent (Backend)
+  * **Description:** Implement the `capability_plugins` and `swarm_memory_embeddings` tables, and dynamic MCP registration as per the new Agentic OS blueprint.
+  * **Dependencies:** None.
+  * **Status:** Ready
+* **Task 3.2: Apply Design Tokens (Frontend)**
+  * **Owner:** UI Developer Agent
+  * **Description:** Update the OHC Next.js dashboard with Glassmorphism tokens (`blur(15px)`, `rgba` backgrounds, smooth data transitions).
+  * **Dependencies:** Task 3.1
+  * **Status:** Ready
+* **Task 3.3: Visual Prototyping (Design)**
+  * **Owner:** Visualizer Agent
+  * **Description:** Generate high-fidelity mockups of the new Capability Dashboard and plugin mesh integration to serve as a ground-truth reference for frontend implementation.
+  * **Dependencies:** Task 3.2
+  * **Status:** Ready
