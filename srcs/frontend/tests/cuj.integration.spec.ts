@@ -331,19 +331,22 @@ test("CUJ 4: hire an agent", async ({ page }) => {
   await page.getByRole("button", { name: "+ Hire Agent" }).click();
 
   // Verify modal is visible
-  const modalTitle = page.getByRole("heading", { name: "Hire a New Agent" });
+  const modalTitle = page.getByRole("heading", { name: "Hire New Agent" });
   await expect(modalTitle).toBeVisible();
 
   // Step 1: Select Role
   await page.getByRole("button", { name: "Software Engineer" }).click();
-  await page.getByRole("button", { name: /Next: Configuration/i }).click();
+  await page.getByRole("button", { name: /Next: AI Provider/i }).click();
 
-  // Step 2: Name Agent
+  // Step 2: Select Provider (MiniMax pre-selected)
+  await page.getByRole("button", { name: /Next: Details/i }).click();
+
+  // Step 3: Name Agent
   const nameInput = page.getByLabel("Agent Name");
   await nameInput.fill("SecBot");
-  await page.getByRole("button", { name: /Next: Deployment/i }).click();
+  await page.getByRole("button", { name: /Next: Confirm/i }).click();
 
-  // Step 3: Deploy
+  // Step 4: Deploy
   await page.getByRole("button", { name: /Deploy Agent/i }).click();
 
   // Verify success

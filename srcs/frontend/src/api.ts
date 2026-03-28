@@ -188,12 +188,13 @@ export async function sendMessage(form: {
  * @summary Executes the hireAgent operation.
  * @param name
  * @param role
+ * @param providerType - Optional AI provider type (e.g. "minimax", "claude", "builtin")
  * @returns Promise with operation result
  * @throws May throw an error if the API request fails
  * @remarks Side Effects: Mutates server state
  */
-export function hireAgent(name: string, role: string): Promise<DashboardSnapshot> {
-  return authedPostJSON<DashboardSnapshot>("/api/agents/hire", { name, role });
+export function hireAgent(name: string, role: string, providerType?: string): Promise<DashboardSnapshot> {
+  return authedPostJSON<DashboardSnapshot>("/api/agents/hire", { name, role, ...(providerType ? { providerType } : {}) });
 }
 /**
  * @summary Executes the delegateTask operation.

@@ -54,8 +54,10 @@ func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 		s.settings = req
 		s.mu.Unlock()
 
-		// Update Minimax API key in Hub if present in extras
-		if key, ok := req.Extras["minimax_api_key"]; ok {
+		// Update Minimax API key in Hub if present in the top-level field or extras.
+		if req.MinimaxAPIKey != "" {
+			s.hub.SetMinimaxAPIKey(req.MinimaxAPIKey)
+		} else if key, ok := req.Extras["minimax_api_key"]; ok {
 			s.hub.SetMinimaxAPIKey(key)
 		}
 

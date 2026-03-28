@@ -279,16 +279,26 @@ function HireAgentForm({
   onHire,
   onClose,
 }: {
-  onHire: (name: string, role: string) => void;
+  onHire: (name: string, role: string, providerType: string) => void;
   onClose: () => void;
 }) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
+  const [providerType, setProviderType] = useState("minimax");
   const commonRoles = [
     "SOFTWARE_ENGINEER", "PRODUCT_MANAGER", "QA_TESTER", "SECURITY_ENGINEER",
     "DESIGNER", "MARKETING_MANAGER", "GROWTH_AGENT", "CONTENT_STRATEGIST",
     "SEO_SPECIALIST", "BOOKKEEPER", "TAX_SPECIALIST",
+  ];
+  const providers = [
+    { id: "minimax", label: "MiniMax", desc: "abab series models — best for all roles" },
+    { id: "claude", label: "Claude (Anthropic)", desc: "Claude Sonnet/Opus — best for engineering" },
+    { id: "gemini", label: "Gemini (Google)", desc: "Gemini Pro/Ultra — best for PM & analytics" },
+    { id: "opencode", label: "OpenCode", desc: "Open-source SWE agent" },
+    { id: "openclaw", label: "OpenClaw", desc: "General-purpose assistant agent" },
+    { id: "ironclaw", label: "IronClaw", desc: "Security & audit-focused agent" },
+    { id: "builtin", label: "Built-in", desc: "Platform-native agent — no credentials needed" },
   ];
 
   return (
@@ -300,7 +310,7 @@ function HireAgentForm({
         </div>
         <div className="modal-body">
           <div className="wizard-steps">
-            {["Select Role", "Details", "Confirm"].map((label, i) => (
+            {["Select Role", "AI Provider", "Details", "Confirm"].map((label, i) => (
               <div key={label} className={`wizard-step ${step > i + 1 ? "wizard-step--done" : step === i + 1 ? "wizard-step--active" : ""}`}>
                 <span className="wizard-step__num">{step > i + 1 ? "✓" : i + 1}</span>
                 <span className="wizard-step__label">{label}</span>
@@ -335,7 +345,27 @@ function HireAgentForm({
 
           {step === 2 && (
             <div className="wizard-content">
-              <h3 className="wizard-heading">Step 2 — Agent Details</h3>
+              <h3 className="wizard-heading">Step 2 — Choose AI Provider</h3>
+              <p className="wizard-note">Select the AI backend that will power this agent. MiniMax is recommended for all roles.</p>
+              <div className="role-grid">
+                {providers.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={`role-select-card ${providerType === p.id ? "role-select-card--active" : ""}`}
+                    onClick={() => setProviderType(p.id)}
+                  >
+                    <span className="role-select-card__name">{p.label}</span>
+                    <span className="role-select-card__desc">{p.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="wizard-content">
+              <h3 className="wizard-heading">Step 3 — Agent Details</h3>
               <label className="field">
                 <span className="field-label">Agent Name</span>
                 <input
@@ -355,12 +385,19 @@ function HireAgentForm({
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => setStep(1)}>Change</button>
                 </div>
               </label>
+              <label className="field">
+                <span className="field-label">AI Provider</span>
+                <div className="role-preview-bar">
+                  <span className="role-preview-bar__name">{providers.find(p => p.id === providerType)?.label ?? providerType}</span>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setStep(2)}>Change</button>
+                </div>
+              </label>
             </div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <div className="wizard-content">
-              <h3 className="wizard-heading">Step 3 — Confirm Deployment</h3>
+              <h3 className="wizard-heading">Step 4 — Confirm Deployment</h3>
               <div className="hire-summary">
                 <div className="hire-summary__avatar-wrap">
                   <RoleAvatar role={role} name={name} />
@@ -368,6 +405,7 @@ function HireAgentForm({
                 <div className="hire-summary__info">
                   <p className="hire-summary__name">{name}</p>
                   <p className="hire-summary__role">{role.replace(/_/g, " ")}</p>
+                  <p className="hire-summary__provider">Provider: {providers.find(p => p.id === providerType)?.label ?? providerType}</p>
                 </div>
               </div>
               <p className="wizard-success">
@@ -380,22 +418,28 @@ function HireAgentForm({
           {step === 1 && (
             <>
               <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
-              <button type="button" className="btn btn-primary" disabled={!role} onClick={() => setStep(2)}>Next: Details →</button>
+              <button type="button" className="btn btn-primary" disabled={!role} onClick={() => setStep(2)}>Next: AI Provider →</button>
             </>
           )}
           {step === 2 && (
             <>
               <button type="button" className="btn btn-ghost" onClick={() => setStep(1)}>Back</button>
-              <button type="button" className="btn btn-primary" disabled={!name.trim()} onClick={() => setStep(3)}>Next: Confirm →</button>
+              <button type="button" className="btn btn-primary" disabled={!providerType} onClick={() => setStep(3)}>Next: Details →</button>
             </>
           )}
           {step === 3 && (
             <>
               <button type="button" className="btn btn-ghost" onClick={() => setStep(2)}>Back</button>
+              <button type="button" className="btn btn-primary" disabled={!name.trim()} onClick={() => setStep(4)}>Next: Confirm →</button>
+            </>
+          )}
+          {step === 4 && (
+            <>
+              <button type="button" className="btn btn-ghost" onClick={() => setStep(3)}>Back</button>
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => { onHire(name.trim(), role); }}
+                onClick={() => { onHire(name.trim(), role, providerType); }}
               >
                 Deploy Agent
               </button>
@@ -529,7 +573,7 @@ export function App() {
     messageType: "task",
     content: "Review launch blockers and owner assignments",
   });
-  const [settings, setSettings] = useState<Settings>({ minimaxApiKey: "" });
+  const [settings, setSettings] = useState<Settings>({ minimax_api_key: "" });
   const [savingSettings, setSavingSettings] = useState(false);
 
   const meetings = snapshot?.meetings ?? [];
@@ -634,12 +678,12 @@ export function App() {
     await submitMessage(form).catch(() => {});
   }
 
-  async function handleHire(name: string, role: string) {
+  async function handleHire(name: string, role: string, providerType: string) {
     setShowHireModal(false);
     setAgentActionLoading(true);
     setError("");
     try {
-      const data = await hireAgent(name, role);
+      const data = await hireAgent(name, role, providerType);
       setSnapshot(data);
       setNotice(`Agent "${name}" hired successfully.`);
     } catch (e) {
@@ -2588,8 +2632,8 @@ export function App() {
                       className="input"
                       type="password"
                       placeholder="sk-cp-..."
-                      value={settings.minimaxApiKey ?? ""}
-                      onChange={(e) => setSettings({ ...settings, minimaxApiKey: e.target.value })}
+                      value={settings.minimax_api_key ?? ""}
+                      onChange={(e) => setSettings({ ...settings, minimax_api_key: e.target.value })}
                       autoComplete="off"
                     />
                     <span className="field-hint">Required for minimax-m2.7 models.</span>

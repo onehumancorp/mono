@@ -537,13 +537,13 @@ describe("App – navigation tabs", () => {
     expect(screen.queryByText("Hire New Agent")).not.toBeInTheDocument();
   });
 
-  it("Next Details button is disabled until role is selected", async () => {
+  it("Next AI Provider button is disabled until role is selected", async () => {
     vi.stubGlobal("fetch", makeFetch());
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
-    const nextBtn = screen.getByRole("button", { name: /Next: Details/i });
+    const nextBtn = screen.getByRole("button", { name: /Next: AI Provider/i });
     expect(nextBtn).toBeDisabled();
     fireEvent.click(screen.getAllByText("SOFTWARE ENGINEER")[0]);
     expect(nextBtn).not.toBeDisabled();
@@ -557,6 +557,9 @@ describe("App – navigation tabs", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
 
     fireEvent.click(screen.getAllByText("SOFTWARE ENGINEER")[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Next: AI Provider/i }));
+
+    // Provider step: minimax is pre-selected, just advance
     fireEvent.click(screen.getByRole("button", { name: /Next: Details/i }));
 
     fireEvent.change(screen.getByPlaceholderText(/Senior Software Engineer/i), { target: { value: "New Agent" } });
@@ -578,6 +581,9 @@ describe("App – navigation tabs", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
 
     fireEvent.click(screen.getAllByText("SOFTWARE ENGINEER")[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Next: AI Provider/i }));
+
+    // Provider step: minimax is pre-selected, just advance
     fireEvent.click(screen.getByRole("button", { name: /Next: Details/i }));
 
     fireEvent.change(screen.getByPlaceholderText(/Senior Software Engineer/i), { target: { value: "Fail Agent" } });
@@ -600,6 +606,9 @@ describe("App – navigation tabs", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
 
     fireEvent.click(screen.getAllByText("PRODUCT MANAGER")[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Next: AI Provider/i }));
+
+    // Provider step: minimax is pre-selected, just advance
     fireEvent.click(screen.getByRole("button", { name: /Next: Details/i }));
 
     fireEvent.change(screen.getByPlaceholderText(/Senior Product Manager/i), { target: { value: "PM Agent" } });
@@ -2294,7 +2303,7 @@ describe("App – MCP invoke modal (communication category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([commTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       return mockJson({}, 404);
     }));
     render(<App />);
@@ -2321,7 +2330,7 @@ describe("App – MCP invoke modal (communication category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([commTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       if (input === "/api/mcp/tools/invoke") return mockJson({ status: "sent" });
       return mockJson({}, 404);
     }));
@@ -2340,7 +2349,7 @@ describe("App – MCP invoke modal (communication category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([commTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       if (input === "/api/mcp/tools/invoke") return mockJson({ error: "tool error" }, 500);
       return mockJson({}, 404);
     }));
@@ -2359,7 +2368,7 @@ describe("App – MCP invoke modal (communication category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([commTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       return mockJson({}, 404);
     }));
     render(<App />);
@@ -2388,7 +2397,7 @@ describe("App – MCP invoke modal (code category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([codeTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       return mockJson({}, 404);
     }));
     render(<App />);
@@ -2421,7 +2430,7 @@ describe("App – MCP invoke modal (project_management category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([pmTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       return mockJson({}, 404);
     }));
     render(<App />);
@@ -2453,7 +2462,7 @@ describe("App – MCP invoke modal (other/default category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([otherTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       return mockJson({}, 404);
     }));
     render(<App />);
@@ -2517,8 +2526,8 @@ describe("App – handleSaveSettings", () => {
   it("saves settings successfully and shows notice", async () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/settings" && (!init || init.method !== "POST")) return mockJson({ minimaxApiKey: "" });
-      if (input === "/api/settings" && init?.method === "POST") return mockJson({ minimaxApiKey: "new-key" });
+      if (input === "/api/settings" && (!init || init.method !== "POST")) return mockJson({ minimax_api_key: "" });
+      if (input === "/api/settings" && init?.method === "POST") return mockJson({ minimax_api_key: "new-key" });
       return mockJson({}, 404);
     }));
     render(<App />);
@@ -2533,7 +2542,7 @@ describe("App – handleSaveSettings", () => {
   it("settings save failure does not show success notice", async () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/settings" && (!init || init.method !== "POST")) return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings" && (!init || init.method !== "POST")) return mockJson({ minimax_api_key: "" });
       if (input === "/api/settings" && init?.method === "POST") return mockJson({ error: "Server error" }, 500);
       return mockJson({}, 404);
     }));

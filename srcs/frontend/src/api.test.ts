@@ -974,10 +974,10 @@ describe("api – testChatIntegration, invokeMCPTool, saveSettings", () => {
   it("saveSettings posts and returns updated settings", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({
       ok: true, status: 200,
-      json: async () => ({ minimaxApiKey: "new-key" }),
+      json: async () => ({ minimax_api_key: "new-key" }),
       text: async () => "",
     })));
-    await expect(saveSettings({ minimaxApiKey: "new-key" })).resolves.toEqual({ minimaxApiKey: "new-key" });
+    await expect(saveSettings({ minimax_api_key: "new-key" })).resolves.toEqual({ minimax_api_key: "new-key" });
   });
 });
 
