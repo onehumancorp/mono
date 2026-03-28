@@ -320,6 +320,38 @@ test("CUJ 9: approval execution flows end-to-end", async ({ page, request }) => 
   await saveShot(page, "cuj-09-approval-execution");
 });
 
+test("CUJ 4: hire an agent", async ({ page }) => {
+  await page.goto("/");
+
+  // Navigate to Agents tab
+  await page.getByRole("button", { name: "Agents" }).click();
+  await expect(page.getByRole("heading", { name: "Agent Network" })).toBeVisible();
+
+  // Click Hire Agent
+  await page.getByRole("button", { name: "+ Hire Agent" }).click();
+
+  // Verify modal is visible
+  const modalTitle = page.getByRole("heading", { name: "Hire a New Agent" });
+  await expect(modalTitle).toBeVisible();
+
+  // Step 1: Select Role
+  await page.getByRole("button", { name: "Software Engineer" }).click();
+  await page.getByRole("button", { name: /Next: Configuration/i }).click();
+
+  // Step 2: Name Agent
+  const nameInput = page.getByLabel("Agent Name");
+  await nameInput.fill("SecBot");
+  await page.getByRole("button", { name: /Next: Deployment/i }).click();
+
+  // Step 3: Deploy
+  await page.getByRole("button", { name: /Deploy Agent/i }).click();
+
+  // Verify success
+  await expect(page.getByText("Agent Hired")).toBeVisible({ timeout: 10000 });
+
+  await saveShot(page, "cuj-04-hire-agent");
+});
+
 test("CUJ 10: E2E Pipelines UI interactions with seeded data", async ({ page, request }) => {
   const loginResp = await request.post("http://127.0.0.1:8080/api/auth/login", {
     data: { username: "admin", password: "adminpass123" }
