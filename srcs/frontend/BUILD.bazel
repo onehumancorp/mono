@@ -94,7 +94,6 @@ sh_test(
         "//srcs/cmd/ohc",
     ],
     tags = [
-        "manual",
         "no-remote-exec",
         "requires-network",
     ],
