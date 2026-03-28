@@ -668,22 +668,26 @@ func (h *Hub) FireAgent(id string) {
 // Produces errors: Explicit error handling.
 // Has no side effects.
 func (h *Hub) Publish(message Message) error {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
+	h.mu.RLock()
 	if _, ok := h.agents[message.FromAgent]; !ok {
+		h.mu.RUnlock()
 		return errors.New("sender agent is not registered")
 	}
 	if message.ToAgent != "" {
 		if _, ok := h.agents[message.ToAgent]; !ok {
+			h.mu.RUnlock()
 			return errors.New("recipient agent is not registered")
 		}
+	}
+	h.mu.RUnlock()
 
-		// Optimization: Check cap to avoid small reallocations
+	h.mu.Lock()
+	if message.ToAgent != "" {
 		inbox := h.inbox[message.ToAgent]
 		if cap(inbox) == 0 {
-			inbox = make([]Message, 0, 16)
+			inbox = getMessageSlice()
 		}
+
 		h.inbox[message.ToAgent] = append(inbox, message)
 
 		subs := h.subs[message.ToAgent]
@@ -699,11 +703,12 @@ func (h *Hub) Publish(message Message) error {
 	if message.MeetingID != "" {
 		meeting, ok := h.meetings[message.MeetingID]
 		if !ok {
+			h.mu.Unlock()
 			return errors.New("meeting room is not registered")
 		}
 
 		if cap(meeting.Transcript) == 0 {
-			meeting.Transcript = make([]Message, 0, 16)
+			meeting.Transcript = getMessageSlice()
 		}
 		meeting.Transcript = append(meeting.Transcript, message)
 
@@ -767,6 +772,7 @@ func (h *Hub) Publish(message Message) error {
 		sender.Status = StatusActive
 	}
 	h.agents[message.FromAgent] = sender
+	h.mu.Unlock()
 
 	// ⚡ BOLT: [Asynchronous telemetry recording to reduce critical path latency] - Randomized Selection from Top 5
 	go func() {
@@ -841,6 +847,29 @@ func (h *Hub) Inbox(agentID string) []Message {
 	// ⚡ BOLT: [O(1) Inbox draining instead of O(N) slice copy] - Randomized Selection from Top 5
 	h.inbox[agentID] = nil
 	return inbox
+}
+
+var messageSlicePool = sync.Pool{
+	New: func() interface{} {
+		s := make([]Message, 0, 16)
+		return &s
+	},
+}
+
+func getMessageSlice() []Message {
+	return *messageSlicePool.Get().(*[]Message)
+}
+
+func putMessageSlice(s []Message) {
+	if cap(s) > 1024 {
+		return
+	}
+	// clear elements to avoid memory leaks
+	for i := range s {
+		s[i] = Message{}
+	}
+	s = s[:0]
+	messageSlicePool.Put(&s)
 }
 
 // Meeting retrieves the current state and transcript of a specified virtual meeting room.
@@ -1025,6 +1054,9 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 
 	sendNewMessages := func() error {
 		msgs := s.hub.Inbox(agentID)
+		if len(msgs) > 0 {
+			defer putMessageSlice(msgs)
+		}
 		for _, m := range msgs {
 			if err := stream.Send(pb.Message_builder{
 				Id:             proto.String(m.ID),
