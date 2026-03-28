@@ -38,6 +38,25 @@ func redactPII(input string) string {
 	return s
 }
 
+func redactInterfacePII(val interface{}) interface{} {
+	switch v := val.(type) {
+	case string:
+		return redactPII(v)
+	case map[string]interface{}:
+		for k, val := range v {
+			v[k] = redactInterfacePII(val)
+		}
+		return v
+	case []interface{}:
+		for i, val := range v {
+			v[i] = redactInterfacePII(val)
+		}
+		return v
+	default:
+		return val
+	}
+}
+
 // Status indicates the current operational phase of an AI agent within the workforce.
 // Accepts no parameters.
 // Returns nothing.
@@ -307,6 +326,13 @@ func (h *Hub) eventLogWorker(ctx context.Context, filename string) {
 				slog.Error("failed to marshal event log", "error", err)
 				continue
 			}
+
+			var m map[string]interface{}
+			if err := json.Unmarshal(b, &m); err == nil {
+				redactInterfacePII(m)
+				b, _ = json.Marshal(m)
+			}
+
 			if _, err := f.Write(append(b, '\n')); err != nil {
 				slog.Error("failed to write to event log file", "filename", filename, "error", err)
 			}
