@@ -1,6 +1,8 @@
 package integration
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
+
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -35,7 +37,7 @@ func TestMultiAgentMeetingInteraction(t *testing.T) {
 	}
 
 	for _, m := range messages {
-		if err := hub.Publish(orchestration.Message{
+		if err := hub.Publish(sip.Message{
 			ID:        fmt.Sprintf("msg-%s-%d", m.from, time.Now().UnixNano()),
 			FromAgent: m.from,
 			Type:      orchestration.EventTask,
@@ -223,7 +225,7 @@ func TestHumanChatWithAgent(t *testing.T) {
 	}
 
 	// The router dispatches the human message to the support agent's inbox.
-	if err := hub.Publish(orchestration.Message{
+	if err := hub.Publish(sip.Message{
 		ID:        "human-chat-1",
 		FromAgent: "router",
 		ToAgent:   "support-1",

@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
+
 	"testing"
 	"time"
 
@@ -90,7 +92,7 @@ func setupHubAndOrchestrator(t *testing.T) (*orchestration.Hub, *Orchestrator) {
 func TestHandleSpecApproved(t *testing.T) {
 	hub, orc := setupHubAndOrchestrator(t)
 
-	msg := orchestration.Message{
+	msg := sip.Message{
 		ID:         "msg-1",
 		FromAgent:  "ceo-1",
 		Type:       orchestration.EventSpecApproved,
@@ -122,7 +124,7 @@ func TestHandleSpecApproved(t *testing.T) {
 
 func TestHandleSpecApproved_Error(t *testing.T) {
 	_, orc := setupHubAndOrchestrator(t)
-	err := orc.HandleSpecApproved(orchestration.Message{Content: "invalid"})
+	err := orc.HandleSpecApproved(sip.Message{Content: "invalid"})
 	if err == nil {
 		t.Fatal("expected error for invalid content")
 	}
@@ -140,7 +142,7 @@ func TestHandlePRCreated(t *testing.T) {
 		CreatedAt: time.Now(),
 	}
 
-	msg := orchestration.Message{
+	msg := sip.Message{
 		ID:         "msg-2",
 		FromAgent:  "swe-1",
 		Type:       orchestration.EventPRCreated,
@@ -169,7 +171,7 @@ func TestHandlePRCreated(t *testing.T) {
 
 func TestHandlePRCreated_PipelineNotFound(t *testing.T) {
 	_, orc := setupHubAndOrchestrator(t)
-	err := orc.HandlePRCreated(orchestration.Message{Content: "nonexistent"})
+	err := orc.HandlePRCreated(sip.Message{Content: "nonexistent"})
 	if err == nil {
 		t.Fatal("expected error for nonexistent pipeline")
 	}
@@ -184,7 +186,7 @@ func TestHandleTestResults_Passed(t *testing.T) {
 		AgentID: "swe-1",
 	}
 
-	msg := orchestration.Message{
+	msg := sip.Message{
 		ID:         "msg-3",
 		FromAgent:  "system-hub",
 		Type:       orchestration.EventTestsPassed,
@@ -220,7 +222,7 @@ func TestHandleTestResults_Failed(t *testing.T) {
 		AgentID: "swe-1",
 	}
 
-	msg := orchestration.Message{
+	msg := sip.Message{
 		ID:         "msg-4",
 		FromAgent:  "system-hub",
 		Type:       orchestration.EventTestsFailed,
@@ -249,7 +251,7 @@ func TestHandleTestResults_Failed(t *testing.T) {
 
 func TestHandleTestResults_UnknownPipeline(t *testing.T) {
 	_, orc := setupHubAndOrchestrator(t)
-	err := orc.HandleTestResults(orchestration.Message{Content: "nonexistent", Type: orchestration.EventTestsPassed})
+	err := orc.HandleTestResults(sip.Message{Content: "nonexistent", Type: orchestration.EventTestsPassed})
 	if err == nil {
 		t.Fatal("expected error for nonexistent pipeline")
 	}
@@ -258,7 +260,7 @@ func TestHandleTestResults_UnknownPipeline(t *testing.T) {
 func TestHandleTestResults_UnknownType(t *testing.T) {
 	_, orc := setupHubAndOrchestrator(t)
 	orc.pipelines["feat-123"] = &Pipeline{Branch: "feat-123"}
-	err := orc.HandleTestResults(orchestration.Message{Content: "feat-123", Type: "UnknownType"})
+	err := orc.HandleTestResults(sip.Message{Content: "feat-123", Type: "UnknownType"})
 	if err == nil {
 		t.Fatal("expected error for unknown test result type")
 	}
@@ -345,7 +347,7 @@ func TestE2EPipeline(t *testing.T) {
 	hub, orc := setupHubAndOrchestrator(t)
 
 	// 1. PM approves spec
-	specMsg := orchestration.Message{
+	specMsg := sip.Message{
 		FromAgent: "ceo-1",
 		Type:      orchestration.EventSpecApproved,
 		Content:   "branch=feat-e2e,details=Analytics",
@@ -360,7 +362,7 @@ func TestE2EPipeline(t *testing.T) {
 	}
 
 	// 2. SWE creates PR (code ready)
-	prMsg := orchestration.Message{
+	prMsg := sip.Message{
 		FromAgent: "swe-1",
 		Type:      orchestration.EventPRCreated,
 		Content:   "feat-e2e",
@@ -375,7 +377,7 @@ func TestE2EPipeline(t *testing.T) {
 	}
 
 	// 3. Tests Pass
-	testMsg := orchestration.Message{
+	testMsg := sip.Message{
 		FromAgent: "system-hub",
 		Type:      orchestration.EventTestsPassed,
 		Content:   "branch=feat-e2e",

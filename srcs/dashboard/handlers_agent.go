@@ -1,6 +1,8 @@
 package dashboard
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
+
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -126,7 +128,7 @@ func (s *Server) handleDelegateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message := orchestration.Message{
+	message := sip.Message{
 		ID:         "web-" + time.Now().UTC().Format("20060102150405.000000000"),
 		Type:       orchestration.EventTask,
 		Content:    req.Content,

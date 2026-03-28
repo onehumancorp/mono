@@ -11,6 +11,7 @@ go_test(
         "//srcs/frontend/server:server_lib",
         "//srcs/integrations",
         "//srcs/orchestration",
+        "//srcs/sip",
     ],
 )
 
@@ -31,5 +32,6 @@ go_test(
         "//srcs/integrations",
         "//srcs/integrations/chatwoot",
         "//srcs/orchestration",
+        "//srcs/sip",
     ],
 )

@@ -1,4 +1,4 @@
-package orchestration
+package sip
 
 import (
 	"context"
@@ -20,6 +20,13 @@ type SIPDB struct {
 	db *sql.DB
 }
 
+
+
+// NewSIPDB initializes a new database connection and creates required tables.
+// Accepts parameters: dbPath string (No Constraints).
+// Returns (*SIPDB, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
 const (
 	maxRetries    = 3
 	retryInterval = 100 * time.Millisecond
@@ -34,7 +41,10 @@ func withRetry(ctx context.Context, op func() error) error {
 			return nil
 		}
 
-		// If context is done, abort retries
+		if err == sql.ErrNoRows || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || err.Error() == "mission not found" {
+			return err
+		}
+
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -42,16 +52,15 @@ func withRetry(ctx context.Context, op func() error) error {
 		}
 
 		slog.Warn("sipdb: operation failed, retrying", "attempt", i+1, "error", err)
-		time.Sleep(retryInterval * time.Duration(1<<i))
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(retryInterval * time.Duration(1<<i)):
+		}
 	}
 	return err
 }
 
-// NewSIPDB initializes a new database connection and creates required tables.
-// Accepts parameters: dbPath string (No Constraints).
-// Returns (*SIPDB, error).
-// Produces errors: Explicit error handling.
-// Has no side effects.
 func NewSIPDB(dbPath string) (*SIPDB, error) {
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
@@ -230,3 +239,18 @@ func (s *SIPDB) DelegateMission(ctx context.Context, missionID, role string, tas
 func (s *SIPDB) Close() error {
 	return s.db.Close()
 }
+
+type Message struct {
+	ID         string    `json:"id"`
+	FromAgent  string    `json:"fromAgent"`
+	ToAgent    string    `json:"toAgent"`
+	Type       string    `json:"type"`
+	Content    string    `json:"content"`
+	MeetingID  string    `json:"meetingId,omitempty"`
+	OccurredAt time.Time `json:"occurredAt"`
+}
+
+const (
+	EventTask  = "EVENT_TASK"
+	EventError = "EVENT_ERROR"
+)

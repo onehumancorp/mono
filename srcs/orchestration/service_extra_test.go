@@ -1,6 +1,8 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
+
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -32,7 +34,7 @@ func TestPublish_ContextSummarization_Success(t *testing.T) {
 	meeting := hub.OpenMeeting("kickoff", []string{"pm-1", "swe-1"})
 
 	for i := 0; i < 16; i++ {
-		err := hub.Publish(Message{
+		err := hub.Publish(sip.Message{
 			ID:         "msg-" + string(rune(i)),
 			FromAgent:  "pm-1",
 			ToAgent:    "", // Broadcast to meeting
@@ -85,7 +87,7 @@ func TestPublish_ChannelFull(t *testing.T) {
 
 	ch <- struct{}{}
 
-	err := hub.Publish(Message{
+	err := hub.Publish(sip.Message{
 		ID:         "msg-1",
 		FromAgent:  "pm-1",
 		ToAgent:    "swe-1",
@@ -112,7 +114,7 @@ func TestPublish_MeetingChannelFull(t *testing.T) {
 
 	hub.OpenMeeting("kickoff", []string{"pm-1", "swe-1"})
 
-	err := hub.Publish(Message{
+	err := hub.Publish(sip.Message{
 		ID:         "msg-1",
 		FromAgent:  "pm-1",
 		ToAgent:    "swe-1",
@@ -157,7 +159,7 @@ func TestStreamMessages_SendErrorOnInitialSend(t *testing.T) {
 	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
 	server := NewHubServiceServer(hub)
 
-	_ = hub.Publish(Message{
+	_ = hub.Publish(sip.Message{
 		ID:         "msg-1",
 		FromAgent:  "sender",
 		ToAgent:    "receiver",
@@ -200,7 +202,7 @@ func TestStreamMessages_ErrorOnLaterSend(t *testing.T) {
 	}()
 
 	time.Sleep(10 * time.Millisecond) // Let stream setup
-	_ = hub.Publish(Message{
+	_ = hub.Publish(sip.Message{
 		ID:         "msg-2",
 		FromAgent:  "sender",
 		ToAgent:    "receiver",
@@ -235,7 +237,7 @@ func TestPublish_ContextSummarization_Failure(t *testing.T) {
 	meeting := hub.OpenMeeting("kickoff", []string{"pm-1", "swe-1"})
 
 	for i := 0; i < 16; i++ {
-		err := hub.Publish(Message{
+		err := hub.Publish(sip.Message{
 			ID:         "msg-" + string(rune(i)),
 			FromAgent:  "pm-1",
 			ToAgent:    "", // Broadcast to meeting

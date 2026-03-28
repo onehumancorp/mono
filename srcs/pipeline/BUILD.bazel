@@ -7,6 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//srcs/orchestration",
+        "//srcs/sip",
     ],
 )
 
@@ -16,5 +17,6 @@ go_test(
     embed = [":pipeline"],
     deps = [
         "//srcs/orchestration",
+        "//srcs/sip",
     ],
 )

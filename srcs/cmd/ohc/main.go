@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
+
 	"context"
 	"fmt"
 	"log/slog"
@@ -144,7 +146,7 @@ func run(now time.Time, listen listenFunc) error {
 		}
 
 		// Simulate task execution by publishing a message
-		msg := orchestration.Message{
+		msg := sip.Message{
 			ID:         task.ID + "-" + fmt.Sprintf("%d", time.Now().Unix()),
 			FromAgent:  "system-scheduler",
 			ToAgent:    task.AgentID,

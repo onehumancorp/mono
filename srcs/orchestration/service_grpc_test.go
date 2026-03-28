@@ -1,6 +1,8 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
+
 	"context"
 	"errors"
 	"net/http"
@@ -129,7 +131,7 @@ func TestStreamMessagesViaGRPC(t *testing.T) {
 	srv := NewHubServiceServer(hub)
 
 	// Publish an initial message
-	hub.Publish(Message{
+	hub.Publish(sip.Message{
 		ID:         "msg-1",
 		FromAgent:  "a1",
 		ToAgent:    "a2",
@@ -146,7 +148,7 @@ func TestStreamMessagesViaGRPC(t *testing.T) {
 	go func() {
 		// Publish a message while streaming
 		time.Sleep(100 * time.Millisecond)
-		hub.Publish(Message{
+		hub.Publish(sip.Message{
 			ID:         "msg-2",
 			FromAgent:  "a1",
 			ToAgent:    "a2",

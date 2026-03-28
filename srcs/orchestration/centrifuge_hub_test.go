@@ -1,6 +1,8 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
+
 	"testing"
 )
 
@@ -66,7 +68,7 @@ func TestHubCentrifugeIntegration(t *testing.T) {
 	hub.OpenMeetingWithAgenda("cn-meeting", "Integration test", []string{"cn-pm", "cn-swe"})
 
 	// Publish should succeed and silently forward to Centrifuge in the background.
-	if err := hub.Publish(Message{
+	if err := hub.Publish(sip.Message{
 		ID:        "cn-msg-1",
 		FromAgent: "cn-pm",
 		Type:      EventTask,
@@ -95,7 +97,7 @@ func TestHubCentrifugeNilSafe(t *testing.T) {
 	})
 	hub.OpenMeeting("nil-meeting", []string{"nil-pm", "nil-swe"})
 
-	if err := hub.Publish(Message{
+	if err := hub.Publish(sip.Message{
 		ID:        "nil-msg-1",
 		FromAgent: "nil-pm",
 		Type:      EventTask,

@@ -13,6 +13,8 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
+
 	"context"
 	"encoding/json"
 	"log/slog"
@@ -83,7 +85,7 @@ func (cn *CentrifugeNode) Handler() http.Handler {
 
 // PublishMeetingMessage fans a transcript entry out to all subscribers of the
 // "meeting:<meetingID>" Centrifuge channel.
-func (cn *CentrifugeNode) PublishMeetingMessage(meetingID string, msg Message) {
+func (cn *CentrifugeNode) PublishMeetingMessage(meetingID string, msg sip.Message) {
 	channel := "meeting:" + meetingID
 	data, err := json.Marshal(msg)
 	if err != nil {
@@ -97,7 +99,7 @@ func (cn *CentrifugeNode) PublishMeetingMessage(meetingID string, msg Message) {
 
 // PublishChatMessage fans a chat message out to all subscribers of the
 // "chat:<roomID>" Centrifuge channel.
-func (cn *CentrifugeNode) PublishChatMessage(roomID string, msg Message) {
+func (cn *CentrifugeNode) PublishChatMessage(roomID string, msg sip.Message) {
 	channel := "chat:" + roomID
 	data, err := json.Marshal(msg)
 	if err != nil {
@@ -111,7 +113,7 @@ func (cn *CentrifugeNode) PublishChatMessage(roomID string, msg Message) {
 
 // PublishAgentNotification sends a lightweight inbox-notification to a specific
 // agent's Centrifuge channel.
-func (cn *CentrifugeNode) PublishAgentNotification(agentID string, msg Message) {
+func (cn *CentrifugeNode) PublishAgentNotification(agentID string, msg sip.Message) {
 	channel := "agent:" + agentID
 	data, err := json.Marshal(msg)
 	if err != nil {

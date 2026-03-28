@@ -1,6 +1,8 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
+
 	"context"
 	"fmt"
 	"time"
@@ -60,7 +62,7 @@ func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask)
 	}
 
 	// 3. Execution (trigger via task message)
-	msg := Message{
+	msg := sip.Message{
 		ID:         fmt.Sprintf("msg-%s-%d", req.GetTaskId(), time.Now().UnixNano()),
 		FromAgent:  "SYSTEM",
 		ToAgent:    subAgentID,

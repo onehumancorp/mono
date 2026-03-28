@@ -11,6 +11,8 @@ package integration
 //     a Minimax reasoning call so the conversation is fully autonomous.
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
+
 	"context"
 	"fmt"
 	"os"
@@ -60,7 +62,7 @@ func TestMinimaxAgentTaskE2E(t *testing.T) {
 
 	// PM assigns a concrete task to the SWE.
 	taskContent := "Implement a simple HTTP health-check endpoint that returns 200 OK."
-	if err := hub.Publish(orchestration.Message{
+	if err := hub.Publish(sip.Message{
 		ID:         "task-e2e-1",
 		FromAgent:  "pm-e2e",
 		ToAgent:    "swe-e2e",
@@ -100,7 +102,7 @@ func TestMinimaxAgentTaskE2E(t *testing.T) {
 	}
 
 	// SWE publishes the implementation plan back to the PM.
-	if err := hub.Publish(orchestration.Message{
+	if err := hub.Publish(sip.Message{
 		ID:         "reply-e2e-1",
 		FromAgent:  "swe-e2e",
 		ToAgent:    "pm-e2e",
@@ -209,7 +211,7 @@ func TestMinimaxAgentMeetingRoomE2E(t *testing.T) {
 			t.Fatalf("turn %d (%s) returned empty Minimax response", i+1, turn.role)
 		}
 
-		if err := hub.Publish(orchestration.Message{
+		if err := hub.Publish(sip.Message{
 			ID:         fmt.Sprintf("meet-msg-%d", i+1),
 			FromAgent:  turn.fromAgent,
 			Type:       orchestration.EventTask,
