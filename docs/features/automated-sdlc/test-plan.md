@@ -16,28 +16,28 @@ A high-level summary of the testing strategy for the Automated Implementation Pi
 ### 3.1 Unit Tests
 | Test ID | Component | Description | Expected Result | Status |
 |---------|-----------|-------------|-----------------|--------|
-| UT-01 | Event Parser | Parse `SpecApproved` event | Correct struct generated | Pending |
-| UT-02 | CI Trigger | Trigger build with `feat-123` | Build command formed correctly | Pending |
+| UT-01 | Event Parser | Parse `SpecApproved` event | Correct struct generated | Passed |
+| UT-02 | CI Trigger | Trigger build with `feat-123` | Build command formed correctly | Passed |
 
 ### 3.2 Integration Tests
 | Test ID | Components | Description | Expected Result | Status |
 |---------|------------|-------------|-----------------|--------|
-| IT-01 | Hub -> CI Runner | Send build task to runner | Runner returns `TestsPassed` or error | Pending |
-| IT-02 | Hub -> Notification | Send `ApprovalNeeded` event | Notification emitted correctly | Pending |
+| IT-01 | Hub -> CI Runner | Send build task to runner | Runner returns `TestsPassed` or error | Passed |
+| IT-02 | Hub -> Notification | Send `ApprovalNeeded` event | Notification emitted correctly | Passed |
 
 ### 3.3 E2E Tests
 | Test ID | CUJ Reference | Description | Expected Result | Status |
 |---------|---------------|-------------|-----------------|--------|
-| E2E-01 | Design-to-Deploy | Run full SDLC pipeline | Code deployed to staging URL | Pending |
-| E2E-02 | Staging Rejection| Reject a staging preview | Pipeline rolls back and notifies SWE | Pending |
-| E2E-03 | Production Promote| Approve staging for production | Deployment applied to production namespace | Pending |
+| E2E-01 | Design-to-Deploy | Run full SDLC pipeline | Code deployed to staging URL | Passed |
+| E2E-02 | Staging Rejection| Reject a staging preview | Pipeline rolls back and notifies SWE | Passed |
+| E2E-03 | Production Promote| Approve staging for production | Deployment applied to production namespace | Passed |
 
 ### 3.4 UI Components and Constants Testing
 | Test ID | Component | Description | Expected Result | Status |
 |---------|-----------|-------------|-----------------|--------|
-| UI-01 | Active PRs List | Verify rendering of the "Active PRs" list | List displays PRs transitioning states | Pending |
-| UI-02 | Approve Spec Button | Verify "Approve Spec" button functionality | Clicking the button triggers task assignment | Pending |
-| UI-03 | Start Implementation Button | Verify "Start Implementation" button functionality | Clicking the button starts the pipeline | Pending |
+| UI-01 | Active PRs List | Verify rendering of the "Active PRs" list | List displays PRs transitioning states | Passed |
+| UI-02 | Approve Spec Button | Verify "Approve Spec" button functionality | Clicking the button triggers task assignment | Passed |
+| UI-03 | Start Implementation Button | Verify "Start Implementation" button functionality | Clicking the button starts the pipeline | Passed |
 
 ## 4. Edge Cases & Error Handling
 - **Build Failure:** Verify SWE agent correctly receives build errors and attempts automatic fix.

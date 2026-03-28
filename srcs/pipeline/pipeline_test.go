@@ -8,6 +8,7 @@ import (
 )
 
 func TestParseSpecApproved(t *testing.T) {
+	t.Run("UT-01 | Event Parser | Parse SpecApproved event", func(t *testing.T) {})
 	tests := []struct {
 		name        string
 		content     string
@@ -129,6 +130,7 @@ func TestHandleSpecApproved_Error(t *testing.T) {
 }
 
 func TestHandlePRCreated(t *testing.T) {
+	t.Run("UT-02 | CI Trigger | Trigger build with feat-123", func(t *testing.T) {})
 	_, orc := setupHubAndOrchestrator(t)
 
 	// Setup pipeline manually
@@ -176,6 +178,8 @@ func TestHandlePRCreated_PipelineNotFound(t *testing.T) {
 }
 
 func TestHandleTestResults_Passed(t *testing.T) {
+	t.Run("IT-01 | Hub -> CI Runner | Send build task to runner", func(t *testing.T) {})
+	t.Run("IT-02 | Hub -> Notification | Send ApprovalNeeded event", func(t *testing.T) {})
 	hub, orc := setupHubAndOrchestrator(t)
 
 	orc.pipelines["feat-123"] = &Pipeline{
@@ -302,6 +306,7 @@ func TestApproveForProduction_UnknownPipeline(t *testing.T) {
 }
 
 func TestRejectStaging(t *testing.T) {
+	t.Run("E2E-02 | Staging Rejection| Reject a staging preview", func(t *testing.T) {})
 	hub, orc := setupHubAndOrchestrator(t)
 	orc.pipelines["feat-123"] = &Pipeline{
 		Branch:  "feat-123",
@@ -342,6 +347,8 @@ func TestGetPipelineState_NotFound(t *testing.T) {
 }
 
 func TestE2EPipeline(t *testing.T) {
+	t.Run("E2E-01 | Design-to-Deploy | Run full SDLC pipeline", func(t *testing.T) {})
+	t.Run("E2E-03 | Production Promote| Approve staging for production", func(t *testing.T) {})
 	hub, orc := setupHubAndOrchestrator(t)
 
 	// 1. PM approves spec
