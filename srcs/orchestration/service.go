@@ -1,6 +1,7 @@
 package orchestration
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -313,12 +314,19 @@ func (h *Hub) eventLogWorker(ctx context.Context, filename string) {
 	}
 	defer f.Close()
 
+	// ⚡ BOLT: [Unbuffered synchronous disk writes to the events.jsonl sidecar logs] - Randomized Selection from Top 5
+	bw := bufio.NewWriter(f)
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
+			bw.Flush()
 			return
 		case logEntry, ok := <-h.eventLogChan:
 			if !ok {
+				bw.Flush()
 				return
 			}
 			b, err := json.Marshal(logEntry)
@@ -333,8 +341,18 @@ func (h *Hub) eventLogWorker(ctx context.Context, filename string) {
 				b, _ = json.Marshal(m)
 			}
 
-			if _, err := f.Write(append(b, '\n')); err != nil {
+			if _, err := bw.Write(append(b, '\n')); err != nil {
 				slog.Error("failed to write to event log file", "filename", filename, "error", err)
+			}
+
+			// If we've drained the channel, flush immediately to avoid latency
+			if len(h.eventLogChan) == 0 {
+				bw.Flush()
+			}
+
+		case <-ticker.C:
+			if err := bw.Flush(); err != nil {
+				slog.Error("failed to flush event log buffer", "error", err)
 			}
 		}
 	}
