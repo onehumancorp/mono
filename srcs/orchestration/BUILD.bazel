@@ -43,6 +43,7 @@ go_test(
         "service_test.go",
         "sip_extra_test.go",
         "sip_test.go",
+        "sip_mesh_test.go",
     ],
     embed = [":orchestration"],
     deps = [
