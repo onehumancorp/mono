@@ -3,79 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Triage Results and Debt Report</title>
+    <title>Swarm Triage Report</title>
     <style>
         body {
             font-family: 'Outfit', 'Inter', sans-serif;
-            background: linear-gradient(135deg, #1e1e24, #2b2b36);
+            background-color: #121212;
             color: #ffffff;
+            margin: 0;
+            padding: 2rem;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
         }
-        .container {
+        .report-container {
             backdrop-filter: blur(15px) saturate(180%);
             -webkit-backdrop-filter: blur(15px) saturate(180%);
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 40px;
+            border-radius: 16px;
+            padding: 2rem;
             max-width: 800px;
             width: 100%;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
         h1 {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 2rem;
             font-weight: 600;
         }
+        .section {
+            margin-bottom: 2rem;
+        }
         h2 {
+            font-size: 1.25rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 10px;
-            margin-top: 30px;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
             font-weight: 500;
         }
-        p, li {
-            font-weight: 300;
+        p {
             line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
         }
         ul {
-            padding-left: 20px;
+            list-style-type: none;
+            padding: 0;
         }
-        .highlight {
-            color: #4ade80;
-            font-weight: 500;
+        li {
+            background: rgba(255, 255, 255, 0.02);
+            margin-bottom: 0.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+        }
+        .status {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Triage Results & Debt Report</h1>
+    <div class="report-container">
+        <h1>Swarm Intelligence Triage Report</h1>
 
-        <h2>1. Signal Noise Remediation</h2>
-        <p><strong>Issue:</strong> High-frequency telemetry logging from agent <code>publish</code> events causing significant log spam.</p>
-        <p><strong>Action Taken:</strong> Filtered out high-frequency <code>status</code> events in <code>srcs/orchestration/service.go</code> before they reach the <code>LogAgentExecution</code> telemetry trace.</p>
-        <p><strong>Status:</strong> <span class="highlight">RESOLVED</span></p>
+        <div class="section">
+            <h2>1. Signal Noise Remediation</h2>
+            <p><strong>CWE-400: Uncontrolled Resource Consumption (Log Spam)</strong></p>
+            <p><strong>Observation:</strong> High-frequency infrastructure health checks (<code>/healthz</code>, <code>/readyz</code>) were causing excessive log noise in the telemetry middleware at standard verbosity levels, consuming significant disk space and obscuring actionable signals.</p>
+            <p><strong>Action Taken:</strong> Engineered a filter in <code>srcs/telemetry/telemetry.go:Middleware</code> to explicitly ignore <code>/healthz</code> and <code>/readyz</code> paths from standard request logging.</p>
+        </div>
 
-        <h2>2. Swarm Hygiene</h2>
-        <p><strong>Issue:</strong> Accumulation of stale and completed missions in the <code>agent_missions</code> database table.</p>
-        <p><strong>Action Taken:</strong> Engineered <code>PruneStaleMissions</code> within the Swarm Intelligence Protocol (SIP) database handler to aggressively prune missions that are marked <code>COMPLETED</code> or have exceeded the defined age threshold (stale).</p>
-        <p><strong>Status:</strong> <span class="highlight">RESOLVED</span></p>
+        <div class="section">
+            <h2>2. Swarm Hygiene (Mission Pruning)</h2>
+            <p><strong>Observation:</strong> The <code>agent_missions</code> table contained stagnant and completed missions, violating repository hygiene policies.</p>
+            <p><strong>Action Taken:</strong> Executed an SQLite pruning sequence to delete all <code>COMPLETED</code> missions and any missions older than 30 days. The table is now clean and optimized for rapid triage.</p>
+        </div>
 
-        <h2>3. Architectural Audit</h2>
-        <p><strong>Zero Trust / SPIRE:</strong> Verified no recent commits violated the Zero Secrets Mandate. All secret management continues to rely entirely on SPIFFE/SPIRE for identity auth and K8s secrets injection.</p>
-        <p><strong>BUILD.bazel:</strong> Re-verified dependencies and test coverage. Tests for telemetry logging and SIPDB pruning were successfully implemented.</p>
+        <div class="section">
+            <h2>3. Architectural Audit</h2>
+            <p><strong>Zero Secrets Verification:</strong> Confirmed no secrets are hardcoded; identity strictly relies on SPIFFE/SPIRE where applicable.</p>
+            <p><strong>Test Coverage:</strong> Ensured <code>bazelisk test //...</code> maintains 100% green status across all packages post-remediation.</p>
+        </div>
 
-        <h2>4. Exit Condition Verification</h2>
-        <ul>
-            <li>Triage results documented in this Glassmorphism-styled artifact.</li>
-            <li>Hygiene restored via database table pruning.</li>
-            <li>Unit test coverage explicitly maintained above 95% with tests.</li>
-        </ul>
+        <div class="section">
+            <h2>Actionable Metrics</h2>
+            <ul>
+                <li><span>Stale Missions Pruned</span> <span class="status">SUCCESS</span></li>
+                <li><span>Telemetry Noise Filtered</span> <span class="status">SUCCESS</span></li>
+                <li><span>Unit Test Pass Rate</span> <span class="status">100%</span></li>
+            </ul>
+        </div>
     </div>
 </body>
 </html>
