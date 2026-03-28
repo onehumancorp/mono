@@ -27,6 +27,7 @@ import {
   fetchPipelines,
   createPipeline,
   promotePipeline,
+  fetchProactiveInsights,
 } from "./api";
 import type { ApiPipeline } from "./proto_types";
 import type {
@@ -432,6 +433,8 @@ export function App() {
   const [activeNav, setActiveNav] = useState<NavSection>("overview");
   const [showHireModal, setShowHireModal] = useState(false);
 
+  const [proactiveInsights, setProactiveInsights] = useState<import("./types").ProactiveInsight[]>([]);
+
   // Scaling State
   const [salesReps, setSalesReps] = useState(2);
   const [sweAgents, setSweAgents] = useState(4);
@@ -554,7 +557,11 @@ export function App() {
     setState("loading");
     setError("");
     try {
-      const data = await fetchDashboard();
+      const [data, insights] = await Promise.all([
+        fetchDashboard(),
+        fetchProactiveInsights().catch(() => [])
+      ]);
+      setProactiveInsights(insights);
       setSnapshot(data);
       setSelectedMeetingID((current) => {
         if (current && data.meetings.some((m) => m.id === current)) return current;
@@ -1243,6 +1250,37 @@ export function App() {
         {/* ────────────────── Overview ────────────────── */}
         {activeNav === "overview" && (
           <>
+            {proactiveInsights.length > 0 && (
+              <div className="proactive-insights-panel">
+                <header className="panel-head">
+                  <h2 className="panel-title" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    Proactive Insights
+                  </h2>
+                </header>
+                <div className="panel-body" style={{ display: "flex", gap: "1rem", overflowX: "auto", padding: "1rem" }}>
+                  {proactiveInsights.map(insight => (
+                    <article key={insight.id} className={`insight-card insight-card--${insight.severity}`}>
+                      <div className="insight-card__icon">
+                        {insight.type === "efficiency" && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}
+                        {insight.type === "bottleneck" && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>}
+                        {insight.type === "market_pulse" && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>}
+                      </div>
+                      <div className="insight-card__content">
+                        <p className="insight-card__msg">{insight.message}</p>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => {
+                          if (insight.type === "bottleneck") setActiveNav("handoffs");
+                          if (insight.type === "efficiency") setActiveNav("scaling");
+                        }}>
+                          {insight.actionLabel} →
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* KPI Row */}
             <div className="kpi-row">
               <article className="kpi-card">

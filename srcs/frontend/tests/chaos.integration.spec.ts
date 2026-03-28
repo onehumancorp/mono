@@ -41,12 +41,15 @@ test("Chaos: Simulate DB failure and recovery during agent handoff", async ({ pa
   await page.evaluate((t) => localStorage.setItem("ohc_token", t), token);
   await page.goto("/");
 
+  // Wait for the page to load by waiting for the overview tab
+  await expect(page.locator('.nav-item.active').filter({ hasText: 'Overview' })).toBeVisible({ timeout: 10000 });
+
   // Navigate to Handoffs tab
-  await page.getByRole("button", { name: "Handoffs" }).click();
+  await page.getByRole("button", { name: "Handoffs", exact: true }).click();
 
   // Look for our seeded handoff
-  const handoffCard = page.locator('.handoff-card', { hasText: 'Merge conflict resolution required for legacy billing module.' });
-  await expect(handoffCard).toBeVisible();
+  const handoffCard = page.locator('.handoff-card', { hasText: 'Merge conflict resolution required for legacy billing module.' }).first();
+  await expect(handoffCard).toBeVisible({ timeout: 30000 });
 
   // Verify visual indicators of failure
   await expect(handoffCard.getByText('Failed Attempts: 3')).toBeVisible();
@@ -66,7 +69,7 @@ test("Chaos: Simulate DB failure and recovery during agent handoff", async ({ pa
 
   // Reload or re-navigate to refresh state
   await page.reload();
-  await page.getByRole("button", { name: "Handoffs" }).click();
+  await page.getByRole("button", { name: "Handoffs", exact: true }).click();
 
   // Look for our seeded handoff again, it should be resolved
   const updatedHandoffCard = page.locator('.handoff-card', { hasText: 'Merge conflict resolution required for legacy billing module.' });

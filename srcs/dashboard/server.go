@@ -482,6 +482,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/marketplace", server.handleMarketplace)
 	// Phase 4 – Real-time Analytics
 	mux.HandleFunc("/api/analytics", server.handleAnalytics)
+	mux.HandleFunc("/api/insights", server.handleProactiveInsights)
 	// Phase 2 – External Integrations (chat, git, issues)
 	mux.HandleFunc("/api/integrations", server.handleIntegrations)
 	mux.HandleFunc("/api/integrations/connect", server.handleIntegrationConnect)
