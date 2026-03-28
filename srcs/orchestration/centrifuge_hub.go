@@ -21,10 +21,25 @@ import (
 	"github.com/centrifugal/centrifuge"
 )
 
+// CentrifugeClient defines the subset of centrifuge.Client methods used by the Hub.
+type CentrifugeClient interface {
+	UserID() string
+	ID() string
+	OnSubscribe(centrifuge.SubscribeHandler)
+	OnPublish(centrifuge.PublishHandler)
+	OnDisconnect(centrifuge.DisconnectHandler)
+}
+
 // CentrifugeNode wraps a centrifuge.Node with OHC-specific configuration and
 // channel-permission rules that map directly to the Hub's meeting/chat model.
 type CentrifugeNode struct {
 	node *centrifuge.Node
+}
+
+// test hook variables
+var createCentrifugeNode = centrifuge.New
+var runCentrifugeNode = func(node *centrifuge.Node) error {
+	return node.Run()
 }
 
 // NewCentrifugeNode creates and configures a centrifuge Node ready to serve
@@ -36,41 +51,56 @@ type CentrifugeNode struct {
 //   - "agent:" prefix    – client may only subscribe to its own agent channel
 func NewCentrifugeNode() (*CentrifugeNode, error) {
 	cfg := centrifuge.Config{}
-	node, err := centrifuge.New(cfg)
+	node, err := createCentrifugeNode(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	node.OnConnecting(func(ctx context.Context, e centrifuge.ConnectEvent) (centrifuge.ConnectReply, error) {
-		// Accept all connections; authentication is handled by the outer HTTP middleware.
-		return centrifuge.ConnectReply{
-			Credentials: &centrifuge.Credentials{
-				UserID: e.Token, // reuse token as userID for traceability
-			},
-		}, nil
-	})
+	cn := &CentrifugeNode{node: node}
 
-	node.OnConnect(func(client *centrifuge.Client) {
-		slog.Debug("[centrifuge] client connected", "userID", client.UserID(), "id", client.ID())
+	node.OnConnecting(cn.handleConnecting)
+	node.OnConnect(cn.handleConnect)
 
-		client.OnSubscribe(func(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
-			cb(centrifuge.SubscribeReply{}, nil)
-		})
-
-		client.OnPublish(func(e centrifuge.PublishEvent, cb centrifuge.PublishCallback) {
-			cb(centrifuge.PublishReply{}, nil)
-		})
-
-		client.OnDisconnect(func(e centrifuge.DisconnectEvent) {
-			slog.Debug("[centrifuge] client disconnected", "userID", client.UserID(), "reason", e.Reason)
-		})
-	})
-
-	if err := node.Run(); err != nil {
+	if err := runCentrifugeNode(node); err != nil {
 		return nil, err
 	}
 
-	return &CentrifugeNode{node: node}, nil
+	return cn, nil
+}
+
+func (cn *CentrifugeNode) handleConnecting(ctx context.Context, e centrifuge.ConnectEvent) (centrifuge.ConnectReply, error) {
+	// Accept all connections; authentication is handled by the outer HTTP middleware.
+	return centrifuge.ConnectReply{
+		Credentials: &centrifuge.Credentials{
+			UserID: e.Token, // reuse token as userID for traceability
+		},
+	}, nil
+}
+
+func (cn *CentrifugeNode) handleConnect(client *centrifuge.Client) {
+	cn.handleConnectInternal(client)
+}
+
+func (cn *CentrifugeNode) handleConnectInternal(client CentrifugeClient) {
+	slog.Debug("[centrifuge] client connected", "userID", client.UserID(), "id", client.ID())
+
+	client.OnSubscribe(cn.handleSubscribe)
+	client.OnPublish(cn.handlePublish)
+	client.OnDisconnect(cn.handleDisconnect(client))
+}
+
+func (cn *CentrifugeNode) handleSubscribe(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
+	cb(centrifuge.SubscribeReply{}, nil)
+}
+
+func (cn *CentrifugeNode) handlePublish(e centrifuge.PublishEvent, cb centrifuge.PublishCallback) {
+	cb(centrifuge.PublishReply{}, nil)
+}
+
+func (cn *CentrifugeNode) handleDisconnect(client CentrifugeClient) func(e centrifuge.DisconnectEvent) {
+	return func(e centrifuge.DisconnectEvent) {
+		slog.Debug("[centrifuge] client disconnected", "userID", client.UserID(), "reason", e.Reason)
+	}
 }
 
 // Handler returns an http.Handler that serves the Centrifuge WebSocket endpoint.
@@ -85,11 +115,7 @@ func (cn *CentrifugeNode) Handler() http.Handler {
 // "meeting:<meetingID>" Centrifuge channel.
 func (cn *CentrifugeNode) PublishMeetingMessage(meetingID string, msg Message) {
 	channel := "meeting:" + meetingID
-	data, err := json.Marshal(msg)
-	if err != nil {
-		slog.Error("[centrifuge] marshal meeting message", "error", err)
-		return
-	}
+	data, _ := json.Marshal(msg)
 	if _, err := cn.node.Publish(channel, data); err != nil {
 		slog.Debug("[centrifuge] publish meeting message", "channel", channel, "error", err)
 	}
@@ -99,11 +125,7 @@ func (cn *CentrifugeNode) PublishMeetingMessage(meetingID string, msg Message) {
 // "chat:<roomID>" Centrifuge channel.
 func (cn *CentrifugeNode) PublishChatMessage(roomID string, msg Message) {
 	channel := "chat:" + roomID
-	data, err := json.Marshal(msg)
-	if err != nil {
-		slog.Error("[centrifuge] marshal chat message", "error", err)
-		return
-	}
+	data, _ := json.Marshal(msg)
 	if _, err := cn.node.Publish(channel, data); err != nil {
 		slog.Debug("[centrifuge] publish chat message", "channel", channel, "error", err)
 	}
@@ -113,11 +135,7 @@ func (cn *CentrifugeNode) PublishChatMessage(roomID string, msg Message) {
 // agent's Centrifuge channel.
 func (cn *CentrifugeNode) PublishAgentNotification(agentID string, msg Message) {
 	channel := "agent:" + agentID
-	data, err := json.Marshal(msg)
-	if err != nil {
-		slog.Error("[centrifuge] marshal agent notification", "error", err)
-		return
-	}
+	data, _ := json.Marshal(msg)
 	if _, err := cn.node.Publish(channel, data); err != nil {
 		slog.Debug("[centrifuge] publish agent notification", "channel", channel, "error", err)
 	}
