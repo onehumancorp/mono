@@ -3,6 +3,7 @@ package orchestration
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	pb "github.com/onehumancorp/mono/srcs/proto"
@@ -27,18 +28,23 @@ func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask)
 		return nil, status.Errorf(codes.InvalidArgument, "task_id and target_role are required")
 	}
 
-	// 1. Quota Enforcement
-	// Mock VRAM quota limit checking to enforce token efficiency and bounds.
-	s.hub.mu.RLock()
+	for _, c := range req.GetTargetRole() {
+		if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-') {
+			return nil, status.Errorf(codes.InvalidArgument, "target_role contains invalid characters")
+		}
+	}
+
+	// 1. Quota Enforcement & Provisioning
+	// Prevent TOCTOU quota bypass by holding the write lock during enforcement and registration.
+	s.hub.mu.Lock()
 	currentAgents := len(s.hub.agents)
-	s.hub.mu.RUnlock()
 
 	// VRAM Quota Enforcement: Hard limit at 10 active agents across the hub
 	if currentAgents >= 10 {
+		s.hub.mu.Unlock()
 		return nil, status.Errorf(codes.ResourceExhausted, "VRAM quota limit exceeded, cannot spawn sub-agent")
 	}
 
-	// 2. Provisioning
 	subAgentID := fmt.Sprintf("sub-agent-%s-%d", req.GetTargetRole(), time.Now().UnixNano())
 	subAgent := Agent{
 		ID:             subAgentID,
@@ -49,7 +55,14 @@ func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask)
 		ProviderType:   "builtin",
 	}
 
-	s.hub.RegisterAgent(subAgent)
+	if _, exists := s.hub.agents[subAgent.ID]; !exists {
+		s.hub.agents[subAgent.ID] = subAgent
+	}
+	s.hub.mu.Unlock()
+
+	if s.hub.sipDB != nil {
+		s.hub.LogEvent(subAgent)
+	}
 
 	// Ensure SYSTEM sender exists to avoid "sender agent is not registered" in Publish
 	s.hub.mu.RLock()
@@ -60,12 +73,17 @@ func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask)
 	}
 
 	// 3. Execution (trigger via task message)
+	instruction := req.GetInstruction()
+	if strings.Contains(instruction, "SYSTEM:") || strings.Contains(instruction, "\n\n") {
+		return nil, status.Errorf(codes.InvalidArgument, "instruction contains forbidden prompt injection sequences")
+	}
+
 	msg := Message{
 		ID:         fmt.Sprintf("msg-%s-%d", req.GetTaskId(), time.Now().UnixNano()),
 		FromAgent:  "SYSTEM",
 		ToAgent:    subAgentID,
 		Type:       "TaskDelegation",
-		Content:    fmt.Sprintf("Execute Task: %s\nContext: %s", req.GetInstruction(), req.GetParentThreadId()),
+		Content:    fmt.Sprintf("Execute Task: %s\nContext: %s", instruction, req.GetParentThreadId()),
 		OccurredAt: time.Now().UTC(),
 	}
 

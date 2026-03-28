@@ -87,6 +87,7 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 		domain := trimmed[:firstSlash]
 		rest := trimmed[firstSlash+1:]
 		var agentID string
+		var orgID string
 
 		if domain == "onehumancorp.io" {
 			// format: onehumancorp.io/{orgID}/{agentID}
@@ -95,6 +96,7 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain onehumancorp.io: %s", spiffeID)
 			}
 			lastSlash := strings.LastIndexByte(rest, '/')
+			orgID = rest[:lastSlash]
 			agentID = rest[lastSlash+1:]
 		} else if domain == "ohc.local" {
 			// format: ohc.local/org/{orgID}/agent/{agentID}
@@ -107,6 +109,9 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			if rest[secondToLastSlash+1:lastSlash] != "agent" {
 				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain ohc.local: %s", spiffeID)
 			}
+			orgIDStart := len("org/")
+			orgIDEnd := strings.IndexByte(rest[orgIDStart:], '/') + orgIDStart
+			orgID = rest[orgIDStart:orgIDEnd]
 			agentID = rest[lastSlash+1:]
 		} else if domain == "ohc.os" {
 			// format: ohc.os/agent/{agentID}
@@ -127,6 +132,9 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			if rest[secondToLastSlash+1:lastSlash] != "agent" {
 				return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID path structure for domain %s: %s", domain, spiffeID)
 			}
+			orgIDStart := len("org/")
+			orgIDEnd := strings.IndexByte(rest[orgIDStart:], '/') + orgIDStart
+			orgID = rest[orgIDStart:orgIDEnd]
 			agentID = rest[lastSlash+1:]
 		} else {
 			return nil, status.Errorf(codes.PermissionDenied, "unsupported SPIFFE trust domain in ID: %s", spiffeID)
@@ -137,6 +145,10 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			reqAgentID := v.GetAgent().GetId()
 			if agentID != reqAgentID {
 				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot register agent %s", spiffeID, reqAgentID)
+			}
+			reqOrgID := v.GetAgent().GetOrganizationId()
+			if orgID != "" && reqOrgID != "" && orgID != reqOrgID {
+				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot register into organization %s", spiffeID, reqOrgID)
 			}
 		case *pb.PublishMessageRequest:
 			reqFromAgent := v.GetMessage().GetFromAgent()
@@ -157,6 +169,18 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			reqFromAgent := v.GetFromAgentId()
 			if agentID != reqFromAgent {
 				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot request reasoning as agent %s", spiffeID, reqFromAgent)
+			}
+		case *pb.OpenMeetingRequest:
+			// Ensure the calling agent is part of the meeting they are creating
+			found := false
+			for _, p := range v.GetParticipants() {
+				if p == agentID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot open a meeting without being a participant", spiffeID)
 			}
 		}
 
