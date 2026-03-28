@@ -25,6 +25,7 @@ required_files=(
   "test/auth_service_test.dart"
   "test/api_service_test.dart"
   "test/widget_test.dart"
+  "test/desktop_e2e_test.dart"
 )
 
 for file in "${required_files[@]}"; do

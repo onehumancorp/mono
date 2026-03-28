@@ -5,13 +5,36 @@ import 'package:path/path.dart' as p;
 
 /// Manages the local OpenClaw service and its configuration.
 class LocalManagerService {
+  LocalManagerService({String? homeOverride}) : _homeOverride = homeOverride;
+
+  final String? _homeOverride;
+
   Directory get _openclawDir {
-    final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
+    final home = _homeOverride ??
+        Platform.environment['HOME'] ??
+        Platform.environment['USERPROFILE'] ??
+        '.';
     return Directory(p.join(home, '.openclaw'));
   }
 
   File get _configFile => File(p.join(_openclawDir.path, 'openclaw.json'));
   File get _envFile => File(p.join(_openclawDir.path, '.env'));
+
+  Future<Process> processStart(
+    String executable,
+    List<String> arguments, {
+    bool runInShell = true,
+  }) {
+    return Process.start(executable, arguments, runInShell: runInShell);
+  }
+
+  Future<ProcessResult> processRun(
+    String executable,
+    List<String> arguments, {
+    bool runInShell = true,
+  }) {
+    return Process.run(executable, arguments, runInShell: runInShell);
+  }
 
   // ── Service Management ───────────────────────────────────────────────────
 
@@ -28,11 +51,11 @@ class LocalManagerService {
 
   Future<void> startService() async {
     if (await isServiceRunning()) return;
-    await Process.start('openclaw', ['start', '--daemon'], runInShell: true);
+    await processStart('openclaw', ['start', '--daemon']);
   }
 
   Future<void> stopService() async {
-    await Process.run('openclaw', ['stop'], runInShell: true);
+    await processRun('openclaw', ['stop']);
   }
 
   Future<void> restartService() async {
@@ -97,7 +120,7 @@ class LocalManagerService {
   // ── Diagnostics ──────────────────────────────────────────────────────────
 
   Future<String> runDoctor() async {
-    final result = await Process.run('openclaw', ['doctor'], runInShell: true);
+    final result = await processRun('openclaw', ['doctor']);
     return result.stdout.toString() + result.stderr.toString();
   }
 

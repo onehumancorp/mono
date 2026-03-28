@@ -1,0 +1,52 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ohc_gradient_final" x1="200" y1="200" x2="824" y2="824" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E293B" /> <!-- Deep Midnight Blue -->
+      <stop offset="100%" stop-color="#F59E0B" /> <!-- Solar Amber -->
+    </linearGradient>
+  </defs>
+
+  <!-- Background Layer (Optional, but kept for context) -->
+  <rect width="1024" height="1024" fill="#0F172A" />
+
+  <!-- Radiating Lines (8 Tapered Beams) -->
+  <g fill="url(#ohc_gradient_final)">
+    <!-- Top -->
+    <path d="M512 80 L525 250 L499 250 Z" />
+    <!-- Bottom -->
+    <path d="M512 944 L525 774 L499 774 Z" />
+    <!-- Left -->
+    <path d="M80 512 L250 525 L250 499 Z" />
+    <!-- Right -->
+    <path d="M944 512 L774 525 L774 499 Z" />
+    
+    <!-- Top-Left -->
+    <path d="M206 206 L335 315 L315 335 Z" />
+    <!-- Top-Right -->
+    <path d="M818 206 L709 315 L689 335 Z" />
+    <!-- Bottom-Left -->
+    <path d="M206 818 L315 709 L335 689 Z" />
+    <!-- Bottom-Right -->
+    <path d="M818 818 L689 709 L709 689 Z" />
+  </g>
+
+  <!-- Mascot: The Sovereign King -->
+  <g fill="url(#ohc_gradient_final)" stroke="#0F172A" stroke-width="4">
+    <!-- Throne -->
+    <path d="M380 720 H644 V580 H620 V450 H404 V580 H380 Z" />
+    <rect x="420" y="680" width="184" height="40" rx="4" />
+    
+    <!-- Body -->
+    <path d="M440 580 C440 540 460 520 512 520 C564 520 584 540 584 580 V700 H440 V580 Z" />
+    
+    <!-- Head -->
+    <circle cx="512" cy="485" r="35" />
+    
+    <!-- Crown -->
+    <path d="M470 455 L485 435 L512 455 L539 435 L554 455 V470 H470 V455 Z" />
+    
+    <!-- Scepter (Added for style matching) -->
+    <line x1="420" y1="580" x2="420" y2="480" stroke="url(#ohc_gradient_final)" stroke-width="8" stroke-linecap="round" />
+    <circle cx="420" cy="470" r="12" fill="url(#ohc_gradient_final)" />
+  </g>
+</svg>

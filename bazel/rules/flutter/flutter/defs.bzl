@@ -857,7 +857,89 @@ if [ -n "$PUB_DEPS_ABS" ] && [ -f "$PUB_DEPS_ABS" ]; then
 fi
 
 FLUTTER_BIN_DIR="$(dirname "$FLUTTER_BIN_ABS")"
-FLUTTER_ROOT="$(cd "$FLUTTER_BIN_DIR/.." && pwd)"
+FLUTTER_ROOT_ORIG="$(cd "$FLUTTER_BIN_DIR/.." && pwd)"
+
+# ── Create a writable Flutter SDK overlay ────────────────────────────────────
+# The external Flutter SDK is mounted read-only inside the Bazel linux-sandbox
+# (errno=30 EROFS).  Flutter writes a lockfile to bin/cache/ on every invocation.
+# We build a thin overlay in TEST_TMPDIR (which Bazel marks writable):
+#   • bin/flutter  → real wrapper script (follow_links stops here → writable root)
+#   • bin/internal → symlink to original (shell scripts; only read)
+#   • bin/cache/   → real writable directory; cache files symlinked except
+#                    lock/stamp files (lockfile, .upgrade_lock, .dartignore)
+#                    which Flutter must create fresh
+#   • everything else → symlinks to original
+FLUTTER_WRITABLE="${{TEST_TMPDIR}}/flutter_root"
+mkdir -p "${{FLUTTER_WRITABLE}}/bin"
+
+# Symlink root-level entries except 'bin'
+for _f in "${{FLUTTER_ROOT_ORIG}}"/* "${{FLUTTER_ROOT_ORIG}}"/.[!.]*; do
+    _n="$(basename -- "$_f")" || continue
+    [ "$_n" = "bin" ] && continue
+    [ -e "$_f" ] || [ -L "$_f" ] || continue
+    ln -sf "$_f" "${{FLUTTER_WRITABLE}}/$_n" 2>/dev/null || true
+done
+
+# Symlink bin/internal (shell scripts; only read by flutter)
+ln -sf "${{FLUTTER_ROOT_ORIG}}/bin/internal" "${{FLUTTER_WRITABLE}}/bin/internal" 2>/dev/null || true
+
+# Symlink other bin/* except 'flutter', 'cache', 'internal'
+for _f in "${{FLUTTER_ROOT_ORIG}}/bin"/* "${{FLUTTER_ROOT_ORIG}}/bin"/.[!.]*; do
+    _n="$(basename -- "$_f")" || continue
+    case "$_n" in flutter|cache|internal) continue ;; esac
+    [ -e "$_f" ] || [ -L "$_f" ] || continue
+    ln -sf "$_f" "${{FLUTTER_WRITABLE}}/bin/$_n" 2>/dev/null || true
+done
+
+# Create a real (non-symlink) wrapper flutter script so that follow_links()
+# in the Flutter binary resolves BIN_DIR to $FLUTTER_WRITABLE/bin.
+cat > "${{FLUTTER_WRITABLE}}/bin/flutter" << 'FLUTTER_WRAPPER_HEREDOC'
+#!/usr/bin/env bash
+set -e
+unset CDPATH
+# Resolve BIN_DIR from this wrapper's own location (not via symlink resolution)
+# so that shared.sh sets FLUTTER_ROOT = $FLUTTER_WRITABLE (the writable overlay).
+BIN_DIR="$(cd "$(dirname -- "$BASH_SOURCE")" && pwd -P)"
+PROG_NAME="$BIN_DIR/$(basename -- "$BASH_SOURCE")"
+SHARED_NAME="$BIN_DIR/internal/shared.sh"
+OS="$(uname -s)"
+if [[ $OS =~ MINGW.* || $OS =~ CYGWIN.* || $OS =~ MSYS.* ]]; then
+    exec "$BIN_DIR/flutter.bat" "$@"
+fi
+source "$SHARED_NAME"
+shared::execute "$@"
+FLUTTER_WRAPPER_HEREDOC
+chmod +x "${{FLUTTER_WRITABLE}}/bin/flutter"
+
+# Create a real writable bin/cache pre-populated with symlinks to originals.
+# IMPORTANT: Do NOT symlink lock/stamp files that Flutter must create fresh;
+# if those files are symlinks to the read-only SDK, openSync(FileMode.write)
+# will fail with EROFS even though our overlay directory is writable.
+mkdir -p "${{FLUTTER_WRITABLE}}/bin/cache"
+if [ -d "${{FLUTTER_ROOT_ORIG}}/bin/cache" ]; then
+    for _f in "${{FLUTTER_ROOT_ORIG}}/bin/cache"/* "${{FLUTTER_ROOT_ORIG}}/bin/cache"/.[!.]*; do
+        _n="$(basename -- "$_f")" || continue
+        # Skip lock files that Flutter must create fresh
+        case "$_n" in lockfile|.upgrade_lock|.dartignore) continue ;; esac
+        [ -e "$_f" ] || [ -L "$_f" ] || continue
+        # Copy stamp files (not symlink) so Flutter can update them in-place
+        case "$_n" in
+            *.stamp)
+                cp "$_f" "${{FLUTTER_WRITABLE}}/bin/cache/$_n" 2>/dev/null || \
+                    ln -sf "$_f" "${{FLUTTER_WRITABLE}}/bin/cache/$_n" 2>/dev/null || true
+                ;;
+            *)
+                ln -sf "$_f" "${{FLUTTER_WRITABLE}}/bin/cache/$_n" 2>/dev/null || true
+                ;;
+        esac
+    done
+fi
+# Ensure the cache directory itself is writable so Flutter can create new files.
+chmod u+w "${{FLUTTER_WRITABLE}}/bin/cache" 2>/dev/null || true
+
+FLUTTER_BIN_ABS="${{FLUTTER_WRITABLE}}/bin/flutter"
+FLUTTER_BIN_DIR="${{FLUTTER_WRITABLE}}/bin"
+# ─────────────────────────────────────────────────────────────────────────────
 
 export FLUTTER_SUPPRESS_ANALYTICS=true
 export CI=true
@@ -865,7 +947,6 @@ export PUB_ENVIRONMENT="flutter_tool:bazel"
 export PUB_CACHE="$RUNTIME_PUB_CACHE"
 export ANDROID_HOME=""
 export ANDROID_SDK_ROOT=""
-export FLUTTER_ROOT
 export PATH="$FLUTTER_BIN_DIR:$PATH"
 
 # Regenerate package_config.json with correct paths to RUNTIME_PUB_CACHE
@@ -884,6 +965,9 @@ fi
 popd >/dev/null
 
 CMD=("$FLUTTER_BIN_ABS" "--suppress-analytics" "test")
+if [ "{coverage_flag}" = "true" ]; then
+    CMD+=("--coverage")
+fi
 IFS=$'\n'
 for pattern in $'{test_patterns}'; do
     if [ -n "$pattern" ]; then
@@ -904,6 +988,30 @@ popd >/dev/null
 echo "" | tee -a "$TEST_LOG"
 if [ "$RESULT" -eq 0 ]; then
     echo "✓ Flutter tests completed successfully" | tee -a "$TEST_LOG"
+    # ── Coverage threshold check ──────────────────────────────────────────
+    if [ "{coverage_flag}" = "true" ]; then
+        LCOV_FILE="$RUNTIME_WORKSPACE/coverage/lcov.info"
+        if [ -f "$LCOV_FILE" ]; then
+            TOTAL=$(grep -c "^DA:" "$LCOV_FILE" 2>/dev/null || echo 0)
+            COVERED=$(grep -cE "^DA:[0-9]+,[1-9][0-9]*" "$LCOV_FILE" 2>/dev/null || echo 0)
+            if [ "$TOTAL" -gt 0 ]; then
+                PCT=$(awk -v c="$COVERED" -v t="$TOTAL" 'BEGIN {{printf "%.1f", c / t * 100}}')
+                PCT_INT=$(awk -v c="$COVERED" -v t="$TOTAL" 'BEGIN {{printf "%d", c / t * 100}}')
+                echo "Coverage: $PCT% ($COVERED/$TOTAL instrumented lines)" | tee -a "$TEST_LOG"
+                if [ "$PCT_INT" -lt "{coverage_min}" ]; then
+                    echo "✗ Coverage $PCT% is below the required minimum of {coverage_min}%" | tee -a "$TEST_LOG"
+                    cp "$LCOV_FILE" "$LOG_ROOT/lcov.info" 2>/dev/null || true
+                    exit 1
+                fi
+                echo "✓ Coverage $PCT% meets the required minimum of {coverage_min}%" | tee -a "$TEST_LOG"
+            else
+                echo "WARNING: coverage/lcov.info contains no DA: lines" | tee -a "$TEST_LOG"
+            fi
+            cp "$LCOV_FILE" "$LOG_ROOT/lcov.info" 2>/dev/null || true
+        else
+            echo "WARNING: --coverage requested but coverage/lcov.info not found" | tee -a "$TEST_LOG"
+        fi
+    fi
 else
     echo "✗ Flutter tests failed" | tee -a "$TEST_LOG"
 fi
@@ -920,6 +1028,8 @@ exit "$RESULT"
         dart_tool_path = library_info.dart_tool.path,
         flutter_bin = flutter_bin,
         test_patterns = test_patterns_literal,
+        coverage_flag = "true" if ctx.attr.coverage else "false",
+        coverage_min = ctx.attr.coverage_min,
     )
 
     ctx.actions.write(
@@ -958,6 +1068,14 @@ flutter_test = rule(
         "test_files": attr.string_list(
             default = ["test/"],
             doc = "Test files or directories to run",
+        ),
+        "coverage": attr.bool(
+            default = False,
+            doc = "Run tests with --coverage and enforce coverage_min threshold.",
+        ),
+        "coverage_min": attr.int(
+            default = 90,
+            doc = "Minimum required line-coverage percentage (0-100) when coverage=True.",
         ),
     },
     test = True,
