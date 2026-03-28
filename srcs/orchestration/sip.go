@@ -87,6 +87,21 @@ func initializeTables(db *sql.DB) error {
 			status TEXT NOT NULL,
 			last_heartbeat DATETIME DEFAULT CURRENT_TIMESTAMP
 		);`,
+		`CREATE TABLE IF NOT EXISTS capability_plugins (
+			plugin_id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			version TEXT NOT NULL,
+			manifest_url TEXT NOT NULL,
+			status TEXT NOT NULL,
+			registered_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
+		`CREATE TABLE IF NOT EXISTS swarm_memory_embeddings (
+			memory_id TEXT PRIMARY KEY,
+			context TEXT NOT NULL,
+			vector_embedding BLOB,
+			source_plugin TEXT,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
 	}
 
 	for _, q := range queries {
@@ -233,6 +248,137 @@ func (s *SIPDB) PruneStaleMissions(ctx context.Context, ageThreshold time.Durati
 		_, err := s.db.ExecContext(ctx, "DELETE FROM agent_missions WHERE status = 'COMPLETED' OR created_at < ?", thresholdTime)
 		return err
 	})
+}
+
+// CapabilityPlugin represents an MCP plugin registration.
+type CapabilityPlugin struct {
+	PluginID    string    `json:"plugin_id"`
+	Name        string    `json:"name"`
+	Version     string    `json:"version"`
+	ManifestURL string    `json:"manifest_url"`
+	Status      string    `json:"status"`
+	RegisteredAt time.Time `json:"registered_at"`
+}
+
+// RegisterCapabilityPlugin dynamically registers a new MCP capability plugin in the mesh.
+// Accepts parameters: ctx context.Context, plugin CapabilityPlugin.
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has side effects: Inserts or updates a record in the capability_plugins table.
+func (s *SIPDB) RegisterCapabilityPlugin(ctx context.Context, plugin CapabilityPlugin) error {
+	return withRetry(ctx, func() error {
+		_, err := s.db.ExecContext(ctx,
+			`INSERT INTO capability_plugins (plugin_id, name, version, manifest_url, status, registered_at)
+			 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+			 ON CONFLICT(plugin_id) DO UPDATE SET
+			 name=excluded.name, version=excluded.version,
+			 manifest_url=excluded.manifest_url, status=excluded.status,
+			 registered_at=CURRENT_TIMESTAMP`,
+			plugin.PluginID, plugin.Name, plugin.Version, plugin.ManifestURL, plugin.Status,
+		)
+		return err
+	})
+}
+
+// GetCapabilityPlugins retrieves all capability plugins from the mesh matching the specified status.
+// If status is empty, returns all plugins.
+// Accepts parameters: ctx context.Context, status string.
+// Returns []CapabilityPlugin, error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *SIPDB) GetCapabilityPlugins(ctx context.Context, status string) ([]CapabilityPlugin, error) {
+	var plugins []CapabilityPlugin
+	err := withRetry(ctx, func() error {
+		plugins = nil // reset slice
+		var rows *sql.Rows
+		var err error
+		if status == "" {
+			rows, err = s.db.QueryContext(ctx, "SELECT plugin_id, name, version, manifest_url, status, registered_at FROM capability_plugins")
+		} else {
+			rows, err = s.db.QueryContext(ctx, "SELECT plugin_id, name, version, manifest_url, status, registered_at FROM capability_plugins WHERE status = ?", status)
+		}
+
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var p CapabilityPlugin
+			var t string
+			if err := rows.Scan(&p.PluginID, &p.Name, &p.Version, &p.ManifestURL, &p.Status, &t); err != nil {
+				return err
+			}
+			p.RegisteredAt, _ = time.Parse("2006-01-02 15:04:05", t)
+			plugins = append(plugins, p)
+		}
+		return nil
+	})
+	return plugins, err
+}
+
+// EpisodicMemory represents a long-term memory entry with an optional vector embedding.
+type EpisodicMemory struct {
+	MemoryID        string    `json:"memory_id"`
+	Context         string    `json:"context"`
+	VectorEmbedding []byte    `json:"vector_embedding"`
+	SourcePlugin    string    `json:"source_plugin"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+// StoreEpisodicMemory stores a new long-term episodic memory.
+// Accepts parameters: ctx context.Context, memory EpisodicMemory.
+// Returns error.
+// Produces errors: Explicit error handling.
+// Has side effects: Inserts a record into the swarm_memory_embeddings table.
+func (s *SIPDB) StoreEpisodicMemory(ctx context.Context, memory EpisodicMemory) error {
+	return withRetry(ctx, func() error {
+		_, err := s.db.ExecContext(ctx,
+			`INSERT INTO swarm_memory_embeddings (memory_id, context, vector_embedding, source_plugin, created_at)
+			 VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+			 ON CONFLICT(memory_id) DO UPDATE SET
+			 context=excluded.context, vector_embedding=excluded.vector_embedding,
+			 source_plugin=excluded.source_plugin`,
+			memory.MemoryID, memory.Context, memory.VectorEmbedding, memory.SourcePlugin,
+		)
+		return err
+	})
+}
+
+// GetEpisodicMemoriesByPlugin retrieves memories matching a specific source plugin.
+// Accepts parameters: ctx context.Context, plugin string.
+// Returns []EpisodicMemory, error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *SIPDB) GetEpisodicMemoriesByPlugin(ctx context.Context, plugin string) ([]EpisodicMemory, error) {
+	var memories []EpisodicMemory
+	err := withRetry(ctx, func() error {
+		memories = nil // reset slice
+		var rows *sql.Rows
+		var err error
+		if plugin == "" {
+			rows, err = s.db.QueryContext(ctx, "SELECT memory_id, context, vector_embedding, source_plugin, created_at FROM swarm_memory_embeddings")
+		} else {
+			rows, err = s.db.QueryContext(ctx, "SELECT memory_id, context, vector_embedding, source_plugin, created_at FROM swarm_memory_embeddings WHERE source_plugin = ?", plugin)
+		}
+
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var m EpisodicMemory
+			var t string
+			if err := rows.Scan(&m.MemoryID, &m.Context, &m.VectorEmbedding, &m.SourcePlugin, &t); err != nil {
+				return err
+			}
+			m.CreatedAt, _ = time.Parse("2006-01-02 15:04:05", t)
+			memories = append(memories, m)
+		}
+		return nil
+	})
+	return memories, err
 }
 
 // Close closes the database connection.
