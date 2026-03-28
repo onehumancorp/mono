@@ -1,4 +1,4 @@
-load("@rules_flutter//flutter:defs.bzl", "flutter_library", "flutter_test")
+load("@rules_flutter//flutter:defs.bzl", "flutter_app", "flutter_library", "flutter_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 # ── Source filegroup (non-flutter uses, e.g. layout checks) ──────────────────
@@ -32,8 +32,6 @@ flutter_library(
         # Direct main dependencies
         "@pub_centrifuge//:centrifuge",
         "@pub_cupertino_icons//:cupertino_icons",
-        "@pub_flutter_riverpod//:flutter_riverpod",
-        "@pub_go_router//:go_router",
         "@pub_http//:http",
         "@pub_intl//:intl",
         "@pub_shared_preferences//:shared_preferences",
@@ -201,4 +199,54 @@ flutter_test(
     srcs = ["test/wizard_screen_test.dart"],
     embed = [":app_lib"],
     test_files = ["test/wizard_screen_test.dart"],
+)
+
+# ── Desktop E2E tests (button clicks – macOS/Windows/Linux) ──────────────────
+# Uses flutter_test with tester.tap() to simulate real button interactions on
+# all desktop platforms.  All screens are exercised.
+
+flutter_test(
+    name = "app_desktop_e2e_test",
+    srcs = glob(["test/**"]),
+    embed = [":app_lib"],
+    test_files = ["test/desktop_e2e_test.dart"],
+)
+
+# ── Coverage test (≥90 % line coverage required) ─────────────────────────────
+# Runs the full unit + widget test suite with --coverage and fails the build
+# if the aggregate line-coverage drops below 90%.
+
+flutter_test(
+    name = "app_coverage_test",
+    srcs = glob(["test/**"]),
+    embed = [":app_lib"],
+    test_files = ["test/"],
+    coverage = True,
+    coverage_min = 90,
+)
+
+# ── Flutter web app build ─────────────────────────────────────────────────────
+# Builds the Flutter app for the web platform.  The resulting artifacts are used
+# by the Playwright e2e test target below.
+
+flutter_app(
+    name = "app_web",
+    embed = [":app_lib"],
+    web = glob(["web/**"], allow_empty = True),
+)
+
+# ── Web E2E tests (Playwright) ────────────────────────────────────────────────
+# Serves the built Flutter web app and runs Playwright tests against it in a
+# real Chromium browser.  Depends on the web build artifacts from :app_web.
+
+sh_test(
+    name = "app_web_e2e_test",
+    srcs = ["tests/flutter_web_e2e_test.sh"],
+    data = [
+        ":app_web",
+        "e2e/playwright.config.ts",
+        "e2e/web.spec.ts",
+        "//:node_modules/@playwright/test",
+    ],
+    tags = ["requires-network"],  # browser download may need network on first run
 )

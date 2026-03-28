@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:ohc_app/services/api_service.dart';
 
 final _dashboardProvider = FutureProvider<Map<String, dynamic>>((ref) async {
@@ -15,7 +16,13 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshot = ref.watch(_dashboardProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        leading: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: SvgPicture.asset('assets/logo.svg'),
+        ),
+      ),
       body: snapshot.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),

@@ -326,14 +326,21 @@ cd "$WORKSPACE_DIR_ABS"
 
 echo "=== Generating pub_deps.json ==="
 DART_BIN_LOCAL="$FLUTTER_ROOT/bin/cache/dart-sdk/bin/dart"
-if [ -x "$DART_BIN_LOCAL" ]; then
-    PUB_DEPS_CMD=("$DART_BIN_LOCAL" pub deps --json)
+PUB_DEPS_ERR="$WORKSPACE_DIR_ABS/pub_deps.stderr.log"
+if [ -x "$DART_BIN_LOCAL" ] && "$DART_BIN_LOCAL" pub deps --json > pub_deps.json 2> "$PUB_DEPS_ERR"; then
+    :
 else
-    PUB_DEPS_CMD=("$FLUTTER_BIN_ABS" --suppress-analytics pub deps --json)
-fi
-if ! "${{PUB_DEPS_CMD[@]}}" > pub_deps.json; then
-    echo "✗ FATAL ERROR: flutter pub deps --json failed" >&2
-    exit 1
+    if [ -f "$PUB_DEPS_ERR" ] && grep -qi "requires the Flutter SDK" "$PUB_DEPS_ERR"; then
+        if ! "$FLUTTER_BIN_ABS" --suppress-analytics pub deps --json > pub_deps.json 2>> "$PUB_DEPS_ERR"; then
+            cat "$PUB_DEPS_ERR" >&2 || true
+            echo "✗ FATAL ERROR: flutter pub deps --json failed" >&2
+            exit 1
+        fi
+    else
+        cat "$PUB_DEPS_ERR" >&2 || true
+        echo "✗ FATAL ERROR: flutter pub deps --json failed" >&2
+        exit 1
+    fi
 fi
 
 export PUB_DEPS_PATH="$WORKSPACE_DIR_ABS/pub_deps.json"
@@ -622,6 +629,7 @@ FLUTTER_ROOT="$(cd "$(dirname "$FLUTTER_BIN_ABS")/.." && pwd -P)"
 export FLUTTER_SUPPRESS_ANALYTICS=true
 export CI=true
 export PUB_ENVIRONMENT="flutter_tool:bazel"
+export FLUTTER_ALREADY_LOCKED=true
 export ANDROID_HOME=""
 export ANDROID_SDK_ROOT=""
 export FLUTTER_ROOT
@@ -648,9 +656,11 @@ echo ""
 # This ensures package imports resolve correctly in the build environment
 echo ""
 echo "Regenerating package_config.json for build environment..."
-if "$FLUTTER_BIN_ABS" --suppress-analytics pub get --offline > /dev/null 2>&1; then
+PUB_GET_LOG="$(mktemp "${{TMPDIR:-/tmp}}/flutter_pub_get.XXXXXX.log")"
+if "$FLUTTER_BIN_ABS" --suppress-analytics pub get --offline > "$PUB_GET_LOG" 2>&1; then
     echo "✓ Package config regenerated successfully (offline)"
 else
+    cat "$PUB_GET_LOG" >&2 || true
     echo "✗ FATAL ERROR: flutter pub get --offline failed; ensure dependency caches contain all packages" >&2
     exit 1
 fi

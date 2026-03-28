@@ -9,6 +9,9 @@
     "ts-proto": "^1.167.1",
     "typescript": "^5.3.3"
   },
+  "devDependencies": {
+    "@playwright/test": "^1.51.1"
+  },
   "pnpm": {
     "onlyBuiltDependencies": []
   }
