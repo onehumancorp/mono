@@ -610,6 +610,9 @@ func (s *Server) handleDevSeed(w http.ResponseWriter, r *http.Request) {
 	s.hub = hub
 	s.tracker = tracker
 
+	// Clear out old handoffs
+	s.handoffs = nil
+
 	mockHandoff := HandoffPackage{
 		ID:             "handoff-" + time.Now().UTC().Format("20060102150405"),
 		FromAgentID:    "swe-1",

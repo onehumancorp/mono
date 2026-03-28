@@ -11,6 +11,12 @@ async function saveShot(page: Page, name: string): Promise<void> {
 test("Chaos: Simulate DB failure and recovery during agent handoff", async ({ page, request }) => {
   console.log("Starting Chaos test");
 
+  // Wait for health check before UI auth
+  await expect(async () => {
+    const health = await request.get("http://127.0.0.1:8080/healthz");
+    expect(health.ok()).toBeTruthy();
+  }).toPass({ timeout: 15000 });
+
   // Step 1: Login
   const loginResp = await request.post("http://127.0.0.1:8080/api/auth/login", {
     data: { username: "admin", password: "adminpass123" }
@@ -41,16 +47,18 @@ test("Chaos: Simulate DB failure and recovery during agent handoff", async ({ pa
   await page.evaluate((t) => localStorage.setItem("ohc_token", t), token);
   await page.goto("/");
 
+  await page.waitForSelector('text=One Human Corp Dashboard');
+
   // Navigate to Handoffs tab
   await page.getByRole("button", { name: "Handoffs" }).click();
 
   // Look for our seeded handoff
-  const handoffCard = page.locator('.handoff-card', { hasText: 'Merge conflict resolution required for legacy billing module.' });
-  await expect(handoffCard).toBeVisible();
+  const handoffCard = page.locator('.handoff-card').filter({ hasText: 'Merge conflict resolution required for legacy billing module.' }).first();
+  await expect(handoffCard).toBeVisible({ timeout: 15000 });
 
   // Verify visual indicators of failure
-  await expect(handoffCard.getByText('Failed Attempts: 3')).toBeVisible();
-  await expect(handoffCard.getByText('PENDING')).toBeVisible(); // Default status is pending
+  await expect(handoffCard.getByText('Failed Attempts: 3')).toBeVisible({ timeout: 15000 });
+  await expect(handoffCard.getByText('PENDING')).toBeVisible({ timeout: 15000 }); // Default status is pending
 
   await saveShot(page, "chaos-01-blocked-handoff");
 

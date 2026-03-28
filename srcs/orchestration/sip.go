@@ -87,6 +87,21 @@ func initializeTables(db *sql.DB) error {
 			status TEXT NOT NULL,
 			last_heartbeat DATETIME DEFAULT CURRENT_TIMESTAMP
 		);`,
+		`CREATE TABLE IF NOT EXISTS capability_plugins (
+			plugin_id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			version TEXT NOT NULL,
+			manifest_url TEXT NOT NULL,
+			status TEXT NOT NULL,
+			registered_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
+		`CREATE TABLE IF NOT EXISTS swarm_memory_embeddings (
+			memory_id TEXT PRIMARY KEY,
+			context TEXT NOT NULL,
+			vector_embedding BLOB,
+			source_plugin TEXT,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
 	}
 
 	for _, q := range queries {
