@@ -150,7 +150,12 @@ func Middleware(next http.Handler) http.Handler {
 			requestCounter.Add(r.Context(), 1, attributes)
 			latencyHistogram.Record(r.Context(), duration, attributes)
 		}
-		if Verbosity >= 2 {
+
+		isHealthCheck := r.URL.Path == "/healthz" || r.URL.Path == "/readyz"
+
+		if Verbosity >= 2 && !isHealthCheck {
+			slog.Info("recorded request", "component", "telemetry", "method", r.Method, "path", r.URL.Path, "duration", duration)
+		} else if Verbosity >= 3 && isHealthCheck {
 			slog.Info("recorded request", "component", "telemetry", "method", r.Method, "path", r.URL.Path, "duration", duration)
 		}
 	})

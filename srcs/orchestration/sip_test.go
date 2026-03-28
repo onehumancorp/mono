@@ -2,8 +2,9 @@ package orchestration
 
 import (
 	"context"
-	"testing"
 	"path/filepath"
+	"testing"
+	"time"
 )
 
 func TestSIPDB_Init(t *testing.T) {
@@ -267,5 +268,71 @@ func TestSIPDB_InitTables_InvalidDBDir(t *testing.T) {
 	_, err := NewSIPDB(dbPath)
 	if err == nil {
 		t.Fatal("Expected error initializing tables when path is a directory")
+	}
+}
+
+func TestSIPDB_PruneStaleMissions(t *testing.T) {
+	db, err := NewSIPDB(":memory:")
+	if err != nil {
+		t.Fatalf("failed to initialize SIPDB: %v", err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+
+	// Delegate three missions
+	db.DelegateMission(ctx, "m1", "SOFTWARE_ENGINEER", Message{ID: "m1", Content: "Task 1", Type: EventTask})
+	db.DelegateMission(ctx, "m2", "SOFTWARE_ENGINEER", Message{ID: "m2", Content: "Task 2", Type: EventTask})
+	db.DelegateMission(ctx, "m3", "SOFTWARE_ENGINEER", Message{ID: "m3", Content: "Task 3", Type: EventTask})
+
+	// Complete two of them
+	db.CompleteMission(ctx, "m1")
+	db.CompleteMission(ctx, "m2")
+
+	// Artificially age "m1" by setting its updated_at to 48 hours ago
+	_, err = db.db.ExecContext(ctx, "UPDATE agent_missions SET updated_at = datetime('now', '-48 hour') WHERE id = 'm1'")
+	if err != nil {
+		t.Fatalf("failed to age mission m1: %v", err)
+	}
+
+	// Prune missions older than 24 hours
+	affected, err := db.PruneStaleMissions(ctx, 24 * time.Hour)
+	if err != nil {
+		t.Fatalf("PruneStaleMissions failed: %v", err)
+	}
+
+	if affected != 1 {
+		t.Fatalf("expected 1 mission pruned, got %d", affected)
+	}
+
+	// Verify only m1 was deleted
+	var count int
+	err = db.db.QueryRowContext(ctx, "SELECT count(*) FROM agent_missions WHERE id = 'm1'").Scan(&count)
+	if err != nil || count != 0 {
+		t.Fatalf("expected m1 to be deleted, count: %d, err: %v", count, err)
+	}
+
+	err = db.db.QueryRowContext(ctx, "SELECT count(*) FROM agent_missions WHERE id = 'm2'").Scan(&count)
+	if err != nil || count != 1 {
+		t.Fatalf("expected m2 to remain, count: %d, err: %v", count, err)
+	}
+
+	err = db.db.QueryRowContext(ctx, "SELECT count(*) FROM agent_missions WHERE id = 'm3'").Scan(&count)
+	if err != nil || count != 1 {
+		t.Fatalf("expected m3 to remain, count: %d, err: %v", count, err)
+	}
+}
+
+func TestSIPDB_PruneStaleMissions_DBError(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "test.db")
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		t.Fatalf("Failed to create test DB: %v", err)
+	}
+	db.Close()
+
+	_, err = db.PruneStaleMissions(context.Background(), 24 * time.Hour)
+	if err == nil {
+		t.Fatal("Expected error querying closed DB")
 	}
 }

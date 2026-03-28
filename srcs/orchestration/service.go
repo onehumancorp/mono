@@ -302,7 +302,35 @@ func NewHub() *Hub {
 		settingsStore: settings.NewStore(),
 	}
 	go h.eventLogWorker(context.Background(), "events.jsonl")
+	go h.hygieneWorker(context.Background())
 	return h
+}
+
+// hygieneWorker periodically prunes stale missions from the database.
+// Accepts parameters: ctx context.Context.
+// Returns nothing.
+// Produces no errors.
+// Has side effects: Starts a background loop that deletes old completed missions.
+func (h *Hub) hygieneWorker(ctx context.Context) {
+	ticker := time.NewTicker(1 * time.Hour)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if h.sipDB != nil {
+				// Prune completed missions older than 24 hours
+				affected, err := h.sipDB.PruneStaleMissions(ctx, 24*time.Hour)
+				if err != nil {
+					slog.Warn("failed to prune stale missions", "error", err)
+				} else if affected > 0 {
+					slog.Info("pruned stale missions", "count", affected)
+				}
+			}
+		}
+	}
 }
 
 // eventLogWorker processes event logs and writes them sequentially to the specified file.

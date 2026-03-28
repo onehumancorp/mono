@@ -222,6 +222,25 @@ func (s *SIPDB) DelegateMission(ctx context.Context, missionID, role string, tas
 	})
 }
 
+// PruneStaleMissions removes completed missions older than the specified duration.
+// Accepts parameters: s *SIPDB, olderThan time.Duration.
+// Returns PruneStaleMissions(ctx context.Context, olderThan time.Duration) (int64, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *SIPDB) PruneStaleMissions(ctx context.Context, olderThan time.Duration) (int64, error) {
+	var affected int64
+	err := withRetry(ctx, func() error {
+		cutoff := time.Now().UTC().Add(-olderThan)
+		res, err := s.db.ExecContext(ctx, "DELETE FROM agent_missions WHERE status = 'COMPLETED' AND updated_at < ?", cutoff)
+		if err != nil {
+			return err
+		}
+		affected, err = res.RowsAffected()
+		return err
+	})
+	return affected, err
+}
+
 // Close closes the database connection.
 // Accepts parameters: s *SIPDB (No Constraints).
 // Returns Close() error.
