@@ -815,26 +815,26 @@ func (h *Hub) Publish(message Message) error {
 	h.mu.Unlock()
 
 	// ⚡ BOLT: [Asynchronous telemetry recording to reduce critical path latency] - Randomized Selection from Top 5
-	go telemetry.RecordAgentApiCall(context.Background(), sender.ID, sender.Role, "publish")
+	go func() {
+		telemetry.RecordAgentApiCall(context.Background(), sender.ID, sender.Role, "publish")
 
-	// Structured logging for agent execution traces
-	// Filter out high-frequency "status" events to reduce signal noise.
-	if message.Type != EventStatus {
-		go telemetry.LogAgentExecution(context.Background(), sender.ID, sender.Role, "publish", message.Type, message.Content)
-	}
+		// Structured logging for agent execution traces
+		// Filter out high-frequency "status" events to reduce signal noise.
+		if message.Type != EventStatus {
+			telemetry.LogAgentExecution(context.Background(), sender.ID, sender.Role, "publish", message.Type, message.Content)
+		}
+	}()
 
 	// Forward to Centrifuge for real-time client delivery (non-blocking).
 	if cn := h.centrifugeNode; cn != nil {
-		if message.MeetingID != "" {
-			go func(mID string, msg Message) {
-				cn.PublishMeetingMessage(mID, msg)
-			}(message.MeetingID, message)
-		}
-		if message.ToAgent != "" {
-			go func(toAgent string, msg Message) {
-				cn.PublishAgentNotification(toAgent, msg)
-			}(message.ToAgent, message)
-		}
+		go func() {
+			if message.MeetingID != "" {
+				cn.PublishMeetingMessage(message.MeetingID, message)
+			}
+			if message.ToAgent != "" {
+				cn.PublishAgentNotification(message.ToAgent, message)
+			}
+		}()
 	}
 
 	return nil
