@@ -3,6 +3,13 @@ backend:
   replicas: 1
   service:
     port: 8080
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
   # Set to "true" to enable the multi-tenant TenantRegistry.
   # In multi-tenant mode a single server instance handles all organisations;
   # each user can only see their own company's data after login.
@@ -13,6 +20,13 @@ frontend:
   replicas: 1
   service:
     port: 8081
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
 
 # OHC Core — Rust library (settings · agent scheduler · meeting rooms · chat)
 # In cloud-native mode the core runs as a dedicated micro-service.
@@ -56,6 +70,13 @@ chatwoot:
   replicas: 1
   service:
     port: 3000
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
   # Secret key base – MUST be overridden in production with a 64+ char random string.
   secretKeyBase: changeme_secret_key_base_at_least_64_chars_long_for_production
   # Admin credentials used by OHC backend to auto-configure the inbox.
