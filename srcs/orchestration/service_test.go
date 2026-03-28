@@ -1285,7 +1285,7 @@ func TestHub_ToolParameterAutoCorrection_SuccessFlow(t *testing.T) {
 
 func TestSetSIPDB(t *testing.T) {
 	hub := NewHub()
-	db, _ := NewSIPDB(":memory:")
+	db, _ := NewSIPDB("file:dummy_1.db?mode=memory&cache=shared")
 	hub.SetSIPDB(db)
 	if hub.GetSIPDB() != db {
 		t.Fatal("SetSIPDB/GetSIPDB failed")
@@ -1321,4 +1321,99 @@ func TestEventLogWorker_Coverage(t *testing.T) {
 
 	// Force close to stop loop
 	close(hub.eventLogChan)
+}
+
+// A quick test for the missing []interface{} branch inside service.go redactInterfacePII
+func TestRedactInterfacePII_Slice(t *testing.T) {
+	input := []interface{}{
+		"test@example.com",
+		"hello",
+		[]interface{}{"123-45-6789"},
+	}
+
+	result := redactInterfacePII(input)
+	slice, ok := result.([]interface{})
+	if !ok {
+		t.Fatalf("expected slice, got %T", result)
+	}
+
+	if slice[0] != "[REDACTED_EMAIL]" {
+		t.Errorf("expected [REDACTED_EMAIL], got %v", slice[0])
+	}
+	if slice[1] != "hello" {
+		t.Errorf("expected hello, got %v", slice[1])
+	}
+}
+
+func TestHub_LogEvent_FullChan(t *testing.T) {
+	hub := NewHub() // eventLogChan is buffered to 1000
+
+	// Fill it up to cause a drop
+	for i := 0; i < 1000; i++ {
+		hub.eventLogChan <- "msg"
+	}
+
+	hub.LogEvent("drop this") // should hit default branch
+}
+
+func TestHub_AppendEventWorker_ContextCancel(t *testing.T) {
+	hub := NewHub()
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go hub.eventLogWorker(ctx, "/tmp/dummy_events.jsonl")
+
+	// Let it start then cancel
+	time.Sleep(10 * time.Millisecond)
+	cancel()
+	time.Sleep(10 * time.Millisecond)
+}
+
+func TestHub_AppendEventWorker_CloseChan(t *testing.T) {
+	hub := NewHub()
+	ctx := context.Background()
+
+	go hub.eventLogWorker(ctx, "/tmp/dummy_events2.jsonl")
+
+	// Let it start then close channel
+	time.Sleep(10 * time.Millisecond)
+	close(hub.eventLogChan)
+	time.Sleep(10 * time.Millisecond)
+}
+
+func TestHub_DelegateMissionWithSIPDB(t *testing.T) {
+	hub := NewHub()
+
+	db, err := NewSIPDB("file:dummy_2.db?mode=memory&cache=shared")
+	if err != nil {
+		t.Fatalf("failed to create sip db: %v", err)
+	}
+	hub.SetSIPDB(db)
+
+	hub.RegisterAgent(Agent{
+		ID:             "swe-1",
+		Name:           "SWE",
+		Role:           "SOFTWARE_ENGINEER",
+		OrganizationID: "org-1",
+	})
+	hub.RegisterAgent(Agent{
+		ID:             "pm-1",
+		Name:           "PM",
+		Role:           "PRODUCT_MANAGER",
+		OrganizationID: "org-1",
+	})
+	hub.OpenMeeting("m-1", []string{"swe-1", "pm-1"})
+
+	msg := Message{ID: "msg-1", Content: "do work", MeetingID: "m-1"}
+	err = hub.DelegateTask("pm-1", "swe-1", msg)
+	if err != nil {
+		t.Fatalf("expected nil err, got %v", err)
+	}
+
+	// Let the goroutine run
+	time.Sleep(150 * time.Millisecond) // enough time for sipdb
+
+	missions, _ := db.GetPendingMissions(context.Background(), "SOFTWARE_ENGINEER")
+	if len(missions) != 1 {
+		t.Fatalf("expected 1 mission, got %d", len(missions))
+	}
 }
