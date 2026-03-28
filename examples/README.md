@@ -31,9 +31,9 @@ The `examples` directory serves as a template and testing ground for new agent b
   ```
 
 ## Configuration
-For local development, the `hello-world-agent` uses the `builtin` model. For production deployment, you can deploy the raw Kubernetes Custom Resource Definition (CRD) to your local cluster:
+For local development, the `hello-world` uses the `builtin` model. For production deployment, you can deploy the raw Kubernetes Custom Resource Definition (CRD) to your local cluster:
 ```yaml
-# examples/hello_world_agent.yaml
+# examples/hello-world-agent/hello_world_agent.yaml
 apiVersion: onehumancorp.com/v1alpha1
 kind: Agent
 metadata:

@@ -5,9 +5,13 @@ set -euo pipefail
 echo "--- One Human Corp: Local K8s Setup ---"
 
 # Detect if Docker or minikube is running and switch context
-if command -v kind >/dev/null 2>&1 && kind get clusters 2>/dev/null | grep -q "kind"; then
-    echo "Found local Kind cluster. Switching context..."
+if command -v kind >/dev/null 2>&1 && kind get clusters 2>/dev/null | grep -q "^kind$"; then
+    echo "Found local Kind cluster 'kind'. Switching context..."
     kubectl config use-context kind-kind
+elif command -v kind >/dev/null 2>&1 && kind get clusters 2>/dev/null | grep -q -v "^$"; then
+    KIND_CLUSTER=$(kind get clusters | head -n 1)
+    echo "Found local Kind cluster '${KIND_CLUSTER}'. Switching context..."
+    kubectl config use-context "kind-${KIND_CLUSTER}"
 elif command -v kubectl >/dev/null 2>&1 && kubectl config get-contexts -o name 2>/dev/null | grep -q "docker-desktop"; then
     echo "Found docker-desktop context. Switching context..."
     kubectl config use-context docker-desktop
