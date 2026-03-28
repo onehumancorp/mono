@@ -142,16 +142,16 @@ func Middleware(next http.Handler) http.Handler {
 
 		duration := time.Since(start).Seconds()
 
-		if requestCounter != nil && latencyHistogram != nil {
-			attributes := metric.WithAttributes(
-				attribute.String("method", r.Method),
-				attribute.String("path", r.URL.Path),
-			)
-			requestCounter.Add(r.Context(), 1, attributes)
-			latencyHistogram.Record(r.Context(), duration, attributes)
-		}
-		if Verbosity >= 2 {
-			if r.URL.Path != "/healthz" && r.URL.Path != "/readyz" {
+		if r.URL.Path != "/healthz" && r.URL.Path != "/readyz" {
+			if requestCounter != nil && latencyHistogram != nil {
+				attributes := metric.WithAttributes(
+					attribute.String("method", r.Method),
+					attribute.String("path", r.URL.Path),
+				)
+				requestCounter.Add(r.Context(), 1, attributes)
+				latencyHistogram.Record(r.Context(), duration, attributes)
+			}
+			if Verbosity >= 2 {
 				slog.Info("recorded request", "component", "telemetry", "method", r.Method, "path", r.URL.Path, "duration", duration)
 			}
 		}
