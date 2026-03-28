@@ -243,6 +243,11 @@ if [ ${{#DEP_CACHES[@]}} -gt 0 ]; then
 else
     echo "No dependency caches supplied"
 fi
+# Bazel marks output directories read-only (0555) after actions complete.
+# Dependency caches are Bazel outputs, so rsync -a copies those read-only
+# permissions into our new pub_cache.  Make everything writable so subsequent
+# mkdir/copy operations (e.g. the IS_PUB_PACKAGE block below) can succeed.
+chmod -R u+w "$PUB_CACHE_DIR_ABS" 2>/dev/null || true
 echo ""
 
 export PUBSPEC_PATH="$WORKSPACE_DIR_ABS/pubspec.yaml"
@@ -635,11 +640,21 @@ export ANDROID_SDK_ROOT=""
 export FLUTTER_ROOT
 export PATH="$FLUTTER_ROOT/bin:$PATH"
 
+# The workspace directory is a Bazel-declared output from the previous stage
+# (PrepareFlutterAppWorkspace), which Bazel marks read-only after the action.
+# We need to make it writable before modifying any files inside it.
+chmod -R u+w "$ORIGINAL_PWD/$WORKSPACE_DIR" 2>/dev/null || true
+
 # Change to the workspace directory from execroot
 cd "$ORIGINAL_PWD/$WORKSPACE_DIR"
 
 # Copy .dart_tool tree to workspace
 if [ -d "$DART_TOOL_DIR_ABS" ]; then
+    # The workspace may be a re-used Bazel output directory whose .dart_tool
+    # was made read-only after a previous action.  Remove it first so cp never
+    # tries to overwrite files in a 0555 directory.
+    chmod -R u+w .dart_tool 2>/dev/null || true
+    rm -rf .dart_tool
     mkdir -p .dart_tool
     cp -R "$DART_TOOL_DIR_ABS/." .dart_tool/
     chmod -R u+rwX .dart_tool
