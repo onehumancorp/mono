@@ -389,3 +389,60 @@ func (s *SIPDB) GetEpisodicMemoriesByPlugin(ctx context.Context, plugin string) 
 func (s *SIPDB) Close() error {
 	return s.db.Close()
 }
+
+// RegisterCapabilityPlugin registers a new capability plugin dynamically.
+// Accepts parameters: s *SIPDB (No Constraints).
+// Returns RegisterCapabilityPlugin(ctx context.Context, pluginID, name, version, manifestURL string) error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *SIPDB) RegisterCapabilityPlugin(ctx context.Context, pluginID, name, version, manifestURL string) error {
+	return withRetry(ctx, func() error {
+		_, err := s.db.ExecContext(ctx,
+			"INSERT INTO capability_plugins (plugin_id, name, version, manifest_url, status, registered_at) VALUES (?, ?, ?, ?, 'ACTIVE', CURRENT_TIMESTAMP) ON CONFLICT(plugin_id) DO UPDATE SET name=excluded.name, version=excluded.version, manifest_url=excluded.manifest_url, status='ACTIVE', registered_at=CURRENT_TIMESTAMP",
+			pluginID, name, version, manifestURL,
+		)
+		return err
+	})
+}
+
+// QueryCapabilityPlugins retrieves a list of active capability plugins matching an intent.
+// Accepts parameters: s *SIPDB (No Constraints).
+// Returns QueryCapabilityPlugins(ctx context.Context) ([]string, error).
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *SIPDB) QueryCapabilityPlugins(ctx context.Context) ([]string, error) {
+	var plugins []string
+	err := withRetry(ctx, func() error {
+		plugins = nil
+		rows, err := s.db.QueryContext(ctx, "SELECT manifest_url FROM capability_plugins WHERE status = 'ACTIVE'")
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var manifestURL string
+			if err := rows.Scan(&manifestURL); err != nil {
+				return err
+			}
+			plugins = append(plugins, manifestURL)
+		}
+		return nil
+	})
+	return plugins, err
+}
+
+// RecordSwarmMemoryEmbedding records an agent's distilled context with semantic embedding.
+// Accepts parameters: s *SIPDB (No Constraints).
+// Returns RecordSwarmMemoryEmbedding(ctx context.Context, memoryID, contextStr, sourcePlugin string, embedding []byte) error.
+// Produces errors: Explicit error handling.
+// Has no side effects.
+func (s *SIPDB) RecordSwarmMemoryEmbedding(ctx context.Context, memoryID, contextStr, sourcePlugin string, embedding []byte) error {
+	return withRetry(ctx, func() error {
+		_, err := s.db.ExecContext(ctx,
+			"INSERT INTO swarm_memory_embeddings (memory_id, context, vector_embedding, source_plugin, created_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(memory_id) DO UPDATE SET context=excluded.context, vector_embedding=excluded.vector_embedding, source_plugin=excluded.source_plugin, created_at=CURRENT_TIMESTAMP",
+			memoryID, contextStr, embedding, sourcePlugin,
+		)
+		return err
+	})
+}

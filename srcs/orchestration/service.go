@@ -283,6 +283,17 @@ type Hub struct {
 	centrifugeNode *CentrifugeNode
 }
 
+// SIPDB returns the underlying SIPDB connection.
+// Accepts parameters: h *Hub.
+// Returns interface{}.
+// Produces no errors.
+// Has no side effects.
+func (h *Hub) SIPDB() interface{} {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.sipDB
+}
+
 // NewHub constructs a new instance of an orchestration Hub, pre-allocated with empty registries.
 //
 // Accepts no parameters.

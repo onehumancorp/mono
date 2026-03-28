@@ -458,6 +458,8 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/mcp/tools", server.handleMCPTools)
 	mux.HandleFunc("/api/mcp/tools/register", server.handleMCPRegister)
 	mux.HandleFunc("/api/mcp/tools/invoke", server.handleMCPInvoke)
+	mux.HandleFunc("/api/plugins/import", server.handleImportPlugin)
+	mux.HandleFunc("/api/plugins", server.handleGetPlugins)
 	mux.HandleFunc("/api/dev/seed", server.handleDevSeed)
 	mux.HandleFunc("/api/settings", server.handleSettings)
 	mux.HandleFunc("/api/scheduler", server.handleSchedulerTasks)

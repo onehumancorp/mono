@@ -67,7 +67,7 @@ body,
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Inter", system-ui, sans-serif;
+  font-family: 'Outfit', 'Inter', sans-serif;
   font-size: 13px;
   line-height: 1.5;
   color: var(--text-primary);
@@ -313,7 +313,7 @@ body {
   padding: 0 1.5rem;
   border-bottom: 1px solid var(--border);
   background: rgba(13, 17, 23, 0.85);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(15px) saturate(180%);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -457,7 +457,7 @@ body {
   border: 1px solid var(--border-card);
   border-radius: var(--r-lg);
   padding: 1rem;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(15px) saturate(180%);
   box-shadow: var(--shadow-xs);
   animation: fadeUp 250ms ease both;
   display: flex;
@@ -679,7 +679,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0.45rem 0.65rem;
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: var(--r-sm);
   border: 1px solid var(--border);
 }
@@ -753,7 +753,7 @@ body {
   align-items: center;
   gap: 0.55rem;
   padding: 0.5rem 0.65rem;
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
   transition: border-color 0.12s;
@@ -850,7 +850,7 @@ body {
   font-size: 10.5px;
   font-weight: 600;
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
@@ -878,7 +878,7 @@ body {
 }
 
 .transcript::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
 }
 
@@ -957,14 +957,14 @@ body {
   color: var(--text-primary);
   position: relative;
   word-break: break-word;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease, box-shadow 0.2s ease;
 }
 
 .transcript-item--agent .transcript-bubble {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-bottom-left-radius: 6px;
 }
@@ -987,9 +987,9 @@ body {
   flex-direction: column;
   height: calc(100vh - var(--header-h) - 4rem);
   background: rgba(18, 22, 31, 0.65);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--r-2xl);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   overflow: hidden;
@@ -999,7 +999,7 @@ body {
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(15px) saturate(180%);
 }
 
 .war-room-title {
@@ -1067,7 +1067,7 @@ body {
   gap: 0.5rem;
   padding: 0.4rem;
   border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .war-room-participant .role-avatar {
@@ -1124,7 +1124,7 @@ body {
 }
 
 .war-room-composer .textarea:focus {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
   border-color: rgba(47, 129, 247, 0.5);
   box-shadow: 0 0 0 2px rgba(47, 129, 247, 0.2);
 }
@@ -1171,11 +1171,11 @@ body {
   border: 1px solid rgba(255, 69, 58, 0.5);
   border-radius: var(--r-xl);
   box-shadow: 0 12px 32px rgba(255, 69, 58, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
   overflow: hidden;
   margin-top: 0.5rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease, box-shadow 0.2s ease;
 }
 
 .approval-card:hover {
@@ -1276,15 +1276,15 @@ body {
 
 .agent-card {
   background: rgba(22, 27, 34, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
   border: 1px solid var(--border-card);
   border-radius: var(--r-lg);
   padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   animation: fadeUp 220ms ease both;
 }
 
@@ -1416,7 +1416,7 @@ body {
 
 .spend-bar-track {
   height: 4px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -1496,7 +1496,7 @@ body {
 }
 
 .burn-stat {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   padding: 0.65rem 0.75rem;
@@ -1599,7 +1599,7 @@ body {
 }
 
 .playbook-chip--muted {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text-secondary);
   border-color: var(--border);
 }
@@ -1646,7 +1646,7 @@ body {
 
 .domain-item {
   padding: 0.7rem 0.85rem;
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   transition: border-color 0.12s;
@@ -1684,7 +1684,7 @@ body {
 
 .tool-item {
   padding: 0.7rem 0.85rem;
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
 }
@@ -1782,7 +1782,7 @@ body {
 }
 
 .btn-ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text-primary);
 }
 
@@ -1884,7 +1884,7 @@ select.input {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(15px) saturate(180%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2135,7 +2135,7 @@ select.input {
   align-items: center;
   gap: 0.6rem;
   padding: 1rem 0.5rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   cursor: pointer;
@@ -2405,7 +2405,7 @@ select.input {
   background: rgba(0, 0, 0, 0.2);
   padding: 0.75rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 0.85rem;
 }
@@ -2432,7 +2432,7 @@ select.input {
 }
 
 .transcript-item--human .agent-standup-visualizer {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.2);
 }
 .transcript-item--human .agent-standup-value {
@@ -2451,8 +2451,8 @@ select.input {
 
 .handoff-card {
   background: rgba(26, 30, 36, 0.65);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--r-2xl);
   overflow: hidden;
@@ -2460,7 +2460,7 @@ select.input {
   flex-direction: row;
   min-height: 280px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease, box-shadow 0.2s ease;
 }
 
 .handoff-card:hover {
@@ -2517,7 +2517,7 @@ select.input {
 
 .handoff-card__details {
   background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: auto;
@@ -2556,7 +2556,7 @@ select.input {
   background: rgba(0, 0, 0, 0.3);
   padding: 0.75rem;
   border-radius: var(--r-md);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   white-space: pre-wrap;
   word-break: break-word;
   max-height: 120px;
@@ -2568,7 +2568,7 @@ select.input {
   flex-direction: column;
   padding: 1rem 1.25rem;
   background: rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--r-md);
 }
 
@@ -2616,7 +2616,7 @@ select.input {
 .handoff-trace-line {
   width: 2px;
   flex-grow: 1;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   margin-top: -2px;
   margin-bottom: -4px;
   z-index: 1;
@@ -2648,8 +2648,8 @@ select.input {
   font-size: 13.5px;
   color: var(--text-primary);
   line-height: 1.5;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 0.5rem 0.75rem;
   border-radius: var(--r-sm);
   word-break: break-word;
@@ -2762,7 +2762,7 @@ select.input {
   color: #1a1a1a;
   cursor: grab;
   z-index: 2;
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   touch-action: none;
 }
 
@@ -2823,7 +2823,7 @@ select.input {
   width: 100%;
   height: 8px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   outline: none;
 }
 .capacity-slider::-webkit-slider-thumb {
@@ -2835,7 +2835,7 @@ select.input {
   background: #ffffff;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 .capacity-slider::-webkit-slider-thumb:hover {
   transform: scale(1.1);
@@ -2855,7 +2855,7 @@ select.input {
 }
 .capacity-summary-card {
   flex: 1;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 1rem;

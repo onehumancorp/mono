@@ -9,6 +9,7 @@ go_library(
         "handlers_integration.go",
         "handlers_ops.go",
         "handlers_org.go",
+        "handlers_plugins.go",
         "handlers_scheduler.go",
         "handlers_wizard.go",
         "server.go",
@@ -27,6 +28,7 @@ go_library(
         "//srcs/scheduler",
         "//srcs/settings",
         "//srcs/telemetry",
+        "@in_gopkg_yaml_v3//:yaml_v3",
     ],
 )
 
@@ -37,6 +39,7 @@ go_test(
         "handlers_mcp_test.go",
         "handlers_ops_extra_test.go",
         "handlers_ops_test.go",
+        "handlers_plugins_test.go",
         "handlers_wizard_test.go",
         "server_missing_test.go",
         "server_rate_limit_test.go",
@@ -51,5 +54,6 @@ go_test(
         "//srcs/integrations",
         "//srcs/orchestration",
         "//srcs/settings",
+        "@in_gopkg_yaml_v3//:yaml_v3",
     ],
 )
