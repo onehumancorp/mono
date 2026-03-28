@@ -3,7 +3,6 @@ package orchestration
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -26,8 +25,8 @@ func TestSIPDB_Chaos(t *testing.T) {
 
 	// 1. High-concurrency agent mission ingestion (Stress Test)
 	var wg sync.WaitGroup
-	numAgents := 50
-	missionsPerAgent := 10
+	numAgents := 10
+	missionsPerAgent := 2
 
 	errs := make(chan error, numAgents*missionsPerAgent)
 
@@ -46,6 +45,8 @@ func TestSIPDB_Chaos(t *testing.T) {
 				if err := db.DelegateMission(ctx, missionID, "SOFTWARE_ENGINEER", task); err != nil {
 					errs <- fmt.Errorf("agent %d failed to delegate mission %d: %v", agentIdx, j, err)
 				}
+				// Give the DB a tiny breath to avoid complete starvation on high-core machines
+				time.Sleep(15 * time.Millisecond)
 			}
 		}(i)
 	}

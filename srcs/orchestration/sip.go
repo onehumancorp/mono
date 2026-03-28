@@ -21,8 +21,8 @@ type SIPDB struct {
 }
 
 const (
-	maxRetries    = 3
-	retryInterval = 100 * time.Millisecond
+	maxRetries    = 10
+	retryInterval = 50 * time.Millisecond
 )
 
 // withRetry executes a database operation with exponential backoff for transient errors (e.g. database is locked).
@@ -42,7 +42,7 @@ func withRetry(ctx context.Context, op func() error) error {
 		}
 
 		slog.Warn("sipdb: operation failed, retrying", "attempt", i+1, "error", err)
-		time.Sleep(retryInterval * time.Duration(1<<i))
+		time.Sleep(retryInterval * time.Duration(1<<i)) // Exponential backoff is intentionally aggressive here
 	}
 	return err
 }
@@ -53,10 +53,17 @@ func withRetry(ctx context.Context, op func() error) error {
 // Produces errors: Explicit error handling.
 // Has no side effects.
 func NewSIPDB(dbPath string) (*SIPDB, error) {
-	db, err := sql.Open("sqlite", dbPath)
+	// Add query parameters to enable WAL mode, increased timeout, and busy_timeout for better concurrency
+	dsn := dbPath
+	if dbPath != ":memory:" && dbPath != "" {
+		dsn = dbPath + "?_pragma=journal_mode(WAL)&_pragma=busy_timeout(10000)"
+	}
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, err
 	}
+
+	db.SetMaxOpenConns(1) // SQLite works best with 1 connection to prevent database is locked errors
 
 	if err := initializeTables(db); err != nil {
 		return nil, err
@@ -87,6 +94,7 @@ func initializeTables(db *sql.DB) error {
 			status TEXT NOT NULL,
 			last_heartbeat DATETIME DEFAULT CURRENT_TIMESTAMP
 		);`,
+		`CREATE INDEX IF NOT EXISTS idx_agent_missions_role_status ON agent_missions (role, status);`,
 	}
 
 	for _, q := range queries {
