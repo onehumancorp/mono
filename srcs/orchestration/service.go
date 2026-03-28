@@ -526,6 +526,13 @@ func (h *Hub) SetSIPDB(sipDB *SIPDB) {
 	h.sipDB = sipDB
 }
 
+// SIPDB returns the configured database-driven Swarm Intelligence Protocol interface.
+func (h *Hub) SIPDB() *SIPDB {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.sipDB
+}
+
 // GetSIPDB retrieves the current SIP database interface.
 // Accepts parameters: h *Hub (No Constraints).
 // Returns GetSIPDB() *SIPDB.
