@@ -87,6 +87,14 @@ func initializeTables(db *sql.DB) error {
 			status TEXT NOT NULL,
 			last_heartbeat DATETIME DEFAULT CURRENT_TIMESTAMP
 		);`,
+		`CREATE TABLE IF NOT EXISTS capability_plugins (
+			plugin_id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			version TEXT NOT NULL,
+			manifest_url TEXT NOT NULL,
+			status TEXT NOT NULL,
+			registered_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		);`,
 	}
 
 	for _, q := range queries {
@@ -201,6 +209,15 @@ func (s *SIPDB) Heartbeat(ctx context.Context, agentID, role, status string) err
 		)
 		return err
 	})
+}
+
+// GetDB exposes the underlying SQL DB connection, useful for creating dependent stores.
+// Accepts parameters: s *SIPDB (No Constraints).
+// Returns *sql.DB.
+// Produces no errors.
+// Has no side effects.
+func (s *SIPDB) GetDB() *sql.DB {
+	return s.db
 }
 
 // DelegateMission delegates specialized tasks via the agent_missions table.
