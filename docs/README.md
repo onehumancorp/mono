@@ -17,12 +17,15 @@ One Human Corp is an innovative Cloud-Native Hybrid Architecture (Agentic OS) th
 4. **Collaboration (Virtual Meeting Rooms)**: When the CEO defines a goal, multiple agents (e.g., PM, SWE, and Director) convene in Virtual Meeting Rooms to define scopes, debate technical constraints, and finalize designs before execution.
 
 ## Architecture
-Built on a modular, open-source stack (Model Context Protocol, SPIFFE/SPIRE, LangGraph), the system leverages Kubernetes Custom Resource Definitions (CRDs) to manage the organisational structure as Infrastructure as Code. The backend is written in Go (Bazel-based monorepo), and it integrates with a React Next.js-style frontend to allow the human CEO to direct virtual meeting rooms, handle high-risk approvals, and monitor token usage and billing.
+
+<div class="ohc-card" style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.2);">
+Built on a modular, open-source stack (Model Context Protocol, SPIFFE/SPIRE, LangGraph), the system leverages Kubernetes Custom Resource Definitions (CRDs) to manage the organisational structure as Infrastructure as Code. The core business logic is powered by the `ohc-core` Rust library, wrapped in a Go (Bazel-based monorepo) Dashboard Server API. It integrates with a robust cross-platform Flutter/Dart client (Mobile, Desktop, Web) to allow the human CEO to direct virtual meeting rooms, handle high-risk approvals, and monitor token usage and billing.
+</div>
 
 ```mermaid
 graph TD;
-    User[Human CEO] --> Frontend[React Next.js Frontend];
-    Frontend --> Backend[Go Dashboard Server];
+    User[Human CEO] --> Frontend[Flutter Client];
+    Frontend --> Backend[Go Dashboard Server + ohc-core Rust lib];
     Backend --> Hub[Orchestration Hub];
     Hub --> Rooms[Virtual Meeting Rooms];
     Hub --> K8s[Kubernetes Cluster];
@@ -32,7 +35,7 @@ graph TD;
 ```
 
 ## Quick Start
-1. Ensure you have `bazelisk` and `npm` installed.
+1. Ensure you have `bazelisk` installed.
 2. Build the backend:
    ```bash
    bazelisk build //...
@@ -42,19 +45,17 @@ graph TD;
    bazelisk test //...
    ```
 4. Run the Go backend (Dashboard Server) locally on port `8080`.
-5. In parallel, run the frontend dev server:
+5. In parallel, serve the Bazel-built Flutter web app:
    ```bash
-   cd srcs/frontend
-   npm install
-   npm run dev &
+   bazelisk run //srcs/app:start &
    ```
-6. Access the dashboard at `http://localhost:5173`.
+6. Access the dashboard at `http://127.0.0.1:8081`.
 
 ## Developer Workflow
-This project uses Bazel for deterministic builds and testing.
+This project uses Bazel for deterministic builds and testing. All builds and tests MUST be executed exclusively via `bazelisk` or `bazel`.
 - **Build all modules:** `bazelisk build //...`
 - **Run all tests:** `bazelisk test //...`
-- **Format code:** Use standard `gofmt` for Go and Prettier for the frontend.
+- **Format code:** Use standard `gofmt` for Go and `dart format` for the Flutter frontend.
 - **Documentation:** All feature additions must include a `cuj.md`, `design-doc.md`, and `user-guide.md` adhering to the standard templates.
 
 ## Configuration
