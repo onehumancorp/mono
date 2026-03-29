@@ -4,10 +4,10 @@
 To verify the functionality, reliability, and usability of the Dynamic Scaling UI component within the CEO Dashboard. This ensures the human operator can efficiently manage and scale agent roles dynamically.
 
 ## 2. Scope
-This test plan covers the real-time React component responsible for replica count adjustments ("Hire/Fire" UI), including its integration with the backend API and the K8s Operator.
+This test plan covers the real-time Flutter widget responsible for replica count adjustments ("Hire/Fire" UI), including its integration with the backend API and the K8s Operator.
 
 ## 3. Test Environments
-- **Frontend Development Server:** Local testing using `npm run dev`.
+- **Frontend Development Server:** Local testing using `flutter run -d chrome`.
 - **Backend API & K8s Emulator:** Mocked endpoints for K8s Operator reconciliation to simulate scaling.
 
 ## 4. Test Cases

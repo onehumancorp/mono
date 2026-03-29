@@ -16,8 +16,8 @@ The CEO Experience refers to the unified frontend dashboard and interaction mode
 - Code-level intervention IDE.
 
 ## 3. Implementation Details
-- **Architecture**: The `HoldingCompany` CRD is visually mapped to the React/Vite/Next.js UI. Data syncs via REST and Server-Sent Events (SSE).
-- **Stack**: React, D3.js, Go 1.26 backend.
+- **Architecture**: The `HoldingCompany` CRD is visually mapped to the Flutter/Dart UI. Data syncs via REST and Server-Sent Events (SSE).
+- **Stack**: Flutter, CustomPainter, Go 1.26 backend.
 - **State Management**: Actions like "Hire Agent" update the `events.jsonl` Postgres log, which LangGraph uses to resume agent states.
 
 ## 4. Edge Cases

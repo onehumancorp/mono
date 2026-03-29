@@ -309,7 +309,7 @@
     "category": "UX",
     "industry_traffic": "Medium",
     "feasibility_ohc": "Medium",
-    "description": "Agents returning React/Vue components based on the task (e.g., rendering a custom chart instead of just text)."
+    "description": "Agents returning Flutter components based on the task (e.g., rendering a custom chart instead of just text)."
   },
   {
     "rank": 40,

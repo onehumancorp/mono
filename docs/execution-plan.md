@@ -31,7 +31,7 @@ This document breaks down the Strategic Roadmap into discrete, parallelizable ta
     * CUJ: `docs/features/dynamic-scaling-ui/cuj.md` [VERIFIED]
     * Test Plan: `docs/features/dynamic-scaling-ui/test-plan.md` [VERIFIED]
   * **Owner:** Frontend Agent
-  * **Description:** Build a real-time React component in the CEO Dashboard that allows replica count adjustments for newly generated roles.
+  * **Description:** Build a real-time Flutter widget in the CEO Dashboard that allows replica count adjustments for newly generated roles.
   * **Dependencies:** Task 1.2
   * **Status:** Ready
 
@@ -93,7 +93,7 @@ Any cross-team dependencies will trigger an immediate, synchronous "War Room" me
   * **Status:** Ready
 * **Task 3.2: Apply Design Tokens (Frontend)**
   * **Owner:** UI Developer Agent
-  * **Description:** Update the OHC Next.js dashboard with Glassmorphism tokens (`blur(15px)`, `rgba` backgrounds, smooth data transitions).
+  * **Description:** Update the OHC Flutter/Dart dashboard with Glassmorphism tokens (`blur(15px)`, `rgba` backgrounds, smooth data transitions).
   * **Dependencies:** Task 3.1
   * **Status:** Ready
 * **Task 3.3: Visual Prototyping (Design)**

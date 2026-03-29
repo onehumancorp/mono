@@ -8,7 +8,7 @@
 - **Human-in-the-Loop (HITL) Workflows**: Zero Trust authenticated approval gates
 - **Code Interpreter / Sandboxing**: Hermetic Bazel builds and ephemeral K8s pods
 - **RAG Integration**: Integrated distributed vector caching
-- **Agentic UI Generation**: Next.js dynamic component rendering
+- **Agentic UI Generation**: Flutter/Dart dynamic component rendering
 - **Cost & Token Tracking**: OpenTelemetry structured logging
 - **Self-Reflection and Auto-Correction**: Iterative LangGraph state transitions
 - **Web Surfing / Scraping**: Distributed scraping workers on K8s
@@ -17,7 +17,7 @@
 - **Asynchronous Task Execution**: Go goroutines and worker queues
 - **Custom Knowledge Base Ingestion**: Streaming ingestion pipelines
 - **Cross-Agent Messaging Protocol**: gRPC streams via orchestration Hub
-- **Streaming Output / Typing Effect**: WebSocket/gRPC streams to Next.js
+- **Streaming Output / Typing Effect**: WebSocket/gRPC streams to Flutter/Dart
 - **Explainable AI (Execution Traces)**: Full OpenTelemetry distributed tracing
 - **Workflow Templates / Blueprints**: Zero-configuration YAML definitions
 - **Model Agnostic API (LLM Routing)**: Shared http.Client Keep-Alive pool

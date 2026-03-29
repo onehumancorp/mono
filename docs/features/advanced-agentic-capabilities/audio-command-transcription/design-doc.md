@@ -5,7 +5,7 @@
 **Scope:** Integration within the core Orchestration Hub and the MCP Gateway, adhering to the Zero-Lock paradigm.
 
 ## 2. Architecture & Components
-Integrates a localized Whisper model endpoint within the Kubernetes cluster. The React Native frontend streams `.m4a` audio chunks to the backend, which transcribes them and injects the resulting text into the agent's LangGraph entry node.
+Integrates a localized Whisper model endpoint within the Kubernetes cluster. The Flutter frontend streams `.m4a` audio chunks to the backend, which transcribes them and injects the resulting text into the agent's LangGraph entry node.
 
 ## 3. Data Flow
 1. **Trigger:** The feature is invoked via Agent intent or a K8s event.
