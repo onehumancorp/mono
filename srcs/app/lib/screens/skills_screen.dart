@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ohc_app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ohc_app/models/skill.dart';
 import 'package:ohc_app/services/api_service.dart';
@@ -94,7 +95,7 @@ class _SkillList extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: skills.length,
-      itemBuilder: (_, i) => _SkillCard(skill: skills[i], ref: ref),
+      itemBuilder: (_, i) => _SkillGlassCard(skill: skills[i], ref: ref),
     );
   }
 }
@@ -103,7 +104,7 @@ class _SkillCard extends StatefulWidget {
   final Skill skill;
   final WidgetRef ref;
 
-  const _SkillCard({required this.skill, required this.ref});
+  const _SkillGlassCard({required this.skill, required this.ref});
 
   @override
   State<_SkillCard> createState() => _SkillCardState();
@@ -177,7 +178,7 @@ class _SkillCardState extends State<_SkillCard> {
   @override
   Widget build(BuildContext context) {
     final s = widget.skill;
-    return Card(
+    return GlassCard(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),

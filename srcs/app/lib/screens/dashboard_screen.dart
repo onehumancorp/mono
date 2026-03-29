@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ohc_app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:flutter_svg/flutter_svg.dart'; // Temporarily disabled for Bazel build
 import 'package:ohc_app/models/dashboard.dart';
@@ -48,25 +49,25 @@ class _DashboardContent extends StatelessWidget {
           spacing: 16,
           runSpacing: 16,
           children: [
-            _StatCard(
+            _StatGlassCard(
               label: 'Active Agents',
               value: data.agents.where((a) => a.isRunning).length.toString(),
               icon: Icons.smart_toy,
               color: Colors.indigo,
             ),
-            _StatCard(
+            _StatGlassCard(
               label: 'Dashboard Updates',
               value: data.statuses.length.toString(),
               icon: Icons.pending_actions,
               color: Colors.orange,
             ),
-            _StatCard(
+            _StatGlassCard(
               label: 'Open Meetings',
               value: data.meetings.length.toString(),
               icon: Icons.video_call,
               color: Colors.teal,
             ),
-            _StatCard(
+            _StatGlassCard(
               label: 'Total Org Members',
               value: data.organization.members.length.toString(),
               icon: Icons.people,
@@ -98,7 +99,7 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _StatCard({
+  const _StatGlassCard({
     required this.label,
     required this.value,
     required this.icon,
@@ -109,7 +110,7 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 180,
-      child: Card(
+      child: GlassCard(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ohc_app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ohc_app/models/channel.dart';
 import 'package:ohc_app/services/api_service.dart';
@@ -221,14 +222,14 @@ class _ChannelList extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: channels.length,
-      itemBuilder: (_, i) => _ChannelCard(channel: channels[i]),
+      itemBuilder: (_, i) => _ChannelGlassCard(channel: channels[i]),
     );
   }
 }
 
 class _ChannelCard extends StatelessWidget {
   final ChatChannel channel;
-  const _ChannelCard({required this.channel});
+  const _ChannelGlassCard({required this.channel});
 
   String _icon() {
     for (final def in _channelDefs) {
@@ -239,7 +240,7 @@ class _ChannelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return GlassCard(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: Text(_icon(), style: const TextStyle(fontSize: 28)),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ohc_app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:ohc_app/models/pipeline.dart';
@@ -84,7 +85,7 @@ class _PipelinesScreenState extends ConsumerState<PipelinesScreen> {
               final pipeline = pipelines[index];
               final isProcessing = _processingIds.contains(pipeline.id);
 
-              return Card(
+              return GlassCard(
                 margin: const EdgeInsets.only(bottom: 24),
                 child: Padding(
                   padding: const EdgeInsets.all(24),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ohc_app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ohc_app/models/ai_provider.dart';
 import 'package:ohc_app/services/api_service.dart';
@@ -90,7 +91,7 @@ class _ProviderList extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: providers.length,
-      itemBuilder: (_, i) => _ProviderCard(provider: providers[i], ref: ref),
+      itemBuilder: (_, i) => _ProviderGlassCard(provider: providers[i], ref: ref),
     );
   }
 }
@@ -99,11 +100,11 @@ class _ProviderCard extends StatelessWidget {
   final AiProvider provider;
   final WidgetRef ref;
 
-  const _ProviderCard({required this.provider, required this.ref});
+  const _ProviderGlassCard({required this.provider, required this.ref});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return GlassCard(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),

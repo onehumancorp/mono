@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ohc_app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ohc_app/services/api_service.dart';
 
@@ -44,7 +45,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
           Row(
             children: [
               Expanded(
-                child: _IntegrationCard(
+                child: _IntegrationGlassCard(
                   title: 'Telegram',
                   subtitle: 'Connect your bot for mobile alerts',
                   icon: Icons.send,
@@ -54,7 +55,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _IntegrationCard(
+                child: _IntegrationGlassCard(
                   title: 'Discord',
                   subtitle: 'Stream agent logs to a channel',
                   icon: Icons.forum_outlined,
@@ -90,7 +91,7 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
 
               final tools = snapshot.data ?? [];
               if (tools.isEmpty) {
-                return Card(
+                return GlassCard(
                   child: Padding(
                     padding: const EdgeInsets.all(32),
                     child: Center(
@@ -156,7 +157,7 @@ class _IntegrationCard extends StatelessWidget {
   final Color color;
   final VoidCallback onConnect;
 
-  const _IntegrationCard({
+  const _IntegrationGlassCard({
     required this.title,
     required this.subtitle,
     required this.icon,
@@ -168,7 +169,7 @@ class _IntegrationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -221,7 +222,7 @@ class _MCPToolTile extends StatelessWidget {
     final name = tool['name'] as String? ?? 'Unknown Tool';
     final description = tool['description'] as String? ?? '';
 
-    return Card(
+    return GlassCard(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: const Icon(Icons.build_circle_outlined),
