@@ -30,6 +30,7 @@ type Server struct {
 	// ⚡ BOLT: [high-allocation hashing or mapping for agent roles] - Randomized Selection from Top 5
 	roleProfileCache      map[string]domain.RoleProfile
 	hub                   *orchestration.Hub
+	sipdb                 *orchestration.SIPDB
 	tracker               *billing.Tracker
 	approvals             []ApprovalRequest
 	handoffs              []HandoffPackage
@@ -378,6 +379,7 @@ var statusOrder = []orchestration.Status{
 // Produces no errors.
 // Has no side effects.
 func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing.Tracker, authStore ...*auth.Store) http.Handler {
+
 	var store *auth.Store
 	if len(authStore) > 0 && authStore[0] != nil {
 		store = authStore[0]
@@ -410,6 +412,7 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 		agentProviderRegistry: agents.DefaultRegistry(),
 		dynamicMCPTools:       append([]MCPTool(nil), defaultMcpTools...),
 		rateLimitStates:       make(map[string]*RateLimitState),
+			sipdb:                 orchestration.GetDefaultSIPDB(),
 	}
 	// Load initial settings.
 	initialSettings := hub.SettingsStore().Get()
@@ -454,6 +457,8 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	mux.HandleFunc("/api/mcp/tools", server.handleMCPTools)
 	mux.HandleFunc("/api/mcp/tools/register", server.handleMCPRegister)
 	mux.HandleFunc("/api/mcp/tools/invoke", server.handleMCPInvoke)
+	mux.HandleFunc("/api/capability/plugins", server.handleCapabilityPlugins)
+	mux.HandleFunc("/api/capability/memories", server.handleEpisodicMemories)
 	mux.HandleFunc("/api/dev/seed", server.handleDevSeed)
 	mux.HandleFunc("/api/settings", server.handleSettings)
 	mux.HandleFunc("/api/scheduler", server.handleSchedulerTasks)

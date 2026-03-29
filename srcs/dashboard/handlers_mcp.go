@@ -349,3 +349,90 @@ func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 		}, nil
 	}
 }
+
+func (s *Server) handleCapabilityPlugins(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		status := r.URL.Query().Get("status")
+		plugins, err := s.sipdb.GetCapabilityPlugins(r.Context(), status)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if plugins == nil {
+			plugins = []orchestration.CapabilityPlugin{}
+		}
+		json.NewEncoder(w).Encode(plugins)
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		var req orchestration.CapabilityPlugin
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid request", http.StatusBadRequest)
+			return
+		}
+
+		if req.PluginID == "" || req.Name == "" || req.ManifestURL == "" {
+			http.Error(w, "plugin_id, name, and manifest_url are required", http.StatusBadRequest)
+			return
+		}
+
+		if req.Status == "" {
+			req.Status = "ACTIVE"
+		}
+		if req.Version == "" {
+			req.Version = "1.0.0"
+		}
+
+		if err := s.sipdb.RegisterCapabilityPlugin(r.Context(), req); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(map[string]string{"status": "registered"})
+		return
+	}
+
+	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}
+
+func (s *Server) handleEpisodicMemories(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		plugin := r.URL.Query().Get("plugin")
+		memories, err := s.sipdb.GetEpisodicMemoriesByPlugin(r.Context(), plugin)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if memories == nil {
+			memories = []orchestration.EpisodicMemory{}
+		}
+		json.NewEncoder(w).Encode(memories)
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		var req orchestration.EpisodicMemory
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid request", http.StatusBadRequest)
+			return
+		}
+
+		if req.MemoryID == "" || req.Context == "" {
+			http.Error(w, "memory_id and context are required", http.StatusBadRequest)
+			return
+		}
+
+		if err := s.sipdb.StoreEpisodicMemory(r.Context(), req); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(map[string]string{"status": "stored"})
+		return
+	}
+
+	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+}

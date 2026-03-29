@@ -7,6 +7,8 @@ import (
 	"errors"
 	"log/slog"
 	"time"
+	"os"
+	"path/filepath"
 
 	_ "modernc.org/sqlite"
 )
@@ -388,4 +390,11 @@ func (s *SIPDB) GetEpisodicMemoriesByPlugin(ctx context.Context, plugin string) 
 // Has no side effects.
 func (s *SIPDB) Close() error {
 	return s.db.Close()
+}
+// GetDefaultSIPDB returns a default initialized SIPDB instance, useful when injecting dependencies.
+func GetDefaultSIPDB() *SIPDB {
+	home, _ := os.UserHomeDir()
+	dbPath := filepath.Join(home, ".openclaw", "ohc.db")
+	db, _ := NewSIPDB(dbPath)
+    return db
 }
