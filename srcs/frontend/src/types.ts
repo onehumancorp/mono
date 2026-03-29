@@ -502,6 +502,6 @@ export type LoginResponse = {
  * @remarks Side Effects: None
  */
 export type Settings = {
-  minimaxApiKey?: string;
+  minimax_api_key?: string;
   theme?: string;
 };

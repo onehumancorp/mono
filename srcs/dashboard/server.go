@@ -416,13 +416,12 @@ func NewServer(org domain.Organization, hub *orchestration.Hub, tracker *billing
 	server.settings = initialSettings
 
 	// Load Minimax API key from environment on startup if not already set.
-	if key := os.Getenv("MINIMAX_API_KEY"); key != "" && server.settings.Extras["minimax_api_key"] == "" {
+	// OpenClaw agents are backed by the Minimax API, so the key is forwarded
+	// to the OpenClaw provider.
+	if key := os.Getenv("MINIMAX_API_KEY"); key != "" && server.settings.MinimaxAPIKey == "" {
 		hub.SetMinimaxAPIKey(key)
-		if server.settings.Extras == nil {
-			server.settings.Extras = make(map[string]string)
-		}
-		server.settings.Extras["minimax_api_key"] = key
-		_ = hub.SettingsStore().SetExtra("minimax_api_key", key)
+		server.settings.MinimaxAPIKey = key
+		_ = hub.SettingsStore().Update(server.settings)
 		if err := server.agentProviderRegistry.Authenticate(agents.ProviderTypeOpenClaw, agents.Credentials{APIKey: key}); err != nil {
 			slog.Warn("failed to authenticate OpenClaw provider with MINIMAX_API_KEY", "error", err)
 		}

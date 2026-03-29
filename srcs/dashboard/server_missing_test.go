@@ -848,6 +848,33 @@ func TestHandleSettingsPostInvalidJSON(t *testing.T) {
 	}
 }
 
+func TestHandleSettingsTopLevelMinimaxAPIKey(t *testing.T) {
+	app, _, _ := newTestServer(t)
+
+	// POST settings using the top-level minimax_api_key field (frontend-compatible path)
+	reqBody := `{"minimax_api_key":"sk-top-level-key"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/settings", strings.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	app.handleSettings(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var postResp settings.AppSettings
+	if err := json.NewDecoder(rec.Body).Decode(&postResp); err != nil {
+		t.Fatalf("decode post response: %v", err)
+	}
+	if postResp.MinimaxAPIKey != "sk-top-level-key" {
+		t.Errorf("expected minimax_api_key 'sk-top-level-key', got %q", postResp.MinimaxAPIKey)
+	}
+	// Verify the hub got the key too
+	if got := app.hub.MinimaxAPIKey(); got != "sk-top-level-key" {
+		t.Errorf("expected hub minimax key 'sk-top-level-key', got %q", got)
+	}
+}
+
 func TestHandleIncidentStatus_UpdateRCA(t *testing.T) {
 	tests := []struct {
 		name    string

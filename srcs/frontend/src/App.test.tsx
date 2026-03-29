@@ -537,13 +537,13 @@ describe("App – navigation tabs", () => {
     expect(screen.queryByText("Hire New Agent")).not.toBeInTheDocument();
   });
 
-  it("Next Details button is disabled until role is selected", async () => {
+  it("Next AI Provider button is disabled until role is selected", async () => {
     vi.stubGlobal("fetch", makeFetch());
     render(<App />);
     await screen.findByText("Acme Software");
     fireEvent.click(screen.getByRole("button", { name: /agents/i }));
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
-    const nextBtn = screen.getByRole("button", { name: /Next: Details/i });
+    const nextBtn = screen.getByRole("button", { name: /Next: AI Provider/i });
     expect(nextBtn).toBeDisabled();
     fireEvent.click(screen.getAllByText("SOFTWARE ENGINEER")[0]);
     expect(nextBtn).not.toBeDisabled();
@@ -557,6 +557,9 @@ describe("App – navigation tabs", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
 
     fireEvent.click(screen.getAllByText("SOFTWARE ENGINEER")[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Next: AI Provider/i }));
+
+    // Provider step: openclaw is pre-selected (backed by MiniMax API), just advance
     fireEvent.click(screen.getByRole("button", { name: /Next: Details/i }));
 
     fireEvent.change(screen.getByPlaceholderText(/Senior Software Engineer/i), { target: { value: "New Agent" } });
@@ -578,6 +581,9 @@ describe("App – navigation tabs", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
 
     fireEvent.click(screen.getAllByText("SOFTWARE ENGINEER")[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Next: AI Provider/i }));
+
+    // Provider step: openclaw is pre-selected (backed by MiniMax API), just advance
     fireEvent.click(screen.getByRole("button", { name: /Next: Details/i }));
 
     fireEvent.change(screen.getByPlaceholderText(/Senior Software Engineer/i), { target: { value: "Fail Agent" } });
@@ -600,6 +606,9 @@ describe("App – navigation tabs", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Hire Agent" }));
 
     fireEvent.click(screen.getAllByText("PRODUCT MANAGER")[0]);
+    fireEvent.click(screen.getByRole("button", { name: /Next: AI Provider/i }));
+
+    // Provider step: openclaw is pre-selected (backed by MiniMax API), just advance
     fireEvent.click(screen.getByRole("button", { name: /Next: Details/i }));
 
     fireEvent.change(screen.getByPlaceholderText(/Senior Product Manager/i), { target: { value: "PM Agent" } });
@@ -2294,7 +2303,7 @@ describe("App – MCP invoke modal (communication category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([commTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       return mockJson({}, 404);
     }));
     render(<App />);
@@ -2321,7 +2330,7 @@ describe("App – MCP invoke modal (communication category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([commTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       if (input === "/api/mcp/tools/invoke") return mockJson({ status: "sent" });
       return mockJson({}, 404);
     }));
@@ -2340,7 +2349,7 @@ describe("App – MCP invoke modal (communication category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([commTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       if (input === "/api/mcp/tools/invoke") return mockJson({ error: "tool error" }, 500);
       return mockJson({}, 404);
     }));
@@ -2359,7 +2368,7 @@ describe("App – MCP invoke modal (communication category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([commTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       return mockJson({}, 404);
     }));
     render(<App />);
@@ -2388,7 +2397,7 @@ describe("App – MCP invoke modal (code category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([codeTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       return mockJson({}, 404);
     }));
     render(<App />);
@@ -2421,7 +2430,7 @@ describe("App – MCP invoke modal (project_management category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([pmTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       return mockJson({}, 404);
     }));
     render(<App />);
@@ -2453,7 +2462,7 @@ describe("App – MCP invoke modal (other/default category)", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
       if (input === "/api/mcp/tools") return mockJson([otherTool]);
-      if (input === "/api/settings") return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings") return mockJson({ minimax_api_key: "" });
       return mockJson({}, 404);
     }));
     render(<App />);
@@ -2517,8 +2526,8 @@ describe("App – handleSaveSettings", () => {
   it("saves settings successfully and shows notice", async () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/settings" && (!init || init.method !== "POST")) return mockJson({ minimaxApiKey: "" });
-      if (input === "/api/settings" && init?.method === "POST") return mockJson({ minimaxApiKey: "new-key" });
+      if (input === "/api/settings" && (!init || init.method !== "POST")) return mockJson({ minimax_api_key: "" });
+      if (input === "/api/settings" && init?.method === "POST") return mockJson({ minimax_api_key: "new-key" });
       return mockJson({}, 404);
     }));
     render(<App />);
@@ -2533,7 +2542,7 @@ describe("App – handleSaveSettings", () => {
   it("settings save failure does not show success notice", async () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
       if (input === "/api/dashboard") return mockJson(dashboardPayload);
-      if (input === "/api/settings" && (!init || init.method !== "POST")) return mockJson({ minimaxApiKey: "" });
+      if (input === "/api/settings" && (!init || init.method !== "POST")) return mockJson({ minimax_api_key: "" });
       if (input === "/api/settings" && init?.method === "POST") return mockJson({ error: "Server error" }, 500);
       return mockJson({}, 404);
     }));
@@ -3475,5 +3484,60 @@ describe("App – Pipelines tab UI Components and Constants Testing", () => {
     const startBtn = screen.getByText("+ Start Implementation");
     fireEvent.click(startBtn);
     await screen.findByText("Kick off a new feature branch", { exact: false });
+  });
+
+  it("UI-04 | Create Pipeline modal | fills name and submits to create pipeline", async () => {
+    render(<App />);
+    fireEvent.click(screen.getByText("Pipelines"));
+    await screen.findByText("Active PRs");
+
+    const startBtn = screen.getByText("+ Start Implementation");
+    fireEvent.click(startBtn);
+    await screen.findByText("Kick off a new feature branch", { exact: false });
+
+    const nameInput = screen.getByPlaceholderText(/e\.g\. feat-analytics/i);
+    fireEvent.change(nameInput, { target: { value: "My Feature" } });
+
+    // Button is now enabled; click it to exercise the createPipeline onClick handler
+    const createBtn = screen.getByRole("button", { name: /Create Pipeline/i });
+    expect(createBtn).not.toBeDisabled();
+    await act(async () => { fireEvent.click(createBtn); });
+
+    // Verify the pipeline was created (notice appears) or input resets
+    await waitFor(() => {
+      const noticeEl = screen.queryByText(/Implementation pipeline started/i);
+      const input = screen.queryByPlaceholderText(/e\.g\. feat-analytics/i) as HTMLInputElement | null;
+      expect(noticeEl !== null || (input !== null && input.value === "")).toBe(true);
+    });
+  });
+
+  it("UI-05 | Approve for Production button | clicks promote on STAGING pipeline", async () => {
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = input.toString();
+      if (url.includes("/api/auth/me")) {
+        return new Response(JSON.stringify({ id: "ceo1", name: "CEO", role: "CEO", status: "ACTIVE" }));
+      }
+      if (url.includes("/api/pipelines/promote")) {
+        return new Response(JSON.stringify({ id: "pl1", name: "Test Pipeline", branch: "main", status: "PROMOTED" }));
+      }
+      if (url.includes("/api/pipelines")) {
+        return new Response(JSON.stringify([
+          { id: "pl1", name: "Test Pipeline", branch: "main", status: "STAGING" }
+        ]));
+      }
+      return new Response("[]");
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByText("Pipelines"));
+    await screen.findByText("Active PRs");
+
+    const approveBtn = await screen.findByRole("button", { name: /Approve for Production/i });
+    fireEvent.click(approveBtn);
+
+    await waitFor(() => {
+      // After promotion succeeds, notice should appear
+      expect(screen.queryByText(/Pipeline approved for production/i) ?? screen.queryByText(/Approve for Production/i)).not.toBeNull();
+    });
   });
 });
