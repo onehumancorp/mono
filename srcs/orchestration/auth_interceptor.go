@@ -182,6 +182,8 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			if !found {
 				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot open a meeting without being a participant", spiffeID)
 			}
+		default:
+			return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot perform unauthorized action %T", spiffeID, req)
 		}
 
 		return handler(ctx, req)
@@ -305,6 +307,8 @@ func (w *recvWrapper) RecvMsg(m interface{}) error {
 		if w.agentID != reqAgentID {
 			return status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot stream messages for agent %s", w.spiffeID, reqAgentID)
 		}
+	} else {
+		return status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot stream unauthorized action %T", w.spiffeID, m)
 	}
 	return nil
 }
