@@ -91,6 +91,8 @@ def _ensure_pub_deps(repository_ctx, package_name, package_dir):
                 "doesn't exist" in lower_stderr
             )
         ) or (
+            "workspace" in lower_stderr
+        ) or (
             # Catch-all for SDK version-solving failures (e.g. _macros not in SDK).
             "version solving failed" in lower_stderr
         ):
