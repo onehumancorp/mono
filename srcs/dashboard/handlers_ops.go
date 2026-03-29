@@ -1,10 +1,12 @@
 package dashboard
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/onehumancorp/mono/srcs/orchestration"
@@ -377,6 +379,12 @@ func (s *Server) handleScale(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+var sseBufferPool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
+}
+
 // handleScaleStream streams real-time scaling trace events to the dashboard.
 // Accepts parameters: s *Server (No Constraints).
 // Returns nothing.
@@ -400,8 +408,15 @@ func (s *Server) handleScaleStream(w http.ResponseWriter, r *http.Request) {
 
 	for _, event := range events {
 		s.hub.LogEvent(map[string]interface{}{"type": "ScalingEventStream", "data": event})
-		data := []byte("data: " + event + "\n\n")
-		w.Write(data)
+
+		buf := sseBufferPool.Get().(*bytes.Buffer)
+		buf.Reset()
+		buf.WriteString("data: ")
+		buf.WriteString(event)
+		buf.WriteString("\n\n")
+		w.Write(buf.Bytes())
+		sseBufferPool.Put(buf)
+
 		if err := rc.Flush(); err != nil {
 			break
 		}
