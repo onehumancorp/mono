@@ -165,6 +165,16 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			if agentID != reqFromAgent {
 				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot delegate subtask as agent %s", spiffeID, reqFromAgent)
 			}
+
+			// Sanitize TargetRole to prevent prompt injection and tool-execution boundary escapes
+			targetRole := v.GetTargetRole()
+			if targetRole != "" {
+				for _, r := range targetRole {
+					if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_') {
+						return nil, status.Errorf(codes.PermissionDenied, "invalid characters in TargetRole for subtask: %s", targetRole)
+					}
+				}
+			}
 		case *pb.ReasonRequest:
 			reqFromAgent := v.GetFromAgentId()
 			if agentID != reqFromAgent {

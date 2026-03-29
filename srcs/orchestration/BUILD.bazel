@@ -38,6 +38,7 @@ go_test(
         "delegation_test.go",
         "eventlog_test.go",
         "minimax_client_test.go",
+        "security_exploit_test.go",
         "service_extra_test.go",
         "service_grpc_test.go",
         "service_test.go",
