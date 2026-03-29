@@ -10,7 +10,6 @@ import (
 	pb "github.com/onehumancorp/mono/srcs/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 func TestDelegateSubTask_Success(t *testing.T) {
@@ -19,13 +18,13 @@ func TestDelegateSubTask_Success(t *testing.T) {
 	server := NewHubServiceServer(hub)
 	ctx := context.Background()
 
-	req := pb.SubTask_builder{
-		TaskId:         proto.String("task-1"),
-		TargetRole:     proto.String("SWE"),
-		Instruction:    proto.String("Implement login component"),
-		ParentThreadId: proto.String("thread-1"),
-		FromAgentId:    proto.String("sender-1"),
-	}.Build()
+	req := &pb.SubTask{
+		TaskId:         ("task-1"),
+		TargetRole:     ("SWE"),
+		Instruction:    ("Implement login component"),
+		ParentThreadId: ("thread-1"),
+		FromAgentId:    ("sender-1"),
+	}
 
 	resp, err := server.DelegateSubTask(ctx, req)
 	if err != nil {
@@ -79,12 +78,12 @@ func TestDelegateSubTask_QuotaExhaustion(t *testing.T) {
 		})
 	}
 
-	req := pb.SubTask_builder{
-		TaskId:         proto.String("task-2"),
-		TargetRole:     proto.String("QA"),
-		Instruction:    proto.String("Test login component"),
-		ParentThreadId: proto.String("thread-1"),
-	}.Build()
+	req := &pb.SubTask{
+		TaskId:         ("task-2"),
+		TargetRole:     ("QA"),
+		Instruction:    ("Test login component"),
+		ParentThreadId: ("thread-1"),
+	}
 
 	_, err := server.DelegateSubTask(ctx, req)
 	if err == nil {
@@ -108,17 +107,17 @@ func TestDelegateSubTask_MissingFields(t *testing.T) {
 	}{
 		{
 			name: "missing task_id",
-			req: pb.SubTask_builder{
-				TargetRole:  proto.String("SWE"),
-				Instruction: proto.String("Impl"),
-			}.Build(),
+			req: &pb.SubTask{
+				TargetRole:  ("SWE"),
+				Instruction: ("Impl"),
+			},
 		},
 		{
 			name: "missing target_role",
-			req: pb.SubTask_builder{
-				TaskId:      proto.String("task-3"),
-				Instruction: proto.String("Impl"),
-			}.Build(),
+			req: &pb.SubTask{
+				TaskId:      ("task-3"),
+				Instruction: ("Impl"),
+			},
 		},
 	}
 
@@ -143,13 +142,13 @@ func TestDelegateSubTask_Integration(t *testing.T) {
 	server := NewHubServiceServer(hub)
 	ctx := context.Background()
 
-	req := pb.SubTask_builder{
-		TaskId:         proto.String("task-int-1"),
-		TargetRole:     proto.String("QA"),
-		Instruction:    proto.String("Verify real data integration"),
-		ParentThreadId: proto.String("thread-int-1"),
-		FromAgentId:    proto.String("sender-1"),
-	}.Build()
+	req := &pb.SubTask{
+		TaskId:         ("task-int-1"),
+		TargetRole:     ("QA"),
+		Instruction:    ("Verify real data integration"),
+		ParentThreadId: ("thread-int-1"),
+		FromAgentId:    ("sender-1"),
+	}
 
 	_, err := server.DelegateSubTask(ctx, req)
 	if err != nil {

@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 func TestPublishRoutesMessagesAndMeetingTranscript(t *testing.T) {
@@ -372,9 +371,9 @@ func TestHubServiceServer_StreamMessages(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	mockStream := &mockStreamMessagesServer{ctx: ctx}
 
-	req := pb.StreamMessagesRequest_builder{
-		AgentId: proto.String("receiver"),
-	}.Build()
+	req := &pb.StreamMessagesRequest{
+		AgentId: ("receiver"),
+	}
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -420,9 +419,9 @@ func TestHubServiceServer_StreamMessages_SendError(t *testing.T) {
 	defer cancel()
 	mockStream := &mockStreamMessagesServer{ctx: ctx}
 
-	req := pb.StreamMessagesRequest_builder{
-		AgentId: proto.String("receiver"),
-	}.Build()
+	req := &pb.StreamMessagesRequest{
+		AgentId: ("receiver"),
+	}
 
 	err := server.StreamMessages(req, mockStream)
 	if err == nil || err.Error() != "simulated send error" {
@@ -441,9 +440,9 @@ func TestHubServiceServer_StreamMessages_ContextDone(t *testing.T) {
 	cancel() // Cancel immediately
 
 	mockStream := &mockStreamMessagesServer{ctx: ctx}
-	req := pb.StreamMessagesRequest_builder{
-		AgentId: proto.String("receiver"),
-	}.Build()
+	req := &pb.StreamMessagesRequest{
+		AgentId: ("receiver"),
+	}
 
 	err := server.StreamMessages(req, mockStream)
 	if err != context.Canceled {
@@ -460,9 +459,9 @@ func TestHubServiceServer_StreamMessages_SendErrorOnWait(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	mockStream := &mockStreamMessagesServer{ctx: ctx}
-	req := pb.StreamMessagesRequest_builder{
-		AgentId: proto.String("receiver"),
-	}.Build()
+	req := &pb.StreamMessagesRequest{
+		AgentId: ("receiver"),
+	}
 
 	// Wait for the stream to start, then publish the error message
 	errCh := make(chan error, 1)
@@ -568,9 +567,9 @@ func TestHubServiceServer_Reason_And_MinimaxClient(t *testing.T) {
 			server := NewHubServiceServer(hub)
 			ctx := context.Background()
 
-			req := pb.ReasonRequest_builder{
-				Prompt: proto.String("Test prompt"),
-			}.Build()
+			req := &pb.ReasonRequest{
+				Prompt: ("Test prompt"),
+			}
 
 			resp, err := server.Reason(ctx, req)
 			if tt.expectErr {
@@ -610,15 +609,15 @@ func TestHubServiceServer_RegisterAgent(t *testing.T) {
 	server := NewHubServiceServer(hub)
 	ctx := context.Background()
 
-	req := pb.RegisterAgentRequest_builder{
-		Agent: pb.Agent_builder{
-			Id:             proto.String("grpc-agent-1"),
-			Name:           proto.String("GRPC Agent"),
-			Role:           proto.String("TEST_ROLE"),
-			OrganizationId: proto.String("org-grpc"),
-			Status:         proto.String(string(StatusIdle)),
-		}.Build(),
-	}.Build()
+	req := &pb.RegisterAgentRequest{
+		Agent: &pb.Agent{
+			Id:             ("grpc-agent-1"),
+			Name:           ("GRPC Agent"),
+			Role:           ("TEST_ROLE"),
+			OrganizationId: ("org-grpc"),
+			Status:         (string(StatusIdle)),
+		},
+	}
 
 	resp, err := server.RegisterAgent(ctx, req)
 	if err != nil {
@@ -644,11 +643,11 @@ func TestHubServiceServer_OpenMeeting(t *testing.T) {
 	server := NewHubServiceServer(hub)
 	ctx := context.Background()
 
-	req := pb.OpenMeetingRequest_builder{
-		MeetingId:    proto.String("grpc-meeting-1"),
-		Agenda:       proto.String("Discuss gRPC"),
+	req := &pb.OpenMeetingRequest{
+		MeetingId:    ("grpc-meeting-1"),
+		Agenda:       ("Discuss gRPC"),
 		Participants: []string{"p1", "p2"},
-	}.Build()
+	}
 
 	resp, err := server.OpenMeeting(ctx, req)
 	if err != nil {
@@ -685,46 +684,46 @@ func TestHubServiceServer_DelegateTask(t *testing.T) {
 	}{
 		{
 			name: "Valid Delegation",
-			req: pb.DelegateTaskRequest_builder{
-				FromAgentId: proto.String("delegate"),
-				ToAgentId:   proto.String("specialist"),
-				Task: pb.Message_builder{
-					Id:             proto.String("m1"),
-					Type:           proto.String(EventTask),
-					Content:        proto.String("Do work"),
-					OccurredAtUnix: proto.Int64(time.Now().Unix()),
-				}.Build(),
-			}.Build(),
+			req: &pb.DelegateTaskRequest{
+				FromAgentId: ("delegate"),
+				ToAgentId:   ("specialist"),
+				Task: &pb.Message{
+					Id:             ("m1"),
+					Type:           (EventTask),
+					Content:        ("Do work"),
+					OccurredAtUnix: (time.Now().Unix()),
+				},
+			},
 			expectSuccess: true,
 			expectErrCode: codes.OK,
 		},
 		{
 			name: "Invalid Delegate Agent",
-			req: pb.DelegateTaskRequest_builder{
-				FromAgentId: proto.String("unknown-delegate"),
-				ToAgentId:   proto.String("specialist"),
-				Task: pb.Message_builder{
-					Id:             proto.String("m2"),
-					Type:           proto.String(EventTask),
-					Content:        proto.String("Do work"),
-					OccurredAtUnix: proto.Int64(time.Now().Unix()),
-				}.Build(),
-			}.Build(),
+			req: &pb.DelegateTaskRequest{
+				FromAgentId: ("unknown-delegate"),
+				ToAgentId:   ("specialist"),
+				Task: &pb.Message{
+					Id:             ("m2"),
+					Type:           (EventTask),
+					Content:        ("Do work"),
+					OccurredAtUnix: (time.Now().Unix()),
+				},
+			},
 			expectSuccess: false,
 			expectErrCode: codes.Internal,
 		},
 		{
 			name: "Invalid Specialist Agent",
-			req: pb.DelegateTaskRequest_builder{
-				FromAgentId: proto.String("delegate"),
-				ToAgentId:   proto.String("unknown-specialist"),
-				Task: pb.Message_builder{
-					Id:             proto.String("m3"),
-					Type:           proto.String(EventTask),
-					Content:        proto.String("Do work"),
-					OccurredAtUnix: proto.Int64(time.Now().Unix()),
-				}.Build(),
-			}.Build(),
+			req: &pb.DelegateTaskRequest{
+				FromAgentId: ("delegate"),
+				ToAgentId:   ("unknown-specialist"),
+				Task: &pb.Message{
+					Id:             ("m3"),
+					Type:           (EventTask),
+					Content:        ("Do work"),
+					OccurredAtUnix: (time.Now().Unix()),
+				},
+			},
 			expectSuccess: false,
 			expectErrCode: codes.Internal,
 		},
@@ -916,31 +915,31 @@ func TestHubServiceServer_Publish(t *testing.T) {
 	}{
 		{
 			name: "Valid Publish",
-			req: pb.PublishMessageRequest_builder{
-				Message: pb.Message_builder{
-					Id:             proto.String("m1"),
-					FromAgent:      proto.String("sender"),
-					ToAgent:        proto.String("receiver"),
-					Type:           proto.String(EventTask),
-					Content:        proto.String("Hello"),
-					OccurredAtUnix: proto.Int64(time.Now().Unix()),
-				}.Build(),
-			}.Build(),
+			req: &pb.PublishMessageRequest{
+				Message: &pb.Message{
+					Id:             ("m1"),
+					FromAgent:      ("sender"),
+					ToAgent:        ("receiver"),
+					Type:           (EventTask),
+					Content:        ("Hello"),
+					OccurredAtUnix: (time.Now().Unix()),
+				},
+			},
 			expectSuccess: true,
 			expectErrCode: codes.OK,
 		},
 		{
 			name: "Invalid Sender",
-			req: pb.PublishMessageRequest_builder{
-				Message: pb.Message_builder{
-					Id:             proto.String("m2"),
-					FromAgent:      proto.String("unknown"),
-					ToAgent:        proto.String("receiver"),
-					Type:           proto.String(EventTask),
-					Content:        proto.String("Hello"),
-					OccurredAtUnix: proto.Int64(time.Now().Unix()),
-				}.Build(),
-			}.Build(),
+			req: &pb.PublishMessageRequest{
+				Message: &pb.Message{
+					Id:             ("m2"),
+					FromAgent:      ("unknown"),
+					ToAgent:        ("receiver"),
+					Type:           (EventTask),
+					Content:        ("Hello"),
+					OccurredAtUnix: (time.Now().Unix()),
+				},
+			},
 			expectSuccess: false,
 			expectErrCode: codes.Internal,
 		},

@@ -9,15 +9,14 @@ import (
 	pb "github.com/onehumancorp/mono/srcs/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 // DelegateSubTask handles Hierarchical Task Delegation by provisioning temporary
 // specialized sub-agents. It enforces VRAM quota limits before creating the agent,
 // and isolates the sub-agent with its own thread ID and instructions.
 //
-//   ctx context.Context
-//   req *pb.SubTask
+//	ctx context.Context
+//	req *pb.SubTask
 //
 // Accepts parameters: s *HubServiceServer (No Constraints).
 // Returns DelegateSubTask(ctx context.Context, req *pb.SubTask) (*pb.DelegateTaskResponse, error).
@@ -98,5 +97,5 @@ func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask)
 	}
 
 	// Return success acknowledging that the sub-agent is spawned and task assigned.
-	return pb.DelegateTaskResponse_builder{Success: proto.Bool(true)}.Build(), nil
+	return &pb.DelegateTaskResponse{Success: (true)}, nil
 }
