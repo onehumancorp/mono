@@ -94,3 +94,14 @@ func TestValidateSPIFFEID_ErrorScheme(t *testing.T) {
 		t.Fatalf("expected error from parsing")
 	}
 }
+
+func TestValidateSPIFFEID_SpoofedURL(t *testing.T) {
+	err := ValidateSPIFFEID("spiffe://onehumancorp.io/org-1%2fagent-1")
+	if err == nil || !strings.Contains(err.Error(), "url-encoded") {
+		t.Fatalf("expected error from parsing url encoded spoofed url, got: %v", err)
+	}
+	err = ValidateSPIFFEID("spiffe://onehumancorp.io/org-1%2Fagent-1")
+	if err == nil || !strings.Contains(err.Error(), "url-encoded") {
+		t.Fatalf("expected error from parsing url encoded spoofed url uppercase, got: %v", err)
+	}
+}
