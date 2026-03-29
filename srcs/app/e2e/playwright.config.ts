@@ -10,7 +10,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: __dirname,
-  testMatch: ['web.spec.ts'],
+  testMatch: ['web.spec.ts', 'handoff.spec.ts'],
   timeout: 60_000,
   retries: process.env.CI ? 1 : 0,
   reporter: [['list'], ['json', { outputFile: 'playwright-results.json' }]],
