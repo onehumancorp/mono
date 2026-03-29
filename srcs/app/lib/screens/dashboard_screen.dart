@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:flutter_svg/flutter_svg.dart'; // Temporarily disabled for Bazel build
@@ -109,28 +110,49 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 180,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: color, size: 28),
-              const SizedBox(height: 12),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.compose(
+            outer: const ColorFilter.matrix(<double>[
+              1.8, 0, 0, 0, 0,
+              0, 1.8, 0, 0, 0,
+              0, 0, 1.8, 0, 0,
+              0, 0, 0, 1, 0
+            ]),
+            inner: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color.fromRGBO(255, 255, 255, 0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color.fromRGBO(255, 255, 255, 0.1),
               ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(icon, color: color, size: 28),
+                  const SizedBox(height: 12),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
