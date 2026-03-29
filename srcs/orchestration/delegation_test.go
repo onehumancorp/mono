@@ -139,7 +139,7 @@ func TestDelegateSubTask_MissingFields(t *testing.T) {
 // TestDelegateSubTask_Integration checks the real data law by seeing if the message gets processed properly
 func TestDelegateSubTask_Integration(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "sender-1", Name: "Sender", Role: "PM", Status: StatusIdle})
+	hub.RegisterAgent(Agent{ID: "sender-1", Name: "Sender", Role: "PM", Status: StatusIdle, ProviderType: "builtin"})
 	server := NewHubServiceServer(hub)
 	ctx := context.Background()
 
