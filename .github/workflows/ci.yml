@@ -47,7 +47,8 @@ jobs:
               --remote_upload_local_results=false \
               --build_event_json_file="" \
               --bes_results_url="" \
-              --bes_backend=""
+              --bes_backend="" \
+              --jobs=200
           else
             bazelisk test //... \
               --test_output=errors \
@@ -58,5 +59,7 @@ jobs:
               --bes_results_url="" \
               --bes_backend="" \
               --remote_upload_local_results=false \
-              --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY
+              --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
+              --config=buildbuddy-official \
+              --jobs=200
           fi

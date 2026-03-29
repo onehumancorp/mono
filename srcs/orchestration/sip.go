@@ -209,6 +209,7 @@ func (s *SIPDB) CompleteMission(ctx context.Context, missionID string) error {
 // Produces errors: Explicit error handling.
 // Has no side effects.
 func (s *SIPDB) Heartbeat(ctx context.Context, agentID, role, status string) error {
+	slog.Info("agent heartbeat", "agent_id", agentID, "role", role, "status", status)
 	return withRetry(ctx, func() error {
 		_, err := s.db.ExecContext(ctx,
 			"INSERT INTO agent_status (agent_id, role, status, last_heartbeat) VALUES (?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(agent_id) DO UPDATE SET role=excluded.role, status=excluded.status, last_heartbeat=CURRENT_TIMESTAMP",
@@ -228,6 +229,7 @@ func (s *SIPDB) DelegateMission(ctx context.Context, missionID, role string, tas
 	if err != nil {
 		return err
 	}
+	slog.Info("delegating mission", "mission_id", missionID, "role", role)
 	return withRetry(ctx, func() error {
 		_, err := s.db.ExecContext(ctx,
 			"INSERT INTO agent_missions (id, role, task, status, created_at, updated_at) VALUES (?, ?, ?, 'PENDING', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
