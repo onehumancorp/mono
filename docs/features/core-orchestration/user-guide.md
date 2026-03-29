@@ -1,5 +1,11 @@
 # User Guide: Core Orchestration
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## 1. Introduction & Value Proposition
 Core Orchestration serves as the foundational communication and execution framework within One Human Corp. It orchestrates the asynchronous and synchronous interactions (Virtual Meeting Rooms) between various specialized AI agents and the human CEO. Its value lies in breaking down complex epics into manageable, verifiable tasks while maintaining the rigid organizational hierarchy defined in your configuration.
 

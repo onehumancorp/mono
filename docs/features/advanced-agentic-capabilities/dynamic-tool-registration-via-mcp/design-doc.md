@@ -1,5 +1,11 @@
 # Design Document: Dynamic Tool Registration via MCP
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## 1. Executive Summary
 **Objective:** Enable the Orchestration Hub to dynamically map OpenAPI schemas into agent tool definitions at runtime, preventing the need for hardcoded schemas and tightly coupled agent-tool implementations.
 **Scope:** Implement the `MCPRegistryService` and integrate the `Switchboard` routing layer with the Model Context Protocol.

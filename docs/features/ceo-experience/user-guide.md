@@ -1,5 +1,11 @@
 # User Guide: One Human Corp Platform
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## Introduction
 One Human Corp (OHC) is an enterprise-grade AI-agent orchestration platform. It gives your organisation a virtual workforce of AI agents that can collaborate, escalate high-risk actions, and manage entire product development life cycles autonomously under your guidance as CEO.
 

@@ -1,5 +1,11 @@
 # Developer Guide: One Human Corp
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## Introduction
 This guide is intended for engineers who want to contribute to the One Human Corp (OHC) platform. It covers everything from local setup to adding new features and deploying to Kubernetes.
 

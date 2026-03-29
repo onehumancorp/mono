@@ -1,5 +1,11 @@
 # Customer User Journey: Dynamic Scaling UI ("Hire/Fire")
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## 1. Overview
 This document outlines the user journey for the Dynamic Scaling UI ("Hire/Fire"), a real-time React component in the CEO Dashboard that allows adjusting replica counts for newly generated roles.
 

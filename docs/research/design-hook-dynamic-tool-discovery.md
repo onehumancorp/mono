@@ -1,5 +1,11 @@
 # Design Hook: Dynamic Tool Discovery via MCP & SPIFFE
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## Executive Summary
 Agents in existing AI frameworks (like AutoGen and CrewAI) are tightly coupled to a static list of tools injected at initialization. When a novel problem arises that requires a new tool, the agent fails out, creating a high-friction loop.
 

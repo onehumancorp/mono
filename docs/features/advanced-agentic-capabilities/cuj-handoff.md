@@ -1,5 +1,11 @@
 # CUJ: Human-in-the-Loop (HITL) Handoff UI
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 **Persona:** CEO / Manager
 **Context:** An autonomous agent has encountered a high-risk operation or an ambiguous state requiring human intervention before proceeding.
 **Success Metrics:** Secure handoff presentation, verifiable state ground truth, and quick resumption of tasks post-approval.

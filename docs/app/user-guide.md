@@ -1,5 +1,11 @@
 # User Guide: OHC Flutter App
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## 1. Overview
 
 This guide covers the Bazel-native Flutter app workflow in `srcs/app`.

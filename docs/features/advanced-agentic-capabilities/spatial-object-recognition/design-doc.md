@@ -1,5 +1,11 @@
 # Design Document: Spatial Object Recognition
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## 1. Executive Summary
 **Objective:** Enable agents to execute precise viewport interactions by translating visual intent into exact X,Y coordinates using multimodal LLMs.
 **Scope:** Integrate spatial grounding capabilities into the Multimodal Router and build an MCP tool for executing Playwright actions via coordinates.
