@@ -20,6 +20,7 @@ filegroup(
 
 # Base dependencies for most screens
 SCREEN_DEPS = [
+    "//srcs/app:theme_lib",
     "//srcs/app/lib/models:models_lib",
     "//srcs/app/lib/services:services_lib",
     "//srcs/app/lib/widgets:widgets_lib",
