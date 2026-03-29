@@ -21,8 +21,8 @@ type SIPDB struct {
 }
 
 const (
-	maxRetries    = 3
-	retryInterval = 100 * time.Millisecond
+	maxRetries    = 12
+	retryInterval = 50 * time.Millisecond
 )
 
 // withRetry executes a database operation with exponential backoff for transient errors (e.g. database is locked).
@@ -39,6 +39,11 @@ func withRetry(ctx context.Context, op func() error) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
+		}
+
+		// If it's a "database is locked" error, retry. Otherwise, return immediately.
+		if err.Error() != "database is locked (5) (SQLITE_BUSY)" && err.Error() != "database is locked" {
+			return err
 		}
 
 		slog.Warn("sipdb: operation failed, retrying", "attempt", i+1, "error", err)
@@ -252,11 +257,11 @@ func (s *SIPDB) PruneStaleMissions(ctx context.Context, ageThreshold time.Durati
 
 // CapabilityPlugin represents an MCP plugin registration.
 type CapabilityPlugin struct {
-	PluginID    string    `json:"plugin_id"`
-	Name        string    `json:"name"`
-	Version     string    `json:"version"`
-	ManifestURL string    `json:"manifest_url"`
-	Status      string    `json:"status"`
+	PluginID     string    `json:"plugin_id"`
+	Name         string    `json:"name"`
+	Version      string    `json:"version"`
+	ManifestURL  string    `json:"manifest_url"`
+	Status       string    `json:"status"`
 	RegisteredAt time.Time `json:"registered_at"`
 }
 

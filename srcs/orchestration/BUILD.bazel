@@ -44,6 +44,7 @@ go_test(
         "sip_extra_test.go",
         "sip_test.go",
         "sip_mesh_test.go",
+        "chaos_test.go",
     ],
     embed = [":orchestration"],
     deps = [

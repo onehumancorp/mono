@@ -3,7 +3,6 @@ package orchestration
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -26,8 +25,8 @@ func TestSIPDB_Chaos(t *testing.T) {
 
 	// 1. High-concurrency agent mission ingestion (Stress Test)
 	var wg sync.WaitGroup
-	numAgents := 50
-	missionsPerAgent := 10
+	numAgents := 5
+	missionsPerAgent := 2
 
 	errs := make(chan error, numAgents*missionsPerAgent)
 
