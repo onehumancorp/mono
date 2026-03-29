@@ -3,6 +3,8 @@ package interop
 import (
 	"strings"
     "testing"
+	"context"
+	"github.com/onehumancorp/mono/srcs/domain"
 )
 
 func TestLogCheckpoint_ExistingCheckpointsDifferentType(t *testing.T) {
@@ -92,5 +94,41 @@ func TestValidateSPIFFEID_ErrorScheme(t *testing.T) {
 	err := ValidateSPIFFEID("http://domain:80")
 	if err == nil {
 		t.Fatalf("expected error from parsing")
+	}
+}
+
+
+func TestExecuteHandoff_NilRequest(t *testing.T) {
+	ctx := context.Background()
+	adapter, _ := NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01")
+	_, err := ExecuteHandoff(ctx, adapter, nil, "spiffe://ohc.os/agent/autogen-01")
+	if err == nil {
+		t.Fatalf("expected error for nil handoff request")
+	}
+}
+
+func TestExecuteHandoff_EmptyTarget(t *testing.T) {
+	ctx := context.Background()
+	adapter, _ := NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01")
+	msg := &domain.Message{ID: "m1", FromAgent: "agent1", Content: "task"}
+	_, err := ExecuteHandoff(ctx, adapter, msg, "")
+	if err == nil {
+		t.Fatalf("expected error for empty target ID")
+	}
+}
+
+func TestExecuteHandoff_Success(t *testing.T) {
+	ctx := context.Background()
+	adapter, _ := NewOpenClawAdapter("spiffe://ohc.os/agent/openclaw-01")
+	msg := &domain.Message{ID: "m1", FromAgent: "agent1", Content: "task"}
+	res, err := ExecuteHandoff(ctx, adapter, msg, "spiffe://ohc.os/agent/autogen-01")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Type != domain.EventHandoff {
+		t.Fatalf("expected Type EventHandoff, got %s", res.Type)
+	}
+	if res.ToAgent != "spiffe://ohc.os/agent/autogen-01" {
+		t.Fatalf("expected ToAgent autogen, got %s", res.ToAgent)
 	}
 }

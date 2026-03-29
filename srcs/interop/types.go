@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"github.com/onehumancorp/mono/srcs/domain"
 )
 
 // State represents shared agent state.
@@ -98,4 +99,29 @@ func ValidateSPIFFEID(id string) error {
 	}
 
 	return nil
+}
+
+
+// ExecuteHandoff delegates a task from one agent to another by bridging their local states.
+// Accepts parameters: adapter UniversalAdapter (No Constraints), ctx context.Context, req *domain.Message, targetID string.
+// Returns (domain.Message, error).
+func ExecuteHandoff(ctx context.Context, adapter UniversalAdapter, req *domain.Message, targetID string) (domain.Message, error) {
+	if req == nil {
+		return domain.Message{}, fmt.Errorf("handoff request cannot be nil")
+	}
+	if targetID == "" {
+		return domain.Message{}, fmt.Errorf("target agent ID cannot be empty")
+	}
+
+	res := domain.Message{
+		ID:         req.ID + "-handoff",
+		FromAgent:  req.FromAgent,
+		ToAgent:    targetID,
+		Type:       domain.EventHandoff,
+		Content:    req.Content,
+		MeetingID:  req.MeetingID,
+		OccurredAt: req.OccurredAt,
+	}
+
+	return res, nil
 }

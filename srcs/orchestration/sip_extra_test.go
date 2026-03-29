@@ -2,6 +2,7 @@ package orchestration
 
 import (
 	"context"
+	"github.com/onehumancorp/mono/srcs/domain"
 	"testing"
 )
 
@@ -72,7 +73,7 @@ func TestSIPDB_GetPendingMissions_Fallback(t *testing.T) {
 	if len(missions) != 1 {
 		t.Fatalf("expected 1 mission, got %d", len(missions))
 	}
-	if missions[0].Content != "invalid_json" || missions[0].ID != "m2" || missions[0].Type != EventTask {
+	if missions[0].Content != "invalid_json" || missions[0].ID != "m2" || missions[0].Type != domain.EventTask {
 		t.Fatalf("fallback msg parsing failed: %+v", missions[0])
 	}
 }
@@ -152,7 +153,7 @@ func TestSIPDB_DBClosedErrors(t *testing.T) {
 		t.Fatalf("expected error on Heartbeat after close")
 	}
 
-	err = db.DelegateMission(ctx, "m1", "r1", Message{ID: "m1"})
+	err = db.DelegateMission(ctx, "m1", "r1", domain.Message{ID: "m1"})
 	if err == nil {
 		t.Fatalf("expected error on DelegateMission after close")
 	}

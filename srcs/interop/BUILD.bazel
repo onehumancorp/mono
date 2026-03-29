@@ -12,6 +12,7 @@ go_library(
     ],
     importpath = "github.com/onehumancorp/mono/srcs/interop",
     visibility = ["//visibility:public"],
+    deps = ["//srcs/domain"],
 )
 
 go_test(

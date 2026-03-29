@@ -96,7 +96,27 @@ message ReasonResponse {
   string content = 1;
 }
 
+
+message AgentHandoff {
+  string original_agent_id = 1;
+  string target_agent_id = 2;
+  string task_context = 3;
+  Message original_task = 4;
+  int64 handoff_time_unix = 5;
+}
+
+message HandoffRequest {
+  AgentHandoff handoff = 1;
+}
+
+message HandoffResponse {
+  bool success = 1;
+  string new_task_id = 2;
+}
+
 service HubService {
+  rpc ExecuteHandoff(HandoffRequest) returns (HandoffResponse);
+
   rpc RegisterAgent(RegisterAgentRequest) returns (RegisterAgentResponse);
   rpc OpenMeeting(OpenMeetingRequest) returns (MeetingRoom);
   rpc Publish(PublishMessageRequest) returns (PublishMessageResponse);
