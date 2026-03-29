@@ -607,6 +607,10 @@ func (s *Server) handleDevSeed(w http.ResponseWriter, r *http.Request) {
 	s.hub = hub
 	s.tracker = tracker
 
+	// ⚡ BOLT: Explicitly clear in-memory slices to prevent cross-test contamination and duplicate entries
+	s.handoffs = s.handoffs[:0]
+	s.pipelines = s.pipelines[:0]
+
 	mockHandoff := HandoffPackage{
 		ID:             "handoff-" + time.Now().UTC().Format("20060102150405"),
 		FromAgentID:    "swe-1",

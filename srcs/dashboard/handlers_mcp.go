@@ -12,6 +12,7 @@ import (
 	"github.com/onehumancorp/mono/srcs/integrations"
 	"github.com/onehumancorp/mono/srcs/interop"
 	"github.com/onehumancorp/mono/srcs/orchestration"
+	"github.com/onehumancorp/mono/srcs/telemetry"
 )
 
 func (s *Server) handleMCPRegister(w http.ResponseWriter, r *http.Request) {
@@ -207,12 +208,14 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) invokeMCPTool(req mcpInvokeRequest) (map[string]any, error) {
 	// Emit structured trace for MCP tool invocation
-	slog.Info("agent execution trace",
-		"component", "telemetry",
-		"api", "invokeMCPTool",
-		"tool_id", req.ToolID,
-		"action", req.Action,
-	)
+	if telemetry.Verbosity >= 2 {
+		slog.Info("agent execution trace",
+			"component", "telemetry",
+			"api", "invokeMCPTool",
+			"tool_id", req.ToolID,
+			"action", req.Action,
+		)
+	}
 
 	switch req.ToolID {
 	// ── Communication tools ───────────────────────────────────────────────────

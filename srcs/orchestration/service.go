@@ -829,15 +829,13 @@ func (h *Hub) Publish(message Message) error {
 	h.mu.Unlock()
 
 	// ⚡ BOLT: [Asynchronous telemetry recording to reduce critical path latency] - Randomized Selection from Top 5
-	go func() {
-		telemetry.RecordAgentApiCall(context.Background(), sender.ID, sender.Role, "publish")
+	go telemetry.RecordAgentApiCall(context.Background(), sender.ID, sender.Role, "publish")
 
-		// Structured logging for agent execution traces
-		// Filter out high-frequency "status" events to reduce signal noise.
-		if message.Type != EventStatus {
-			telemetry.LogAgentExecution(context.Background(), sender.ID, sender.Role, "publish", message.Type, message.Content)
-		}
-	}()
+	// Structured logging for agent execution traces
+	// Filter out high-frequency "status" events to reduce signal noise.
+	if message.Type != EventStatus {
+		go telemetry.LogAgentExecution(context.Background(), sender.ID, sender.Role, "publish", message.Type, message.Content)
+	}
 
 	// Forward to Centrifuge for real-time client delivery (non-blocking).
 	if cn := h.centrifugeNode; cn != nil {

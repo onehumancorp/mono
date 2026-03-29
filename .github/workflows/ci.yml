@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@0.18.0
+        uses: bazel-contrib/setup-bazel@0.8.5
         with:
           bazelisk-cache: true
           disk-cache: ${{ runner.os }}-bazel-disk-${{ hashFiles('**/BUILD', '**/BUILD.bazel', '**/*.bzl', 'WORKSPACE', 'MODULE.bazel', '.bazelrc') }}
@@ -37,10 +37,26 @@ jobs:
           BAZEL_REPOSITORY_CACHE: ${{ env.BAZEL_REPOSITORY_CACHE }}
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
-          bazelisk test //... \
-            --test_output=errors \
-            --test_summary=terse \
-            --test_timeout=300,600,900,1800 \
-            --disk_cache="$BAZEL_DISK_CACHE" \
-            --repository_cache="$BAZEL_REPOSITORY_CACHE" \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY
+          if [ -z "$BUILDBUDDY_API_KEY" ]; then
+            bazelisk test //... \
+              --test_output=errors \
+              --test_summary=terse \
+              --test_timeout=300,600,900,1800 \
+              --disk_cache="$BAZEL_DISK_CACHE" \
+              --repository_cache="$BAZEL_REPOSITORY_CACHE" \
+              --remote_upload_local_results=false \
+              --build_event_json_file="" \
+              --bes_results_url="" \
+              --bes_backend=""
+          else
+            bazelisk test //... \
+              --test_output=errors \
+              --test_summary=terse \
+              --test_timeout=300,600,900,1800 \
+              --disk_cache="$BAZEL_DISK_CACHE" \
+              --repository_cache="$BAZEL_REPOSITORY_CACHE" \
+              --bes_results_url="" \
+              --bes_backend="" \
+              --remote_upload_local_results=false \
+              --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY
+          fi
