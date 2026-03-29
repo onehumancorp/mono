@@ -61,6 +61,17 @@ type UniversalAdapter interface {
 // Produces errors: Returns an error if the SPIFFE ID is invalid or spoofed.
 // Has no side effects.
 func ValidateSPIFFEID(id string) error {
+	if !strings.HasPrefix(id, "spiffe://") {
+		return fmt.Errorf("invalid SPIFFE ID scheme: %s", id)
+	}
+	if strings.Contains(strings.ToLower(id), "%2f") {
+		return fmt.Errorf("invalid SPIFFE ID format: contains url-encoded characters")
+	}
+	trimmed := strings.TrimPrefix(id, "spiffe://")
+	if strings.Contains(trimmed, "..") || strings.Contains(trimmed, "//") {
+		return fmt.Errorf("invalid SPIFFE ID format: contains path traversal or double slashes")
+	}
+
 	u, err := url.Parse(id)
 	if err != nil {
 		return fmt.Errorf("invalid SPIFFE ID format: %w", err)

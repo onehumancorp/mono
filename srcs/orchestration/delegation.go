@@ -64,12 +64,12 @@ func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask)
 		s.hub.LogEvent(subAgent)
 	}
 
-	// Ensure SYSTEM sender exists to avoid "sender agent is not registered" in Publish
+	// Ensure sender exists to avoid "sender agent is not registered" in Publish
 	s.hub.mu.RLock()
-	_, sysExists := s.hub.agents["SYSTEM"]
+	_, sysExists := s.hub.agents[req.GetFromAgentId()]
 	s.hub.mu.RUnlock()
 	if !sysExists {
-		s.hub.RegisterAgent(Agent{ID: "SYSTEM", Name: "System", Role: "SYSTEM", Status: StatusIdle})
+		return nil, status.Errorf(codes.PermissionDenied, "sender agent is not registered: %s", req.GetFromAgentId())
 	}
 
 	// 3. Execution (trigger via task message)
@@ -78,12 +78,17 @@ func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask)
 		return nil, status.Errorf(codes.InvalidArgument, "instruction contains forbidden prompt injection sequences")
 	}
 
+	parentThreadID := req.GetParentThreadId()
+	if strings.Contains(parentThreadID, "SYSTEM:") || strings.Contains(parentThreadID, "\n\n") {
+		return nil, status.Errorf(codes.InvalidArgument, "parent_thread_id contains forbidden prompt injection sequences")
+	}
+
 	msg := Message{
 		ID:         fmt.Sprintf("msg-%s-%d", req.GetTaskId(), time.Now().UnixNano()),
-		FromAgent:  "SYSTEM",
+		FromAgent:  req.GetFromAgentId(),
 		ToAgent:    subAgentID,
 		Type:       "TaskDelegation",
-		Content:    fmt.Sprintf("Execute Task: %s\nContext: %s", instruction, req.GetParentThreadId()),
+		Content:    fmt.Sprintf("Execute Task: %s\nContext: %s", instruction, parentThreadID),
 		OccurredAt: time.Now().UTC(),
 	}
 
