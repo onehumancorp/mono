@@ -58,7 +58,7 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			return nil, status.Errorf(codes.Unauthenticated, "unauthenticated: %v", err)
 		}
 
-		if strings.Contains(strings.ToLower(spiffeID), "%2f") {
+		if strings.Contains(spiffeID, "%") {
 			return nil, status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID format: %s", spiffeID)
 		}
 
@@ -206,7 +206,7 @@ func SPIFFEStreamInterceptor() grpc.StreamServerInterceptor {
 			return status.Errorf(codes.Unauthenticated, "unauthenticated: %v", err)
 		}
 
-		if strings.Contains(strings.ToLower(spiffeID), "%2f") {
+		if strings.Contains(spiffeID, "%") {
 			return status.Errorf(codes.PermissionDenied, "invalid SPIFFE ID format: %s", spiffeID)
 		}
 

@@ -378,8 +378,22 @@ func TestSPIFFEAuthInterceptor_OHCLocalDomain(t *testing.T) {
 			errCode:     codes.PermissionDenied,
 		},
 		{
+			name:        "Spoofing with other URL-encoded characters %",
+			spiffeID:    "spiffe://ohc.os/agent/attacker%252fagent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
 			name:        "Boundary Escape OHC Local Domain",
 			spiffeID:    "spiffe://ohc.local/org/org-1/attacker/agent-1",
+			reqAgentID:  "agent-1",
+			expectedErr: true,
+			errCode:     codes.PermissionDenied,
+		},
+		{
+			name:        "Stream other URL-encoded characters %",
+			spiffeID:    "spiffe://onehumancorp.io/org-1%252fagent-1",
 			reqAgentID:  "agent-1",
 			expectedErr: true,
 			errCode:     codes.PermissionDenied,
