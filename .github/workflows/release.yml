@@ -348,28 +348,43 @@ jobs:
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_OFFICIAL_API_KEY }}
         run: |
+          if [ -n "$BUILDBUDDY_API_KEY" ]; then
+            AUTH_HEADER="--remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY"
+          else
+            AUTH_HEADER=""
+          fi
           bazelisk run //deploy:server_push \
             --disk_cache="$BAZEL_DISK_CACHE" \
             --repository_cache="$BAZEL_REPOSITORY_CACHE" \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
+            $AUTH_HEADER \
             -- --tag "${{ github.ref_name }}"
 
       - name: Push agent image
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_OFFICIAL_API_KEY }}
         run: |
+          if [ -n "$BUILDBUDDY_API_KEY" ]; then
+            AUTH_HEADER="--remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY"
+          else
+            AUTH_HEADER=""
+          fi
           bazelisk run //deploy:agent_push \
             --disk_cache="$BAZEL_DISK_CACHE" \
             --repository_cache="$BAZEL_REPOSITORY_CACHE" \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
+            $AUTH_HEADER \
             -- --tag "${{ github.ref_name }}"
 
       - name: Push UI image
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_OFFICIAL_API_KEY }}
         run: |
+          if [ -n "$BUILDBUDDY_API_KEY" ]; then
+            AUTH_HEADER="--remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY"
+          else
+            AUTH_HEADER=""
+          fi
           bazelisk run //deploy:ui_push \
             --disk_cache="$BAZEL_DISK_CACHE" \
             --repository_cache="$BAZEL_REPOSITORY_CACHE" \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
+            $AUTH_HEADER \
             -- --tag "${{ github.ref_name }}"
