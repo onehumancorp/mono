@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -32,6 +33,10 @@ func withRetry(ctx context.Context, op func() error) error {
 		err = op()
 		if err == nil {
 			return nil
+		}
+
+		if err.Error() != "database is locked (5) (SQLITE_BUSY)" && !strings.Contains(err.Error(), "database is locked") {
+			return err
 		}
 
 		// If context is done, abort retries
