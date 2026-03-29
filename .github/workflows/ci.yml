@@ -30,7 +30,7 @@ jobs:
           channel: stable
 
       - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@0.18.0
+        uses: bazel-contrib/setup-bazel@0.8.1
         with:
           bazelisk-cache: true
           disk-cache: ${{ runner.os }}-bazel-disk-${{ hashFiles('**/BUILD', '**/BUILD.bazel', '**/*.bzl', 'WORKSPACE', 'MODULE.bazel', '.bazelrc') }}
@@ -42,10 +42,12 @@ jobs:
           BAZEL_REPOSITORY_CACHE: ${{ env.BAZEL_REPOSITORY_CACHE }}
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_OFFICIAL_API_KEY }}
         run: |
+          # If BUILDBUDDY_API_KEY is not set (e.g. from a fork PR), fall back to the public read-only key
+          API_KEY="${BUILDBUDDY_API_KEY:-vGFjlQg7X49NwoQHAfRW}"
           bazelisk test //... \
             --test_output=errors \
             --test_summary=terse \
             --test_timeout=300,600,900,1800 \
             --disk_cache="$BAZEL_DISK_CACHE" \
             --repository_cache="$BAZEL_REPOSITORY_CACHE" \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY
+            --remote_header=x-buildbuddy-api-key="$API_KEY"

@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@0.18.0
+        uses: bazel-contrib/setup-bazel@0.8.1
         with:
           bazelisk-cache: true
           disk-cache: ${{ runner.os }}-bazel-release-${{ hashFiles('**/BUILD', '**/BUILD.bazel', '**/*.bzl', 'WORKSPACE', 'MODULE.bazel', '.bazelrc') }}
@@ -338,7 +338,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Bazel
-        uses: bazel-contrib/setup-bazel@0.18.0
+        uses: bazel-contrib/setup-bazel@0.8.1
         with:
           bazelisk-cache: true
           disk-cache: ${{ runner.os }}-bazel-release-${{ hashFiles('**/BUILD', '**/BUILD.bazel', '**/*.bzl', 'WORKSPACE', 'MODULE.bazel', '.bazelrc') }}
@@ -348,28 +348,31 @@ jobs:
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_OFFICIAL_API_KEY }}
         run: |
+          API_KEY="${BUILDBUDDY_API_KEY:-vGFjlQg7X49NwoQHAfRW}"
           bazelisk run //deploy:server_push \
             --disk_cache="$BAZEL_DISK_CACHE" \
             --repository_cache="$BAZEL_REPOSITORY_CACHE" \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
+            --remote_header=x-buildbuddy-api-key="$API_KEY" \
             -- --tag "${{ github.ref_name }}"
 
       - name: Push agent image
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_OFFICIAL_API_KEY }}
         run: |
+          API_KEY="${BUILDBUDDY_API_KEY:-vGFjlQg7X49NwoQHAfRW}"
           bazelisk run //deploy:agent_push \
             --disk_cache="$BAZEL_DISK_CACHE" \
             --repository_cache="$BAZEL_REPOSITORY_CACHE" \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
+            --remote_header=x-buildbuddy-api-key="$API_KEY" \
             -- --tag "${{ github.ref_name }}"
 
       - name: Push UI image
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_OFFICIAL_API_KEY }}
         run: |
+          API_KEY="${BUILDBUDDY_API_KEY:-vGFjlQg7X49NwoQHAfRW}"
           bazelisk run //deploy:ui_push \
             --disk_cache="$BAZEL_DISK_CACHE" \
             --repository_cache="$BAZEL_REPOSITORY_CACHE" \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
+            --remote_header=x-buildbuddy-api-key="$API_KEY" \
             -- --tag "${{ github.ref_name }}"
