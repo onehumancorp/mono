@@ -11,14 +11,14 @@ This document provides an overview of the Critical User Journeys (CUJs) for the 
 
 | ID | Journey Name | Persona | Documentation |
 |----|--------------|---------|---------------|
-| 01 | Dashboard Load | Admin | [cuj-01-dashboard-load.md](../ceo-experience/cuj-dashboard-load.md) |
-| 02 | Send Message | Manager | [cuj-02-send-message.md](../core-orchestration/cuj-send-message.md) |
-| 04 | Hire an Agent | Admin | [cuj-04-hire-agent.md](../identity-security/cuj-hire-agent.md) |
-| 05 | Approval Gating | Approver | [cuj-05-approval-gating.md](../identity-security/cuj-approval-gating.md) |
-| 06 | Warm Handoff | Manager | [cuj-06-warm-handoff.md](../b2b-collaboration/cuj-warm-handoff.md) |
-| 07 | Billing Tracking | Finance | [cuj-07-billing-cost-tracking.md](../billing-finance/cuj-cost-tracking.md) |
-| 08 | Skill Pack Import | Admin | [cuj-08-skill-pack-import.md](../tooling-mcp/cuj-skill-import.md) |
-| 09 | Org Snapshot | Admin | [cuj-09-org-snapshot.md](../persistence-dr/cuj-org-snapshot.md) |
+| 01 | Dashboard Load | Admin | [cuj-dashboard-load.md](../ceo-experience/cuj-dashboard-load.md) |
+| 02 | Send Message | Manager | [cuj-send-message.md](../core-orchestration/cuj-send-message.md) |
+| 04 | Hire an Agent | Admin | [cuj-hire-agent.md](../identity-security/cuj-hire-agent.md) |
+| 05 | Approval Gating | Approver | [cuj-approval-gating.md](../identity-security/cuj-approval-gating.md) |
+| 06 | Warm Handoff | Manager | [cuj-warm-handoff.md](../b2b-collaboration/cuj-warm-handoff.md) |
+| 07 | Billing Tracking | Finance | [cuj-cost-tracking.md](../billing-finance/cuj-cost-tracking.md) |
+| 08 | Skill Pack Import | Admin | [cuj-skill-import.md](../tooling-mcp/cuj-skill-import.md) |
+| 09 | Org Snapshot | Admin | [cuj-org-snapshot.md](../persistence-dr/cuj-org-snapshot.md) |
 | 10 | PM Investigation | PM Agent | [cuj-scoping.md](cuj-scoping.md) |
 
 ## Metrics & KPIs

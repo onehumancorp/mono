@@ -16,7 +16,7 @@ The Human-in-the-Loop (HITL) Handoff UI provides a seamless "Warm Handoff" mecha
 - Full manual remote-control of agents (handoffs are discrete events, not continuous control).
 
 ## 3. Implementation Details
-- **Architecture**: A native K8s-backed system leveraging the OHC Hub to route handoff requests. The frontend is built on Next.js, presenting a unified dashboard for human operators.
+- **Architecture**: A native K8s-backed system leveraging the OHC Hub to route handoff requests. The frontend is built on Flutter, presenting a unified dashboard for human operators.
 - **Data Flow**: When an agent triggers a handoff, it packages its current LangGraph state, intent, and any multimodal artifacts (like UI diffs or screenshots) into a JSON payload. This payload is stored in Postgres and surfaced to the CEO Dashboard.
 - **Identity & Security**: All approvals are strictly gated by SPIFFE/SPIRE. The human operator's OIDC login is mapped to a role that dictates whether they have the authority to approve the specific handoff request.
 

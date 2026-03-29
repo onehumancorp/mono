@@ -29,7 +29,7 @@ When the CEO defines a goal, the organisation works collaboratively. Agents ente
 
 ```mermaid
 graph TD
-    Client[Client Browser / React SPA] -->|HTTP/JSON| FE[Frontend Server :8081]
+    Client[Client Browser / Flutter App] -->|HTTP/JSON| FE[Frontend Server :8081]
     FE -->|Proxy /api/*| BE[Backend Server :8080]
     
     subgraph "Backend Core"

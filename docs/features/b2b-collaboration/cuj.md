@@ -18,7 +18,7 @@ The CEO establishes a B2B agreement with another One Human Corp instance, enabli
 
 ## 3. Implementation Details
 - **Architecture**: The `inter-org.md` explains the underlying OIDC and SPIFFE federation. The Dashboard UI connects via Server-Sent Events (SSE) to display real-time inter-org debates.
-- **Stack**: Go 1.26, React/Vite/Next.js UI.
+- **Stack**: Go 1.26, Flutter/Dart UI.
 - **Authentication**: OIDC logic determines human authorization for contract sign-off.
 
 ## 4. Edge Cases

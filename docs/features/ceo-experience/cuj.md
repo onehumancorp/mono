@@ -17,7 +17,7 @@ A high-level view of how the human CEO manages the AI workforce from the "Missio
 | 4 | Approve a PR merge | CEO clicks "Approve" | Agent receives `APPROVAL` event | Code merges |
 
 ## 3. Implementation Details
-- **Architecture**: A React/Vite/Next.js frontend fetching data from the Go 1.26 backend via REST and Server-Sent Events (SSE).
+- **Architecture**: A Flutter/Dart frontend fetching data from the Go 1.26 backend via REST and Server-Sent Events (SSE).
 - **Deployment**: Deployed via the OHC Kubernetes Operator. The dashboard acts as the primary control plane for the `HoldingCompany` CRD.
 - **State Management**: The UI is fully real-time. Actions like "Hire Agent" immediately update the append-only `events.jsonl` Postgres log.
 

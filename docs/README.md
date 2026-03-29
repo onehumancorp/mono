@@ -17,11 +17,11 @@ One Human Corp is an innovative Cloud-Native Hybrid Architecture (Agentic OS) th
 4. **Collaboration (Virtual Meeting Rooms)**: When the CEO defines a goal, multiple agents (e.g., PM, SWE, and Director) convene in Virtual Meeting Rooms to define scopes, debate technical constraints, and finalize designs before execution.
 
 ## Architecture
-Built on a modular, open-source stack (Model Context Protocol, SPIFFE/SPIRE, LangGraph), the system leverages Kubernetes Custom Resource Definitions (CRDs) to manage the organisational structure as Infrastructure as Code. The backend is written in Go (Bazel-based monorepo), and it integrates with a React Next.js-style frontend to allow the human CEO to direct virtual meeting rooms, handle high-risk approvals, and monitor token usage and billing.
+Built on a modular, open-source stack (Model Context Protocol, SPIFFE/SPIRE, LangGraph), the system leverages Kubernetes Custom Resource Definitions (CRDs) to manage the organisational structure as Infrastructure as Code. The backend is written in Go (Bazel-based monorepo), and it integrates with a Flutter frontend to allow the human CEO to direct virtual meeting rooms, handle high-risk approvals, and monitor token usage and billing.
 
 ```mermaid
 graph TD;
-    User[Human CEO] --> Frontend[React Next.js Frontend];
+    User[Human CEO] --> Frontend[Flutter Frontend];
     Frontend --> Backend[Go Dashboard Server];
     Backend --> Hub[Orchestration Hub];
     Hub --> Rooms[Virtual Meeting Rooms];
@@ -44,11 +44,11 @@ graph TD;
 4. Run the Go backend (Dashboard Server) locally on port `8080`.
 5. In parallel, run the frontend dev server:
    ```bash
-   cd srcs/frontend
-   npm install
-   npm run dev &
+   cd srcs/app
+   flutter pub get
+   flutter run -d web &
    ```
-6. Access the dashboard at `http://localhost:5173`.
+6. Access the dashboard at `http://localhost:8081`.
 
 ## Developer Workflow
 This project uses Bazel for deterministic builds and testing.

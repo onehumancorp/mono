@@ -60,7 +60,7 @@ mono/
     ├── cmd/ohc/             Backend binary entrypoint
     ├── dashboard/           REST API handlers
     ├── domain/              Domain model (Org / Dept / Role)
-    ├── frontend/            React SPA + vitest + Playwright tests
+    ├── frontend/            Flutter App + flutter test + Playwright tests
     ├── frontend/server/     Go server that serves the SPA
     ├── integration/         Go integration tests
     ├── integrations/        Integration registry
@@ -94,7 +94,7 @@ bazel test //...
 # Run all Go unit tests
 bazel test //srcs/...
 
-# Run frontend npm unit tests (vitest)
+# Run frontend flutter unit tests
 bazel test //srcs/frontend:frontend_unit_test
 
 # Run frontend Playwright e2e tests
@@ -133,7 +133,7 @@ cd srcs/frontend && npm run typecheck
 bazel test //srcs/billing/... //srcs/domain/... //srcs/orchestration/... //srcs/integrations/...
 ```
 
-### Frontend Unit Tests (vitest)
+### Frontend Unit Tests
 
 ```bash
 bazel test //srcs/frontend:frontend_unit_test
@@ -230,7 +230,7 @@ docker compose -f deploy/docker-compose.yml down -v
 |----------|---------|-------------|
 | `FRONTEND_ADDR` | `:8081` | HTTP listen address |
 | `BACKEND_URL` | `http://localhost:8080` | Upstream backend for `/api/*` proxy |
-| `FRONTEND_STATIC_DIR` | `./dist` | Path to built React static files |
+| `FRONTEND_STATIC_DIR` | `./dist` | Path to built Flutter static files |
 
 ---
 

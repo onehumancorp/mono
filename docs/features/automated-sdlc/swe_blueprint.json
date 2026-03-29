@@ -45,7 +45,7 @@
           "phases": [
             {
               "name": "The 'Wide Net' Scan (The Top 50)",
-              "protocol_details": "Scan for Algorithmic, React/View, I/O, Assets/Bundle, and Memory issues. Generate up to 50 candidates."
+              "protocol_details": "Scan for Algorithmic, Flutter/View, I/O, Assets/Bundle, and Memory issues. Generate up to 50 candidates."
             },
             {
               "name": "The Stochastic Selection (The Top 5 Shuffle)",

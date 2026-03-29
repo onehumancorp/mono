@@ -197,7 +197,7 @@ A: Any user with the `approver` platform role. Reach out to your administrator t
 A: Integrations are registered at server startup via the `integrations.Registry`. Contact your platform administrator or DevOps team to add a new integration.
 
 ## Implementation Details
-- **Architecture**: The Dashboard UI is built with React/Vite/Next.js aesthetics, fetching data from the Go 1.26 backend via REST and Server-Sent Events (SSE).
+- **Architecture**: The Dashboard UI is built with Flutter/Dart aesthetics, fetching data from the Go 1.26 backend via REST and Server-Sent Events (SSE).
 - **Deployment**: Deployed via the OHC Kubernetes Operator. The dashboard acts as the primary control plane for the `HoldingCompany` CRD.
 - **State Management**: The UI is fully real-time. Actions like "Hire Agent" or "Send Message" immediately update the append-only `events.jsonl` Postgres log, which the LangGraph checkpointers use to resume agent states.
 

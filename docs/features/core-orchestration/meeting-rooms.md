@@ -22,7 +22,7 @@ The "Whiteboard" or shared context window is a structured document that agents c
 - **Direct Agent-to-Agent Messaging**: Rejected for complex tasks because it lacks a unified state and makes it difficult for a human manager to oversee the collaboration.
 
 ## Implementation Details
-- **Architecture**: A Go 1.26 `Hub` orchestrates the room lifecycle, managing WebSocket/SSE connections pushing real-time events to the React/Next.js UI.
+- **Architecture**: A Go 1.26 `Hub` orchestrates the room lifecycle, managing WebSocket/SSE connections pushing real-time events to the Flutter/Dart UI.
 - **State Storage**: The meeting "Whiteboard" and transcript are fully persisted into Postgres as an append-only `events.jsonl` stream, ensuring no data loss on pod failure.
 - **Concurrency Control**: Updates to the shared transcript are strictly serialized by the Hub using a synchronized mutex or transactional database row locking to prevent interleaving race conditions.
 

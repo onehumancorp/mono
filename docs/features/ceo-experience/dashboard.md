@@ -18,9 +18,9 @@ The CEO Dashboard is the primary human-in-the-loop (HITL) interface for One Huma
 
 ## 3. Detailed Design
 
-### 3.1 Architecture (React + Vite)
-The frontend is a React-based SPA that leverages:
-- **State Management**: `Zustand` for lightweight, reactive Hub state sync.
+### 3.1 Architecture
+The frontend is a Flutter-based SPA that leverages:
+- **State Management**: `Riverpod` for lightweight, Flutterive Hub state sync.
 - **Visualization**: `D3.js` for the dynamic Org Chart and Billing heatmaps.
 - **Real-time Sync**: WebSockets (`/api/ws`) for streaming meeting transcripts and agent status pulses.
 
@@ -52,7 +52,7 @@ The frontend is a React-based SPA that leverages:
 The dashboard must maintain a 100/100 Lighthouse score for accessibility, ensuring the CEO can manage the company via screen readers if necessary.
 
 ## 5. Alternatives Considered
-- **Server-Side Rendering (Next.js)**: Rejected because the dashboard is a high-interactivity real-time tool; a pure SPA with a Go backend is more responsive for WebSocket-heavy workloads.
+- **Server-Side Rendering (Flutter)**: Rejected because the dashboard is a high-interactivity real-time tool; a pure SPA with a Go backend is more responsive for WebSocket-heavy workloads.
 - **TUI (Terminal User Interface)**: Rejected as a primary interface but considered as a "DevOps Fallback" for low-bandwidth situations.
 
 ## 6. Implementation Stages
