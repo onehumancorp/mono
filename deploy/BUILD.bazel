@@ -194,10 +194,10 @@ sh_test(
         "helm/ohc/**",
         "docker-compose.yml",
     ]) + [
-        "//:go.mod",
-        "//srcs/cmd/ohc",
         ":backend_load",
         ":ui_load",
+        "//:go.mod",
+        "//srcs/cmd/ohc",
     ],
     tags = [
         "large",

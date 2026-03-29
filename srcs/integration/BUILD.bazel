@@ -15,9 +15,23 @@ go_test(
 )
 
 go_test(
+    name = "chaos_test",
+    srcs = ["chaos_e2e_test.go"],
+    deps = [
+        "//srcs/auth",
+        "//srcs/billing",
+        "//srcs/dashboard",
+        "//srcs/domain",
+        "//srcs/orchestration",
+        "@org_modernc_sqlite//:sqlite",
+    ],
+)
+
+go_test(
     name = "integration_test",
     srcs = [
         "agent_interaction_test.go",
+        "chaos_e2e_test.go",
         "feature_integration_test.go",
         "frontend_backend_test.go",
         "minimax_e2e_test.go",
@@ -31,5 +45,6 @@ go_test(
         "//srcs/integrations",
         "//srcs/integrations/chatwoot",
         "//srcs/orchestration",
+        "@org_modernc_sqlite//:sqlite",
     ],
 )
