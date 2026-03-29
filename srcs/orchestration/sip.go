@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"sync"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -149,10 +150,12 @@ func (s *SIPDB) UpdateMemory(ctx context.Context, key, value string) error {
 // Returns GetPendingMissions(ctx context.Context, role string) ([]Message, error).
 // Produces errors: Explicit error handling.
 // Has no side effects.
+var pendingMissionsSlicePool = sync.Pool{New: func() interface{} { s := make([]Message, 0, 64); return &s }}
 func (s *SIPDB) GetPendingMissions(ctx context.Context, role string) ([]Message, error) {
-	var missions []Message
+	missionsPtr := pendingMissionsSlicePool.Get().(*[]Message)
+	missions := (*missionsPtr)[:0]
 	err := withRetry(ctx, func() error {
-		missions = nil
+		missions = missions[:0]
 		rows, err := s.db.QueryContext(ctx, "SELECT id, task FROM agent_missions WHERE role = ? AND status = 'PENDING'", role)
 		if err != nil {
 			return err
@@ -160,15 +163,16 @@ func (s *SIPDB) GetPendingMissions(ctx context.Context, role string) ([]Message,
 		defer rows.Close()
 
 		for rows.Next() {
-			var id, taskStr string
-			if err := rows.Scan(&id, &taskStr); err != nil {
+			var id string
+			var taskBytes []byte
+			if err := rows.Scan(&id, &taskBytes); err != nil {
 				return err
 			}
 
 			var msg Message
-			if err := json.Unmarshal([]byte(taskStr), &msg); err != nil {
+			if err := json.Unmarshal(taskBytes, &msg); err != nil {
 				// fallback
-				msg = Message{ID: id, Content: taskStr, Type: EventTask}
+				msg = Message{ID: id, Content: string(taskBytes), Type: EventTask}
 			} else {
 				if msg.ID == "" {
 					msg.ID = id
