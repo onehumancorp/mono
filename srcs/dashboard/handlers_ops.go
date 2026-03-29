@@ -420,3 +420,19 @@ func (s *Server) handlePruneMissions(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, map[string]string{"status": "success", "message": "agent missions pruned"})
 }
+
+func (s *Server) handleChaosLockDB(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// This is a controlled failure simulation for testing purposes.
+	if s.hub.SIPDB() != nil {
+		go func() {
+			s.hub.SIPDB().LockForTesting(time.Second * 3)
+		}()
+	}
+
+	writeJSON(w, map[string]string{"status": "success", "message": "database locked for 3 seconds"})
+}

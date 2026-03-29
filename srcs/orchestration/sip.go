@@ -58,6 +58,16 @@ func NewSIPDB(dbPath string) (*SIPDB, error) {
 		return nil, err
 	}
 
+	db.SetMaxOpenConns(1)
+	_, err = db.Exec("PRAGMA journal_mode=WAL;")
+	if err != nil {
+		return nil, err
+	}
+	_, err = db.Exec("PRAGMA busy_timeout=15000;")
+	if err != nil {
+		return nil, err
+	}
+
 	if err := initializeTables(db); err != nil {
 		return nil, err
 	}
@@ -388,4 +398,14 @@ func (s *SIPDB) GetEpisodicMemoriesByPlugin(ctx context.Context, plugin string) 
 // Has no side effects.
 func (s *SIPDB) Close() error {
 	return s.db.Close()
+}
+// LockForTesting locks the DB exclusively for the specified duration to simulate downtime.
+func (s *SIPDB) LockForTesting(d time.Duration) {
+	tx, err := s.db.Begin()
+	if err == nil {
+		_, _ = tx.Exec("BEGIN EXCLUSIVE")
+		_, _ = tx.Exec("UPDATE agent_missions SET status = 'LOCKED' WHERE 1=0")
+		time.Sleep(d)
+		_ = tx.Commit()
+	}
 }

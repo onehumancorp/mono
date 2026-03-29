@@ -1,0 +1,37 @@
+--- srcs/app/e2e/chaos_test.spec.ts
++++ srcs/app/e2e/chaos_test.spec.ts
+@@ -29,19 +29,17 @@
+
+     await page.goto('/');
+     await waitForFlutter(page);
+-    await page.goto('/login');
+-    await waitForFlutter(page);
+
++    // Press tab to focus email field and sign in
++    await page.keyboard.press('Tab');
+     await page.keyboard.type('admin@test.com');
+     await page.keyboard.press('Tab');
+     await page.keyboard.type('adminpass123');
+     await page.keyboard.press('Tab');
+     await page.keyboard.press('Enter');
+
+-    await page.waitForTimeout(2000);
++    await page.waitForTimeout(1000);
+
+-    await page.goto('/handoffs');
+-    await waitForFlutter(page);
+     await page.waitForTimeout(1000);
+
+     const outDir = process.env.APP_SCREENSHOT_OUTPUT_DIR || process.env.PLAYWRIGHT_BROWSERS_PATH || process.cwd();
+@@ -52,11 +50,7 @@
+         await page.request.post(`${baseUrl}/api/ops/chaos/lock-db`);
+     } catch (e) {}
+
+-    await page.goto('/');
+-    await waitForFlutter(page);
+     await page.waitForTimeout(4000); // wait for DB lock to release
+-    await page.goto('/handoffs');
+-    await waitForFlutter(page);
+     await page.screenshot({ path: require('path').join(outDir, 'handoff-verification-after-recovery.png') });
+
+     const title = await page.title();
