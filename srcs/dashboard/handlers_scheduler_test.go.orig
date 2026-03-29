@@ -1,0 +1,199 @@
+package dashboard
+
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/onehumancorp/mono/srcs/auth"
+	"github.com/onehumancorp/mono/srcs/billing"
+	"github.com/onehumancorp/mono/srcs/domain"
+	"github.com/onehumancorp/mono/srcs/orchestration"
+	"github.com/onehumancorp/mono/srcs/scheduler"
+)
+
+func setupSchedulerServer(t *testing.T) *Server {
+	t.Helper()
+	org := domain.NewSoftwareCompany("test-org", "Test Org", "CEO", time.Now().UTC())
+	hub := orchestration.NewHub()
+	tracker := billing.NewTracker(billing.DefaultCatalog)
+	authStore := auth.NewStore()
+
+	return &Server{
+		org:       org,
+		hub:       hub,
+		tracker:   tracker,
+		authStore: authStore,
+	}
+}
+
+func TestHandleSchedulerTasks_Get(t *testing.T) {
+	s := setupSchedulerServer(t)
+
+	// Add a task
+	task := scheduler.NewTask(s.org.ID, "agent-1", "test-task", scheduler.Schedule{
+		Type: scheduler.ScheduleOnce,
+	}, nil)
+	s.hub.Scheduler().Create(task)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/scheduler/tasks", nil)
+	w := httptest.NewRecorder()
+
+	s.handleSchedulerTasks(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", w.Code)
+	}
+
+	var responseTasks []scheduler.Task
+	if err := json.NewDecoder(w.Body).Decode(&responseTasks); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if len(responseTasks) != 1 {
+		t.Errorf("expected 1 task, got %d", len(responseTasks))
+	}
+	if responseTasks[0].ID != task.ID {
+		t.Errorf("expected task ID %s, got %s", task.ID, responseTasks[0].ID)
+	}
+}
+
+func TestHandleSchedulerTasks_Post(t *testing.T) {
+	s := setupSchedulerServer(t)
+
+	reqBody := schedulerCreateRequest{
+		AgentID: "agent-1",
+		Name:    "test-task",
+		Schedule: scheduler.Schedule{
+			Type: scheduler.ScheduleOnce,
+		},
+		Payload: json.RawMessage(`{"key": "value"}`),
+	}
+	bodyBytes, _ := json.Marshal(reqBody)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/scheduler/tasks", bytes.NewReader(bodyBytes))
+	w := httptest.NewRecorder()
+
+	s.handleSchedulerTasks(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", w.Code)
+	}
+
+	var responseTask scheduler.Task
+	if err := json.NewDecoder(w.Body).Decode(&responseTask); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if responseTask.Name != reqBody.Name {
+		t.Errorf("expected task name %s, got %s", reqBody.Name, responseTask.Name)
+	}
+	if responseTask.AgentID != reqBody.AgentID {
+		t.Errorf("expected task agent ID %s, got %s", reqBody.AgentID, responseTask.AgentID)
+	}
+}
+
+func TestHandleSchedulerTasks_Post_InvalidJSON(t *testing.T) {
+	s := setupSchedulerServer(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/scheduler/tasks", bytes.NewReader([]byte(`invalid json`)))
+	w := httptest.NewRecorder()
+
+	s.handleSchedulerTasks(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", w.Code)
+	}
+}
+
+func TestHandleSchedulerTasks_MethodNotAllowed(t *testing.T) {
+	s := setupSchedulerServer(t)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/scheduler/tasks", nil)
+	w := httptest.NewRecorder()
+
+	s.handleSchedulerTasks(w, req)
+
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected status 405, got %d", w.Code)
+	}
+}
+
+func TestHandleSchedulerCancel(t *testing.T) {
+	s := setupSchedulerServer(t)
+
+	// Add a task
+	task := scheduler.NewTask(s.org.ID, "agent-1", "test-task", scheduler.Schedule{
+		Type: scheduler.ScheduleOnce,
+	}, nil)
+	s.hub.Scheduler().Create(task)
+
+	reqBody := schedulerCancelRequest{
+		ID: task.ID,
+	}
+	bodyBytes, _ := json.Marshal(reqBody)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/scheduler/cancel", bytes.NewReader(bodyBytes))
+	w := httptest.NewRecorder()
+
+	s.handleSchedulerCancel(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Errorf("expected status 204, got %d", w.Code)
+	}
+
+	tasks := s.hub.Scheduler().ListForOrg(s.org.ID)
+	if len(tasks) != 1 {
+		t.Fatalf("expected 1 task, got %d", len(tasks))
+	}
+	if tasks[0].Status != scheduler.TaskStatusCancelled {
+		t.Errorf("expected task status to be cancelled, got %s", tasks[0].Status)
+	}
+}
+
+func TestHandleSchedulerCancel_InvalidJSON(t *testing.T) {
+	s := setupSchedulerServer(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/scheduler/cancel", bytes.NewReader([]byte(`invalid json`)))
+	w := httptest.NewRecorder()
+
+	s.handleSchedulerCancel(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", w.Code)
+	}
+}
+
+func TestHandleSchedulerCancel_NotFound(t *testing.T) {
+	s := setupSchedulerServer(t)
+
+	reqBody := schedulerCancelRequest{
+		ID: "nonexistent",
+	}
+	bodyBytes, _ := json.Marshal(reqBody)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/scheduler/cancel", bytes.NewReader(bodyBytes))
+	w := httptest.NewRecorder()
+
+	s.handleSchedulerCancel(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected status 404, got %d", w.Code)
+	}
+}
+
+func TestHandleSchedulerCancel_MethodNotAllowed(t *testing.T) {
+	s := setupSchedulerServer(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/scheduler/cancel", nil)
+	w := httptest.NewRecorder()
+
+	s.handleSchedulerCancel(w, req)
+
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Errorf("expected status 405, got %d", w.Code)
+	}
+}
