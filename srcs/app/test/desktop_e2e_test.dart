@@ -33,6 +33,7 @@ import 'package:ohc_app/screens/service_screen.dart';
 import 'package:ohc_app/screens/settings_screen.dart';
 import 'package:ohc_app/screens/skills_screen.dart';
 import 'package:ohc_app/screens/wizard_screen.dart';
+import 'package:ohc_app/screens/scaling_screen.dart';
 import 'package:ohc_app/services/api_service.dart';
 import 'package:ohc_app/services/auth_service.dart';
 import 'package:ohc_app/services/local_manager_service.dart';

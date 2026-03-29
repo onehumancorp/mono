@@ -215,6 +215,23 @@ class ApiService {
     _checkStatus(res);
   }
 
+  // ── Scaling ──────────────────────────────────────────────────────────────
+
+  Future<void> scaleRole(String role, int count) async {
+    final res = await _client.post(
+      Uri.parse('$baseUrl/api/v1/scale'),
+      headers: _headers,
+      body: jsonEncode({'role': role, 'count': count}),
+    );
+    _checkStatus(res);
+  }
+
+  Future<http.StreamedResponse> scaleStream() async {
+    final request = http.Request('GET', Uri.parse('$baseUrl/api/v1/scale/stream'));
+    request.headers.addAll(_headers);
+    return await _client.send(request);
+  }
+
   // ── Service logs ──────────────────────────────────────────────────────────
 
   Future<List<String>> getLogs({int lines = 100}) async {

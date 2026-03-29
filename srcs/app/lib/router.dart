@@ -13,6 +13,7 @@ import 'package:ohc_app/screens/security_screen.dart';
 import 'package:ohc_app/screens/settings_screen.dart';
 import 'package:ohc_app/screens/service_screen.dart';
 import 'package:ohc_app/screens/wizard_screen.dart';
+import 'package:ohc_app/screens/scaling_screen.dart';
 import 'package:ohc_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
@@ -85,6 +86,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/wizard',
             builder: (context, state) => const SetupWizardScreen(),
           ),
+          GoRoute(
+            path: '/scaling',
+            builder: (context, state) => const ScalingScreen(),
+          ),
         ],
       ),
     ],
@@ -128,6 +133,7 @@ class _Sidebar extends StatelessWidget {
         _NavItem(icon: Icons.video_call, label: 'Meetings', path: '/meetings'),
         _NavItem(icon: Icons.chat, label: 'Chat', path: '/chat'),
         _NavItem(icon: Icons.chat_bubble_outline, label: 'Channels', path: '/channels'),
+        _NavItem(icon: Icons.trending_up, label: 'Scaling', path: '/scaling'),
         const Divider(),
         _NavItem(icon: Icons.psychology, label: 'AI Providers', path: '/ai-config'),
         _NavItem(icon: Icons.extension, label: 'Skills', path: '/skills'),
