@@ -1189,6 +1189,11 @@ var bufferPool = sync.Pool{
 
 var sharedHTTPClient = &http.Client{
 	Timeout: 30 * time.Second,
+	Transport: &http.Transport{
+		MaxIdleConns:        1000,
+		MaxIdleConnsPerHost: 1000,
+		IdleConnTimeout:     90 * time.Second,
+	},
 }
 
 // Reason functionality.
