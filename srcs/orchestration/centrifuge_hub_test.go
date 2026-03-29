@@ -62,7 +62,6 @@ func TestCentrifugeNodeHandler(t *testing.T) {
 func TestHubCentrifugeIntegration(t *testing.T) {
 	hub := NewHub()
 
-
 	cn, err := NewCentrifugeNode()
 	if err != nil {
 		t.Fatalf("NewCentrifugeNode() error = %v", err)

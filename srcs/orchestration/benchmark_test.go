@@ -10,7 +10,6 @@ import (
 
 	pb "github.com/onehumancorp/mono/srcs/proto"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
 )
 
 type benchStreamMessagesServer struct {
@@ -47,7 +46,7 @@ func BenchmarkStreamLatency(b *testing.B) {
 	}
 
 	go func() {
-		_ = srv.StreamMessages(pb.StreamMessagesRequest_builder{AgentId: proto.String("agent2")}.Build(), stream)
+		_ = srv.StreamMessages(&pb.StreamMessagesRequest{AgentId: ("agent2")}, stream)
 	}()
 
 	// wait for stream to start

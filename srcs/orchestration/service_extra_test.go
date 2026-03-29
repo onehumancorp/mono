@@ -10,7 +10,6 @@ import (
 	pb "github.com/onehumancorp/mono/srcs/proto"
 	"github.com/onehumancorp/mono/srcs/settings"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
 )
 
 func TestPublish_ContextSummarization_Success(t *testing.T) {
@@ -171,9 +170,9 @@ func TestStreamMessages_SendErrorOnInitialSend(t *testing.T) {
 	defer cancel()
 
 	mockStream := &mockStreamMessagesServerError{ctx: ctx}
-	req := pb.StreamMessagesRequest_builder{
-		AgentId: proto.String("receiver"),
-	}.Build()
+	req := &pb.StreamMessagesRequest{
+		AgentId: ("receiver"),
+	}
 
 	err := server.StreamMessages(req, mockStream)
 	if err == nil {
@@ -191,9 +190,9 @@ func TestStreamMessages_ErrorOnLaterSend(t *testing.T) {
 	defer cancel()
 
 	mockStream := &mockStreamMessagesServerError{ctx: ctx}
-	req := pb.StreamMessagesRequest_builder{
-		AgentId: proto.String("receiver"),
-	}.Build()
+	req := &pb.StreamMessagesRequest{
+		AgentId: ("receiver"),
+	}
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -337,7 +336,7 @@ func TestEventLogWorker_Errors(t *testing.T) {
 
 	hub2 := NewHub()
 	// Marshal failure branch (func cannot be marshaled in JSON)
-	hub2.LogEvent(func(){})
+	hub2.LogEvent(func() {})
 
 	time.Sleep(50 * time.Millisecond)
 }

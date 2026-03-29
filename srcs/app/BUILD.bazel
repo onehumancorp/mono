@@ -141,6 +141,7 @@ sh_test(
         ":app",
         "e2e/playwright.config.ts",
         "e2e/web.spec.ts",
+        "e2e/handoff.spec.ts",
         "//:node_modules/@playwright/test",
     ],
     tags = ["requires-network"],  # browser download may need network on first run
