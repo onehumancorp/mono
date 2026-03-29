@@ -146,6 +146,18 @@ sh_test(
     tags = ["requires-network"],  # browser download may need network on first run
 )
 
+sh_test(
+    name = "chaos_test",
+    srcs = ["test/chaos_test.sh"],
+    data = [
+        ":app_web",
+        "e2e/playwright.config.ts",
+        "e2e/chaos_test.spec.ts",
+        "//:node_modules/@playwright/test",
+    ],
+    tags = ["requires-network"],
+)
+
 # ── Local Development targets ─────────────────────────────────────────────────
 
 sh_binary(
