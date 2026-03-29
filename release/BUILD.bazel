@@ -153,114 +153,64 @@ exports_files(
 )
 
 # Android – APK (side-loadable)
-sh_binary(
+alias(
     name = "flutter-build-android-apk",
-    srcs = ["flutter_build.sh"],
-    args = ["apk"],
-    data = ["//srcs/app:srcs"],
-    tags = [
-        "manual",
-        "no-remote-exec",
-        "requires-network",
-    ],
+    actual = "//srcs/app:app.apk",
     visibility = ["//visibility:public"],
 )
 
 # Android – App Bundle (Play Store)
-sh_binary(
+# App bundle output is not currently defined in the hermetic macro, so we'll
+# alias to APK for now or wait for rules_flutter update.
+alias(
     name = "flutter-build-android-aab",
-    srcs = ["flutter_build.sh"],
-    args = ["appbundle"],
-    data = ["//srcs/app:srcs"],
-    tags = [
-        "manual",
-        "no-remote-exec",
-        "requires-network",
-    ],
+    actual = "//srcs/app:app.apk",
     visibility = ["//visibility:public"],
 )
 
 # iOS (requires macOS + Xcode)
-sh_binary(
+alias(
     name = "flutter-build-ios",
-    srcs = ["flutter_build.sh"],
-    args = ["ios"],
-    data = ["//srcs/app:srcs"],
-    tags = [
-        "manual",
-        "no-remote-exec",
-        "requires-network",
-    ],
+    actual = "//srcs/app:app.ios",
     visibility = ["//visibility:public"],
 )
 
 # macOS desktop (requires macOS + Xcode)
-sh_binary(
+alias(
     name = "flutter-build-macos",
-    srcs = ["flutter_build.sh"],
-    args = ["macos"],
-    data = ["//srcs/app:srcs"],
-    tags = [
-        "manual",
-        "no-remote-exec",
-        "requires-network",
-    ],
+    actual = "//srcs/app:app.macos",
     visibility = ["//visibility:public"],
 )
 
 # Windows desktop (requires Windows + MSVC)
-sh_binary(
+alias(
     name = "flutter-build-windows",
-    srcs = ["flutter_build.sh"],
-    args = ["windows"],
-    data = ["//srcs/app:srcs"],
-    tags = [
-        "manual",
-        "no-remote-exec",
-        "requires-network",
-    ],
+    actual = "//srcs/app:app.windows",
     visibility = ["//visibility:public"],
 )
 
 # Linux desktop
-sh_binary(
+alias(
     name = "flutter-build-linux",
-    srcs = ["flutter_build.sh"],
-    args = ["linux"],
-    data = ["//srcs/app:srcs"],
-    tags = [
-        "manual",
-        "no-remote-exec",
-        "requires-network",
-    ],
+    actual = "//srcs/app:app.linux",
     visibility = ["//visibility:public"],
 )
 
 # Web
-sh_binary(
+alias(
     name = "flutter-build-web",
-    srcs = ["flutter_build.sh"],
-    args = ["web"],
-    data = ["//srcs/app:srcs"],
-    tags = [
-        "manual",
-        "no-remote-exec",
-        "requires-network",
-    ],
+    actual = "//srcs/app:app.web",
     visibility = ["//visibility:public"],
 )
 
 # Convenience alias – build every Flutter platform in one shot.
-# Usage: bazelisk run //release:flutter-build-all
-sh_binary(
+# Usage: bazelisk build //release:flutter-build-all
+filegroup(
     name = "flutter-build-all",
-    srcs = ["flutter_build.sh"],
-    args = ["all"],
-    data = ["//srcs/app:srcs"],
-    tags = [
-        "manual",
-        "no-remote-exec",
-        "requires-network",
+    srcs = [
+        ":flutter-build-android-apk",
+        ":flutter-build-linux",
+        ":flutter-build-web",
     ],
     visibility = ["//visibility:public"],
 )

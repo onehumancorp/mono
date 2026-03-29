@@ -107,30 +107,11 @@ oci_push(
 # The React frontend has been migrated to Flutter – the Flutter web app is now
 # the canonical frontend and runs on web, mobile, and desktop from a single
 # codebase.
-genrule(
+pkg_tar(
     name = "frontend_static_assets",
-    srcs = ["//srcs/app:app_web.web"],
-    outs = ["frontend_dist.tar"],
-    cmd = """
-set -e
-# Find the Flutter web build artifacts directory produced by the flutter_app rule.
-artifacts_dir=""
-for src in $(SRCS); do
-  case "$$src" in
-    *_build_artifacts)
-      if [ -d "$$src" ]; then
-        artifacts_dir="$$src"
-        break
-      fi
-      ;;
-  esac
-done
-if [ -z "$$artifacts_dir" ]; then
-  echo "ERROR: Flutter web build_artifacts directory not found in genrule sources" >&2
-  exit 1
-fi
-tar -C "$$artifacts_dir" -hcf $@ .
-""",
+    srcs = ["//srcs/app:app.web"],
+    package_dir = "/",
+    strip_prefix = "/srcs/app/app.web_build_artifacts",  # Correct name based on the 'app.web' target
 )
 
 pkg_tar(

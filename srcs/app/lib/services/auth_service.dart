@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:ohc_app/services/settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Currently authenticated user info.
@@ -69,11 +70,10 @@ class AuthService {
 
 // ── Providers ──────────────────────────────────────────────────────────────
 
+
 final _prefsProvider = FutureProvider<SharedPreferences>(
   (_) => SharedPreferences.getInstance(),
 );
-
-import 'package:ohc_app/services/settings_service.dart';
 
 final backendUrlProvider = Provider<String>((ref) {
   final settings = ref.watch(clientSettingsProvider).valueOrNull;

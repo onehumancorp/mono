@@ -19,18 +19,82 @@ filegroup(
 )
 
 flutter_library(
-    name = "services_lib",
-    srcs = glob(
-        ["*.dart"],
-        exclude = ["*_test.dart"],
-    ),
+    name = "settings_service",
+    srcs = ["settings_service.dart"],
     pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
     deps = [
         "//srcs/app/lib/models:models_lib",
         "@flutter_sdk//flutter/packages/flutter",
         "@pub_flutter_riverpod//:flutter_riverpod",
+        "@pub_shared_preferences//:shared_preferences",
+    ],
+)
+
+flutter_library(
+    name = "auth_service",
+    srcs = ["auth_service.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        ":settings_service",
+        "@flutter_sdk//flutter/packages/flutter",
+        "@pub_flutter_riverpod//:flutter_riverpod",
         "@pub_http//:http",
+        "@pub_shared_preferences//:shared_preferences",
+    ],
+)
+
+flutter_library(
+    name = "local_manager_service",
+    srcs = ["local_manager_service.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        ":settings_service",
+        "@flutter_sdk//flutter/packages/flutter",
+        "@pub_flutter_riverpod//:flutter_riverpod",
+    ],
+)
+
+flutter_library(
+    name = "centrifuge_service",
+    srcs = ["centrifuge_service.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        ":auth_service",
+        "@flutter_sdk//flutter/packages/flutter",
+        "@pub_flutter_riverpod//:flutter_riverpod",
         "@pub_centrifuge//:centrifuge",
+    ],
+)
+
+flutter_library(
+    name = "api_service",
+    srcs = ["api_service.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        ":auth_service",
+        "//srcs/app/lib/models:models_lib",
+        "@flutter_sdk//flutter/packages/flutter",
+        "@pub_flutter_riverpod//:flutter_riverpod",
+        "@pub_http//:http",
+    ],
+)
+
+flutter_library(
+    name = "services_lib",
+    srcs = [],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        ":api_service",
+        ":auth_service",
+        ":centrifuge_service",
+        ":local_manager_service",
+        ":settings_service",
     ],
 )
 
@@ -42,6 +106,7 @@ SERVICE_TESTS = glob(["*_test.dart"])
         srcs = [file],
         embed = ["//srcs/app:app_lib"],
         test_files = [file],
+        workspace_pubspec = "//:pubspec.yaml",
     )
     for file in SERVICE_TESTS
 ]
@@ -60,4 +125,5 @@ flutter_test(
     coverage = True,
     coverage_min = 90,
     tags = ["manual"],
+    workspace_pubspec = "//:pubspec.yaml",
 )

@@ -18,22 +18,40 @@ filegroup(
     visibility = ["//srcs/app:__pkg__"],
 )
 
+# Base dependencies for most screens
+SCREEN_DEPS = [
+    "//srcs/app/lib/models:models_lib",
+    "//srcs/app/lib/services:services_lib",
+    "//srcs/app/lib/widgets:widgets_lib",
+    "@flutter_sdk//flutter/packages/flutter",
+    "@pub_flutter_riverpod//:flutter_riverpod",
+    "@pub_go_router//:go_router",
+    "@pub_intl//:intl",
+]
+
+[
+    flutter_library(
+        name = file.replace(".dart", ""),
+        srcs = [file],
+        pubspec = "//srcs/app:pubspec.yaml",
+        workspace_pubspec = "//:pubspec.yaml",
+        deps = SCREEN_DEPS,
+    )
+    for file in glob(
+        ["*.dart"],
+        exclude = ["*_test.dart"],
+    )
+]
+
 flutter_library(
     name = "screens_lib",
-    srcs = glob(
-        ["**/*.dart"],
-        exclude = ["**/*_test.dart"],
-    ),
+    srcs = [],
     pubspec = "//srcs/app:pubspec.yaml",
-    deps = [
-        "//srcs/app/lib/models:models_lib",
-        "//srcs/app/lib/services:services_lib",
-        "//srcs/app/lib/widgets:widgets_lib",
-        "@flutter_sdk//flutter/packages/flutter",
-        "@pub_flutter_riverpod//:flutter_riverpod",
-        "@pub_go_router//:go_router",
-        "@pub_intl//:intl",
-    ],
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [":" + file.replace(".dart", "") for file in glob(
+        ["*.dart"],
+        exclude = ["*_test.dart"],
+    )],
 )
 
 SCREEN_TESTS = glob(["**/*_test.dart"])
@@ -44,6 +62,7 @@ SCREEN_TESTS = glob(["**/*_test.dart"])
         srcs = [file],
         embed = ["//srcs/app:app_lib"],
         test_files = [file],
+        workspace_pubspec = "//:pubspec.yaml",
     )
     for file in SCREEN_TESTS
 ]
@@ -62,4 +81,5 @@ flutter_test(
     coverage = True,
     coverage_min = 90,
     tags = ["manual"],
+    workspace_pubspec = "//:pubspec.yaml",
 )

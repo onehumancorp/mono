@@ -35,24 +35,48 @@ filegroup(
 # ── Flutter Libraries ─────────────────────────────────────────────────────────
 
 flutter_library(
-    name = "app_lib",
-    srcs = glob(["lib/*.dart"]) + [
-        "//srcs/app/lib/models:dart_srcs",
-        "//srcs/app/lib/services:dart_srcs",
-        "//srcs/app/lib/screens:dart_srcs",
-        "//srcs/app/lib/widgets:dart_srcs",
-    ],
+    name = "router_lib",
+    srcs = ["lib/router.dart"],
     pubspec = "pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        "//srcs/app/lib/models:models_lib",
+        "//srcs/app/lib/screens:screens_lib",
+        "//srcs/app/lib/services:auth_service",
+        "@pub_go_router//:go_router",
+    ],
+)
+
+flutter_library(
+    name = "main_lib",
+    srcs = ["lib/main.dart"],
+    pubspec = "pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        ":router_lib",
+        "//srcs/app/lib/services:services_lib",
+        "//srcs/app/lib/widgets:widgets_lib",
+        "@flutter_sdk//flutter/packages/flutter",
+        "@pub_flutter_riverpod//:flutter_riverpod",
+    ],
+)
+
+# Aggregate target for embedding and testing
+flutter_library(
+    name = "app_lib",
+    srcs = [],
+    pubspec = "pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
     visibility = ["//srcs/app:__subpackages__"],
     deps = [
-        # Internal modular libraries
+        ":main_lib",
+        ":router_lib",
         "//srcs/app/lib/models:models_lib",
         "//srcs/app/lib/services:services_lib",
         "//srcs/app/lib/screens:screens_lib",
         "//srcs/app/lib/widgets:widgets_lib",
-        # SDK packages
+        # SDK and third-party deps
         "@flutter_sdk//flutter/packages/flutter",
-        # Direct main dependencies
         "@pub_go_router//:go_router",
         "@pub_flutter_riverpod//:flutter_riverpod",
         "@pub_http//:http",
@@ -61,8 +85,9 @@ flutter_library(
         "@pub_shared_preferences//:shared_preferences",
         "@pub_web_socket_channel//:web_socket_channel",
         "@pub_centrifuge//:centrifuge",
-        # Direct dev dependencies (needed for app_lib if it uses mocktail etc)
         "@pub_mocktail//:mocktail",
+        "@pub_cupertino_icons//:cupertino_icons",
+        "@pub_flutter_lints//:flutter_lints",
     ],
 )
 
@@ -85,6 +110,7 @@ flutter_test(
     srcs = ["test/desktop_e2e_test.dart"],
     embed = [":app_lib"],
     test_files = ["test/desktop_e2e_test.dart"],
+    workspace_pubspec = "//:pubspec.yaml",
 )
 
 # ── Flutter web app build ─────────────────────────────────────────────────────
@@ -92,10 +118,16 @@ flutter_test(
 # by the Playwright e2e test target below.
 
 flutter_app(
-    name = "app_web",
+    name = "app",
+    apk = glob(["android/**"], allow_empty = True),
     embed = [":app_lib"],
+    ios = glob(["ios/**"], allow_empty = True),
+    linux = glob(["linux/**"], allow_empty = True),
+    macos = glob(["macos/**"], allow_empty = True),
     visibility = ["//visibility:public"],
     web = glob(["web/**"], allow_empty = True),
+    windows = glob(["windows/**"], allow_empty = True),
+    workspace_pubspec = "//:pubspec.yaml",
 )
 
 # ── Web E2E tests (Playwright) ────────────────────────────────────────────────
@@ -106,7 +138,7 @@ sh_test(
     name = "app_web_e2e_test",
     srcs = ["test/flutter_web_e2e_test.sh"],
     data = [
-        ":app_web",
+        ":app",
         "e2e/playwright.config.ts",
         "e2e/web.spec.ts",
         "//:node_modules/@playwright/test",
@@ -120,7 +152,7 @@ sh_binary(
     name = "start",
     srcs = ["test/start_web.sh"],
     data = [
-        ":app_web",
+        ":app",
         "test/bazel_helpers.sh",
     ],
     visibility = ["//visibility:public"],
@@ -130,7 +162,7 @@ sh_binary(
     name = "capture_screenshots",
     srcs = ["test/capture_screenshots.sh"],
     data = [
-        ":app_web",
+        ":app",
         "e2e/capture_screenshots.mjs",
         "test/bazel_helpers.sh",
         "//:node_modules/@playwright/test",

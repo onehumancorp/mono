@@ -19,14 +19,33 @@ filegroup(
 )
 
 flutter_library(
-    name = "widgets_lib",
-    srcs = glob(
-        ["*.dart"],
-        exclude = ["*_test.dart"],
-    ),
+    name = "org_tree_widget",
+    srcs = ["org_tree_widget.dart"],
     pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
     deps = [
-        "//srcs/app/lib/models:models_lib",
+        "//srcs/app/lib/models:dashboard_model",
         "@flutter_sdk//flutter/packages/flutter",
+    ],
+)
+
+flutter_library(
+    name = "slide_to_approve",
+    srcs = ["slide_to_approve.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        "@flutter_sdk//flutter/packages/flutter",
+    ],
+)
+
+flutter_library(
+    name = "widgets_lib",
+    srcs = [],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        ":org_tree_widget",
+        ":slide_to_approve",
     ],
 )

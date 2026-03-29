@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:ohc_app/services/settings_service.dart';
 
 /// Manages the local OpenClaw service and its configuration.
 class LocalManagerService {
@@ -134,8 +135,6 @@ class LocalManagerService {
     };
   }
 }
-
-import 'package:ohc_app/services/settings_service.dart';
 
 final localManagerServiceProvider = Provider((ref) => LocalManagerService());
 

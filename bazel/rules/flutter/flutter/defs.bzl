@@ -5,6 +5,7 @@ load("@protobuf//bazel/common:proto_common.bzl", "proto_common")
 load("@protobuf//bazel/common:proto_info.bzl", "ProtoInfo")
 load(
     "//flutter/private:flutter_actions.bzl",
+    "compute_relative_to_package",
     "create_flutter_working_dir",
     "flutter_build_action",
     "flutter_pub_get_action",
@@ -201,6 +202,7 @@ def _flutter_library_impl(ctx):
         dart_files,
         other_files,
         list(ctx.files.data),
+        workspace_pubspec = ctx.file.workspace_pubspec,
     )
 
     # Collect pub_cache directories from all transitive dependencies
@@ -220,6 +222,7 @@ def _flutter_library_impl(ctx):
         pubspec_file,
         transitive_pub_caches,
         ctx.attr.codegen,
+        workspace_pubspec = ctx.file.workspace_pubspec,
     )
 
     output_files = [
@@ -274,6 +277,10 @@ _flutter_library_rule = rule(
         "codegen": attr.string_list(
             doc = "List of code generation commands to run via `dart run` (e.g., ['intl_utils:generate'])",
             default = [],
+        ),
+        "workspace_pubspec": attr.label(
+            allow_single_file = True,
+            doc = "Optional root pubspec.yaml if this library is part of a Dart Workspace.",
         ),
     },
     toolchains = ["//flutter:toolchain_type"],
@@ -434,7 +441,7 @@ def _flutter_app_impl(ctx):
     manifest = ctx.actions.declare_file(ctx.label.name + "_app_overlay.manifest")
 
     overlay_entries = [
-        "{}|{}".format(_compute_relative_to_package(ctx, f), f.path)
+        "{}|{}".format(compute_relative_to_package(ctx, f), f.path)
         for f in ctx.files.srcs
     ]
 
@@ -502,6 +509,7 @@ fi
         ctx.attr.target,
         library_info.pub_cache,
         library_info.dart_tool,
+        package_dir = ctx.label.package if ctx.file.workspace_pubspec else "",
     )
 
     runner = ctx.actions.declare_file(ctx.label.name + "_runner.sh")
@@ -545,6 +553,10 @@ _flutter_app_rule = rule(
             values = ["web", "apk", "ios", "macos", "linux", "windows"],
             doc = "Flutter build target platform",
         ),
+        "workspace_pubspec": attr.label(
+            allow_single_file = True,
+            doc = "Optional root pubspec.yaml if this library is part of a Dart Workspace.",
+        ),
     },
     executable = True,
     toolchains = ["//flutter:toolchain_type"],
@@ -571,7 +583,8 @@ def flutter_app(
         ios = None,
         macos = None,
         linux = None,
-        windows = None):
+        windows = None,
+        workspace_pubspec = None):
     """Macro that defines flutter_app platform targets.
 
     Each platform attribute (`web`, `apk`, `ios`, `macos`, `linux`, `windows`) accepts
@@ -617,6 +630,7 @@ def flutter_app(
             "embed": embed,
             "srcs": common_srcs + _to_label_list(platform_srcs),
             "target": platform,
+            "workspace_pubspec": workspace_pubspec,
         }
 
         if visibility != None:
@@ -957,15 +971,26 @@ export PATH="$FLUTTER_BIN_DIR:$PATH"
 # This ensures package imports resolve correctly in the test environment
 echo "Regenerating package_config.json for test runtime..."
 pushd "$RUNTIME_WORKSPACE" >/dev/null
+
+# If we are in a workspace, we must cd into the package directory
+PACKAGE_DIR="{package_dir}"
+if [ -n "$PACKAGE_DIR" ]; then
+    pushd "$PACKAGE_DIR" >/dev/null
+    echo "Entered package directory: $(pwd)"
+fi
+
 PUB_GET_OUT="$LOG_ROOT/flutter_pub_get.log"
 if "$FLUTTER_BIN_ABS" --suppress-analytics pub get --offline > "$PUB_GET_OUT" 2>&1; then
     echo "✓ Package config regenerated successfully (offline)" | tee -a "$TEST_LOG"
 else
     echo "✗ flutter pub get --offline failed in test runtime" | tee -a "$TEST_LOG"
     cat "$PUB_GET_OUT" | tee -a "$TEST_LOG"
+    if [ -n "$PACKAGE_DIR" ]; then popd >/dev/null; fi
     popd >/dev/null
     exit 1
 fi
+
+if [ -n "$PACKAGE_DIR" ]; then popd >/dev/null; fi
 popd >/dev/null
 
 CMD=("$FLUTTER_BIN_ABS" "--suppress-analytics" "test")
@@ -981,12 +1006,18 @@ done
 unset IFS
 
 pushd "$RUNTIME_WORKSPACE" >/dev/null
+if [ -n "$PACKAGE_DIR" ]; then
+    pushd "$PACKAGE_DIR" >/dev/null
+fi
 
 set +e
 "${{CMD[@]}}" 2>&1 | tee -a "$TEST_LOG"
 RESULT=${{PIPESTATUS[0]}}
 set -e
 
+if [ -n "$PACKAGE_DIR" ]; then
+    popd >/dev/null
+fi
 popd >/dev/null
 
 echo "" | tee -a "$TEST_LOG"
@@ -1034,6 +1065,7 @@ exit "$RESULT"
         test_patterns = test_patterns_literal,
         coverage_flag = "true" if ctx.attr.coverage else "false",
         coverage_min = ctx.attr.coverage_min,
+        package_dir = ctx.label.package if ctx.file.workspace_pubspec else "",
     )
 
     ctx.actions.write(
@@ -1080,6 +1112,10 @@ flutter_test = rule(
         "coverage_min": attr.int(
             default = 90,
             doc = "Minimum required line-coverage percentage (0-100) when coverage=True.",
+        ),
+        "workspace_pubspec": attr.label(
+            allow_single_file = True,
+            doc = "Optional root pubspec.yaml if this library is part of a Dart Workspace.",
         ),
     },
     test = True,
@@ -1325,6 +1361,7 @@ def _dart_library_impl(ctx):
             direct_srcs,
             [],
             [],
+            workspace_pubspec = ctx.file.workspace_pubspec,
         )
 
         # Prepare dependency cache and pub_deps.json without running pub get
@@ -1336,6 +1373,7 @@ def _dart_library_impl(ctx):
             transitive_pub_caches,
             ctx.attr.codegen,
             is_pub_package = ctx.attr.pub_package,
+            workspace_pubspec = ctx.file.workspace_pubspec,
         )
         pub_deps = pub_deps_file
 
@@ -1452,6 +1490,10 @@ _dart_library_rule = rule(
         "pub_package": attr.bool(
             doc = "True if this target represents a hosted pub.dev package (enables cache publishing).",
             default = False,
+        ),
+        "workspace_pubspec": attr.label(
+            allow_single_file = True,
+            doc = "Optional root pubspec.yaml if this library is part of a Dart Workspace.",
         ),
     },
     toolchains = ["//flutter:toolchain_type"],
