@@ -98,13 +98,20 @@ def _ensure_pub_deps(repository_ctx, package_name, package_dir):
                 "Skipping pub deps generation for {} due to unsupported dependency source; falling back to pubspec.yaml".format(package_name),
             )
             return False
-        fail("Failed to run `{tool} pub deps --json` for package '{pkg}' (dir: {dir}).\nstdout: {stdout}\nstderr: {stderr}".format(
-            tool = tool,
-            pkg = package_name,
-            dir = package_dir,
-            stdout = deps_result.stdout,
-            stderr = stderr,
-        ))
+        lower_stderr = stderr.lower()
+        if "workspace" in lower_stderr:
+            repository_ctx.report_progress(
+                "Skipping pub deps generation for {} due to workspace error; falling back to pubspec.yaml".format(package_name),
+            )
+            return False
+        else:
+            fail("Failed to run `{tool} pub deps --json` for package '{pkg}' (dir: {dir}).\nstdout: {stdout}\nstderr: {stderr}".format(
+                tool = tool,
+                pkg = package_name,
+                dir = package_dir,
+                stdout = deps_result.stdout,
+                stderr = stderr,
+            ))
 
     # Write the generated JSON payload (strip any leading log lines).
     output = deps_result.stdout

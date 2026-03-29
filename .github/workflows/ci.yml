@@ -38,7 +38,7 @@ jobs:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           if [ -z "$BUILDBUDDY_API_KEY" ]; then
-            bazelisk test //... \
+            bazelisk test //... --jobs=200 \
               --test_output=errors \
               --test_summary=terse \
               --test_timeout=300,600,900,1800 \
@@ -49,7 +49,7 @@ jobs:
               --bes_results_url="" \
               --bes_backend=""
           else
-            bazelisk test //... \
+            bazelisk test //... --jobs=200 \
               --test_output=errors \
               --test_summary=terse \
               --test_timeout=300,600,900,1800 \
