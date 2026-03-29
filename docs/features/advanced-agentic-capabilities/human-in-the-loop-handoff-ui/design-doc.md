@@ -2,11 +2,11 @@
 
 ## 1. Executive Summary
 **Objective:** Provide a secure, verifiable UI for agents to pause execution and request human manager approval for high-risk actions, preventing unauthorized agent actions.
-**Scope:** Implement the `HandoffService` within the Orchestration Hub and the corresponding React components in the CEO Dashboard.
+**Scope:** Implement the `HandoffService` within the Orchestration Hub and the corresponding Flutter widgets in the CEO Dashboard.
 
 ## 2. Architecture & Components
 - **Handoff Gateway:** A service to intercept agent requests requiring human validation.
-- **UI Layer:** A Next.js React component for displaying handoff context and visual state.
+- **UI Layer:** A Flutter Flutter widget for displaying handoff context and visual state.
 - **Notification Bridge:** Integration with Slack/Mattermost via webhooks for instant manager notification.
 
 ## 3. Data Flow
@@ -28,5 +28,5 @@ message HandoffPackage {
 
 ## 5. Implementation Details
 - Implement structured JSON validation for all handoff payloads.
-- Ensure the UI components properly utilize React state and suspense for real-time updates.
+- Ensure the UI components properly utilize Flutter state and suspense for real-time updates.
 - Maintain Zero-Lock stack compatibility.

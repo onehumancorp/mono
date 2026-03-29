@@ -21,7 +21,7 @@ A narrative description of what a successful journey looks like from the user's 
 - **Manual Intervention**: Steps for the CEO to fix it.
 
 ## 4. UI/UX Details
-- **Component IDs**: Specific React components involved.
+- **Component IDs**: Specific Flutter widgets involved.
 - **Visual Cues**: Color changes (amber for pending, etc.).
 - **Accessibility**: ARIA labels and keyboard navigation paths.
 

@@ -1,7 +1,7 @@
 # Customer User Journey: Dynamic Scaling UI ("Hire/Fire")
 
 ## 1. Overview
-This document outlines the user journey for the Dynamic Scaling UI ("Hire/Fire"), a real-time React component in the CEO Dashboard that allows adjusting replica counts for newly generated roles.
+This document outlines the user journey for the Dynamic Scaling UI ("Hire/Fire"), a real-time Flutter widget in the CEO Dashboard that allows adjusting replica counts for newly generated roles.
 
 ## 2. Persona
 - **CEO (Human Operator):** The primary user who oversees the conglomerate and dynamically scales departments to meet changing demands.

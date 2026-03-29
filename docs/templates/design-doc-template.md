@@ -17,7 +17,8 @@ A technical summary of the problem space, the proposed solution, and the overall
 ## 3. Detailed Design
 ### 3.1 Architecture Diagram
 ```mermaid
-[Detailed Sequence or Component Diagram]
+graph TD;
+    A-->B;
 ```
 
 ### 3.2 Data Model & Schema

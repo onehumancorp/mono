@@ -22,7 +22,7 @@ When an AI agent reaches an ambiguous decision point or requires a high-risk act
 
 ## 3. Implementation Details
 - **Architecture**: The handoff payloads are saved in Postgres and pushed to the CEO Dashboard via Server-Sent Events (SSE).
-- **Stack**: Next.js frontend, Go backend, Postgres DB.
+- **Stack**: Flutter frontend, Go backend, Postgres DB.
 - **Visual Integration**: Screenshots and UI diffs are stored as blobs, with their URLs sent in the handoff payload.
 
 ## 4. Edge Cases

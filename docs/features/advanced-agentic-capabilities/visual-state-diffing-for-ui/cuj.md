@@ -5,7 +5,7 @@
 **Success Metrics:** Task completion latency under 50ms, zero unauthorized access, and complete observability via the event log.
 
 ## 1. User Journey Overview
-When a frontend agent submits a PR modifying the React UI, the QA agent utilizes visual state diffing to compare the rendered output against the baseline snapshot, instantly flagging unintended styling regressions.
+When a frontend agent submits a PR modifying the Flutter UI, the QA agent utilizes visual state diffing to compare the rendered output against the baseline snapshot, instantly flagging unintended styling regressions.
 
 ## 2. Detailed Step-by-Step Breakdown
 | Step | Action | System Trigger | Resulting State | Verification |
