@@ -7,8 +7,9 @@ go_library(
     srcs = [
         "auth_interceptor.go",
         "centrifuge_hub.go",
-        "delegation.go",
+
         "service.go",
+        "handlers_mcp.go",
         "sip.go",
     ],
     importpath = "github.com/onehumancorp/mono/srcs/orchestration",
