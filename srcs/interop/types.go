@@ -64,7 +64,7 @@ func ValidateSPIFFEID(id string) error {
 	if !strings.HasPrefix(id, "spiffe://") {
 		return fmt.Errorf("invalid SPIFFE ID scheme: %s", id)
 	}
-	if strings.Contains(strings.ToLower(id), "%2f") {
+	if strings.Contains(strings.ToLower(id), "%") {
 		return fmt.Errorf("invalid SPIFFE ID format: contains url-encoded characters")
 	}
 	trimmed := strings.TrimPrefix(id, "spiffe://")
