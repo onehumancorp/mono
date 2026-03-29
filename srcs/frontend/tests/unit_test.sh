@@ -28,6 +28,9 @@ export GOPATH="${tmp}/.gopath"
 # Generate dynamic ports for isolated concurrent tests
 export PORT=$(shuf -i 10000-65000 -n 1)
 export GRPC_PORT=$(shuf -i 10000-65000 -n 1)
+export ADMIN_USERNAME="admin"
+export ADMIN_PASSWORD="adminpass123"
+export VITE_BACKEND_URL="http://127.0.0.1:${PORT}"
 
 # Start the Go backend in the background so vitest can hit real APIs.
 cd "${tmp}"
@@ -42,10 +45,6 @@ else
 fi
 
 cd "${tmp}/frontend"
-
-export ADMIN_USERNAME="admin"
-export ADMIN_PASSWORD="adminpass123"
-export VITE_BACKEND_URL="http://127.0.0.1:${PORT}"
 
 # Run vitest once (non-watch mode) with coverage.
 if ! npm test -- --coverage 2>&1; then
