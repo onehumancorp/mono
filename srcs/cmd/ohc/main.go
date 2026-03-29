@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/onehumancorp/mono/srcs/auth"
 	"github.com/onehumancorp/mono/srcs/billing"
@@ -200,7 +201,20 @@ func run(now time.Time, listen listenFunc) error {
 			slog.Error("failed to listen for gRPC", "error", err)
 			return
 		}
+
+		// Implement Zero Trust (SPIFFE/SPIRE)
+		// Apply SPIFFE-based mTLS for every internal call as mandated by security policy.
+		x509Source, err := workloadapi.NewX509Source(ctx)
+		if err != nil {
+			slog.Error("failed to create x509 source from SPIFFE Workload API", "error", err)
+			return
+		}
+		defer x509Source.Close()
+
+		tlsConfig := tlsconfig.MTLSServerConfig(x509Source, x509Source, tlsconfig.AuthorizeAny())
+
 		s := grpc.NewServer(
+			grpc.Creds(credentials.NewTLS(tlsConfig)),
 			grpc.UnaryInterceptor(orchestration.SPIFFEAuthInterceptor()),
 			grpc.StreamInterceptor(orchestration.SPIFFEStreamInterceptor()),
 		)

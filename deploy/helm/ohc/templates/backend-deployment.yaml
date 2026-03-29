@@ -68,6 +68,8 @@ spec:
             - name: OHC_CORE_URL
               value: "http://{{ .Release.Name }}-ohc-core:{{ .Values.ohcCore.service.port }}"
             {{- end }}
+            - name: SPIFFE_ENDPOINT_SOCKET
+              value: "unix:///run/spire/sockets/agent.sock"
           livenessProbe:
             httpGet:
               path: /healthz
@@ -80,3 +82,12 @@ spec:
               port: {{ .Values.backend.service.port }}
             initialDelaySeconds: 3
             periodSeconds: 5
+          volumeMounts:
+            - name: spiffe-workload-api
+              mountPath: /run/spire/sockets
+              readOnly: true
+      volumes:
+        - name: spiffe-workload-api
+          csi:
+            driver: "csi.spiffe.io"
+            readOnly: true

@@ -25,8 +25,8 @@ filegroup(
         allow_empty = True,
     ) + [
         "//srcs/app/lib/models:srcs",
-        "//srcs/app/lib/services:srcs",
         "//srcs/app/lib/screens:srcs",
+        "//srcs/app/lib/services:srcs",
     ],
     visibility = ["//visibility:public"],
 )
@@ -37,8 +37,8 @@ flutter_library(
     name = "app_lib",
     srcs = glob(["lib/*.dart"]) + [
         "//srcs/app/lib/models:dart_srcs",
-        "//srcs/app/lib/services:dart_srcs",
         "//srcs/app/lib/screens:dart_srcs",
+        "//srcs/app/lib/services:dart_srcs",
     ],
     pubspec = "pubspec.yaml",
     visibility = ["//srcs/app:__subpackages__"],
@@ -91,7 +91,10 @@ flutter_test(
 flutter_app(
     name = "app_web",
     embed = [":app_lib"],
-    web = glob(["web/**"], allow_empty = True),
+    web = glob(
+        ["web/**"],
+        allow_empty = True,
+    ),
 )
 
 # ── Web E2E tests (Playwright) ────────────────────────────────────────────────
@@ -102,9 +105,9 @@ sh_test(
     name = "app_web_e2e_test",
     srcs = ["test/flutter_web_e2e_test.sh"],
     data = [
-        ":app_web",
         "e2e/playwright.config.ts",
         "e2e/web.spec.ts",
+        ":app_web",
         "//:node_modules/@playwright/test",
     ],
     tags = ["requires-network"],  # browser download may need network on first run
@@ -116,8 +119,8 @@ sh_binary(
     name = "start",
     srcs = ["test/start_web.sh"],
     data = [
-        ":app_web",
         "test/bazel_helpers.sh",
+        ":app_web",
     ],
     visibility = ["//visibility:public"],
 )
@@ -126,9 +129,9 @@ sh_binary(
     name = "capture_screenshots",
     srcs = ["test/capture_screenshots.sh"],
     data = [
-        ":app_web",
         "e2e/capture_screenshots.mjs",
         "test/bazel_helpers.sh",
+        ":app_web",
         "//:node_modules/@playwright/test",
     ],
     visibility = ["//visibility:public"],

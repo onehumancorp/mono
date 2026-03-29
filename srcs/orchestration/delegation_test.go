@@ -66,8 +66,8 @@ func TestDelegateSubTask_QuotaExhaustion(t *testing.T) {
 	server := NewHubServiceServer(hub)
 	ctx := context.Background()
 
-	// Fill the hub to reach the quota limit (10)
-	for i := 0; i < 10; i++ {
+	// Fill the hub to reach the strict quota limit (5)
+	for i := 0; i < 5; i++ {
 		hub.RegisterAgent(Agent{
 			ID:             fmt.Sprintf("filler-%d", i),
 			Name:           "Filler Agent",

@@ -30,11 +30,28 @@ go_library(
 )
 
 go_test(
+    name = "cve_2026_001_test",
+    srcs = ["cve_2026_001_test.go"],
+    embed = [":orchestration"],
+    deps = [
+        "//srcs/proto:hub_go_proto",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//codes",
+        "@org_golang_google_grpc//credentials",
+        "@org_golang_google_grpc//peer",
+        "@org_golang_google_grpc//status",
+        "@org_golang_google_protobuf//proto",
+    ],
+)
+
+go_test(
     name = "orchestration_test",
     srcs = [
         "auth_interceptor_test.go",
         "benchmark_test.go",
         "centrifuge_hub_test.go",
+        "chaos_test.go",
+        "cve_2026_001_test.go",
         "delegation_test.go",
         "eventlog_test.go",
         "minimax_client_test.go",
@@ -42,12 +59,13 @@ go_test(
         "service_grpc_test.go",
         "service_test.go",
         "sip_extra_test.go",
-        "sip_test.go",
         "sip_mesh_test.go",
+        "sip_test.go",
     ],
     embed = [":orchestration"],
     deps = [
         "//srcs/proto:hub_go_proto",
+        "//srcs/settings",
         "@org_golang_google_grpc//:grpc",
         "@org_golang_google_grpc//codes",
         "@org_golang_google_grpc//credentials",

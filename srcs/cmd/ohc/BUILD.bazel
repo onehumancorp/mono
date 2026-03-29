@@ -16,6 +16,7 @@ go_library(
         "//srcs/settings",
         "//srcs/telemetry",
         "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//credentials",
     ],
 )
 

@@ -1156,7 +1156,7 @@ func TestSPIFFEAuthInterceptor_SubTask_Spoofing(t *testing.T) {
 
 	req := pb.SubTask_builder{
 		TaskId:      proto.String("task-123"),
-		TargetRole:  proto.String("admin"),
+		TargetRole:  proto.String("worker"),
 		FromAgentId: proto.String("target-agent"),
 	}.Build()
 
@@ -1171,5 +1171,8 @@ func TestSPIFFEAuthInterceptor_SubTask_Spoofing(t *testing.T) {
 	st, ok := status.FromError(err)
 	if !ok || st.Code() != codes.PermissionDenied {
 		t.Fatalf("Expected PermissionDenied, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "cannot delegate subtask as agent target-agent") {
+		t.Errorf("expected spoofing error message, got %v", err)
 	}
 }

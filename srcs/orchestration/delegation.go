@@ -39,8 +39,8 @@ func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask)
 	s.hub.mu.Lock()
 	currentAgents := len(s.hub.agents)
 
-	// VRAM Quota Enforcement: Hard limit at 10 active agents across the hub
-	if currentAgents >= 10 {
+	// VRAM Quota Enforcement: Hard limit at 5 active agents across the hub
+	if currentAgents >= 5 {
 		s.hub.mu.Unlock()
 		return nil, status.Errorf(codes.ResourceExhausted, "VRAM quota limit exceeded, cannot spawn sub-agent")
 	}
@@ -74,7 +74,13 @@ func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask)
 
 	// 3. Execution (trigger via task message)
 	instruction := req.GetInstruction()
-	if strings.Contains(instruction, "SYSTEM:") || strings.Contains(instruction, "\n\n") {
+
+	// Advanced Prompt Injection Prevention
+	lowerInst := strings.ToLower(instruction)
+	if strings.Contains(instruction, "SYSTEM:") || strings.Contains(instruction, "\n\n") ||
+	   strings.Contains(lowerInst, "ignore all previous instructions") ||
+	   strings.Contains(lowerInst, "system prompt") ||
+	   strings.Contains(lowerInst, "you are now") {
 		return nil, status.Errorf(codes.InvalidArgument, "instruction contains forbidden prompt injection sequences")
 	}
 

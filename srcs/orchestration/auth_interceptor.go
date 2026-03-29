@@ -165,6 +165,13 @@ func SPIFFEAuthInterceptor() grpc.UnaryServerInterceptor {
 			if agentID != reqFromAgent {
 				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s cannot delegate subtask as agent %s", spiffeID, reqFromAgent)
 			}
+
+			// Harden: Granular RBAC and Zero Trust
+			// Prevent tool-execution boundary escapes and privilege escalation.
+			targetRole := v.GetTargetRole()
+			if strings.EqualFold(targetRole, "SYSTEM") || strings.EqualFold(targetRole, "admin") || strings.EqualFold(targetRole, "orchestrator") {
+				return nil, status.Errorf(codes.PermissionDenied, "SPIFFE ID %s is not authorized to spawn sub-agents with privileged role: %s", spiffeID, targetRole)
+			}
 		case *pb.ReasonRequest:
 			reqFromAgent := v.GetFromAgentId()
 			if agentID != reqFromAgent {
