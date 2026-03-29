@@ -101,3 +101,11 @@ Any cross-team dependencies will trigger an immediate, synchronous "War Room" me
   * **Description:** Generate high-fidelity mockups of the new Capability Dashboard and plugin mesh integration to serve as a ground-truth reference for frontend implementation.
   * **Dependencies:** Task 3.2
   * **Status:** Ready
+
+
+## Visual States (Auto-Captured)
+
+<div style="backdrop-filter: blur(15px); border-radius: 8px; overflow: hidden; margin-top: 20px;">
+  <img src="screenshots/dashboard_main.png" alt="Dashboard Main View" style="max-width: 100%; border: 1px solid rgba(255,255,255,0.2);" />
+  <img src="screenshots/login_state.png" alt="Login State View" style="max-width: 100%; border: 1px solid rgba(255,255,255,0.2); margin-top: 10px;" />
+</div>

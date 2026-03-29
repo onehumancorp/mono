@@ -63,3 +63,11 @@ The following environment variables and configurations are commonly used:
 - `MCP_BUNDLE_DIR`: Directory for MCP bundles.
 - `MONO_FRONTEND_DIST`: Path to the compiled frontend dist directory.
 - Kubernetes Secrets are used to inject runtime credentials safely without committing secrets to the repo.
+
+
+## Visual States (Auto-Captured)
+
+<div style="backdrop-filter: blur(15px); border-radius: 8px; overflow: hidden; margin-top: 20px;">
+  <img src="screenshots/dashboard_main.png" alt="Dashboard Main View" style="max-width: 100%; border: 1px solid rgba(255,255,255,0.2);" />
+  <img src="screenshots/login_state.png" alt="Login State View" style="max-width: 100%; border: 1px solid rgba(255,255,255,0.2); margin-top: 10px;" />
+</div>
