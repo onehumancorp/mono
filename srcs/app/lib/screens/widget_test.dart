@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ohc_app/services/local_manager_service.dart';
+import 'package:ohc_app/services/settings_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:mocktail/mocktail.dart';
 import 'package:ohc_app/screens/agents_screen.dart';
@@ -499,6 +501,39 @@ void main() {
 }
 
 // ── Fake AuthNotifier ────────────────────────────────────────────────────────
+
+
+
+class _FakeLocalManagerService extends LocalManagerService {
+  @override
+  Future<void> startService() async {}
+  @override
+  Future<void> stopService() async {}
+  @override
+  Future<bool> isServiceRunning() async => true;
+  @override
+  Future<String> runDoctor() async => 'OK';
+}
+
+class _FakeSettingsNotifierWidgetTest extends ClientSettingsNotifier {
+  _FakeSettingsNotifierWidgetTest(super.ref) : super();
+  @override
+  Future<void> _load() async {
+    state = const AsyncData(ClientSettings(backendUrl: 'http://localhost', standaloneMode: false));
+  }
+}
+
+
+class FakeLocalManagerService extends LocalManagerService {
+  @override
+  Future<void> startService() async {}
+  @override
+  Future<void> stopService() async {}
+  @override
+  Future<bool> isServiceRunning() async => true;
+  @override
+  Future<String> runDoctor() async => 'OK';
+}
 
 class _FakeAuthNotifier extends AuthNotifier {
   final AuthUser? _user;

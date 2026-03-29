@@ -16,6 +16,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ohc_app/services/local_manager_service.dart';
+import 'package:ohc_app/services/settings_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:mocktail/mocktail.dart';
 import 'package:ohc_app/models/agent.dart';
@@ -66,6 +68,27 @@ Widget _wrap(
 }
 
 /// A [AuthNotifier] stub that resolves to [user] (or null).
+
+class _FakeSettingsNotifier extends ClientSettingsNotifier {
+  _FakeSettingsNotifier(super.ref) : super();
+  @override
+  Future<void> _load() async {
+    state = const AsyncData(ClientSettings(backendUrl: 'http://localhost', standaloneMode: false));
+  }
+}
+
+
+class FakeLocalManagerService extends LocalManagerService {
+  @override
+  Future<void> startService() async {}
+  @override
+  Future<void> stopService() async {}
+  @override
+  Future<bool> isServiceRunning() async => true;
+  @override
+  Future<String> runDoctor() async => 'OK';
+}
+
 class _FakeAuthNotifier extends AuthNotifier {
   final AuthUser? _user;
   _FakeAuthNotifier(this._user);
@@ -218,9 +241,11 @@ void main() {
         const SettingsScreen(),
         overrides: [
           authStateProvider.overrideWith(() => _FakeAuthNotifier(_fakeUser)),
+          clientSettingsProvider.overrideWith((ref) => _FakeSettingsNotifier(ref)..state = const AsyncData(ClientSettings(backendUrl: 'test', standaloneMode: false))),
+          localManagerServiceProvider.overrideWithValue(_FakeLocalManagerService()),
         ],
       ));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('Sign Out'), findsOneWidget);
 
@@ -235,9 +260,11 @@ void main() {
         const SettingsScreen(),
         overrides: [
           authStateProvider.overrideWith(() => _FakeAuthNotifier(_fakeUser)),
+          clientSettingsProvider.overrideWith((ref) => _FakeSettingsNotifier(ref)..state = const AsyncData(ClientSettings(backendUrl: 'test', standaloneMode: false))),
+          localManagerServiceProvider.overrideWithValue(_FakeLocalManagerService()),
         ],
       ));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('Dev User'), findsOneWidget);
       expect(find.text('dev@example.com'), findsOneWidget);
