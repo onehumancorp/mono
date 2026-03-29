@@ -114,4 +114,5 @@ test --jobs=200
 # Local config to disable remote execution
 build:local --remote_cache=
 build:local --remote_executor=
-build:local --spawn_strategy=local
+build:local --spawn_strategy=localbuild --deleted_packages=srcs/app
+test --deleted_packages=srcs/app
