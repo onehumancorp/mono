@@ -1,4 +1,4 @@
-package orchestration
+package minimax
 
 import (
 	"context"
@@ -29,11 +29,11 @@ func TestMinimaxClientReasonSuccess(t *testing.T) {
 	defer ts.Close()
 
 	// Use our own internal package variable URL to point to the test server
-	originalURL := minimaxAPIURL
-	minimaxAPIURL = ts.URL
-	defer func() { minimaxAPIURL = originalURL }()
+	originalURL := APIURL
+	APIURL = ts.URL
+	defer func() { APIURL = originalURL }()
 
-	client := NewMinimaxClient("valid-key")
+	client := NewClient("valid-key")
 	res, err := client.Reason(context.Background(), "What is 6x7?")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -50,11 +50,11 @@ func TestMinimaxClientReasonFailure(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	originalURL := minimaxAPIURL
-	minimaxAPIURL = ts.URL
-	defer func() { minimaxAPIURL = originalURL }()
+	originalURL := APIURL
+	APIURL = ts.URL
+	defer func() { APIURL = originalURL }()
 
-	client := NewMinimaxClient("valid-key")
+	client := NewClient("valid-key")
 	_, err := client.Reason(context.Background(), "test")
 	if err == nil {
 		t.Fatalf("expected error on 500 response")
@@ -70,11 +70,11 @@ func TestMinimaxClientReasonEmptyResponse(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	originalURL := minimaxAPIURL
-	minimaxAPIURL = ts.URL
-	defer func() { minimaxAPIURL = originalURL }()
+	originalURL := APIURL
+	APIURL = ts.URL
+	defer func() { APIURL = originalURL }()
 
-	client := NewMinimaxClient("valid-key")
+	client := NewClient("valid-key")
 	_, err := client.Reason(context.Background(), "test")
 	if err == nil {
 		t.Fatalf("expected error on empty choices")

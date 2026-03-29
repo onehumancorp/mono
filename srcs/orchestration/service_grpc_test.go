@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
+	"github.com/onehumancorp/mono/srcs/minimax"
 )
 
 func TestRegisterAgentViaGRPC(t *testing.T) {
@@ -266,11 +267,11 @@ func TestMinimaxClientReasonDecodeError(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	originalURL := minimaxAPIURL
-	minimaxAPIURL = ts.URL
-	defer func() { minimaxAPIURL = originalURL }()
+	originalURL := minimax.APIURL
+	minimax.APIURL = ts.URL
+	defer func() { minimax.APIURL = originalURL }()
 
-	client := NewMinimaxClient("valid-key")
+	client := minimax.NewClient("valid-key")
 	_, err := client.Reason(context.Background(), "test")
 	if err == nil {
 		t.Fatalf("expected error on malformed JSON")
@@ -278,7 +279,7 @@ func TestMinimaxClientReasonDecodeError(t *testing.T) {
 }
 
 func TestMinimaxClientReasonInvalidRequest(t *testing.T) {
-	client := NewMinimaxClient("valid-key")
+	client := minimax.NewClient("valid-key")
 	// Using a cancelled context to trigger a request creation or execution error
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
