@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ohc_app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ohc_app/services/api_service.dart';
 
@@ -88,7 +87,7 @@ class _RoomList extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: rooms.length,
-      itemBuilder: (_, i) => _RoomGlassCard(room: rooms[i], ref: ref),
+      itemBuilder: (_, i) => _RoomCard(room: rooms[i], ref: ref),
     );
   }
 }
@@ -97,7 +96,7 @@ class _RoomCard extends StatefulWidget {
   final Map<String, dynamic> room;
   final WidgetRef ref;
 
-  const _RoomGlassCard({required this.room, required this.ref});
+  const _RoomCard({required this.room, required this.ref});
 
   @override
   State<_RoomCard> createState() => _RoomCardState();
@@ -175,7 +174,7 @@ class _RoomCardState extends State<_RoomCard> {
   Widget build(BuildContext context) {
     final room = widget.room;
     final participantCount = room['participant_count'] as int? ?? 0;
-    return GlassCard(
+    return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),

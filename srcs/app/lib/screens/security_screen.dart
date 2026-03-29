@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ohc_app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ohc_app/models/security_issue.dart';
 import 'package:ohc_app/services/api_service.dart';
@@ -49,7 +48,7 @@ class SecurityScreen extends ConsumerWidget {
                       ? Colors.red
                       : Colors.orange,
                 ),
-                ...open.map((i) => _IssueGlassCard(issue: i, ref: ref)),
+                ...open.map((i) => _IssueCard(issue: i, ref: ref)),
                 const SizedBox(height: 16),
               ],
               if (fixed.isNotEmpty) ...[
@@ -57,7 +56,7 @@ class SecurityScreen extends ConsumerWidget {
                   '${fixed.length} resolved',
                   color: Colors.green,
                 ),
-                ...fixed.map((i) => _IssueGlassCard(issue: i, ref: ref)),
+                ...fixed.map((i) => _IssueCard(issue: i, ref: ref)),
               ],
             ],
           );
@@ -115,7 +114,7 @@ class _IssueCard extends StatefulWidget {
   final SecurityIssue issue;
   final WidgetRef ref;
 
-  const _IssueGlassCard({required this.issue, required this.ref});
+  const _IssueCard({required this.issue, required this.ref});
 
   @override
   State<_IssueCard> createState() => _IssueCardState();
@@ -162,7 +161,7 @@ class _IssueCardState extends State<_IssueCard> {
   @override
   Widget build(BuildContext context) {
     final issue = widget.issue;
-    return GlassCard(
+    return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: Padding(
         padding: const EdgeInsets.all(16),

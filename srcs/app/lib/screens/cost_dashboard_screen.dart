@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ohc_app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:ohc_app/models/agent.dart';
@@ -65,7 +64,7 @@ class _CostDashboardScreenState extends ConsumerState<CostDashboardScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _SummaryGlassCard(
+                    child: _SummaryCard(
                       title: 'Total Spend',
                       value: currencyFormat.format(costs.totalCostUSD),
                       icon: Icons.account_balance_wallet,
@@ -74,7 +73,7 @@ class _CostDashboardScreenState extends ConsumerState<CostDashboardScreen> {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _SummaryGlassCard(
+                    child: _SummaryCard(
                       title: 'Total Tokens',
                       value: NumberFormat.compact().format(costs.totalTokens),
                       icon: Icons.generating_tokens,
@@ -91,7 +90,7 @@ class _CostDashboardScreenState extends ConsumerState<CostDashboardScreen> {
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              GlassCard(
+              Card(
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -167,7 +166,7 @@ class _CostDashboardScreenState extends ConsumerState<CostDashboardScreen> {
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              GlassCard(
+              Card(
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -217,7 +216,7 @@ class _SummaryCard extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _SummaryGlassCard({
+  const _SummaryCard({
     required this.title,
     required this.value,
     required this.icon,
@@ -228,7 +227,7 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return GlassCard(
+    return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(

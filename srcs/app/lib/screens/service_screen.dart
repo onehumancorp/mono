@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ohc_app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ohc_app/services/local_manager_service.dart';
 
@@ -65,7 +64,7 @@ class _ServiceScreenState extends ConsumerState<ServiceScreen> {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          _buildStatusGlassCard(),
+          _buildStatusCard(),
           const SizedBox(height: 24),
           _buildActions(),
           const SizedBox(height: 24),
@@ -75,8 +74,8 @@ class _ServiceScreenState extends ConsumerState<ServiceScreen> {
     );
   }
 
-  Widget _buildStatusGlassCard() {
-    return GlassCard(
+  Widget _buildStatusCard() {
+    return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(

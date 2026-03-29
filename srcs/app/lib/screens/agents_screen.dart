@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ohc_app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ohc_app/models/agent.dart';
@@ -79,18 +78,18 @@ class _AgentList extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: agents.length,
-      itemBuilder: (_, i) => _AgentGlassCard(agent: agents[i]),
+      itemBuilder: (_, i) => _AgentCard(agent: agents[i]),
     );
   }
 }
 
 class _AgentCard extends StatelessWidget {
   final Agent agent;
-  const _AgentGlassCard({required this.agent});
+  const _AgentCard({required this.agent});
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: CircleAvatar(

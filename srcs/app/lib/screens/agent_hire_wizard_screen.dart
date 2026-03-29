@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ohc_app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ohc_app/models/agent.dart';
@@ -236,7 +235,7 @@ class _AgentHireWizardScreenState extends ConsumerState<AgentHireWizardScreen> {
               children: [
                 const Text('Step 4 — Confirm Deployment', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
-                GlassCard(
+                Card(
                   child: ListTile(
                     leading: CircleAvatar(child: Text(_selectedRole.isNotEmpty ? _selectedRole[0] : '?')),
                     title: Text(_nameController.text),

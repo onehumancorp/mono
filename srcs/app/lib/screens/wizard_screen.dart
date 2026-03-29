@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:ohc_app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:ohc_app/services/auth_service.dart';
@@ -317,7 +316,7 @@ class _StatusBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (status.configured) {
-      return GlassCard(
+      return Card(
         color: Colors.green.shade50,
         child: const ListTile(
           leading: Icon(Icons.check_circle, color: Colors.green),
@@ -331,7 +330,7 @@ class _StatusBanner extends StatelessWidget {
     if (!status.serverStep) missing.add('Server');
     if (!status.aiProviderStep) missing.add('AI Provider');
     if (!status.centrifugeStep) missing.add('Centrifuge');
-    return GlassCard(
+    return Card(
       color: Colors.orange.shade50,
       child: ListTile(
         leading: const Icon(Icons.warning_amber, color: Colors.orange),
@@ -468,7 +467,7 @@ class _CentrifugeStep extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        const GlassCard(
+        const Card(
           child: Padding(
             padding: EdgeInsets.all(12),
             child: Column(

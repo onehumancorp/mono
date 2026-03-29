@@ -35,6 +35,16 @@ filegroup(
 # ── Flutter Libraries ─────────────────────────────────────────────────────────
 
 flutter_library(
+    name = "theme_lib",
+    srcs = ["lib/theme.dart"],
+    pubspec = "pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        "@flutter_sdk//flutter/packages/flutter",
+    ],
+)
+
+flutter_library(
     name = "router_lib",
     srcs = ["lib/router.dart"],
     pubspec = "pubspec.yaml",
