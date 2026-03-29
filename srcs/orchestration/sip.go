@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -21,8 +22,8 @@ type SIPDB struct {
 }
 
 const (
-	maxRetries    = 3
-	retryInterval = 100 * time.Millisecond
+	maxRetries    = 15
+	retryInterval = 200 * time.Millisecond
 )
 
 // withRetry executes a database operation with exponential backoff for transient errors (e.g. database is locked).
@@ -42,7 +43,13 @@ func withRetry(ctx context.Context, op func() error) error {
 		}
 
 		slog.Warn("sipdb: operation failed, retrying", "attempt", i+1, "error", err)
-		time.Sleep(retryInterval * time.Duration(1<<i))
+
+		// cap the exponential backoff sleep to a maximum of 500ms to keep tests fast but retries valid.
+		sleepDur := retryInterval * time.Duration(1<<i)
+		if sleepDur > 500*time.Millisecond {
+			sleepDur = 500 * time.Millisecond
+		}
+		time.Sleep(sleepDur)
 	}
 	return err
 }
@@ -53,10 +60,21 @@ func withRetry(ctx context.Context, op func() error) error {
 // Produces errors: Explicit error handling.
 // Has no side effects.
 func NewSIPDB(dbPath string) (*SIPDB, error) {
-	db, err := sql.Open("sqlite", dbPath)
+	// Add PRAGMAs for high concurrency without failing parsing when query params already exist.
+	dsn := dbPath
+	if !strings.Contains(dsn, "?") {
+		dsn += "?_journal_mode=WAL&_busy_timeout=15000"
+	} else {
+		dsn += "&_journal_mode=WAL&_busy_timeout=15000"
+	}
+
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, err
 	}
+
+	// Don't throttle if you don't need to: SQLite WAL handles concurrent connections relatively well
+	// unless using PRAGMA that explicitly locks across DBs. We leave SetMaxOpenConns un-throttled.
 
 	if err := initializeTables(db); err != nil {
 		return nil, err
