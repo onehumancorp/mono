@@ -40,6 +40,16 @@ flutter_library(
 )
 
 flutter_library(
+    name = "glass_card",
+    srcs = ["glass_card.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        "@flutter_sdk//flutter/packages/flutter",
+    ],
+)
+
+flutter_library(
     name = "widgets_lib",
     srcs = [],
     pubspec = "//srcs/app:pubspec.yaml",
@@ -47,5 +57,6 @@ flutter_library(
     deps = [
         ":org_tree_widget",
         ":slide_to_approve",
+        ":glass_card",
     ],
 )
