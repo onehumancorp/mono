@@ -1150,6 +1150,32 @@ func TestSPIFFEStreamInterceptor_CoverageGaps(t *testing.T) {
 	}
 }
 
+func TestSPIFFEAuthInterceptor_UnknownRequestType_Spoofing(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+	ctx := mockSPIFFEContext("spiffe://onehumancorp.io/org-1/attacker-agent")
+
+	// Create an unsupported dummy request type
+	type dummyRequest struct{}
+	req := &dummyRequest{}
+
+	_, err := interceptor(ctx, req, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+		return nil, nil
+	})
+
+	if err == nil {
+		t.Fatalf("Expected permission denied error, but request was allowed")
+	}
+
+	st, ok := status.FromError(err)
+	if !ok || st.Code() != codes.PermissionDenied {
+		t.Fatalf("Expected PermissionDenied, got: %v", err)
+	}
+	expectedMsg := "unsupported request type"
+	if !strings.Contains(err.Error(), expectedMsg) {
+		t.Fatalf("Expected error message to contain %q, got: %v", expectedMsg, err.Error())
+	}
+}
+
 func TestSPIFFEAuthInterceptor_SubTask_Spoofing(t *testing.T) {
 	interceptor := SPIFFEAuthInterceptor()
 	ctx := mockSPIFFEContext("spiffe://onehumancorp.io/org-1/attacker-agent")
