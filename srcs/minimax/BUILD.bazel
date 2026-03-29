@@ -1,0 +1,14 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "minimax",
+    srcs = ["minimax.go"],
+    importpath = "github.com/onehumancorp/mono/srcs/minimax",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "minimax_test",
+    srcs = ["minimax_test.go"],
+    embed = [":minimax"],
+)

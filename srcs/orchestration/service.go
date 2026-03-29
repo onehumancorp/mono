@@ -7,9 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
-	"net/http"
 	"os"
 	"regexp"
 	"sort"
@@ -24,6 +22,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"github.com/onehumancorp/mono/srcs/minimax"
 )
 
 var (
@@ -425,7 +424,7 @@ func (h *Hub) TokenEfficientContextSummarization(eventID, agentID string, payloa
 		return fmt.Errorf("invalid payload: %w", err)
 	}
 
-	client := NewMinimaxClient(h.MinimaxAPIKey())
+	client := minimax.NewClient(h.MinimaxAPIKey())
 	prompt := fmt.Sprintf("Summarize the following context efficiently to save tokens: %s", redactPII(temp.Context))
 	summarizedContext, err := client.Reason(context.Background(), prompt)
 	if err != nil {
@@ -772,7 +771,7 @@ func (h *Hub) Publish(message Message) error {
 			go func(mID string, transcript []Message) {
 				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
-				client := NewMinimaxClient(h.MinimaxAPIKey())
+				client := minimax.NewClient(h.MinimaxAPIKey())
 				prompt := "Extract and summarize ONLY the exact parameters, architectural decisions, and required next steps from this transcript. Discard all conversational filler, pleasantries, and non-actionable text. Output MUST be an ultra-dense, bulleted technical brief optimized for minimal token footprint:\n"
 				for _, msg := range transcript {
 					prompt += "- " + msg.FromAgent + ": " + redactPII(msg.Content) + "\n"
@@ -1151,7 +1150,7 @@ func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream 
 // Produces errors: Explicit error handling.
 // Has no side effects.
 func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*pb.ReasonResponse, error) {
-	client := NewMinimaxClient(s.hub.MinimaxAPIKey())
+	client := minimax.NewClient(s.hub.MinimaxAPIKey())
 	content, err := client.Reason(ctx, req.GetPrompt())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "minimax reasoning failed: %v", err)
@@ -1159,99 +1158,3 @@ func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*
 	return pb.ReasonResponse_builder{Content: proto.String(content)}.Build(), nil
 }
 
-// minimaxAPIURL is the endpoint for Minimax reasoning.
-// ⚡ BOLT: [Configurable endpoint] - Randomized Selection from Top 5
-var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
-
-// MinimaxClient handles interaction with the Minimax Model 2.7.
-// Accepts no parameters.
-// Returns nothing.
-// Produces no errors.
-// Has no side effects.
-type MinimaxClient struct {
-	APIKey string
-}
-
-// NewMinimaxClient functionality.
-// Accepts parameters: apiKey string (No Constraints).
-// Returns *MinimaxClient.
-// Produces no errors.
-// Has no side effects.
-func NewMinimaxClient(apiKey string) *MinimaxClient {
-	return &MinimaxClient{APIKey: apiKey}
-}
-
-var bufferPool = sync.Pool{
-	New: func() interface{} {
-		return new(bytes.Buffer)
-	},
-}
-
-var sharedHTTPClient = &http.Client{
-	Timeout: 30 * time.Second,
-}
-
-// Reason functionality.
-// Accepts parameters: c *MinimaxClient (No Constraints).
-// Returns (string, error).
-// Produces errors: Explicit error handling.
-// Has no side effects.
-func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, error) {
-	if c.APIKey == "" {
-		return "", errors.New("minimax API key is not configured")
-	}
-
-	url := minimaxAPIURL
-	// Optimization: construct the JSON payload manually to avoid
-	// maps and slices allocations.
-	buf := bufferPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	defer bufferPool.Put(buf)
-
-	buf.WriteString(`{"model":"MiniMax-M2.7","messages":[{"role":"user","content":`)
-	enc := json.NewEncoder(buf)
-	enc.SetEscapeHTML(false)
-	_ = enc.Encode(prompt)
-	// Encode adds a newline, so we slice it off and add the closing brackets
-	buf.Truncate(buf.Len() - 1)
-	buf.WriteString(`}]}`)
-
-	req, err := http.NewRequestWithContext(ctx, "POST", url, buf)
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.APIKey)
-
-	// ⚡ BOLT: [Reused HTTP Client] - Randomized Selection from Top 5
-	// Prevents severe connection and resource leaks by reusing connection pools on every request.
-	resp, err := sharedHTTPClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		respBody, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("minimax API error (status %d): %s", resp.StatusCode, string(respBody))
-	}
-
-	var result struct {
-		Choices []struct {
-			Message struct {
-				Content string `json:"content"`
-			} `json:"message"`
-		} `json:"choices"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
-	}
-
-	if len(result.Choices) == 0 {
-		return "", errors.New("empty response from minimax")
-	}
-
-	return result.Choices[0].Message.Content, nil
-}

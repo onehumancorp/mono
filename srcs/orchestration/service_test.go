@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"github.com/onehumancorp/mono/srcs/minimax"
 )
 
 func TestPublishRoutesMessagesAndMeetingTranscript(t *testing.T) {
@@ -486,8 +487,8 @@ func TestHubServiceServer_StreamMessages_SendErrorOnWait(t *testing.T) {
 	}
 }
 
-func TestNewMinimaxClient(t *testing.T) {
-	client := NewMinimaxClient("test-key")
+func TestNewClient(t *testing.T) {
+	client := minimax.NewClient("test-key")
 	if client == nil {
 		t.Fatalf("expected non-nil MinimaxClient")
 	}
@@ -498,8 +499,10 @@ func TestNewMinimaxClient(t *testing.T) {
 
 func TestHubServiceServer_Reason_And_MinimaxClient(t *testing.T) {
 	// Save the original URL to restore it later
-	originalURL := minimaxAPIURL
-	defer func() { minimaxAPIURL = originalURL }()
+	originalURL := minimax.APIURL
+	defer func() { minimax.APIURL = originalURL
+		minimax.ResetCircuitBreaker()
+	}()
 
 	tests := []struct {
 		name          string
@@ -561,7 +564,8 @@ func TestHubServiceServer_Reason_And_MinimaxClient(t *testing.T) {
 			defer ts.Close()
 
 			// Override the package-level URL
-			minimaxAPIURL = ts.URL
+			minimax.APIURL = ts.URL
+			minimax.ResetCircuitBreaker()
 
 			hub := NewHub()
 			hub.SetMinimaxAPIKey(tt.apiKey)
@@ -874,12 +878,14 @@ func TestHub_Publish_UnbufferedChannel(t *testing.T) {
 }
 
 func TestMinimaxClient_Reason_NewRequestWithContext_Error(t *testing.T) {
-	client := NewMinimaxClient("valid-key")
+	client := minimax.NewClient("valid-key")
 
-	originalURL := minimaxAPIURL
+	originalURL := minimax.APIURL
 	// Use an invalid control character in the URL to make http.NewRequestWithContext fail
-	minimaxAPIURL = "http://\x00invalid-url"
-	defer func() { minimaxAPIURL = originalURL }()
+	minimax.APIURL = "http://\x00invalid-url"
+	defer func() { minimax.APIURL = originalURL
+		minimax.ResetCircuitBreaker()
+	}()
 
 	_, err := client.Reason(context.Background(), "some prompt")
 	if err == nil {
@@ -888,12 +894,14 @@ func TestMinimaxClient_Reason_NewRequestWithContext_Error(t *testing.T) {
 }
 
 func TestMinimaxClient_Reason_ClientDo_Error(t *testing.T) {
-	client := NewMinimaxClient("valid-key")
+	client := minimax.NewClient("valid-key")
 
-	originalURL := minimaxAPIURL
+	originalURL := minimax.APIURL
 	// Use a validly parseable URL that fails at the network level
-	minimaxAPIURL = "http://127.0.0.1:0"
-	defer func() { minimaxAPIURL = originalURL }()
+	minimax.APIURL = "http://127.0.0.1:0"
+	defer func() { minimax.APIURL = originalURL
+		minimax.ResetCircuitBreaker()
+	}()
 
 	_, err := client.Reason(context.Background(), "test prompt")
 	if err == nil {
@@ -1069,9 +1077,12 @@ func TestHub_TokenEfficientContextSummarization_SuccessFlow(t *testing.T) {
 	defer ts.Close()
 
 	// Override the Minimax API URL to point to our test server
-	originalAPIURL := minimaxAPIURL
-	minimaxAPIURL = ts.URL
-	defer func() { minimaxAPIURL = originalAPIURL }()
+	originalAPIURL := minimax.APIURL
+	minimax.APIURL = ts.URL
+			minimax.ResetCircuitBreaker()
+	defer func() { minimax.APIURL = originalAPIURL
+		minimax.ResetCircuitBreaker()
+	}()
 
 	// 2. Initialize Hub and set a fake API key
 	hub := NewHub()

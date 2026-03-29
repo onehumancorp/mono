@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -47,13 +48,25 @@ func withRetry(ctx context.Context, op func() error) error {
 	return err
 }
 
+
+
+func appendSQLitePragmas(dbPath string) string {
+	if strings.Contains(dbPath, "?") {
+		return dbPath + "&_journal_mode=WAL&_busy_timeout=15000&_txlock=immediate"
+	}
+	return dbPath + "?_journal_mode=WAL&_busy_timeout=15000&_txlock=immediate"
+}
+
 // NewSIPDB initializes a new database connection and creates required tables.
 // Accepts parameters: dbPath string (No Constraints).
 // Returns (*SIPDB, error).
 // Produces errors: Explicit error handling.
 // Has no side effects.
 func NewSIPDB(dbPath string) (*SIPDB, error) {
-	db, err := sql.Open("sqlite", dbPath)
+	db, err := sql.Open("sqlite", appendSQLitePragmas(dbPath))
+	if err == nil {
+		db.SetMaxOpenConns(1)
+	}
 	if err != nil {
 		return nil, err
 	}

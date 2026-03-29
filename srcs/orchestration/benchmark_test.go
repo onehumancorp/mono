@@ -11,6 +11,7 @@ import (
 	pb "github.com/onehumancorp/mono/srcs/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
+	"github.com/onehumancorp/mono/srcs/minimax"
 )
 
 type benchStreamMessagesServer struct {
@@ -122,11 +123,11 @@ func BenchmarkReason(b *testing.B) {
 	}))
 	defer ts.Close()
 
-	originalURL := minimaxAPIURL
-	minimaxAPIURL = ts.URL
-	defer func() { minimaxAPIURL = originalURL }()
+	originalURL := minimax.APIURL
+	minimax.APIURL = ts.URL
+	defer func() { minimax.APIURL = originalURL }()
 
-	client := NewMinimaxClient("test-key")
+	client := minimax.NewClient("test-key")
 	ctx := context.Background()
 
 	b.ResetTimer()
