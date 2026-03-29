@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/onehumancorp/mono/srcs/orchestration"
@@ -377,6 +378,13 @@ func (s *Server) handleScale(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+var sseBufferPool = sync.Pool{
+	New: func() interface{} {
+		// Pre-allocate a reasonable capacity for typical SSE lines to avoid thrashing
+		return make([]byte, 0, 256)
+	},
+}
+
 // handleScaleStream streams real-time scaling trace events to the dashboard.
 // Accepts parameters: s *Server (No Constraints).
 // Returns nothing.
@@ -400,8 +408,21 @@ func (s *Server) handleScaleStream(w http.ResponseWriter, r *http.Request) {
 
 	for _, event := range events {
 		s.hub.LogEvent(map[string]interface{}{"type": "ScalingEventStream", "data": event})
-		data := []byte("data: " + event + "\n\n")
-		w.Write(data)
+
+		// Use sync.Pool for the byte buffer allocation
+		buf := sseBufferPool.Get().([]byte)
+		buf = buf[:0] // Reset length
+		buf = append(buf, "data: "...)
+		buf = append(buf, event...)
+		buf = append(buf, "\n\n"...)
+
+		_, err := w.Write(buf)
+
+		sseBufferPool.Put(buf)
+
+		if err != nil {
+			break
+		}
 		if err := rc.Flush(); err != nil {
 			break
 		}
