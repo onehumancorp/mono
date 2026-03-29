@@ -174,6 +174,19 @@ E2E_TMP_DIR="${TMPDIR}/e2e"
 mkdir -p "${E2E_TMP_DIR}"
 cp "${CONFIG}" "${E2E_TMP_DIR}/playwright.config.ts"
 cp "${SPEC_FILE}" "${E2E_TMP_DIR}/web.spec.ts"
+HANDOFF_SPEC_FILE=""
+for candidate in \
+    "${RUNFILES}/${WORKSPACE}/srcs/app/e2e/handoff.spec.ts" \
+    "${RUNFILES}/_main/srcs/app/e2e/handoff.spec.ts" \
+    "${RUNFILES}/__main__/srcs/app/e2e/handoff.spec.ts"; do
+  if [ -f "$candidate" ]; then
+    HANDOFF_SPEC_FILE="$candidate"
+    break
+  fi
+done
+if [ -n "$HANDOFF_SPEC_FILE" ]; then
+  cp "${HANDOFF_SPEC_FILE}" "${E2E_TMP_DIR}/handoff.spec.ts"
+fi
 CONFIG="${E2E_TMP_DIR}/playwright.config.ts"
 export NODE_PATH="${NODE_MODULES_DIR}${NODE_PATH:+:${NODE_PATH}}"
 
