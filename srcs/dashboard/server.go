@@ -622,6 +622,31 @@ func (s *Server) handleDevSeed(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:      time.Now().UTC(),
 	}
 	s.handoffs = append(s.handoffs, mockHandoff)
+
+	// Seed DB schema for Agentic OS Vision (OHC-SIP v2)
+	_ = s.hub.DB().UpdateMemory(r.Context(), "architectural_state", "Modular Capability Plugin Mesh Blueprint Approved. OHC-SIP v2 Schema Finalized.")
+	_ = s.hub.DB().UpdateMemory(r.Context(), "roadmap_state", "Transitioning from Skill Blueprints to Decentralized Plugin Mesh. Implementing Glassmorphism tokens.")
+	_ = s.hub.DB().DelegateMission(r.Context(), "mission-backend-dev", "backend_dev", orchestration.Message{ID: "m1", Content: "Implement Modular Capability Plugin Mesh (Plugin Mesh) for OHC OS"})
+	_ = s.hub.DB().DelegateMission(r.Context(), "mission-ui-dev", "ui_dev", orchestration.Message{ID: "m2", Content: "Implement Next-Generation Glassmorphism Design Tokens in OHC Dashboard"})
+	_ = s.hub.DB().Heartbeat(r.Context(), "architect-1", "Principal Product Architect", "IDLE")
+
+	plugin1 := orchestration.CapabilityPlugin{
+		PluginID:    "plugin-backend",
+		Name:        "Plugin Mesh Service",
+		Version:     "v1.0.0",
+		ManifestURL: "http://mesh-svc/manifest.json",
+		Status:      "ACTIVE",
+	}
+	_ = s.hub.DB().RegisterCapabilityPlugin(r.Context(), plugin1)
+
+	memory1 := orchestration.EpisodicMemory{
+		MemoryID:        "mem-1",
+		Context:         "Glassmorphism Tokens",
+		VectorEmbedding: []byte{1, 2, 3},
+		SourcePlugin:    "plugin-ui",
+	}
+	_ = s.hub.DB().StoreEpisodicMemory(r.Context(), memory1)
+
 	s.hub.LogEvent(mockHandoff)
 
 	mockPipeline := Pipeline{
