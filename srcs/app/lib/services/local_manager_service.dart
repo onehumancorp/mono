@@ -51,11 +51,11 @@ class LocalManagerService {
 
   Future<void> startService() async {
     if (await isServiceRunning()) return;
-    await processStart('openclaw', ['start', '--daemon']);
+    await processStart('ohc', ['start', '--daemon']);
   }
 
   Future<void> stopService() async {
-    await processRun('openclaw', ['stop']);
+    await processRun('ohc', ['stop']);
   }
 
   Future<void> restartService() async {
@@ -120,7 +120,7 @@ class LocalManagerService {
   // ── Diagnostics ──────────────────────────────────────────────────────────
 
   Future<String> runDoctor() async {
-    final result = await processRun('openclaw', ['doctor']);
+    final result = await processRun('ohc', ['doctor']);
     return result.stdout.toString() + result.stderr.toString();
   }
 
@@ -135,4 +135,19 @@ class LocalManagerService {
   }
 }
 
+import 'package:ohc_app/services/settings_service.dart';
+
 final localManagerServiceProvider = Provider((ref) => LocalManagerService());
+
+/// Tracks and manages the lifecycle of the local backend if standalone mode is enabled.
+final standaloneManagerProvider = Provider<void>((ref) {
+  final settings = ref.watch(clientSettingsProvider).valueOrNull;
+  if (settings == null || !settings.standaloneMode) return;
+
+  final manager = ref.read(localManagerServiceProvider);
+  
+  // Start the service on initialization
+  manager.startService();
+  
+  // No explicit dispose needed for a daemon, but could add if necessary
+});

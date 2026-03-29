@@ -65,6 +65,15 @@ class ApiService {
     _checkStatus(res);
   }
 
+  Future<void> scaleAgents(String role, int count) async {
+    final res = await _client.post(
+      Uri.parse('$baseUrl/api/scale'),
+      headers: _headers,
+      body: jsonEncode({'role': role, 'count': count}),
+    );
+    _checkStatus(res);
+  }
+
   // ── Dashboard & Analytics ────────────────────────────────────────────────
 
   Future<DashboardSnapshot> getDashboard() async {
@@ -118,56 +127,6 @@ class ApiService {
     return list.map((e) => Pipeline.fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  Future<void> promotePipeline(String pipelineId) async {
-    final res = await _client.post(
-      Uri.parse('$baseUrl/api/pipelines/$pipelineId/promote'),
-      headers: _headers,
-    );
-    _checkStatus(res);
-  }
-
-  // ── Users & RBAC ─────────────────────────────────────────────────────────
-
-  Future<List<UserPublic>> listUsers() async {
-    final res = await _client.get(Uri.parse('$baseUrl/api/users'), headers: _headers);
-    _checkStatus(res);
-    final list = jsonDecode(res.body) as List<dynamic>;
-    return list.map((e) => UserPublic.fromJson(e as Map<String, dynamic>)).toList();
-  }
-
-  Future<void> deleteUser(String userId) async {
-    final res = await _client.delete(Uri.parse('$baseUrl/api/users/$userId'), headers: _headers);
-    _checkStatus(res);
-  }
-
-  // ── Integrations ──────────────────────────────────────────────────────────
-
-  Future<List<Map<String, dynamic>>> listMCPTools() async {
-    final res = await _client.get(Uri.parse('$baseUrl/api/mcp/tools'), headers: _headers);
-    _checkStatus(res);
-    return (jsonDecode(res.body) as List<dynamic>).cast<Map<String, dynamic>>();
-  }
-
-  // ── Scaling ──────────────────────────────────────────────────────────────
-
-  Future<void> scaleAgents(String role, int count) async {
-    final res = await _client.post(
-      Uri.parse('$baseUrl/api/scale'),
-      headers: _headers,
-      body: jsonEncode({'role': role, 'count': count}),
-    );
-    _checkStatus(res);
-  }
-
-  // ── Pipelines ────────────────────────────────────────────────────────────
-
-  Future<List<Pipeline>> listPipelines() async {
-    final res = await _client.get(Uri.parse('$baseUrl/api/pipelines'), headers: _headers);
-    _checkStatus(res);
-    final list = jsonDecode(res.body) as List<dynamic>;
-    return list.map((e) => Pipeline.fromJson(e as Map<String, dynamic>)).toList();
-  }
-
   Future<Pipeline> createPipeline(String name, String branch) async {
     final res = await _client.post(
       Uri.parse('$baseUrl/api/pipelines'),
@@ -186,33 +145,7 @@ class ApiService {
     _checkStatus(res);
   }
 
-  // ── Settings ─────────────────────────────────────────────────────────────
-
-  Future<Settings> getSettings() async {
-    final res = await _client.get(Uri.parse('$baseUrl/api/settings'), headers: _headers);
-    _checkStatus(res);
-    return Settings.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
-  }
-
-  Future<void> saveSettings(Settings settings) async {
-    final res = await _client.post(
-      Uri.parse('$baseUrl/api/settings'),
-      headers: _headers,
-      body: jsonEncode(settings.toJson()),
-    );
-    _checkStatus(res);
-  }
-
-  Future<void> saveAiProviderKey(String providerId, String apiKey) async {
-    final res = await _client.patch(
-      Uri.parse('$baseUrl/api/ai/providers/$providerId'),
-      headers: _headers,
-      body: jsonEncode({'api_key': apiKey}),
-    );
-    _checkStatus(res);
-  }
-
-  // ── User Management ──────────────────────────────────────────────────────
+  // ── Users & RBAC ─────────────────────────────────────────────────────────
 
   Future<List<UserPublic>> listUsers() async {
     final res = await _client.get(Uri.parse('$baseUrl/api/users'), headers: _headers);
@@ -232,10 +165,7 @@ class ApiService {
   }
 
   Future<void> deleteUser(String userId) async {
-    final res = await _client.delete(
-      Uri.parse('$baseUrl/api/users/$userId'),
-      headers: _headers,
-    );
+    final res = await _client.delete(Uri.parse('$baseUrl/api/users/$userId'), headers: _headers);
     _checkStatus(res);
   }
 
@@ -315,6 +245,32 @@ class ApiService {
     final res = await _client.delete(
       Uri.parse('$baseUrl/api/channels/$channelId'),
       headers: _headers,
+    );
+    _checkStatus(res);
+  }
+
+  // ── Settings ─────────────────────────────────────────────────────────────
+
+  Future<Settings> getSettings() async {
+    final res = await _client.get(Uri.parse('$baseUrl/api/settings'), headers: _headers);
+    _checkStatus(res);
+    return Settings.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  Future<void> saveSettings(Settings settings) async {
+    final res = await _client.post(
+      Uri.parse('$baseUrl/api/settings'),
+      headers: _headers,
+      body: jsonEncode(settings.toJson()),
+    );
+    _checkStatus(res);
+  }
+
+  Future<void> saveAiProviderKey(String providerId, String apiKey) async {
+    final res = await _client.patch(
+      Uri.parse('$baseUrl/api/ai/providers/$providerId'),
+      headers: _headers,
+      body: jsonEncode({'api_key': apiKey}),
     );
     _checkStatus(res);
   }

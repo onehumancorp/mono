@@ -42,10 +42,10 @@ alias(
     actual = ":deploy_dev",
 )
 
-# Alias to start the web app (React)
+# Alias to start the primary Flutter Web Gateway
 alias(
     name = "start-web",
-    actual = "//srcs/frontend:start",
+    actual = "//srcs/app:start",
     visibility = ["//visibility:public"],
 )
 

@@ -11,6 +11,7 @@
 // `Platform.isLinux` / `Platform.isMacOS` / `Platform.isWindows`.
 
 import 'dart:convert';
+import 'package:go_router/go_router.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,9 +51,17 @@ Widget _wrap(
   Widget child, {
   List<Override> overrides = const [],
 }) {
+  final router = GoRouter(
+    routes: [
+      GoRoute(path: '/', builder: (context, state) => child),
+      GoRoute(path: '/agents/hire', builder: (context, state) => const Scaffold(body: Text('Hire Agent'))),
+    ],
+  );
   return ProviderScope(
     overrides: overrides,
-    child: MaterialApp(home: child),
+    child: MaterialApp.router(
+      routerConfig: router,
+    ),
   );
 }
 
@@ -243,9 +252,28 @@ void main() {
       when(() => mockClient.get(any(), headers: any(named: 'headers')))
           .thenAnswer((_) async => http.Response(
               jsonEncode({
-                'active_agents': 5,
-                'pending_tasks': 12,
-                'open_meetings': 3,
+                'organization': {
+                  'id': 'org-1',
+                  'name': 'One Human Corp',
+                  'domain': 'onehumancorp.com',
+                  'members': []
+                },
+                'meetings': [],
+                'costs': {
+                  'total': 1234.56,
+                  'currency': 'USD',
+                  'period': 'monthly',
+                  'breakdown': {}
+                },
+                'agents': [
+                  {'id': 'a1', 'name': 'A1', 'role': 'engineer', 'status': 'running'},
+                  {'id': 'a2', 'name': 'A2', 'role': 'designer', 'status': 'running'},
+                  {'id': 'a3', 'name': 'A3', 'role': 'manager', 'status': 'running'},
+                  {'id': 'a4', 'name': 'A4', 'role': 'manager', 'status': 'running'},
+                  {'id': 'a5', 'name': 'A5', 'role': 'manager', 'status': 'running'},
+                ],
+                'statuses': [],
+                'updatedAt': DateTime.now().toIso8601String(),
               }),
               200));
       final api = ApiService(
@@ -265,7 +293,14 @@ void main() {
       final mockClient = MockHttpClient();
       when(() => mockClient.get(any(), headers: any(named: 'headers')))
           .thenAnswer((_) async => http.Response(
-              jsonEncode({'active_agents': 0, 'pending_tasks': 0, 'open_meetings': 0}),
+              jsonEncode({
+                'organization': {'id': 'o', 'name': 'N', 'domain': 'D', 'members': []},
+                'meetings': [],
+                'costs': {'total': 0, 'currency': 'USD', 'period': 'm', 'breakdown': {}},
+                'agents': [],
+                'statuses': [],
+                'updatedAt': DateTime.now().toIso8601String(),
+              }),
               200));
       final api = ApiService(
           baseUrl: 'http://localhost', token: 'tok', client: mockClient);
@@ -301,8 +336,8 @@ void main() {
       await tester.tap(find.text('Hire Agent'));
       await tester.pumpAndSettle();
 
-      // Dialog should appear
-      expect(find.text('Hire Agent'), findsWidgets);
+      // Should have navigated to the hire wizard (our mock route shows 'Hire Agent')
+      expect(find.text('Hire Agent'), findsOneWidget);
     });
 
     testWidgets('shows agents list on data', (tester) async {

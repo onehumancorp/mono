@@ -47,7 +47,6 @@ class _IntegrationsScreenState extends ConsumerState<IntegrationsScreen> {
                 child: _IntegrationCard(
                   title: 'Telegram',
                   subtitle: 'Connect your bot for mobile alerts',
-                  iconPath: 'assets/telegram.png', // Assuming assets exist or using icons
                   icon: Icons.send,
                   color: Colors.blue,
                   onConnect: () => _showConnectionDialog('Telegram'),

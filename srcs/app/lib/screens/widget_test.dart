@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:go_router/go_router.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,12 +24,25 @@ class MockHttpClient extends Mock implements http.Client {}
 
 class FakeUri extends Fake implements Uri {}
 
-// Helper: wrap a widget with ProviderScope + MaterialApp.
-Widget _wrap(Widget child,
-    {List<Override> overrides = const []}) {
+// Helper: wrap a widget with ProviderScope + MaterialApp.router.
+Widget _wrap(Widget child, {List<Override> overrides = const []}) {
+  final router = GoRouter(
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => child,
+      ),
+      GoRoute(
+        path: '/agents/hire',
+        builder: (context, state) => const Scaffold(body: Text('Hire Agent')),
+      ),
+    ],
+  );
   return ProviderScope(
     overrides: overrides,
-    child: MaterialApp(home: child),
+    child: MaterialApp.router(
+      routerConfig: router,
+    ),
   );
 }
 
@@ -121,9 +135,26 @@ void main() {
       when(() => mockClient.get(any(), headers: any(named: 'headers')))
           .thenAnswer((_) async => http.Response(
               jsonEncode({
-                'active_agents': 3,
-                'pending_tasks': 7,
-                'open_meetings': 1,
+                'organization': {
+                  'id': 'org-1',
+                  'name': 'One Human Corp',
+                  'domain': 'onehumancorp.com',
+                  'members': []
+                },
+                'meetings': [],
+                'costs': {
+                  'total': 1234.56,
+                  'currency': 'USD',
+                  'period': 'monthly',
+                  'breakdown': {}
+                },
+                'agents': [
+                  {'id': 'a1', 'name': 'Agent 1', 'role': 'engineer', 'status': 'running'},
+                  {'id': 'a2', 'name': 'Agent 2', 'role': 'designer', 'status': 'running'},
+                  {'id': 'a3', 'name': 'Agent 3', 'role': 'manager', 'status': 'running'},
+                ],
+                'statuses': [],
+                'updatedAt': DateTime.now().toIso8601String(),
               }),
               200));
 

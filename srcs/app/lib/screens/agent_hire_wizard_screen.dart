@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ohc_app/models/agent.dart';
 import 'package:ohc_app/services/api_service.dart';
 
 class AgentHireWizardScreen extends ConsumerStatefulWidget {

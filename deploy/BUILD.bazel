@@ -47,9 +47,16 @@ oci_load(
 )
 
 oci_push(
-    name = "server_push",
+    name = "server_push_ghcr",
     image = ":server_image",
     repository = "ghcr.io/onehumancorp/server",
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "server_push_dockerhub",
+    image = ":server_image",
+    repository = "index.docker.io/onehumancorp/server",
     visibility = ["//visibility:public"],
 )
 
@@ -83,9 +90,16 @@ oci_load(
 )
 
 oci_push(
-    name = "agent_push",
+    name = "agent_push_ghcr",
     image = ":agent_image",
     repository = "ghcr.io/onehumancorp/agent",
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "agent_push_dockerhub",
+    image = ":agent_image",
+    repository = "index.docker.io/onehumancorp/agent",
     visibility = ["//visibility:public"],
 )
 
@@ -115,7 +129,7 @@ if [ -z "$$artifacts_dir" ]; then
   echo "ERROR: Flutter web build_artifacts directory not found in genrule sources" >&2
   exit 1
 fi
-tar -C "$$artifacts_dir" -cf $@ .
+tar -C "$$artifacts_dir" -hcf $@ .
 """,
 )
 
@@ -164,9 +178,16 @@ oci_load(
 )
 
 oci_push(
-    name = "ui_push",
+    name = "ui_push_ghcr",
     image = ":ui_image",
     repository = "ghcr.io/onehumancorp/ui",
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "ui_push_dockerhub",
+    image = ":ui_image",
+    repository = "index.docker.io/onehumancorp/ui",
     visibility = ["//visibility:public"],
 )
 
@@ -194,6 +215,8 @@ sh_test(
     ]) + [
         "//:go.mod",
         "//srcs/cmd/ohc",
+        ":backend_load",
+        ":ui_load",
     ],
     tags = [
         "large",

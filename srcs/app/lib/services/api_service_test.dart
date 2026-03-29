@@ -97,13 +97,27 @@ void main() {
   // ── Dashboard ─────────────────────────────────────────────────────────────
 
   group('ApiService dashboard', () {
-    test('getDashboard returns map', () async {
-      final data = {'active_agents': 5, 'pending_tasks': 2};
+    test('getDashboard returns DashboardSnapshot', () async {
+      final data = {
+        'agents': [],
+        'costs': {
+          'total_cost_usd': 150.0,
+          'total_tokens': 1000000,
+          'agents': [],
+        },
+        'organization': {
+          'id': 'org-1',
+          'name': 'One Human Corp',
+          'domain': 'onehumancorp.com',
+          'members': [],
+        },
+      };
       when(() => mockClient.get(any(), headers: any(named: 'headers')))
           .thenAnswer((_) async => http.Response(jsonEncode(data), 200));
 
       final result = await api.getDashboard();
-      expect(result['active_agents'], 5);
+      expect(result.costs.totalTokens, 1000000);
+      expect(result.organization.name, 'One Human Corp');
     });
   });
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:ohc_app/models/agent.dart';
 import 'package:ohc_app/models/dashboard.dart';
 import 'package:ohc_app/services/api_service.dart';
 
@@ -30,7 +31,7 @@ class _CostDashboardScreenState extends ConsumerState<CostDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final currencyFormat = NumberFormat.currency(symbol: '$');
+    final currencyFormat = NumberFormat.currency(symbol: '\$');
 
     return Scaffold(
       appBar: AppBar(
@@ -75,7 +76,7 @@ class _CostDashboardScreenState extends ConsumerState<CostDashboardScreen> {
                     child: _SummaryCard(
                       title: 'Total Tokens',
                       value: NumberFormat.compact().format(costs.totalTokens),
-                      icon: Icons.Generating_tokens,
+                      icon: Icons.generating_tokens,
                       color: Colors.blue,
                     ),
                   ),

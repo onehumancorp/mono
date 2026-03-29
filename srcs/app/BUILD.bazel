@@ -94,6 +94,7 @@ flutter_test(
 flutter_app(
     name = "app_web",
     embed = [":app_lib"],
+    visibility = ["//visibility:public"],
     web = glob(["web/**"], allow_empty = True),
 )
 
