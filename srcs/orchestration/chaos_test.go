@@ -3,7 +3,7 @@ package orchestration
 import (
 	"context"
 	"fmt"
-	"os"
+
 	"path/filepath"
 	"sync"
 	"testing"
@@ -14,7 +14,7 @@ import (
 // to verify the exponential backoff retry logic in withRetry.
 func TestSIPDB_Chaos(t *testing.T) {
 	tmpDir := t.TempDir()
-	dbPath := filepath.Join(tmpDir, "chaos.db")
+	dbPath := filepath.Join(tmpDir, "chaos.db") + "?_journal_mode=WAL&_busy_timeout=15000&_txlock=immediate"
 
 	db, err := NewSIPDB(dbPath)
 	if err != nil {
