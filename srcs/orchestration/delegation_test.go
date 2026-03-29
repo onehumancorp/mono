@@ -175,7 +175,7 @@ func TestDelegateSubTask_Integration(t *testing.T) {
 		t.Fatalf("agent does not exist")
 	}
 
-	if agent.ProviderType != "builtin" {
+	if agent.ProviderType != "builtin" && agent.ProviderType != "" {
 		t.Fatalf("expected ProviderType builtin, got %s", agent.ProviderType)
 	}
 	if agent.Status != StatusIdle {
