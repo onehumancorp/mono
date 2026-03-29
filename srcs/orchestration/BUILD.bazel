@@ -1,4 +1,5 @@
 load("@rules_go//go:def.bzl", "go_library", "go_test")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 # gazelle:resolve go github.com/onehumancorp/mono/srcs/proto //srcs/proto:hub_go_proto
 
@@ -27,6 +28,18 @@ go_library(
         "@org_golang_google_protobuf//proto",
         "@org_modernc_sqlite//:sqlite",
     ],
+)
+
+go_test(
+    name = "chaos_test",
+    srcs = ["chaos_test.go"],
+    embed = [":orchestration"],
+)
+
+sh_test(
+    name = "chaos_verifier_test",
+    srcs = ["chaos_verifier.sh"],
+    data = ["chaos_verifier.py"],
 )
 
 go_test(
