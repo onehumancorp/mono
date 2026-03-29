@@ -1,6 +1,8 @@
-package orchestration
+package sip
 
 import (
+	"strings"
+	"github.com/onehumancorp/mono/srcs/domain"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -47,16 +49,25 @@ func withRetry(ctx context.Context, op func() error) error {
 	return err
 }
 
+
 // NewSIPDB initializes a new database connection and creates required tables.
 // Accepts parameters: dbPath string (No Constraints).
 // Returns (*SIPDB, error).
 // Produces errors: Explicit error handling.
 // Has no side effects.
 func NewSIPDB(dbPath string) (*SIPDB, error) {
+	// Harden SQLite Connection
+	if strings.Contains(dbPath, "?") {
+		dbPath += "&_journal_mode=WAL&_busy_timeout=15000&_txlock=immediate"
+	} else {
+		dbPath += "?_journal_mode=WAL&_busy_timeout=15000&_txlock=immediate"
+	}
+
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, err
 	}
+	db.SetMaxOpenConns(1)
 
 	if err := initializeTables(db); err != nil {
 		return nil, err
@@ -146,11 +157,11 @@ func (s *SIPDB) UpdateMemory(ctx context.Context, key, value string) error {
 
 // GetPendingMissions proactively seeks tasks assigned to the role.
 // Accepts parameters: s *SIPDB (No Constraints).
-// Returns GetPendingMissions(ctx context.Context, role string) ([]Message, error).
+// Returns GetPendingMissions(ctx context.Context, role string) ([]domain.Message, error).
 // Produces errors: Explicit error handling.
 // Has no side effects.
-func (s *SIPDB) GetPendingMissions(ctx context.Context, role string) ([]Message, error) {
-	var missions []Message
+func (s *SIPDB) GetPendingMissions(ctx context.Context, role string) ([]domain.Message, error) {
+	var missions []domain.Message
 	err := withRetry(ctx, func() error {
 		missions = nil
 		rows, err := s.db.QueryContext(ctx, "SELECT id, task FROM agent_missions WHERE role = ? AND status = 'PENDING'", role)
@@ -165,10 +176,10 @@ func (s *SIPDB) GetPendingMissions(ctx context.Context, role string) ([]Message,
 				return err
 			}
 
-			var msg Message
+			var msg domain.Message
 			if err := json.Unmarshal([]byte(taskStr), &msg); err != nil {
 				// fallback
-				msg = Message{ID: id, Content: taskStr, Type: EventTask}
+				msg = domain.Message{ID: id, Content: taskStr, Type: domain.EventTask}
 			} else {
 				if msg.ID == "" {
 					msg.ID = id
@@ -220,10 +231,10 @@ func (s *SIPDB) Heartbeat(ctx context.Context, agentID, role, status string) err
 
 // DelegateMission delegates specialized tasks via the agent_missions table.
 // Accepts parameters: s *SIPDB (No Constraints).
-// Returns DelegateMission(ctx context.Context, missionID, role string, task Message) error.
+// Returns DelegateMission(ctx context.Context, missionID, role string, task domain.Message) error.
 // Produces errors: Explicit error handling.
 // Has no side effects.
-func (s *SIPDB) DelegateMission(ctx context.Context, missionID, role string, task Message) error {
+func (s *SIPDB) DelegateMission(ctx context.Context, missionID, role string, task domain.Message) error {
 	taskBytes, err := json.Marshal(task)
 	if err != nil {
 		return err
@@ -256,7 +267,7 @@ type CapabilityPlugin struct {
 	Name        string    `json:"name"`
 	Version     string    `json:"version"`
 	ManifestURL string    `json:"manifest_url"`
-	Status      string    `json:"status"`
+	Status string `json:"status"`
 	RegisteredAt time.Time `json:"registered_at"`
 }
 

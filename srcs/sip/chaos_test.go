@@ -1,9 +1,9 @@
-package orchestration
+package sip
 
 import (
+	"github.com/onehumancorp/mono/srcs/domain"
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -38,10 +38,10 @@ func TestSIPDB_Chaos(t *testing.T) {
 			defer wg.Done()
 			for j := 0; j < missionsPerAgent; j++ {
 				missionID := fmt.Sprintf("mission-%d-%d", agentIdx, j)
-				task := Message{
+				task := domain.Message{
 					ID:      missionID,
 					Content: "Stress test task",
-					Type:    EventTask,
+					Type:    domain.EventTask,
 				}
 				if err := db.DelegateMission(ctx, missionID, "SOFTWARE_ENGINEER", task); err != nil {
 					errs <- fmt.Errorf("agent %d failed to delegate mission %d: %v", agentIdx, j, err)
@@ -88,10 +88,10 @@ func TestSIPDB_Chaos(t *testing.T) {
 	// This should retry in the background
 	go func() {
 		defer retryWg.Done()
-		task := Message{
+		task := domain.Message{
 			ID:      "chaos-mission-1",
 			Content: "Chaos test task",
-			Type:    EventTask,
+			Type:    domain.EventTask,
 		}
 
 		// This will block and retry while the DB is locked

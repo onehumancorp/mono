@@ -1,6 +1,8 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
+	"github.com/onehumancorp/mono/srcs/domain"
 	"bufio"
 	"bytes"
 	"context"
@@ -72,160 +74,7 @@ func redactInterfacePII(val interface{}) interface{} {
 	}
 }
 
-// Status indicates the current operational phase of an AI agent within the workforce.
-// Accepts no parameters.
-// Returns nothing.
-// Produces no errors.
-// Has no side effects.
-type Status string
 
-const (
-	// StatusIdle represents the IDLE lifecycle phase of a tracked entity within the event-driven state machine.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	StatusIdle Status = "IDLE"
-	// StatusActive represents the ACTIVE lifecycle phase of a tracked entity within the event-driven state machine.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	StatusActive Status = "ACTIVE"
-	// StatusInMeeting represents the INMEETING lifecycle phase of a tracked entity within the event-driven state machine.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	StatusInMeeting Status = "IN_MEETING"
-	// StatusBlocked represents the BLOCKED lifecycle phase of a tracked entity within the event-driven state machine.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	StatusBlocked Status = "BLOCKED"
-	// StatusWaitingForTools represents the WAITINGFORTOOLS lifecycle phase of a tracked entity within the event-driven state machine.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	StatusWaitingForTools Status = "WAITING_FOR_TOOLS"
-)
-
-// Event type constants for the asynchronous pub/sub agent interaction protocol.
-const (
-	// EventTask provides domain-specific context and typed constraints for EventTask operations across the application.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	EventTask = "task"
-	// EventStatus provides domain-specific context and typed constraints for EventStatus operations across the application.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	EventStatus = "status"
-	// EventHandoff provides domain-specific context and typed constraints for EventHandoff operations across the application.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	EventHandoff = "handoff"
-	// EventCodeReviewed provides domain-specific context and typed constraints for EventCodeReviewed operations across the application.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	EventCodeReviewed = "CodeReviewed"
-	// EventTestsFailed provides domain-specific context and typed constraints for EventTestsFailed operations across the application.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	EventTestsFailed = "TestsFailed"
-	// EventTestsPassed provides domain-specific context and typed constraints for EventTestsPassed operations across the application.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	EventTestsPassed = "TestsPassed"
-	// EventSpecApproved provides domain-specific context and typed constraints for EventSpecApproved operations across the application.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	EventSpecApproved = "SpecApproved"
-	// EventBlockerRaised provides domain-specific context and typed constraints for EventBlockerRaised operations across the application.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	EventBlockerRaised = "BlockerRaised"
-	// EventBlockerCleared provides domain-specific context and typed constraints for EventBlockerCleared operations across the application.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	EventBlockerCleared = "BlockerCleared"
-	// EventPRCreated provides domain-specific context and typed constraints for EventPRCreated operations across the application.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	EventPRCreated = "PRCreated"
-	// EventPRMerged provides domain-specific context and typed constraints for EventPRMerged operations across the application.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	EventPRMerged = "PRMerged"
-	// EventDesignReviewed provides domain-specific context and typed constraints for EventDesignReviewed operations across the application.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	EventDesignReviewed = "DesignReviewed"
-	// EventApprovalNeeded provides domain-specific context and typed constraints for EventApprovalNeeded operations across the application.
-	// Accepts no parameters.
-	// Returns nothing.
-	// Produces no errors.
-	// Has no side effects.
-	EventApprovalNeeded = "ApprovalNeeded"
-)
-
-// Agent represents an autonomous AI actor registered in the orchestration Hub, tracking its identity, role, and current state.
-// Accepts no parameters.
-// Returns nothing.
-// Produces no errors.
-// Has no side effects.
-type Agent struct {
-	ID             string `json:"id"`
-	Name           string `json:"name"`
-	Role           string `json:"role"`
-	OrganizationID string `json:"organizationId"`
-	Status         Status `json:"status"`
-	// ProviderType identifies the external agent implementation backing this worker
-	// (e.g. "claude", "gemini", "opencode").  An empty string or "builtin" means
-	// the platform's own lightweight agent is used.
-	ProviderType string `json:"providerType,omitempty"`
-	Region       string `json:"region,omitempty"`
-}
-
-// Message represents a discrete packet of communication between agents within a meeting room, containing the content and sender identity.
-// Accepts no parameters.
-// Returns nothing.
-// Produces no errors.
-// Has no side effects.
-type Message struct {
-	ID         string    `json:"id"`
-	FromAgent  string    `json:"fromAgent"`
-	ToAgent    string    `json:"toAgent"`
-	Type       string    `json:"type"`
-	Content    string    `json:"content"`
-	MeetingID  string    `json:"meetingId,omitempty"`
-	OccurredAt time.Time `json:"occurredAt"`
-}
 
 // DelegateTask allows an agent in Delegate Mode to act as a routing proxy.
 // It inspects an incoming task, updates the sender and recipient fields,
@@ -233,13 +82,13 @@ type Message struct {
 //
 //   - fromAgentID: string; The unique identifier of the delegating agent.
 //   - toAgentID: string; The unique identifier of the specialist agent.
-//   - task: Message; The task payload to be delegated.
+//   - task: domain.Message; The task payload to be delegated.
 //
 // Accepts parameters: h *Hub (No Constraints).
-// Returns DelegateTask(fromAgentID, toAgentID string, task Message) error.
+// Returns DelegateTask(fromAgentID, toAgentID string, task domain.Message) error.
 // Produces errors: Explicit error handling.
 // Has no side effects.
-func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
+func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task domain.Message) error {
 	h.mu.RLock()
 	if _, ok := h.agents[fromAgentID]; !ok {
 		h.mu.RUnlock()
@@ -257,7 +106,7 @@ func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
 
 	err := h.Publish(task)
 	if err == nil && h.sipDB != nil {
-		go func(t Message, r string) {
+		go func(t domain.Message, r string) {
 			_ = h.sipDB.DelegateMission(context.Background(), t.ID, r, t)
 		}(task, toAgent.Role)
 	}
@@ -273,7 +122,7 @@ type MeetingRoom struct {
 	ID           string    `json:"id"`
 	Agenda       string    `json:"agenda,omitempty"`
 	Participants []string  `json:"participants"`
-	Transcript   []Message `json:"transcript"`
+	Transcript   []domain.Message `json:"transcript"`
 }
 
 // Hub acts as the central, thread-safe asynchronous message broker and state registry for all active agents and meeting rooms.
@@ -283,12 +132,12 @@ type MeetingRoom struct {
 // Has no side effects.
 type Hub struct {
 	mu             sync.RWMutex
-	agents         map[string]Agent
-	inbox          map[string][]Message
+	agents         map[string]domain.Agent
+	inbox          map[string][]domain.Message
 	meetings       map[string]MeetingRoom
 	minimaxAPIKey  string
 	subs           map[string][]chan struct{}
-	sipDB          *SIPDB
+	sipDB          *sip.SIPDB
 	tokenTrackers  map[string]struct{}
 	autoCorTrack   map[string]struct{}
 	eventLogChan   chan interface{}
@@ -305,8 +154,8 @@ type Hub struct {
 // Has no side effects.
 func NewHub() *Hub {
 	h := &Hub{
-		agents:        map[string]Agent{},
-		inbox:         map[string][]Message{},
+		agents:        map[string]domain.Agent{},
+		inbox:         map[string][]domain.Message{},
 		meetings:      map[string]MeetingRoom{},
 		subs:          map[string][]chan struct{}{},
 		tokenTrackers: map[string]struct{}{},
@@ -531,17 +380,17 @@ func (h *Hub) ToolParameterAutoCorrection(eventID, agentID string, payload []byt
 
 // SetSIPDB injects a database-driven Swarm Intelligence Protocol interface.
 // Accepts parameters: h *Hub (No Constraints).
-// Returns SetSIPDB(sipDB *SIPDB).
+// Returns SetSIPDB(sipDB *sip.SIPDB).
 // Produces no errors.
 // Has no side effects.
-func (h *Hub) SetSIPDB(sipDB *SIPDB) {
+func (h *Hub) SetSIPDB(sipDB *sip.SIPDB) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.sipDB = sipDB
 }
 
-// SIPDB returns the configured database-driven Swarm Intelligence Protocol interface.
-func (h *Hub) SIPDB() *SIPDB {
+// sip.SIPDB returns the configured database-driven Swarm Intelligence Protocol interface.
+func (h *Hub) SIPDB() *sip.SIPDB {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.sipDB
@@ -549,32 +398,35 @@ func (h *Hub) SIPDB() *SIPDB {
 
 // GetSIPDB retrieves the current SIP database interface.
 // Accepts parameters: h *Hub (No Constraints).
-// Returns GetSIPDB() *SIPDB.
+// Returns GetSIPDB() *sip.SIPDB.
 // Produces no errors.
 // Has no side effects.
-func (h *Hub) GetSIPDB() *SIPDB {
+func (h *Hub) GetSIPDB() *sip.SIPDB {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.sipDB
 }
 
-// RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its Status.  Parameters:   - agent: Agent; The worker object containing ID, Name, Role, and Organization context.
+// RegisterAgent enrolls an agent into the Hub, allocating an inbox and initialising its domain.Status.  Parameters:   - agent: domain.Agent; The worker object containing ID, Name, Role, and Organization context.
 // Accepts parameters: h *Hub (No Constraints).
 // Returns nothing.
 // Produces no errors.
 // Has no side effects.
-func (h *Hub) RegisterAgent(agent Agent) {
+func (h *Hub) RegisterAgent(agent domain.Agent) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	if agent.Status == "" {
-		agent.Status = StatusIdle
+		agent.Status = domain.StatusIdle
+	}
+	if agent.ProviderType == "" {
+		agent.ProviderType = "builtin"
 	}
 
 	h.agents[agent.ID] = agent
 
 	if h.sipDB != nil {
-		go func(a Agent) {
+		go func(a domain.Agent) {
 			_ = h.sipDB.Heartbeat(context.Background(), a.ID, a.Role, string(a.Status))
 		}(agent)
 	}
@@ -638,10 +490,10 @@ func (h *Hub) CentrifugeNode() *CentrifugeNode {
 //   - id: string; The unique identifier of the agent.
 //
 // Accepts parameters: h *Hub (No Constraints).
-// Returns Agent(id string) (Agent, bool).
+// Returns domain.Agent(id string) (domain.Agent, bool).
 // Produces no errors.
 // Has no side effects.
-func (h *Hub) Agent(id string) (Agent, bool) {
+func (h *Hub) Agent(id string) (domain.Agent, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
@@ -666,7 +518,7 @@ func (h *Hub) OpenMeeting(id string, participants []string) MeetingRoom {
 	h.meetings[id] = meeting
 	for _, participant := range participants {
 		agent := h.agents[participant]
-		agent.Status = StatusInMeeting
+		agent.Status = domain.StatusInMeeting
 		h.agents[participant] = agent
 	}
 
@@ -692,7 +544,7 @@ func (h *Hub) OpenMeetingWithAgenda(id, agenda string, participants []string) Me
 	h.meetings[id] = meeting
 	for _, participant := range participants {
 		agent := h.agents[participant]
-		agent.Status = StatusInMeeting
+		agent.Status = domain.StatusInMeeting
 		h.agents[participant] = agent
 	}
 
@@ -715,13 +567,13 @@ func (h *Hub) FireAgent(id string) {
 
 // Publish validates and routes a message to a direct recipient, a meeting room, or both.
 //
-//   - message: Message; The event payload containing routing headers and content.
+//   - message: domain.Message; The event payload containing routing headers and content.
 //
 // Accepts parameters: h *Hub (No Constraints).
-// Returns Publish(message Message) error.
+// Returns Publish(message domain.Message) error.
 // Produces errors: Explicit error handling.
 // Has no side effects.
-func (h *Hub) Publish(message Message) error {
+func (h *Hub) Publish(message domain.Message) error {
 	h.mu.RLock()
 	if _, ok := h.agents[message.FromAgent]; !ok {
 		h.mu.RUnlock()
@@ -736,6 +588,10 @@ func (h *Hub) Publish(message Message) error {
 	h.mu.RUnlock()
 
 	h.mu.Lock()
+
+	// Collect channels to notify
+	var notifyChannels []chan struct{}
+
 	if message.ToAgent != "" {
 		inbox := h.inbox[message.ToAgent]
 		if cap(inbox) == 0 {
@@ -745,12 +601,7 @@ func (h *Hub) Publish(message Message) error {
 		h.inbox[message.ToAgent] = append(inbox, message)
 
 		subs := h.subs[message.ToAgent]
-		for i := 0; i < len(subs); i++ {
-			select {
-			case subs[i] <- struct{}{}:
-			default:
-			}
-		}
+		notifyChannels = append(notifyChannels, subs...)
 	}
 
 	sender := h.agents[message.FromAgent]
@@ -769,7 +620,7 @@ func (h *Hub) Publish(message Message) error {
 		// ⚡ BOLT: [Aggressive AI Context Summarization] - Randomized Selection from Top 5
 		// Reduces token burn by summarizing transcripts when they exceed a threshold (e.g. 15 msgs)
 		if len(meeting.Transcript) > 10 && h.minimaxAPIKey != "" {
-			go func(mID string, transcript []Message) {
+			go func(mID string, transcript []domain.Message) {
 				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
 				client := NewMinimaxClient(h.MinimaxAPIKey())
@@ -783,12 +634,12 @@ func (h *Hub) Publish(message Message) error {
 					h.mu.Lock()
 					if mtg, ok := h.meetings[mID]; ok {
 						// Keep only the summary and the last 3 messages
-						newTranscript := []Message{
+						newTranscript := []domain.Message{
 							{
 								ID:         "summary-" + time.Now().UTC().Format("20060102150405"),
 								FromAgent:  "SYSTEM_SUMMARIZER",
 								ToAgent:    "all",
-								Type:       EventStatus,
+								Type:       domain.EventStatus,
 								Content:    "[CONTEXT SUMMARIZED]: " + summary,
 								MeetingID:  mID,
 								OccurredAt: time.Now().UTC(),
@@ -807,33 +658,36 @@ func (h *Hub) Publish(message Message) error {
 				} else {
 					slog.Warn("context summarization failed", "meeting_id", mID, "error", err)
 				}
-			}(message.MeetingID, append([]Message(nil), meeting.Transcript...))
+			}(message.MeetingID, append([]domain.Message(nil), meeting.Transcript...))
 		}
 
 		h.meetings[message.MeetingID] = meeting
-		sender.Status = StatusInMeeting
+		sender.Status = domain.StatusInMeeting
 
 		for _, participant := range meeting.Participants {
 			subs := h.subs[participant]
-			for i := 0; i < len(subs); i++ {
-				select {
-				case subs[i] <- struct{}{}:
-				default:
-				}
-			}
+			notifyChannels = append(notifyChannels, subs...)
 		}
 	} else {
-		sender.Status = StatusActive
+		sender.Status = domain.StatusActive
 	}
 	h.agents[message.FromAgent] = sender
 	h.mu.Unlock()
+
+	// Perform non-blocking sends outside the critical section
+	for _, ch := range notifyChannels {
+		select {
+		case ch <- struct{}{}:
+		default:
+		}
+	}
 
 	// ⚡ BOLT: [Asynchronous telemetry recording to reduce critical path latency] - Randomized Selection from Top 5
 	go telemetry.RecordAgentApiCall(context.Background(), sender.ID, sender.Role, "publish")
 
 	// Structured logging for agent execution traces
 	// Filter out high-frequency "status" events to reduce signal noise.
-	if message.Type != EventStatus {
+	if message.Type != domain.EventStatus {
 		go telemetry.LogAgentExecution(context.Background(), sender.ID, sender.Role, "publish", message.Type, message.Content)
 	}
 
@@ -888,10 +742,10 @@ func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 //   - agentID: string; The unique identifier of the worker.
 //
 // Accepts parameters: h *Hub (No Constraints).
-// Returns Inbox(agentID string) []Message.
+// Returns Inbox(agentID string) []domain.Message.
 // Produces no errors.
 // Has no side effects.
-func (h *Hub) Inbox(agentID string) []Message {
+func (h *Hub) Inbox(agentID string) []domain.Message {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -906,22 +760,22 @@ func (h *Hub) Inbox(agentID string) []Message {
 
 var messageSlicePool = sync.Pool{
 	New: func() interface{} {
-		s := make([]Message, 0, 16)
+		s := make([]domain.Message, 0, 16)
 		return &s
 	},
 }
 
-func getMessageSlice() []Message {
-	return *messageSlicePool.Get().(*[]Message)
+func getMessageSlice() []domain.Message {
+	return *messageSlicePool.Get().(*[]domain.Message)
 }
 
-func putMessageSlice(s []Message) {
+func putMessageSlice(s []domain.Message) {
 	if cap(s) > 1024 {
 		return
 	}
 	// clear elements to avoid memory leaks
 	for i := range s {
-		s[i] = Message{}
+		s[i] = domain.Message{}
 	}
 	s = s[:0]
 	messageSlicePool.Put(&s)
@@ -966,12 +820,12 @@ func (h *Hub) Meetings() []MeetingRoom {
 // Agents retrieves a point-in-time snapshot of the entire registered workforce, ordered by ID.
 //
 // Accepts parameters: h *Hub (No Constraints).
-// Returns Agents() []Agent.
+// Returns Agents() []domain.Agent.
 // Produces no errors.
 // Has no side effects.
-func (h *Hub) Agents() []Agent {
+func (h *Hub) Agents() []domain.Agent {
 	h.mu.RLock()
-	agents := make([]Agent, 0, len(h.agents))
+	agents := make([]domain.Agent, 0, len(h.agents))
 	for _, agent := range h.agents {
 		agents = append(agents, agent)
 	}
@@ -1020,12 +874,12 @@ func NewHubServiceServer(hub *Hub) *HubServiceServer {
 // Has no side effects.
 func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAgentRequest) (*pb.RegisterAgentResponse, error) {
 	agentReq := req.GetAgent()
-	agent := Agent{
+	agent := domain.Agent{
 		ID:             agentReq.GetId(),
 		Name:           agentReq.GetName(),
 		Role:           agentReq.GetRole(),
 		OrganizationID: agentReq.GetOrganizationId(),
-		Status:         Status(agentReq.GetStatus()),
+		Status:         domain.Status(agentReq.GetStatus()),
 		ProviderType:   agentReq.GetProviderType(),
 	}
 	s.hub.RegisterAgent(agent)
@@ -1053,7 +907,7 @@ func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingR
 // Has no side effects.
 func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRequest) (*pb.PublishMessageResponse, error) {
 	msgReq := req.GetMessage()
-	msg := Message{
+	msg := domain.Message{
 		ID:         msgReq.GetId(),
 		FromAgent:  msgReq.GetFromAgent(),
 		ToAgent:    msgReq.GetToAgent(),
@@ -1075,7 +929,7 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 // Has no side effects.
 func (s *HubServiceServer) DelegateTask(ctx context.Context, req *pb.DelegateTaskRequest) (*pb.DelegateTaskResponse, error) {
 	msgReq := req.GetTask()
-	msg := Message{
+	msg := domain.Message{
 		ID:         msgReq.GetId(),
 		FromAgent:  msgReq.GetFromAgent(),
 		ToAgent:    msgReq.GetToAgent(),
@@ -1163,6 +1017,14 @@ func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*
 // ⚡ BOLT: [Configurable endpoint] - Randomized Selection from Top 5
 var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
 
+type cbState int
+
+const (
+	cbStateClosed cbState = iota
+	cbStateOpen
+	cbStateHalfOpen
+)
+
 // MinimaxClient handles interaction with the Minimax Model 2.7.
 // Accepts no parameters.
 // Returns nothing.
@@ -1170,6 +1032,14 @@ var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
 // Has no side effects.
 type MinimaxClient struct {
 	APIKey string
+
+	// Circuit breaker state
+	cbMu            sync.Mutex
+	state           cbState
+	failures        int
+	maxFailures     int
+	openTime        time.Time
+	resetTimeout    time.Duration
 }
 
 // NewMinimaxClient functionality.
@@ -1178,7 +1048,21 @@ type MinimaxClient struct {
 // Produces no errors.
 // Has no side effects.
 func NewMinimaxClient(apiKey string) *MinimaxClient {
-	return &MinimaxClient{APIKey: apiKey}
+	return &MinimaxClient{
+		APIKey:       apiKey,
+		state:        cbStateClosed,
+		failures:     0,
+		maxFailures:  3,
+		resetTimeout: 10 * time.Second,
+	}
+}
+
+// Reset resets the circuit breaker state to closed.
+func (c *MinimaxClient) Reset() {
+	c.cbMu.Lock()
+	defer c.cbMu.Unlock()
+	c.state = cbStateClosed
+	c.failures = 0
 }
 
 var bufferPool = sync.Pool{
@@ -1189,6 +1073,10 @@ var bufferPool = sync.Pool{
 
 var sharedHTTPClient = &http.Client{
 	Timeout: 30 * time.Second,
+	Transport: &http.Transport{
+		MaxIdleConns:        1000,
+		MaxIdleConnsPerHost: 1000,
+	},
 }
 
 // Reason functionality.
@@ -1200,6 +1088,17 @@ func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, erro
 	if c.APIKey == "" {
 		return "", errors.New("minimax API key is not configured")
 	}
+
+	c.cbMu.Lock()
+	if c.state == cbStateOpen {
+		if time.Since(c.openTime) > c.resetTimeout {
+			c.state = cbStateHalfOpen
+		} else {
+			c.cbMu.Unlock()
+			return "", errors.New("circuit breaker is open")
+		}
+	}
+	c.cbMu.Unlock()
 
 	url := minimaxAPIURL
 	// Optimization: construct the JSON payload manually to avoid
@@ -1227,9 +1126,25 @@ func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, erro
 	// ⚡ BOLT: [Reused HTTP Client] - Randomized Selection from Top 5
 	// Prevents severe connection and resource leaks by reusing connection pools on every request.
 	resp, err := sharedHTTPClient.Do(req)
-	if err != nil {
-		return "", err
+
+	c.cbMu.Lock()
+	if err != nil || resp.StatusCode != http.StatusOK {
+		c.failures++
+		if c.failures >= c.maxFailures {
+			c.state = cbStateOpen
+			c.openTime = time.Now()
+		}
+		c.cbMu.Unlock()
+
+		if err != nil {
+			return "", err
+		}
+	} else {
+		c.failures = 0
+		c.state = cbStateClosed
+		c.cbMu.Unlock()
 	}
+
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {

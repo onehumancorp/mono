@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "domain",
     srcs = [
+        "agent.go",
         "b2b.go",
         "blueprint.go",
         "compute.go",
