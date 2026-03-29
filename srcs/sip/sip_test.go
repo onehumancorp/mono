@@ -1,10 +1,11 @@
-package orchestration
+package sip
 
 import (
 	"context"
 	"testing"
 	"path/filepath"
 	"time"
+	"github.com/onehumancorp/mono/srcs/domain"
 )
 
 func TestSIPDB_Init(t *testing.T) {
@@ -37,7 +38,7 @@ func TestSIPDB_Init(t *testing.T) {
 	}
 
 	// Test Delegation & Mission
-	msg := Message{ID: "m1", Content: "Build a feature", Type: EventTask}
+	msg := domain.Message{ID: "m1", Content: "Build a feature", Type: domain.EventTask}
 	err = db.DelegateMission(ctx, "m1", "SOFTWARE_ENGINEER", msg)
 	if err != nil {
 		t.Fatalf("DelegateMission failed: %v", err)
@@ -317,7 +318,7 @@ func TestSIPDB_DelegateMission_DBError(t *testing.T) {
 	}
 	db.Close()
 
-	err = db.DelegateMission(context.Background(), "mission", "role", Message{})
+	err = db.DelegateMission(context.Background(), "mission", "role", domain.Message{})
 	if err == nil {
 		t.Fatal("Expected error querying closed DB")
 	}

@@ -1,6 +1,7 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/domain"
 	"context"
 	"fmt"
 	"strings"
@@ -46,12 +47,12 @@ func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask)
 	}
 
 	subAgentID := fmt.Sprintf("sub-agent-%s-%d", req.GetTargetRole(), time.Now().UnixNano())
-	subAgent := Agent{
+	subAgent := domain.Agent{
 		ID:             subAgentID,
 		Name:           fmt.Sprintf("Specialized %s Agent", req.GetTargetRole()),
 		Role:           req.GetTargetRole(),
 		OrganizationID: "dynamic-delegation",
-		Status:         StatusIdle,
+		Status:         domain.StatusIdle,
 		ProviderType:   "builtin",
 	}
 
@@ -83,7 +84,7 @@ func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask)
 		return nil, status.Errorf(codes.InvalidArgument, "parent_thread_id contains forbidden prompt injection sequences")
 	}
 
-	msg := Message{
+	msg := domain.Message{
 		ID:         fmt.Sprintf("msg-%s-%d", req.GetTaskId(), time.Now().UnixNano()),
 		FromAgent:  req.GetFromAgentId(),
 		ToAgent:    subAgentID,
