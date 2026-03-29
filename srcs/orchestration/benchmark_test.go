@@ -134,3 +134,33 @@ func BenchmarkReason(b *testing.B) {
 		_, _ = client.Reason(ctx, "test prompt")
 	}
 }
+
+func BenchmarkGetPendingMissions(b *testing.B) {
+	tmpDir := b.TempDir()
+	dbPath := tmpDir + "/benchmark.db"
+	db, err := NewSIPDB(dbPath)
+	if err != nil {
+		b.Fatalf("Failed to create SIPDB: %v", err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+
+	// Seed database with many missions
+	for i := 0; i < 1000; i++ {
+		task := Message{
+			ID:      fmt.Sprintf("mission-%d", i),
+			Content: "Benchmark task",
+			Type:    EventTask,
+		}
+		db.DelegateMission(ctx, fmt.Sprintf("mission-%d", i), "SOFTWARE_ENGINEER", task)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := db.GetPendingMissions(ctx, "SOFTWARE_ENGINEER")
+		if err != nil {
+			b.Fatalf("Error in GetPendingMissions: %v", err)
+		}
+	}
+}
