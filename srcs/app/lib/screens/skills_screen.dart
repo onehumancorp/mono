@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ohc_app/models/skill.dart';
 import 'package:ohc_app/services/api_service.dart';
+import 'package:ohc_app/widgets/glass_card.dart';
 
 final _skillsProvider = FutureProvider<List<Skill>>((ref) async {
   final api = ref.watch(apiServiceProvider);
@@ -177,7 +178,7 @@ class _SkillCardState extends State<_SkillCard> {
   @override
   Widget build(BuildContext context) {
     final s = widget.skill;
-    return Card(
+    return GlassCard(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),

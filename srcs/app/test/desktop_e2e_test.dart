@@ -18,6 +18,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ohc_app/services/settings_service.dart';
 import 'package:ohc_app/models/agent.dart';
 import 'package:ohc_app/models/ai_provider.dart';
 import 'package:ohc_app/models/channel.dart';
@@ -214,12 +216,15 @@ void main() {
 
   group('SettingsScreen – button clicks', () {
     testWidgets('Sign Out list tile is rendered and tappable', (tester) async {
+      SharedPreferences.setMockInitialValues({});
       await tester.pumpWidget(_wrap(
         const SettingsScreen(),
         overrides: [
           authStateProvider.overrideWith(() => _FakeAuthNotifier(_fakeUser)),
+          clientSettingsProvider.overrideWith((ref) => ClientSettingsNotifier(ref)..state = const AsyncData(ClientSettings(backendUrl: "http://localhost", standaloneMode: false))),
         ],
       ));
+      await tester.pump();
       await tester.pump();
 
       expect(find.text('Sign Out'), findsOneWidget);
@@ -231,12 +236,15 @@ void main() {
     });
 
     testWidgets('shows user name and email when logged in', (tester) async {
+      SharedPreferences.setMockInitialValues({});
       await tester.pumpWidget(_wrap(
         const SettingsScreen(),
         overrides: [
           authStateProvider.overrideWith(() => _FakeAuthNotifier(_fakeUser)),
+          clientSettingsProvider.overrideWith((ref) => ClientSettingsNotifier(ref)..state = const AsyncData(ClientSettings(backendUrl: "http://localhost", standaloneMode: false))),
         ],
       ));
+      await tester.pump();
       await tester.pump();
 
       expect(find.text('Dev User'), findsOneWidget);

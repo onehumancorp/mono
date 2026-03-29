@@ -20,6 +20,7 @@ class OhcApp extends ConsumerWidget {
       title: 'One Human Corp',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        scaffoldBackgroundColor: Colors.transparent,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF6366F1), // indigo-500
           brightness: Brightness.light,
@@ -28,6 +29,7 @@ class OhcApp extends ConsumerWidget {
         fontFamily: 'Inter',
       ),
       darkTheme: ThemeData(
+        scaffoldBackgroundColor: Colors.transparent,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF6366F1),
           brightness: Brightness.dark,
@@ -36,6 +38,22 @@ class OhcApp extends ConsumerWidget {
         fontFamily: 'Inter',
       ),
       themeMode: ThemeMode.system,
+      builder: (context, child) {
+        return Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF1E1B4B), // indigo-950
+                Color(0xFF312E81), // indigo-900
+                Color(0xFF4C1D95), // violet-900
+              ],
+            ),
+          ),
+          child: child,
+        );
+      },
       routerConfig: router,
     );
   }
