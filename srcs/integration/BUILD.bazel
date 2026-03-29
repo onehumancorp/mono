@@ -33,3 +33,15 @@ go_test(
         "//srcs/orchestration",
     ],
 )
+
+go_test(
+    name = "chaos_test",
+    srcs = ["chaos_e2e_test.go"],
+    deps = [
+        "//srcs/auth",
+        "//srcs/billing",
+        "//srcs/dashboard",
+        "//srcs/domain",
+        "//srcs/orchestration",
+    ],
+)

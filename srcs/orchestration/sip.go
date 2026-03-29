@@ -17,12 +17,13 @@ import (
 // Produces no errors.
 // Has no side effects.
 type SIPDB struct {
+	DB *sql.DB
 	db *sql.DB
 }
 
 const (
-	maxRetries    = 3
-	retryInterval = 100 * time.Millisecond
+	maxRetries    = 8
+	retryInterval = 150 * time.Millisecond
 )
 
 // withRetry executes a database operation with exponential backoff for transient errors (e.g. database is locked).
@@ -62,7 +63,7 @@ func NewSIPDB(dbPath string) (*SIPDB, error) {
 		return nil, err
 	}
 
-	return &SIPDB{db: db}, nil
+	return &SIPDB{db: db, DB: db}, nil
 }
 
 func initializeTables(db *sql.DB) error {
