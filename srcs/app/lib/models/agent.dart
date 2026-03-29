@@ -41,3 +41,46 @@ class Agent {
   bool get isRunning => status == 'running';
   bool get isPending => status == 'pending';
 }
+
+/// Information about an AI agent provider.
+class AgentProvider {
+  final String type;
+  final String description;
+  final List<String> supportedRoles;
+  final bool isAuthenticated;
+
+  const AgentProvider({
+    required this.type,
+    required this.description,
+    required this.supportedRoles,
+    required this.isAuthenticated,
+  });
+
+  factory AgentProvider.fromJson(Map<String, dynamic> json) {
+    return AgentProvider(
+      type: json['type'] as String,
+      description: json['description'] as String? ?? '',
+      supportedRoles: List<String>.from(json['supportedRoles'] ?? []),
+      isAuthenticated: json['isAuthenticated'] as bool? ?? false,
+    );
+  }
+
+  String get label {
+    switch (type) {
+      case 'claude':
+        return 'Claude (Anthropic)';
+      case 'gemini':
+        return 'Gemini (Google)';
+      case 'openclaw':
+        return 'OpenClaw';
+      case 'opencode':
+        return 'OpenCode';
+      case 'ironclaw':
+        return 'IronClaw';
+      case 'builtin':
+        return 'Built-in';
+      default:
+        return type.toUpperCase();
+    }
+  }
+}

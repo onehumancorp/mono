@@ -28,6 +28,7 @@ flutter_library(
     deps = [
         "//srcs/app/lib/models:models_lib",
         "@flutter_sdk//flutter/packages/flutter",
+        "@pub_flutter_riverpod//:flutter_riverpod",
         "@pub_http//:http",
         "@pub_centrifuge//:centrifuge",
     ],

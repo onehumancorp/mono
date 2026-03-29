@@ -28,8 +28,11 @@ flutter_library(
     deps = [
         "//srcs/app/lib/models:models_lib",
         "//srcs/app/lib/services:services_lib",
+        "//srcs/app/lib/widgets:widgets_lib",
         "@flutter_sdk//flutter/packages/flutter",
         "@pub_flutter_riverpod//:flutter_riverpod",
+        "@pub_go_router//:go_router",
+        "@pub_intl//:intl",
     ],
 )
 

@@ -1,0 +1,32 @@
+load("@rules_flutter//flutter:defs.bzl", "flutter_library")
+
+package(default_visibility = ["//srcs/app:__subpackages__"])
+
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.dart"], allow_empty = True) + ["BUILD.bazel"],
+    visibility = ["//srcs/app:__pkg__"],
+)
+
+filegroup(
+    name = "dart_srcs",
+    srcs = glob(
+        ["*.dart"],
+        exclude = ["*_test.dart"],
+        allow_empty = True,
+    ),
+    visibility = ["//srcs/app:__pkg__"],
+)
+
+flutter_library(
+    name = "widgets_lib",
+    srcs = glob(
+        ["*.dart"],
+        exclude = ["*_test.dart"],
+    ),
+    pubspec = "//srcs/app:pubspec.yaml",
+    deps = [
+        "//srcs/app/lib/models:models_lib",
+        "@flutter_sdk//flutter/packages/flutter",
+    ],
+)

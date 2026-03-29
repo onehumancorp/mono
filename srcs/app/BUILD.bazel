@@ -27,6 +27,7 @@ filegroup(
         "//srcs/app/lib/models:srcs",
         "//srcs/app/lib/services:srcs",
         "//srcs/app/lib/screens:srcs",
+        "//srcs/app/lib/widgets:srcs",
     ],
     visibility = ["//visibility:public"],
 )
@@ -39,6 +40,7 @@ flutter_library(
         "//srcs/app/lib/models:dart_srcs",
         "//srcs/app/lib/services:dart_srcs",
         "//srcs/app/lib/screens:dart_srcs",
+        "//srcs/app/lib/widgets:dart_srcs",
     ],
     pubspec = "pubspec.yaml",
     visibility = ["//srcs/app:__subpackages__"],
@@ -47,6 +49,7 @@ flutter_library(
         "//srcs/app/lib/models:models_lib",
         "//srcs/app/lib/services:services_lib",
         "//srcs/app/lib/screens:screens_lib",
+        "//srcs/app/lib/widgets:widgets_lib",
         # SDK packages
         "@flutter_sdk//flutter/packages/flutter",
         # Direct main dependencies
