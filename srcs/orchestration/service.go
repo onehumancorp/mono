@@ -53,6 +53,20 @@ func redactInterfacePII(val interface{}) interface{} {
 			v[i] = redactInterfacePII(val)
 		}
 		return v
+	case []string:
+		res := make([]string, len(v))
+		for i, str := range v {
+			res[i] = redactPII(str)
+		}
+		return res
+	case []map[string]interface{}:
+		for i, m := range v {
+			for k, val := range m {
+				m[k] = redactInterfacePII(val)
+			}
+			v[i] = m
+		}
+		return v
 	default:
 		return val
 	}

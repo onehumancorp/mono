@@ -15,6 +15,7 @@ import (
 
 func TestDelegateSubTask_Success(t *testing.T) {
 	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender-1", Name: "Sender", Role: "PM", Status: StatusIdle})
 	server := NewHubServiceServer(hub)
 	ctx := context.Background()
 
@@ -23,6 +24,7 @@ func TestDelegateSubTask_Success(t *testing.T) {
 		TargetRole:     proto.String("SWE"),
 		Instruction:    proto.String("Implement login component"),
 		ParentThreadId: proto.String("thread-1"),
+		FromAgentId:    proto.String("sender-1"),
 	}.Build()
 
 	resp, err := server.DelegateSubTask(ctx, req)
@@ -137,6 +139,7 @@ func TestDelegateSubTask_MissingFields(t *testing.T) {
 // TestDelegateSubTask_Integration checks the real data law by seeing if the message gets processed properly
 func TestDelegateSubTask_Integration(t *testing.T) {
 	hub := NewHub()
+	hub.RegisterAgent(Agent{ID: "sender-1", Name: "Sender", Role: "PM", Status: StatusIdle})
 	server := NewHubServiceServer(hub)
 	ctx := context.Background()
 
@@ -145,6 +148,7 @@ func TestDelegateSubTask_Integration(t *testing.T) {
 		TargetRole:     proto.String("QA"),
 		Instruction:    proto.String("Verify real data integration"),
 		ParentThreadId: proto.String("thread-int-1"),
+		FromAgentId:    proto.String("sender-1"),
 	}.Build()
 
 	_, err := server.DelegateSubTask(ctx, req)

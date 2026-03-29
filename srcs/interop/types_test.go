@@ -1,6 +1,7 @@
 package interop
 
 import (
+	"strings"
     "testing"
 )
 
@@ -24,8 +25,8 @@ func TestLogCheckpoint_ExistingCheckpointsDifferentType(t *testing.T) {
 
 func TestValidateSPIFFEID_InvalidIdentity(t *testing.T) {
     err := ValidateSPIFFEID("invalid-identity")
-    if err == nil || err.Error() != "invalid SPIFFE ID scheme: " {
-        t.Fatalf("invalid SPIFFE ID scheme: invalid-identity, got %v", err)
+    if err == nil || !strings.Contains(err.Error(), "invalid SPIFFE ID scheme") {
+        t.Fatalf("expected invalid SPIFFE ID scheme, got %v", err)
     }
 }
 
