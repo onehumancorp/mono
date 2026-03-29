@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -53,10 +54,20 @@ func withRetry(ctx context.Context, op func() error) error {
 // Produces errors: Explicit error handling.
 // Has no side effects.
 func NewSIPDB(dbPath string) (*SIPDB, error) {
+	// Add pragmas for concurrency if not present
+	if !strings.Contains(dbPath, "?") {
+		dbPath += "?_journal_mode=WAL&_busy_timeout=15000&_txlock=immediate"
+	} else if !strings.Contains(dbPath, "_journal_mode=WAL") {
+		dbPath += "&_journal_mode=WAL&_busy_timeout=15000&_txlock=immediate"
+	}
+
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, err
 	}
+
+	// Important to avoid DB locks
+	db.SetMaxOpenConns(1)
 
 	if err := initializeTables(db); err != nil {
 		return nil, err
