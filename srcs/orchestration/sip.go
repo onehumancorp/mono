@@ -20,6 +20,11 @@ type SIPDB struct {
 	db *sql.DB
 }
 
+// GetDB returns the underlying database connection.
+func (s *SIPDB) GetDB() *sql.DB {
+	return s.db
+}
+
 const (
 	maxRetries    = 3
 	retryInterval = 100 * time.Millisecond

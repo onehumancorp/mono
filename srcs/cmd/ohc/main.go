@@ -138,6 +138,12 @@ func run(now time.Time, listen listenFunc) error {
 	dbPath := filepath.Join(os.Getenv("HOME"), ".openclaw", "ohc.db")
 	if sipdb, err := orchestration.NewSIPDB(dbPath); err == nil {
 		hub.SetSIPDB(sipdb)
+
+		// Seed security missions and advisories into the OHC-SIP
+		if err := SeedSecurityTasks(ctx, sipdb); err != nil {
+			slog.Error("Failed to seed security tasks", "error", err)
+		}
+
 		// Hygiene: Prune stale missions in the agent_missions table periodically
 		go func() {
 			ticker := time.NewTicker(1 * time.Hour)
