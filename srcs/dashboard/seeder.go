@@ -38,7 +38,7 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 	hub.RegisterAgent(orchestration.Agent{ID: "CEO", Name: "Human CEO", Role: "CEO", OrganizationID: org.ID})
 	hub.OpenMeetingWithAgenda("launch-readiness", "Review launch blockers, sign-off on reliability checklist, assign post-launch owners.", []string{"pm-1", "swe-1", "ux-1", "qa-1", "sec-1", "CEO"})
 
-	_ = hub.Publish(orchestration.Message{
+	_ = hub.Publish(domain.Message{
 		ID:         "seed-1",
 		FromAgent:  "pm-1",
 		ToAgent:    "swe-1",
@@ -47,7 +47,7 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 		MeetingID:  "launch-readiness",
 		OccurredAt: now.Add(-6 * time.Minute),
 	})
-	_ = hub.Publish(orchestration.Message{
+	_ = hub.Publish(domain.Message{
 		ID:         "seed-2",
 		FromAgent:  "swe-1",
 		ToAgent:    "pm-1",
@@ -56,7 +56,7 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 		MeetingID:  "launch-readiness",
 		OccurredAt: now.Add(-4 * time.Minute),
 	})
-	_ = hub.Publish(orchestration.Message{
+	_ = hub.Publish(domain.Message{
 		ID:         "seed-3",
 		FromAgent:  "ux-1",
 		ToAgent:    "pm-1",
@@ -67,7 +67,7 @@ func seededLaunchReadiness(now time.Time) (domain.Organization, *orchestration.H
 	})
 
 	msgID := "seed-4"
-	_ = hub.Publish(orchestration.Message{
+	_ = hub.Publish(domain.Message{
 		ID:         msgID,
 		FromAgent:  "pm-1",
 		ToAgent:    "CEO",
@@ -117,7 +117,7 @@ func seededDigitalMarketing(now time.Time) (domain.Organization, *orchestration.
 	hub.RegisterAgent(orchestration.Agent{ID: "seo-1", Name: "SEO Specialist", Role: "SEO_SPECIALIST", OrganizationID: org.ID})
 	hub.OpenMeetingWithAgenda("campaign-kickoff", "Plan Q2 acquisition campaigns and assign channel ownership.", []string{"growth-1", "content-1", "seo-1"})
 
-	_ = hub.Publish(orchestration.Message{
+	_ = hub.Publish(domain.Message{
 		ID:         "seed-dma-1",
 		FromAgent:  "growth-1",
 		ToAgent:    "content-1",
@@ -149,7 +149,7 @@ func seededAccounting(now time.Time) (domain.Organization, *orchestration.Hub, *
 	hub.RegisterAgent(orchestration.Agent{ID: "cfo-1", Name: "CFO", Role: "CFO", OrganizationID: org.ID})
 	hub.OpenMeetingWithAgenda("month-close", "Reconcile April ledger, prepare estimated tax liability, and review payroll entries.", []string{"bookkeeper-1", "tax-1", "cfo-1"})
 
-	_ = hub.Publish(orchestration.Message{
+	_ = hub.Publish(domain.Message{
 		ID:         "seed-acc-1",
 		FromAgent:  "cfo-1",
 		ToAgent:    "bookkeeper-1",

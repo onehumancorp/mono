@@ -1,6 +1,8 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/domain"
+
 	"context"
 	"fmt"
 	"net/http"
@@ -53,7 +55,7 @@ func BenchmarkStreamLatency(b *testing.B) {
 	// wait for stream to start
 	time.Sleep(10 * time.Millisecond)
 
-	msg := Message{
+	msg := domain.Message{
 		ID:         "msg1",
 		FromAgent:  "agent1",
 		ToAgent:    "agent2",
@@ -78,7 +80,7 @@ func BenchmarkPublish_Concurrent(b *testing.B) {
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
-		msg := Message{
+		msg := domain.Message{
 			ID:         "msg1",
 			FromAgent:  "agent1",
 			ToAgent:    "agent2",
@@ -96,7 +98,7 @@ func BenchmarkInbox(b *testing.B) {
 	hub := NewHub()
 	hub.RegisterAgent(Agent{ID: "agent1", Status: StatusIdle})
 
-	msg := Message{
+	msg := domain.Message{
 		ID:         "msg1",
 		FromAgent:  "agent1",
 		ToAgent:    "agent1",

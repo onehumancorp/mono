@@ -62,19 +62,7 @@ type RateLimitState struct {
 
 // Initial settings logic is now handled by the settings package.
 
-type statusCount struct {
-	Status orchestration.Status `json:"status"`
-	Count  int                  `json:"count"`
-}
 
-type dashboardSnapshot struct {
-	Organization domain.Organization         `json:"organization"`
-	Meetings     []orchestration.MeetingRoom `json:"meetings"`
-	Costs        billing.Summary             `json:"costs"`
-	Agents       []orchestration.Agent       `json:"agents"`
-	Statuses     []statusCount               `json:"statuses"`
-	UpdatedAt    time.Time                   `json:"updatedAt"`
-}
 
 type seedRequest struct {
 	Scenario string `json:"scenario"`
@@ -555,12 +543,46 @@ const indexHTML = `<!doctype html>
 <head>
   <meta charset="UTF-8" />
   <title>One Human Corp Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0a;
+      color: #eaeaea;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 50px;
+    }
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      color: #ffffff;
+    }
+    .dashboard-panel {
+      backdrop-filter: blur(15px) saturate(180%);
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 30px;
+      margin-top: 20px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 100%;
+      max-width: 800px;
+    }
+    p {
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 <body>
-  <h1>One Human Corp Dashboard</h1>
-  <p>Send Message to an agent or meeting room using the API.</p>
-  <p>View Role Playbooks and agent skill sets in the Settings panel.</p>
-  <div id="root"></div>
+  <div class="dashboard-panel">
+    <h1>One Human Corp Dashboard</h1>
+    <p>Send Message to an agent or meeting room using the API.</p>
+    <p>View Role Playbooks and agent skill sets in the Settings panel.</p>
+    <div id="root"></div>
+  </div>
 </body>
 </html>`
 
@@ -570,73 +592,8 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(indexHTML))
 }
 
-func (s *Server) handleCosts(w http.ResponseWriter, _ *http.Request) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	writeJSON(w, s.tracker.Summary(s.org.ID))
-}
 
-func (s *Server) handleDashboard(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, s.snapshot())
-}
 
-func (s *Server) handleDevSeed(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
-
-	var payload seedRequest
-	dec := json.NewDecoder(r.Body)
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(&payload); err != nil {
-		http.Error(w, "invalid JSON payload", http.StatusBadRequest)
-		return
-	}
-
-	org, hub, tracker, err := seededScenario(payload.Scenario, time.Now().UTC())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	s.mu.Lock()
-	s.org = org
-	s.hub = hub
-	s.tracker = tracker
-
-	mockHandoff := HandoffPackage{
-		ID:             "handoff-" + time.Now().UTC().Format("20060102150405"),
-		FromAgentID:    "swe-1",
-		ToHumanRole:    "CEO",
-		Intent:         "Merge conflict resolution required for legacy billing module.",
-		FailedAttempts: 3,
-		CurrentState:   `{"Step_1_Code_Checkout": "SUCCESS", "Step_2_Dependency_Install": "SUCCESS", "Step_3_Test_Suite": "FAIL: TypeError in billing_test.go", "Step_4_Auto_Remediation": "SIGKILL: Timeout after 30s"}`,
-		Status:         "pending",
-		CreatedAt:      time.Now().UTC(),
-	}
-	s.handoffs = append(s.handoffs, mockHandoff)
-	s.hub.LogEvent(mockHandoff)
-
-	mockPipeline := Pipeline{
-		ID:          "pipe-seed-" + time.Now().UTC().Format("20060102150405"),
-		Name:        "feat-billing-seed",
-		Status:      PipelineStatusStaging,
-		Branch:      "feature/billing",
-		StagingURL:  "https://staging.acme.com",
-		InitiatedBy: "admin",
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
-	}
-	s.pipelines = append(s.pipelines, mockPipeline)
-
-	snapshot := s.snapshotLocked()
-	s.mu.Unlock()
-
-	writeJSON(w, snapshot)
-}
 
 // handleAgentProviders lists all registered external agent providers and their
 // authentication status.  Responds to GET only.
@@ -658,23 +615,7 @@ type mcpRegisterRequest struct {
 	SPIFFEID string  `json:"spiffeId"`
 }
 
-func (s *Server) snapshot() dashboardSnapshot {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.snapshotLocked()
-}
 
-func (s *Server) snapshotLocked() dashboardSnapshot {
-	agents := s.hub.Agents()
-	return dashboardSnapshot{
-		Organization: s.org,
-		Meetings:     s.hub.Meetings(),
-		Costs:        s.tracker.Summary(s.org.ID),
-		Agents:       agents,
-		Statuses:     summarizeStatuses(agents),
-		UpdatedAt:    time.Now().UTC(),
-	}
-}
 
 func writeJSON(w http.ResponseWriter, value any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -728,27 +669,6 @@ type issueToolParams struct {
 	Priority      string `json:"priority"`
 }
 
-func summarizeStatuses(agents []orchestration.Agent) []statusCount {
-	counts := map[orchestration.Status]int{
-		orchestration.StatusIdle:      0,
-		orchestration.StatusActive:    0,
-		orchestration.StatusInMeeting: 0,
-		orchestration.StatusBlocked:   0,
-	}
-	for _, agent := range agents {
-		counts[agent.Status]++
-	}
-
-	statuses := make([]statusCount, 0, len(counts))
-	for _, status := range statusOrder {
-		statuses = append(statuses, statusCount{
-			Status: status,
-			Count:  counts[status],
-		})
-	}
-
-	return statuses
-}
 
 // ── Approval / Confidence Gating Handlers ─────────────────────────────────────
 

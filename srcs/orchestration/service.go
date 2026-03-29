@@ -1,6 +1,10 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/domain"
+
+	"github.com/onehumancorp/mono/srcs/sip"
+
 	"bufio"
 	"bytes"
 	"context"
@@ -198,20 +202,11 @@ type Agent struct {
 	Region       string `json:"region,omitempty"`
 }
 
-// Message represents a discrete packet of communication between agents within a meeting room, containing the content and sender identity.
+// domain.Message represents a discrete packet of communication between agents within a meeting room, containing the content and sender identity.
 // Accepts no parameters.
 // Returns nothing.
 // Produces no errors.
 // Has no side effects.
-type Message struct {
-	ID         string    `json:"id"`
-	FromAgent  string    `json:"fromAgent"`
-	ToAgent    string    `json:"toAgent"`
-	Type       string    `json:"type"`
-	Content    string    `json:"content"`
-	MeetingID  string    `json:"meetingId,omitempty"`
-	OccurredAt time.Time `json:"occurredAt"`
-}
 
 // DelegateTask allows an agent in Delegate Mode to act as a routing proxy.
 // It inspects an incoming task, updates the sender and recipient fields,
@@ -219,13 +214,13 @@ type Message struct {
 //
 //   - fromAgentID: string; The unique identifier of the delegating agent.
 //   - toAgentID: string; The unique identifier of the specialist agent.
-//   - task: Message; The task payload to be delegated.
+//   - task: domain.Message; The task payload to be delegated.
 //
 // Accepts parameters: h *Hub (No Constraints).
-// Returns DelegateTask(fromAgentID, toAgentID string, task Message) error.
+// Returns DelegateTask(fromAgentID, toAgentID string, task domain.Message) error.
 // Produces errors: Explicit error handling.
 // Has no side effects.
-func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
+func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task domain.Message) error {
 	h.mu.RLock()
 	if _, ok := h.agents[fromAgentID]; !ok {
 		h.mu.RUnlock()
@@ -243,7 +238,7 @@ func (h *Hub) DelegateTask(fromAgentID, toAgentID string, task Message) error {
 
 	err := h.Publish(task)
 	if err == nil && h.sipDB != nil {
-		go func(t Message, r string) {
+		go func(t domain.Message, r string) {
 			_ = h.sipDB.DelegateMission(context.Background(), t.ID, r, t)
 		}(task, toAgent.Role)
 	}
@@ -259,7 +254,7 @@ type MeetingRoom struct {
 	ID           string    `json:"id"`
 	Agenda       string    `json:"agenda,omitempty"`
 	Participants []string  `json:"participants"`
-	Transcript   []Message `json:"transcript"`
+	Transcript   []domain.Message `json:"transcript"`
 }
 
 // Hub acts as the central, thread-safe asynchronous message broker and state registry for all active agents and meeting rooms.
@@ -270,11 +265,11 @@ type MeetingRoom struct {
 type Hub struct {
 	mu             sync.RWMutex
 	agents         map[string]Agent
-	inbox          map[string][]Message
+	inbox          map[string][]domain.Message
 	meetings       map[string]MeetingRoom
 	minimaxAPIKey  string
 	subs           map[string][]chan struct{}
-	sipDB          *SIPDB
+	sipDB          *sip.SIPDB
 	tokenTrackers  map[string]struct{}
 	autoCorTrack   map[string]struct{}
 	eventLogChan   chan interface{}
@@ -292,7 +287,7 @@ type Hub struct {
 func NewHub() *Hub {
 	h := &Hub{
 		agents:        map[string]Agent{},
-		inbox:         map[string][]Message{},
+		inbox:         map[string][]domain.Message{},
 		meetings:      map[string]MeetingRoom{},
 		subs:          map[string][]chan struct{}{},
 		tokenTrackers: map[string]struct{}{},
@@ -517,17 +512,17 @@ func (h *Hub) ToolParameterAutoCorrection(eventID, agentID string, payload []byt
 
 // SetSIPDB injects a database-driven Swarm Intelligence Protocol interface.
 // Accepts parameters: h *Hub (No Constraints).
-// Returns SetSIPDB(sipDB *SIPDB).
+// Returns SetSIPDB(sipDB *sip.SIPDB).
 // Produces no errors.
 // Has no side effects.
-func (h *Hub) SetSIPDB(sipDB *SIPDB) {
+func (h *Hub) SetSIPDB(sipDB *sip.SIPDB) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.sipDB = sipDB
 }
 
 // SIPDB returns the configured database-driven Swarm Intelligence Protocol interface.
-func (h *Hub) SIPDB() *SIPDB {
+func (h *Hub) SIPDB() *sip.SIPDB {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.sipDB
@@ -535,10 +530,10 @@ func (h *Hub) SIPDB() *SIPDB {
 
 // GetSIPDB retrieves the current SIP database interface.
 // Accepts parameters: h *Hub (No Constraints).
-// Returns GetSIPDB() *SIPDB.
+// Returns GetSIPDB() *sip.SIPDB.
 // Produces no errors.
 // Has no side effects.
-func (h *Hub) GetSIPDB() *SIPDB {
+func (h *Hub) GetSIPDB() *sip.SIPDB {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return h.sipDB
@@ -701,13 +696,13 @@ func (h *Hub) FireAgent(id string) {
 
 // Publish validates and routes a message to a direct recipient, a meeting room, or both.
 //
-//   - message: Message; The event payload containing routing headers and content.
+//   - message: domain.Message; The event payload containing routing headers and content.
 //
 // Accepts parameters: h *Hub (No Constraints).
-// Returns Publish(message Message) error.
+// Returns Publish(message domain.Message) error.
 // Produces errors: Explicit error handling.
 // Has no side effects.
-func (h *Hub) Publish(message Message) error {
+func (h *Hub) Publish(message domain.Message) error {
 	h.mu.RLock()
 	if _, ok := h.agents[message.FromAgent]; !ok {
 		h.mu.RUnlock()
@@ -755,7 +750,7 @@ func (h *Hub) Publish(message Message) error {
 		// ⚡ BOLT: [Aggressive AI Context Summarization] - Randomized Selection from Top 5
 		// Reduces token burn by summarizing transcripts when they exceed a threshold (e.g. 15 msgs)
 		if len(meeting.Transcript) > 10 && h.minimaxAPIKey != "" {
-			go func(mID string, transcript []Message) {
+			go func(mID string, transcript []domain.Message) {
 				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
 				client := NewMinimaxClient(h.MinimaxAPIKey())
@@ -769,7 +764,7 @@ func (h *Hub) Publish(message Message) error {
 					h.mu.Lock()
 					if mtg, ok := h.meetings[mID]; ok {
 						// Keep only the summary and the last 3 messages
-						newTranscript := []Message{
+						newTranscript := []domain.Message{
 							{
 								ID:         "summary-" + time.Now().UTC().Format("20060102150405"),
 								FromAgent:  "SYSTEM_SUMMARIZER",
@@ -793,7 +788,7 @@ func (h *Hub) Publish(message Message) error {
 				} else {
 					slog.Warn("context summarization failed", "meeting_id", mID, "error", err)
 				}
-			}(message.MeetingID, append([]Message(nil), meeting.Transcript...))
+			}(message.MeetingID, append([]domain.Message(nil), meeting.Transcript...))
 		}
 
 		h.meetings[message.MeetingID] = meeting
@@ -876,10 +871,10 @@ func (h *Hub) Subscribe(agentID string) (<-chan struct{}, func()) {
 //   - agentID: string; The unique identifier of the worker.
 //
 // Accepts parameters: h *Hub (No Constraints).
-// Returns Inbox(agentID string) []Message.
+// Returns Inbox(agentID string) []domain.Message.
 // Produces no errors.
 // Has no side effects.
-func (h *Hub) Inbox(agentID string) []Message {
+func (h *Hub) Inbox(agentID string) []domain.Message {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -894,22 +889,22 @@ func (h *Hub) Inbox(agentID string) []Message {
 
 var messageSlicePool = sync.Pool{
 	New: func() interface{} {
-		s := make([]Message, 0, 16)
+		s := make([]domain.Message, 0, 16)
 		return &s
 	},
 }
 
-func getMessageSlice() []Message {
-	return *messageSlicePool.Get().(*[]Message)
+func getMessageSlice() []domain.Message {
+	return *messageSlicePool.Get().(*[]domain.Message)
 }
 
-func putMessageSlice(s []Message) {
+func putMessageSlice(s []domain.Message) {
 	if cap(s) > 1024 {
 		return
 	}
 	// clear elements to avoid memory leaks
 	for i := range s {
-		s[i] = Message{}
+		s[i] = domain.Message{}
 	}
 	s = s[:0]
 	messageSlicePool.Put(&s)
@@ -1041,7 +1036,7 @@ func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingR
 // Has no side effects.
 func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRequest) (*pb.PublishMessageResponse, error) {
 	msgReq := req.GetMessage()
-	msg := Message{
+	msg := domain.Message{
 		ID:         msgReq.GetId(),
 		FromAgent:  msgReq.GetFromAgent(),
 		ToAgent:    msgReq.GetToAgent(),
@@ -1063,7 +1058,7 @@ func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRe
 // Has no side effects.
 func (s *HubServiceServer) DelegateTask(ctx context.Context, req *pb.DelegateTaskRequest) (*pb.DelegateTaskResponse, error) {
 	msgReq := req.GetTask()
-	msg := Message{
+	msg := domain.Message{
 		ID:         msgReq.GetId(),
 		FromAgent:  msgReq.GetFromAgent(),
 		ToAgent:    msgReq.GetToAgent(),

@@ -1,6 +1,10 @@
 package dashboard
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
+
+	"github.com/onehumancorp/mono/srcs/domain"
+
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -42,7 +46,7 @@ func (s *Server) handleMCPRegister(w http.ResponseWriter, r *http.Request) {
 
 	// Persist to SIP DB Mesh
 	if s.hub.SIPDB() != nil {
-		plugin := orchestration.CapabilityPlugin{
+		plugin := sip.CapabilityPlugin{
 			PluginID:    req.Tool.ID,
 			Name:        req.Tool.Name,
 			Version:     "1.0.0", // Hardcoded for now if not provided
@@ -146,7 +150,7 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 
 			// Record failure event
 			if req.AgentID != "" {
-				msg := orchestration.Message{
+				msg := domain.Message{
 					ID:         "rl-" + time.Now().UTC().Format("20060102150405.999999999"),
 					FromAgent:  "SYSTEM",
 					ToAgent:    req.AgentID,
@@ -182,7 +186,7 @@ func (s *Server) handleMCPInvoke(w http.ResponseWriter, r *http.Request) {
 		delete(s.rateLimitStates, rateLimitKey) // Prevent unbounded memory leak
 
 		if req.AgentID != "" {
-			msg := orchestration.Message{
+			msg := domain.Message{
 				ID:         "rl-succ-" + time.Now().UTC().Format("20060102150405.999999999"),
 				FromAgent:  "SYSTEM",
 				ToAgent:    req.AgentID,

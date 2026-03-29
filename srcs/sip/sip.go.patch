@@ -1,0 +1,56 @@
+--- srcs/sip/sip.go
++++ srcs/sip/sip.go
+@@ -8,6 +8,8 @@
+	"log/slog"
+	"strings"
+	"time"
++
++	"github.com/onehumancorp/mono/srcs/domain"
+
+	_ "modernc.org/sqlite"
+ )
+@@ -124,10 +126,10 @@
+ }
+
+ // GetPendingMissions proactively seeks tasks assigned to the role.
+-// Accepts parameters: s *SIPDB (No Constraints).
+-// Returns GetPendingMissions(ctx context.Context, role string) ([]Message, error).
+-// Produces errors: Explicit error handling.
+-// Has no side effects.
+-func (s *SIPDB) GetPendingMissions(ctx context.Context, role string) ([]Message, error) {
+-	var missions []Message
++// Accepts parameters: s *SIPDB (No Constraints).
++// Returns GetPendingMissions(ctx context.Context, role string) ([]domain.Message, error).
++// Produces errors: Explicit error handling.
++// Has no side effects.
++func (s *SIPDB) GetPendingMissions(ctx context.Context, role string) ([]domain.Message, error) {
++	var missions []domain.Message
+	err := withRetry(ctx, func() error {
+		missions = nil
+		rows, err := s.db.QueryContext(ctx, "SELECT id, task FROM agent_missions WHERE role = ? AND status = 'PENDING'", role)
+@@ -142,10 +144,10 @@
+				return err
+			}
+
+-			var msg Message
++			var msg domain.Message
+			if err := json.Unmarshal([]byte(taskStr), &msg); err != nil {
+				// fallback
+-				msg = Message{ID: id, Content: taskStr, Type: EventTask}
++				msg = domain.Message{ID: id, Content: taskStr, Type: "task"}
+			} else {
+				if msg.ID == "" {
+					msg.ID = id
+@@ -188,10 +190,10 @@
+ }
+
+ // DelegateMission delegates specialized tasks via the agent_missions table.
+-// Accepts parameters: s *SIPDB (No Constraints).
+-// Returns DelegateMission(ctx context.Context, missionID, role string, task Message) error.
+-// Produces errors: Explicit error handling.
+-// Has no side effects.
+-func (s *SIPDB) DelegateMission(ctx context.Context, missionID, role string, task domain.Message) error {
++func (s *SIPDB) DelegateMission(ctx context.Context, missionID, role string, task domain.Message) error {
+	taskBytes, err := json.Marshal(task)
+	if err != nil {
+		return err

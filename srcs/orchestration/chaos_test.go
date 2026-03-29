@@ -1,6 +1,10 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/domain"
+
+	"github.com/onehumancorp/mono/srcs/sip"
+
 	"context"
 	"fmt"
 	"os"
@@ -16,9 +20,9 @@ func TestSIPDB_Chaos(t *testing.T) {
 	tmpDir := t.TempDir()
 	dbPath := filepath.Join(tmpDir, "chaos.db")
 
-	db, err := NewSIPDB(dbPath)
+	db, err := sip.NewSIPDB(dbPath)
 	if err != nil {
-		t.Fatalf("Failed to create SIPDB: %v", err)
+		t.Fatalf("Failed to create sip.SIPDB: %v", err)
 	}
 	defer db.Close()
 
@@ -38,7 +42,7 @@ func TestSIPDB_Chaos(t *testing.T) {
 			defer wg.Done()
 			for j := 0; j < missionsPerAgent; j++ {
 				missionID := fmt.Sprintf("mission-%d-%d", agentIdx, j)
-				task := Message{
+				task := domain.Message{
 					ID:      missionID,
 					Content: "Stress test task",
 					Type:    EventTask,
@@ -88,7 +92,7 @@ func TestSIPDB_Chaos(t *testing.T) {
 	// This should retry in the background
 	go func() {
 		defer retryWg.Done()
-		task := Message{
+		task := domain.Message{
 			ID:      "chaos-mission-1",
 			Content: "Chaos test task",
 			Type:    EventTask,

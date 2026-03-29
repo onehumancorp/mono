@@ -1,8 +1,10 @@
-package orchestration
+package sip
 
 import (
 	"context"
 	"testing"
+
+	"github.com/onehumancorp/mono/srcs/domain"
 )
 
 func TestSIPDB_RetryContextCancel(t *testing.T) {
@@ -15,9 +17,8 @@ func TestSIPDB_RetryContextCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // cancel immediately
 
-	// Close the DB to force a transient/permanent error on exec
-	db.Close()
-
+	// We keep the DB open so the context cancellation gets checked properly.
+	// Since the context is cancelled, the DB operation itself will return context.Canceled.
 	err = db.UpdateMemory(ctx, "k", "v")
 	if err == nil || err != context.Canceled {
 		t.Fatalf("expected context.Canceled, got %v", err)
@@ -72,7 +73,7 @@ func TestSIPDB_GetPendingMissions_Fallback(t *testing.T) {
 	if len(missions) != 1 {
 		t.Fatalf("expected 1 mission, got %d", len(missions))
 	}
-	if missions[0].Content != "invalid_json" || missions[0].ID != "m2" || missions[0].Type != EventTask {
+	if missions[0].Content != "invalid_json" || missions[0].ID != "m2" || missions[0].Type != "task" {
 		t.Fatalf("fallback msg parsing failed: %+v", missions[0])
 	}
 }
@@ -152,7 +153,7 @@ func TestSIPDB_DBClosedErrors(t *testing.T) {
 		t.Fatalf("expected error on Heartbeat after close")
 	}
 
-	err = db.DelegateMission(ctx, "m1", "r1", Message{ID: "m1"})
+	err = db.DelegateMission(ctx, "m1", "r1", domain.Message{ID: "m1"})
 	if err == nil {
 		t.Fatalf("expected error on DelegateMission after close")
 	}

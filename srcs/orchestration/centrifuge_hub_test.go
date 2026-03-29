@@ -1,6 +1,8 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/domain"
+
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -85,7 +87,7 @@ func TestHubCentrifugeIntegration(t *testing.T) {
 	hub.OpenMeetingWithAgenda("cn-meeting", "Integration test", []string{"cn-pm", "cn-swe"})
 
 	// Publish should succeed and silently forward to Centrifuge in the background.
-	if err := hub.Publish(Message{
+	if err := hub.Publish(domain.Message{
 		ID:        "cn-msg-1",
 		FromAgent: "cn-pm",
 		Type:      EventTask,
@@ -115,7 +117,7 @@ func TestHubCentrifugeNilSafe(t *testing.T) {
 	})
 	hub.OpenMeeting("nil-meeting", []string{"nil-pm", "nil-swe"})
 
-	if err := hub.Publish(Message{
+	if err := hub.Publish(domain.Message{
 		ID:        "nil-msg-1",
 		FromAgent: "nil-pm",
 		Type:      EventTask,
@@ -134,7 +136,7 @@ func TestCentrifugeNode_Publishers(t *testing.T) {
 	}
 	defer cn.Close()
 
-	msg := Message{
+	msg := domain.Message{
 		ID:        "msg-1",
 		FromAgent: "agent-1",
 		Type:      EventTask,

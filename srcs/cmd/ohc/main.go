@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/onehumancorp/mono/srcs/sip"
+
 	"context"
 	"fmt"
 	"log/slog"
@@ -136,7 +138,7 @@ func run(now time.Time, listen listenFunc) error {
 
 	// Set up the SIPDB instance to connect to SQLite
 	dbPath := filepath.Join(os.Getenv("HOME"), ".openclaw", "ohc.db")
-	if sipdb, err := orchestration.NewSIPDB(dbPath); err == nil {
+	if sipdb, err := sip.NewSIPDB(dbPath); err == nil {
 		hub.SetSIPDB(sipdb)
 		// Hygiene: Prune stale missions in the agent_missions table periodically
 		go func() {
@@ -170,7 +172,7 @@ func run(now time.Time, listen listenFunc) error {
 		}
 
 		// Simulate task execution by publishing a message
-		msg := orchestration.Message{
+		msg := domain.Message{
 			ID:         task.ID + "-" + fmt.Sprintf("%d", time.Now().Unix()),
 			FromAgent:  "system-scheduler",
 			ToAgent:    task.AgentID,

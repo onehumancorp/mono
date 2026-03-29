@@ -8,6 +8,7 @@ go_library(
         "compute.go",
         "federation.go",
         "organization.go",
+        "message.go",
         "sre.go",
     ],
     importpath = "github.com/onehumancorp/mono/srcs/domain",

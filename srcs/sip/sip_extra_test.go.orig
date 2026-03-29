@@ -1,0 +1,158 @@
+package sip
+
+import (
+	"context"
+	"testing"
+)
+
+func TestSIPDB_RetryContextCancel(t *testing.T) {
+	db, err := NewSIPDB(":memory:")
+	if err != nil {
+		t.Fatalf("failed to init db: %v", err)
+	}
+	defer db.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately
+
+	// We keep the DB open so the context cancellation gets checked properly.
+	// Since the context is cancelled, the DB operation itself will return context.Canceled.
+	err = db.UpdateMemory(ctx, "k", "v")
+	if err == nil || err != context.Canceled {
+		t.Fatalf("expected context.Canceled, got %v", err)
+	}
+}
+
+func TestSIPDB_NewSIPDB_InvalidPath(t *testing.T) {
+	// sqlite generally allows weird paths, but /root/locked.db should fail to open or init
+	db, err := NewSIPDB("/root/locked.db")
+	if err == nil {
+		db.Close()
+		t.Fatalf("expected error for invalid db path")
+	}
+}
+
+func TestSIPDB_SyncMemory_NoRows(t *testing.T) {
+	db, err := NewSIPDB(":memory:")
+	if err != nil {
+		t.Fatalf("failed to init: %v", err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+	val, err := db.SyncMemory(ctx, "non_existent_key")
+	if err != nil {
+		t.Fatalf("expected no error for sql.ErrNoRows, got %v", err)
+	}
+	if val != "" {
+		t.Fatalf("expected empty string, got %s", val)
+	}
+}
+
+func TestSIPDB_GetPendingMissions_Fallback(t *testing.T) {
+	db, err := NewSIPDB(":memory:")
+	if err != nil {
+		t.Fatalf("failed to init: %v", err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+
+	// Manually insert malformed JSON task
+	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status) VALUES ('m2', 'ROLE', 'invalid_json', 'PENDING')")
+	if err != nil {
+		t.Fatalf("failed to insert: %v", err)
+	}
+
+	missions, err := db.GetPendingMissions(ctx, "ROLE")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if len(missions) != 1 {
+		t.Fatalf("expected 1 mission, got %d", len(missions))
+	}
+	if missions[0].Content != "invalid_json" || missions[0].ID != "m2" || missions[0].Type != "task" {
+		t.Fatalf("fallback msg parsing failed: %+v", missions[0])
+	}
+}
+
+func TestSIPDB_GetPendingMissions_MissingID(t *testing.T) {
+	db, err := NewSIPDB(":memory:")
+	if err != nil {
+		t.Fatalf("failed to init: %v", err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+
+	// Manually insert JSON without ID
+	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status) VALUES ('m3', 'ROLE', '{\"type\":\"TASK\"}', 'PENDING')")
+	if err != nil {
+		t.Fatalf("failed to insert: %v", err)
+	}
+
+	missions, err := db.GetPendingMissions(ctx, "ROLE")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if len(missions) != 1 {
+		t.Fatalf("expected 1 mission, got %d", len(missions))
+	}
+	if missions[0].ID != "m3" {
+		t.Fatalf("fallback msg ID parsing failed: %+v", missions[0])
+	}
+}
+
+func TestSIPDB_CompleteMission_NotFound(t *testing.T) {
+	db, err := NewSIPDB(":memory:")
+	if err != nil {
+		t.Fatalf("failed to init: %v", err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+	err = db.CompleteMission(ctx, "non_existent_mission")
+	if err == nil || err.Error() != "mission not found" {
+		t.Fatalf("expected 'mission not found', got %v", err)
+	}
+}
+
+func TestSIPDB_DBClosedErrors(t *testing.T) {
+	db, err := NewSIPDB(":memory:")
+	if err != nil {
+		t.Fatalf("failed to init: %v", err)
+	}
+	db.Close() // close db to force errors
+
+	ctx := context.Background()
+
+	_, err = db.SyncMemory(ctx, "k")
+	if err == nil {
+		t.Fatalf("expected error on SyncMemory after close")
+	}
+
+	_, err = db.GetPendingMissions(ctx, "ROLE")
+	if err == nil {
+		t.Fatalf("expected error on GetPendingMissions after close")
+	}
+
+	err = db.CompleteMission(ctx, "m1")
+	if err == nil {
+		t.Fatalf("expected error on CompleteMission after close")
+	}
+
+	err = db.UpdateMemory(ctx, "k", "v")
+	if err == nil {
+		t.Fatalf("expected error on UpdateMemory after close")
+	}
+
+	err = db.Heartbeat(ctx, "a1", "r1", "s1")
+	if err == nil {
+		t.Fatalf("expected error on Heartbeat after close")
+	}
+
+	err = db.DelegateMission(ctx, "m1", "r1", domain.Message{ID: "m1"})
+	if err == nil {
+		t.Fatalf("expected error on DelegateMission after close")
+	}
+}

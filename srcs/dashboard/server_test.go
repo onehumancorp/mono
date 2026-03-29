@@ -364,7 +364,7 @@ func TestHandleSendMessageRejectsConcurrentApprovals(t *testing.T) {
 
 	app.mu.Lock()
 	app.hub.OpenMeetingWithAgenda("test-meeting", "Test", []string{"pm-1", "CEO"})
-	_ = app.hub.Publish(orchestration.Message{
+	_ = app.hub.Publish(domain.Message{
 		ID:        "msg-1",
 		FromAgent: "pm-1",
 		ToAgent:   "CEO",
@@ -372,7 +372,7 @@ func TestHandleSendMessageRejectsConcurrentApprovals(t *testing.T) {
 		Content:   "Please approve.",
 		MeetingID: "test-meeting",
 	})
-	_ = app.hub.Publish(orchestration.Message{
+	_ = app.hub.Publish(domain.Message{
 		ID:        "msg-2",
 		FromAgent: "CEO",
 		ToAgent:   "pm-1",

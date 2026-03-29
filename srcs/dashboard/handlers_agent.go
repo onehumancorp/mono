@@ -1,6 +1,8 @@
 package dashboard
 
 import (
+	"github.com/onehumancorp/mono/srcs/domain"
+
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -126,9 +128,9 @@ func (s *Server) handleDelegateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message := orchestration.Message{
+	message := domain.Message{
 		ID:         "web-" + time.Now().UTC().Format("20060102150405.000000000"),
-		Type:       orchestration.EventTask,
+		Type:       "task",
 		Content:    req.Content,
 		MeetingID:  req.MeetingID,
 		OccurredAt: time.Now().UTC(),

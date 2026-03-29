@@ -1,0 +1,11 @@
+--- srcs/sip/sip_extra_test.go
++++ srcs/sip/sip_extra_test.go
+@@ -4,6 +4,8 @@
+
+	"context"
+	"testing"
++
++	"github.com/onehumancorp/mono/srcs/domain"
+ )
+
+ func TestSIPDB_RetryContextCancel(t *testing.T) {

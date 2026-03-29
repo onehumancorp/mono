@@ -1,0 +1,10 @@
+--- sip_test.go
++++ sip_test.go
+@@ -9,6 +9,7 @@
+	"time"
+
+	"github.com/onehumancorp/mono/srcs/proto"
++	"github.com/onehumancorp/mono/srcs/domain"
+ )
+
+ func TestNewSIPDB(t *testing.T) {
