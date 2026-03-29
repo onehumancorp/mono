@@ -98,13 +98,13 @@ When the CEO defines an issue or sets a goal, the entire company is mobilized co
 
 ### The Extensibility Framework: Importing New Skills and Domain Knowledge
 The core power of "One Human Corp" is its ability to learn any business domain. The system implements a robust framework for users to continuously import new skills and domains:
-- **Skill Blueprints (JSON/Protobuf)**: Users can upload domain-specific blueprints. These define the new roles, their specific contexts, and the standard operating procedures (SOPs) for that industry.
+- **Capability Plugin Mesh**: Users can dynamically ingest Capability Plugins at runtime. Instead of static JSON, capabilities are hosted as standalone K8s services exposing a standardized `CapabilityManifest`, enabling agents to discover and adopt new tools and roles on the fly via the MCP Gateway.
 - **Dynamic Org Chart Generation**: When a new domain is imported (e.g., Legal Consulting), the Orchestrator autonomously generates the required hierarchy (e.g., Senior Partner Agent manages Associate Agents).
 - **Plug-and-Play MCP Tools**: If the new domain requires specific external software (e.g., specialized CAD software for architecture), the user simply registers an MCP (Model Context Protocol) endpoint. The agents immediately understand how to interact with the new tool via the Switchboard.
 
 ### Phase 3: The Extensibility Framework & New Domains (Q4)
 *Goal: [COMPLETED] Evolve from a hardcoded "Software Company" into a flexible framework where users can import any knowledge, skill, or domain to tackle any market.*
-- **Extensible Skill Import Framework**: Build the core capability for a user to define custom domains. A CEO can upload a JSON/YAML "Skill Pack" or describe the desired business area in natural language (e.g., "I want to start a Legal Consulting firm"). This allows for the integration of specialized roles like IT Integration Specialists for addressing specific legacy pain points.
+- **Extensible Capability Import Framework**: Build the core capability for a user to define custom domains. A CEO can discover and bind new Capability Plugins or describe the desired business area in natural language (e.g., "I want to start a Legal Consulting firm"), allowing the platform to autonomously discover required capabilities via the Plugin Mesh.
 - **Dynamic Organization Generation**: Based on the imported domain knowledge, the system automatically suggests the required roles, hierarchical layout, and tools needed to operate in that specific industry.
 - **Dynamic Scaling ("Hire/Fire" UI)**: A dynamic control panel for the CEO to scale departments up or down instantly. If customer support tickets spike, the CEO can allocate more compute to spin up 5 new Customer Support Specialist agents.
 - **New Out-of-the-Box Templates**: Launch templates for "Digital Marketing Agency," "Accounting Firm," and "E-commerce Operations."
