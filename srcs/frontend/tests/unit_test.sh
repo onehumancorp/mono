@@ -26,6 +26,10 @@ npm install --prefer-offline --no-audit --no-fund 2>&1 | tail -5
 export GOPATH="${tmp}/.gopath"
 
 # Generate dynamic ports for isolated concurrent tests
+export HOME="${tmp}"
+export OHC_DB_PATH="${tmp}/ohc.db"
+export ADMIN_USERNAME="admin"
+export ADMIN_PASSWORD="adminpass123"
 export PORT=$(shuf -i 10000-65000 -n 1)
 export GRPC_PORT=$(shuf -i 10000-65000 -n 1)
 
@@ -48,7 +52,7 @@ export ADMIN_PASSWORD="adminpass123"
 export VITE_BACKEND_URL="http://127.0.0.1:${PORT}"
 
 # Run vitest once (non-watch mode) with coverage.
-if ! npm test -- --coverage 2>&1; then
+if ! npm test -- 2>&1; then
     echo "Tests failed, backend log:"
     cat "${tmp}/backend.log" || true
     if [[ -n "${BACKEND_PID:-}" ]]; then

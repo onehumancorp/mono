@@ -135,7 +135,10 @@ func run(now time.Time, listen listenFunc) error {
 	hub.SetSettingsStore(store)
 
 	// Set up the SIPDB instance to connect to SQLite
-	dbPath := filepath.Join(os.Getenv("HOME"), ".openclaw", "ohc.db")
+	dbPath := os.Getenv("OHC_DB_PATH")
+    if dbPath == "" {
+        dbPath = filepath.Join(os.Getenv("HOME"), ".openclaw", "ohc.db")
+    }
 	if sipdb, err := orchestration.NewSIPDB(dbPath); err == nil {
 		hub.SetSIPDB(sipdb)
 		// Hygiene: Prune stale missions in the agent_missions table periodically

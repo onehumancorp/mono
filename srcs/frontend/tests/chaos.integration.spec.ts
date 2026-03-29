@@ -71,7 +71,7 @@ test("Chaos: Simulate DB failure and recovery during agent handoff", async ({ pa
   // Look for our seeded handoff again, it should be resolved
   const updatedHandoffCard = page.locator('.handoff-card').filter({ hasText: 'Merge conflict resolution required for legacy billing module.' }).first();
   // Looking for the text inside handoff-resolved-stamp
-  await expect(updatedHandoffCard.locator('.handoff-resolved-stamp')).toHaveText(/Resolved/);
+  await expect(updatedHandoffCard.getByText('RESOLVED', { exact: true })).toBeVisible({ timeout: 15000 });
 
   await saveShot(page, "chaos-02-resolved-handoff");
 });

@@ -32,7 +32,15 @@ fi
 tail -5 "${npm_log}"
 
 # Generate dynamic ports for isolated concurrent tests
+export HOME="${tmp}"
+export HOME="${tmp}"
+export OHC_DB_PATH="${tmp}/ohc.db"
 export PORT=$(shuf -i 10000-65000 -n 1)
+mkdir -p "${tmp}/.openclaw"
+
+export ADMIN_USERNAME="admin"
+export ADMIN_PASSWORD="adminpass123"
+
 export GRPC_PORT=$(shuf -i 10000-65000 -n 1)
 
 # Start the compiled Go backend so tests that hit real /api/* routes can do so.
