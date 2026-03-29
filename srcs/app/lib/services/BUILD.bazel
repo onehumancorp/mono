@@ -4,7 +4,10 @@ package(default_visibility = ["//srcs/app:__subpackages__"])
 
 filegroup(
     name = "srcs",
-    srcs = glob(["*.dart"], allow_empty = True) + ["BUILD.bazel"],
+    srcs = glob(
+        ["*.dart"],
+        allow_empty = True,
+    ) + ["BUILD.bazel"],
     visibility = ["//srcs/app:__pkg__"],
 )
 
@@ -12,8 +15,8 @@ filegroup(
     name = "dart_srcs",
     srcs = glob(
         ["*.dart"],
-        exclude = ["*_test.dart"],
         allow_empty = True,
+        exclude = ["*_test.dart"],
     ),
     visibility = ["//srcs/app:__pkg__"],
 )
@@ -65,8 +68,8 @@ flutter_library(
     deps = [
         ":auth_service",
         "@flutter_sdk//flutter/packages/flutter",
-        "@pub_flutter_riverpod//:flutter_riverpod",
         "@pub_centrifuge//:centrifuge",
+        "@pub_flutter_riverpod//:flutter_riverpod",
     ],
 )
 
@@ -113,17 +116,17 @@ SERVICE_TESTS = glob(["*_test.dart"])
 
 test_suite(
     name = "all_tests",
-    tests = [":" + file.replace(".dart", "") for file in SERVICE_TESTS],
     tags = ["manual"],
+    tests = [":" + file.replace(".dart", "") for file in SERVICE_TESTS],
 )
 
 flutter_test(
     name = "coverage_test",
     srcs = SERVICE_TESTS,
-    embed = ["//srcs/app:app_lib"],
-    test_files = ["."],
     coverage = True,
     coverage_min = 90,
+    embed = ["//srcs/app:app_lib"],
     tags = ["manual"],
+    test_files = ["."],
     workspace_pubspec = "//:pubspec.yaml",
 )
