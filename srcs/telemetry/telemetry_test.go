@@ -327,6 +327,9 @@ func TestLogAgentExecution(t *testing.T) {
 	defer slog.SetDefault(originalLogger)
 
 	ctx := context.Background()
+	originalVerbosity := Verbosity
+	Verbosity = 2
+	defer func() { Verbosity = originalVerbosity }()
 	LogAgentExecution(ctx, "agent-1", "role-1", "api-1", "event-1", "content-1")
 
 	output := buf.String()

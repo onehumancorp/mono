@@ -28,8 +28,6 @@ var (
 
 // InitTelemetry configures and starts the OpenTelemetry metrics provider with a Prometheus exporter.
 //
-//
-//
 // Accepts no parameters.
 // Returns (func(), error).
 // Produces errors: Explicit error handling.
@@ -129,7 +127,6 @@ func InitWithMeter(m mockableMeter) error {
 //
 //   - next: http.Handler; The next HTTP handler in the request pipeline.
 //
-//
 // Accepts parameters: next http.Handler (No Constraints).
 // Returns http.Handler.
 // Produces no errors.
@@ -167,7 +164,6 @@ var Verbosity = 1 // Default level
 
 // MetricsHandler provides an HTTP handler that exposes the collected Prometheus metrics.
 //
-//
 // Accepts no parameters.
 // Returns http.Handler.
 // Produces no errors.
@@ -184,7 +180,6 @@ func MetricsHandler() http.Handler {
 //   - model: string; The specific AI model being inferred (e.g., gpt-4o).
 //   - tokenType: string; The type of tokens (e.g., prompt or completion).
 //   - count: int64; The number of tokens consumed.
-//
 //
 // Accepts parameters: ctx context.Context, agentID, role, model, tokenType string, count int64 (No Constraints).
 // Returns nothing.
@@ -209,7 +204,6 @@ func RecordTokenUsage(ctx context.Context, agentID, role, model, tokenType strin
 //   - role: string; The role of the agent.
 //   - api: string; The name or route of the invoked API/tool.
 //
-//
 // Accepts parameters: ctx context.Context, agentID, role, api string (No Constraints).
 // Returns nothing.
 // Produces no errors.
@@ -230,7 +224,6 @@ func RecordAgentApiCall(ctx context.Context, agentID, role, api string) {
 //   - ctx: context.Context; The context of the active trace or request.
 //   - interactionType: string; The category of interaction (e.g., approval, handoff).
 //
-//
 // Accepts parameters: ctx context.Context, interactionType string (No Constraints).
 // Returns nothing.
 // Produces no errors.
@@ -248,7 +241,6 @@ func RecordHumanInteraction(ctx context.Context, interactionType string) {
 //
 //   - ctx: context.Context; The context of the active trace or request.
 //   - eventType: string; The nature of the meeting event (e.g., start, message, end).
-//
 //
 // Accepts parameters: ctx context.Context, eventType string (No Constraints).
 // Returns nothing.
@@ -272,18 +264,19 @@ func RecordMeetingEvent(ctx context.Context, eventType string) {
 //   - eventType: string; The specific type of the event (e.g. task, status).
 //   - content: string; The content or message payload associated with the execution.
 //
-//
 // Accepts parameters: ctx context.Context, agentID, role, api, eventType, content string (No Constraints).
 // Returns nothing.
 // Produces no errors.
 // Has no side effects.
 func LogAgentExecution(ctx context.Context, agentID, role, api, eventType, content string) {
-	slog.InfoContext(ctx, "agent execution trace",
-		"component", "telemetry",
-		"agent_id", agentID,
-		"role", role,
-		"api", api,
-		"event_type", eventType,
-		"content", content,
-	)
+	if Verbosity >= 2 {
+		slog.InfoContext(ctx, "agent execution trace",
+			"component", "telemetry",
+			"agent_id", agentID,
+			"role", role,
+			"api", api,
+			"event_type", eventType,
+			"content", content,
+		)
+	}
 }
