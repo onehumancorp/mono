@@ -7,9 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
-	"net/http"
 	"os"
 	"regexp"
 	"sort"
@@ -20,9 +18,6 @@ import (
 	"github.com/onehumancorp/mono/srcs/scheduler"
 	"github.com/onehumancorp/mono/srcs/settings"
 	"github.com/onehumancorp/mono/srcs/telemetry"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -815,26 +810,11 @@ func (h *Hub) Publish(message Message) error {
 	h.mu.Unlock()
 
 	// ⚡ BOLT: [Asynchronous telemetry recording to reduce critical path latency] - Randomized Selection from Top 5
-	go func() {
-		telemetry.RecordAgentApiCall(context.Background(), sender.ID, sender.Role, "publish")
-
-		// Structured logging for agent execution traces
-		// Filter out high-frequency "status" events to reduce signal noise.
-		if message.Type != EventStatus {
-			telemetry.LogAgentExecution(context.Background(), sender.ID, sender.Role, "publish", message.Type, message.Content)
-		}
-	}()
+	go recordTelemetry(context.Background(), sender.ID, sender.Role, message.Type, message.Content)
 
 	// Forward to Centrifuge for real-time client delivery (non-blocking).
 	if cn := h.centrifugeNode; cn != nil {
-		go func() {
-			if message.MeetingID != "" {
-				cn.PublishMeetingMessage(message.MeetingID, message)
-			}
-			if message.ToAgent != "" {
-				cn.PublishAgentNotification(message.ToAgent, message)
-			}
-		}()
+		go publishCentrifuge(cn, message.MeetingID, message.ToAgent, message)
 	}
 
 	return nil
@@ -973,273 +953,22 @@ func (h *Hub) Agents() []Agent {
 	return agents
 }
 
-// RegisterHubService HubServiceServer implements the gRPC HubService defined in hub.proto.
-// Accepts parameters: s *grpc.Server (No Constraints), hub *Hub (No Constraints).
-// Returns nothing.
-// Produces no errors.
-// Has no side effects.
-func RegisterHubService(s *grpc.Server, hub *Hub) {
-	pb.RegisterHubServiceServer(s, &HubServiceServer{hub: hub})
-}
 
-// HubServiceServer implements the gRPC interface for the orchestration Hub, facilitating remote agent registration and message streaming.
-// Accepts no parameters.
-// Returns nothing.
-// Produces no errors.
-// Has no side effects.
-type HubServiceServer struct {
-	pb.UnimplementedHubServiceServer
-	hub *Hub
-}
+func recordTelemetry(ctx context.Context, senderID, senderRole, messageType, messageContent string) {
+	telemetry.RecordAgentApiCall(ctx, senderID, senderRole, "publish")
 
-// NewHubServiceServer functionality.
-// Accepts parameters: hub *Hub (No Constraints).
-// Returns *HubServiceServer.
-// Produces no errors.
-// Has no side effects.
-func NewHubServiceServer(hub *Hub) *HubServiceServer {
-	return &HubServiceServer{hub: hub}
-}
-
-// RegisterAgent functionality.
-// Accepts parameters: s *HubServiceServer (No Constraints).
-// Returns (*pb.RegisterAgentResponse, error).
-// Produces errors: Explicit error handling.
-// Has no side effects.
-func (s *HubServiceServer) RegisterAgent(ctx context.Context, req *pb.RegisterAgentRequest) (*pb.RegisterAgentResponse, error) {
-	agentReq := req.GetAgent()
-	agent := Agent{
-		ID:             agentReq.GetId(),
-		Name:           agentReq.GetName(),
-		Role:           agentReq.GetRole(),
-		OrganizationID: agentReq.GetOrganizationId(),
-		Status:         Status(agentReq.GetStatus()),
-		ProviderType:   agentReq.GetProviderType(),
-	}
-	s.hub.RegisterAgent(agent)
-	return pb.RegisterAgentResponse_builder{Success: proto.Bool(true)}.Build(), nil
-}
-
-// OpenMeeting functionality.
-// Accepts parameters: s *HubServiceServer (No Constraints).
-// Returns (*pb.MeetingRoom, error).
-// Produces errors: Explicit error handling.
-// Has no side effects.
-func (s *HubServiceServer) OpenMeeting(ctx context.Context, req *pb.OpenMeetingRequest) (*pb.MeetingRoom, error) {
-	meeting := s.hub.OpenMeetingWithAgenda(req.GetMeetingId(), req.GetAgenda(), req.GetParticipants())
-	return pb.MeetingRoom_builder{
-		Id:           proto.String(meeting.ID),
-		Agenda:       proto.String(meeting.Agenda),
-		Participants: meeting.Participants,
-	}.Build(), nil
-}
-
-// Publish functionality.
-// Accepts parameters: s *HubServiceServer (No Constraints).
-// Returns (*pb.PublishMessageResponse, error).
-// Produces errors: Explicit error handling.
-// Has no side effects.
-func (s *HubServiceServer) Publish(ctx context.Context, req *pb.PublishMessageRequest) (*pb.PublishMessageResponse, error) {
-	msgReq := req.GetMessage()
-	msg := Message{
-		ID:         msgReq.GetId(),
-		FromAgent:  msgReq.GetFromAgent(),
-		ToAgent:    msgReq.GetToAgent(),
-		Type:       msgReq.GetType(),
-		Content:    msgReq.GetContent(),
-		MeetingID:  msgReq.GetMeetingId(),
-		OccurredAt: time.Unix(msgReq.GetOccurredAtUnix(), 0),
-	}
-	if err := s.hub.Publish(msg); err != nil {
-		return nil, status.Errorf(codes.Internal, "publish failed: %v", err)
-	}
-	return pb.PublishMessageResponse_builder{Success: proto.Bool(true)}.Build(), nil
-}
-
-// DelegateTask functionality.
-// Accepts parameters: s *HubServiceServer (No Constraints).
-// Returns (*pb.DelegateTaskResponse, error).
-// Produces errors: Explicit error handling.
-// Has no side effects.
-func (s *HubServiceServer) DelegateTask(ctx context.Context, req *pb.DelegateTaskRequest) (*pb.DelegateTaskResponse, error) {
-	msgReq := req.GetTask()
-	msg := Message{
-		ID:         msgReq.GetId(),
-		FromAgent:  msgReq.GetFromAgent(),
-		ToAgent:    msgReq.GetToAgent(),
-		Type:       msgReq.GetType(),
-		Content:    msgReq.GetContent(),
-		MeetingID:  msgReq.GetMeetingId(),
-		OccurredAt: time.Unix(msgReq.GetOccurredAtUnix(), 0),
-	}
-
-	err := s.hub.DelegateTask(req.GetFromAgentId(), req.GetToAgentId(), msg)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "delegate task failed: %v", err)
-	}
-
-	return pb.DelegateTaskResponse_builder{Success: proto.Bool(true)}.Build(), nil
-}
-
-// StreamMessages functionality.
-// Accepts parameters: s *HubServiceServer (No Constraints).
-// Returns error.
-// Produces errors: Explicit error handling.
-// Has no side effects.
-func (s *HubServiceServer) StreamMessages(req *pb.StreamMessagesRequest, stream pb.HubService_StreamMessagesServer) error {
-	agentID := req.GetAgentId()
-
-	// 1. Subscribe for new real-time messages to eliminate polling latency.
-	// We must subscribe first to avoid missing any messages published between
-	// draining the inbox and subscribing.
-	ch, unsubscribe := s.hub.Subscribe(agentID)
-	defer unsubscribe()
-
-	sendNewMessages := func() error {
-		msgs := s.hub.Inbox(agentID)
-		if len(msgs) > 0 {
-			defer putMessageSlice(msgs)
-		}
-		for _, m := range msgs {
-			if err := stream.Send(pb.Message_builder{
-				Id:             proto.String(m.ID),
-				FromAgent:      proto.String(m.FromAgent),
-				ToAgent:        proto.String(m.ToAgent),
-				Type:           proto.String(m.Type),
-				Content:        proto.String(m.Content),
-				MeetingId:      proto.String(m.MeetingID),
-				OccurredAtUnix: proto.Int64(m.OccurredAt.Unix()),
-			}.Build()); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
-	// 2. Drain any pre-existing messages in the inbox.
-	if err := sendNewMessages(); err != nil {
-		return err
-	}
-
-	for {
-		select {
-		case <-stream.Context().Done():
-			return stream.Context().Err()
-		case <-ch:
-			if err := sendNewMessages(); err != nil {
-				return err
-			}
-		}
+	// Structured logging for agent execution traces
+	// Filter out high-frequency "status" events to reduce signal noise.
+	if messageType != EventStatus {
+		telemetry.LogAgentExecution(ctx, senderID, senderRole, "publish", messageType, messageContent)
 	}
 }
 
-// Reason functionality.
-// Accepts parameters: s *HubServiceServer (No Constraints).
-// Returns (*pb.ReasonResponse, error).
-// Produces errors: Explicit error handling.
-// Has no side effects.
-func (s *HubServiceServer) Reason(ctx context.Context, req *pb.ReasonRequest) (*pb.ReasonResponse, error) {
-	client := NewMinimaxClient(s.hub.MinimaxAPIKey())
-	content, err := client.Reason(ctx, req.GetPrompt())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "minimax reasoning failed: %v", err)
+func publishCentrifuge(cn *CentrifugeNode, meetingID, toAgent string, message Message) {
+	if meetingID != "" {
+		cn.PublishMeetingMessage(meetingID, message)
 	}
-	return pb.ReasonResponse_builder{Content: proto.String(content)}.Build(), nil
-}
-
-// minimaxAPIURL is the endpoint for Minimax reasoning.
-// ⚡ BOLT: [Configurable endpoint] - Randomized Selection from Top 5
-var minimaxAPIURL = "https://api.minimax.io/v1/chat/completions"
-
-// MinimaxClient handles interaction with the Minimax Model 2.7.
-// Accepts no parameters.
-// Returns nothing.
-// Produces no errors.
-// Has no side effects.
-type MinimaxClient struct {
-	APIKey string
-}
-
-// NewMinimaxClient functionality.
-// Accepts parameters: apiKey string (No Constraints).
-// Returns *MinimaxClient.
-// Produces no errors.
-// Has no side effects.
-func NewMinimaxClient(apiKey string) *MinimaxClient {
-	return &MinimaxClient{APIKey: apiKey}
-}
-
-var bufferPool = sync.Pool{
-	New: func() interface{} {
-		return new(bytes.Buffer)
-	},
-}
-
-var sharedHTTPClient = &http.Client{
-	Timeout: 30 * time.Second,
-}
-
-// Reason functionality.
-// Accepts parameters: c *MinimaxClient (No Constraints).
-// Returns (string, error).
-// Produces errors: Explicit error handling.
-// Has no side effects.
-func (c *MinimaxClient) Reason(ctx context.Context, prompt string) (string, error) {
-	if c.APIKey == "" {
-		return "", errors.New("minimax API key is not configured")
+	if toAgent != "" {
+		cn.PublishAgentNotification(toAgent, message)
 	}
-
-	url := minimaxAPIURL
-	// Optimization: construct the JSON payload manually to avoid
-	// maps and slices allocations.
-	buf := bufferPool.Get().(*bytes.Buffer)
-	buf.Reset()
-	defer bufferPool.Put(buf)
-
-	buf.WriteString(`{"model":"MiniMax-M2.7","messages":[{"role":"user","content":`)
-	enc := json.NewEncoder(buf)
-	enc.SetEscapeHTML(false)
-	_ = enc.Encode(prompt)
-	// Encode adds a newline, so we slice it off and add the closing brackets
-	buf.Truncate(buf.Len() - 1)
-	buf.WriteString(`}]}`)
-
-	req, err := http.NewRequestWithContext(ctx, "POST", url, buf)
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.APIKey)
-
-	// ⚡ BOLT: [Reused HTTP Client] - Randomized Selection from Top 5
-	// Prevents severe connection and resource leaks by reusing connection pools on every request.
-	resp, err := sharedHTTPClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		respBody, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("minimax API error (status %d): %s", resp.StatusCode, string(respBody))
-	}
-
-	var result struct {
-		Choices []struct {
-			Message struct {
-				Content string `json:"content"`
-			} `json:"message"`
-		} `json:"choices"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
-	}
-
-	if len(result.Choices) == 0 {
-		return "", errors.New("empty response from minimax")
-	}
-
-	return result.Choices[0].Message.Content, nil
 }

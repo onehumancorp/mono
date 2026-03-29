@@ -9,6 +9,7 @@ import (
 	"time"
 
 	_ "modernc.org/sqlite"
+	"strings"
 )
 
 // SIPDB encapsulates the Swarm Intelligence Protocol database interactions.
@@ -53,10 +54,18 @@ func withRetry(ctx context.Context, op func() error) error {
 // Produces errors: Explicit error handling.
 // Has no side effects.
 func NewSIPDB(dbPath string) (*SIPDB, error) {
-	db, err := sql.Open("sqlite", dbPath)
+	connStr := dbPath
+	if !strings.Contains(connStr, "?") {
+		connStr += "?_journal_mode=WAL&_busy_timeout=15000&_txlock=immediate"
+	} else {
+		connStr += "&_journal_mode=WAL&_busy_timeout=15000&_txlock=immediate"
+	}
+
+	db, err := sql.Open("sqlite", connStr)
 	if err != nil {
 		return nil, err
 	}
+	db.SetMaxOpenConns(1)
 
 	if err := initializeTables(db); err != nil {
 		return nil, err
