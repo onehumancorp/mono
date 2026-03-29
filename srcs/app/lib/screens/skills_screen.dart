@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ohc_app/models/skill.dart';
@@ -177,53 +178,74 @@ class _SkillCardState extends State<_SkillCard> {
   @override
   Widget build(BuildContext context) {
     final s = widget.skill;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.compose(
+          outer: const ColorFilter.matrix(<double>[
+            1.8, 0, 0, 0, 0,
+            0, 1.8, 0, 0, 0,
+            0, 0, 1.8, 0, 0,
+            0, 0, 0, 1, 0
+          ]),
+          inner: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
+        ),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: const Color.fromRGBO(255, 255, 255, 0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color.fromRGBO(255, 255, 255, 0.1),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Chip(
-                  label: Text(s.category),
-                  backgroundColor: _categoryColor().withAlpha(40),
-                  labelStyle: TextStyle(color: _categoryColor()),
-                  visualDensity: VisualDensity.compact,
-                ),
-                const SizedBox(width: 8),
-                Text(s.name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15)),
-                const SizedBox(width: 4),
-                Text('v${s.version}',
-                    style: Theme.of(context).textTheme.bodySmall),
-                const Spacer(),
-                if (_installed)
-                  Switch(
-                    value: _enabled,
-                    onChanged: _busy ? null : _toggleEnable,
-                  ),
-                const SizedBox(width: 8),
-                _busy
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : OutlinedButton(
-                        onPressed: _toggleInstall,
-                        child: Text(_installed ? 'Remove' : 'Install'),
+                Row(
+                  children: [
+                    Chip(
+                      label: Text(s.category),
+                      backgroundColor: _categoryColor().withAlpha(40),
+                      labelStyle: TextStyle(color: _categoryColor()),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(s.name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15)),
+                    const SizedBox(width: 4),
+                    Text('v${s.version}',
+                        style: Theme.of(context).textTheme.bodySmall),
+                    const Spacer(),
+                    if (_installed)
+                      Switch(
+                        value: _enabled,
+                        onChanged: _busy ? null : _toggleEnable,
                       ),
+                    const SizedBox(width: 8),
+                    _busy
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : OutlinedButton(
+                            onPressed: _toggleInstall,
+                            child: Text(_installed ? 'Remove' : 'Install'),
+                          ),
+                  ],
+                ),
+                if (s.description.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(s.description,
+                      style: Theme.of(context).textTheme.bodySmall),
+                ],
               ],
             ),
-            if (s.description.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(s.description,
-                  style: Theme.of(context).textTheme.bodySmall),
-            ],
-          ],
+          ),
         ),
       ),
     );
