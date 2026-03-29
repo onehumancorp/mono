@@ -4,7 +4,10 @@ package(default_visibility = ["//srcs/app:__subpackages__"])
 
 filegroup(
     name = "srcs",
-    srcs = glob(["*.dart"], allow_empty = True) + ["BUILD.bazel"],
+    srcs = glob(
+        ["*.dart"],
+        allow_empty = True,
+    ) + ["BUILD.bazel"],
     visibility = ["//srcs/app:__pkg__"],
 )
 
@@ -12,8 +15,8 @@ filegroup(
     name = "dart_srcs",
     srcs = glob(
         ["*.dart"],
-        exclude = ["*_test.dart"],
         allow_empty = True,
+        exclude = ["*_test.dart"],
     ),
     visibility = ["//srcs/app:__pkg__"],
 )
