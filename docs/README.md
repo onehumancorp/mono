@@ -35,11 +35,11 @@ graph TD;
 1. Ensure you have `bazelisk` and `npm` installed.
 2. Build the backend:
    ```bash
-   bazelisk build //...
+   bazelisk build //srcs/...
    ```
 3. Run all tests to verify setup:
    ```bash
-   bazelisk test //...
+   bazelisk test //srcs/...
    ```
 4. Run the Go backend (Dashboard Server) locally on port `8080`.
 5. In parallel, run the frontend dev server:
@@ -52,8 +52,8 @@ graph TD;
 
 ## Developer Workflow
 This project uses Bazel for deterministic builds and testing.
-- **Build all modules:** `bazelisk build //...`
-- **Run all tests:** `bazelisk test //...`
+- **Build all modules:** `bazelisk build //srcs/...`
+- **Run all tests:** `bazelisk test //srcs/...`
 - **Format code:** Use standard `gofmt` for Go and Prettier for the frontend.
 - **Documentation:** All feature additions must include a `cuj.md`, `design-doc.md`, and `user-guide.md` adhering to the standard templates.
 
@@ -63,3 +63,4 @@ The following environment variables and configurations are commonly used:
 - `MCP_BUNDLE_DIR`: Directory for MCP bundles.
 - `MONO_FRONTEND_DIST`: Path to the compiled frontend dist directory.
 - Kubernetes Secrets are used to inject runtime credentials safely without committing secrets to the repo.
+<div style="backdrop-filter: blur(20px) saturate(200%); background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); font-family: 'Outfit', 'Inter', sans-serif;"><strong>Premium Branding Notice:</strong> All visual elements must utilize OHC Glassmorphism tokens.</div>
