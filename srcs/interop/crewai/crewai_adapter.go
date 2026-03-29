@@ -1,11 +1,12 @@
-package interop
+package crewai
 
 import (
 	"context"
+	"github.com/onehumancorp/mono/srcs/interop"
 	"fmt"
 )
 
-// CrewAIAdapter implements UniversalAdapter for CrewAI.
+// CrewAIAdapter implements interop.UniversalAdapter for CrewAI.
 // Accepts no parameters.
 // Returns nothing.
 // Produces no errors.
@@ -20,7 +21,7 @@ type CrewAIAdapter struct {
 // Produces errors: Returns error if identity is invalid.
 // Has no side effects.
 func NewCrewAIAdapter(identity string) (*CrewAIAdapter, error) {
-	if err := ValidateSPIFFEID(identity); err != nil {
+	if err := interop.ValidateSPIFFEID(identity); err != nil {
 		return nil, fmt.Errorf("invalid identity for CrewAIAdapter: %w", err)
 	}
 	return &CrewAIAdapter{
@@ -33,7 +34,7 @@ func NewCrewAIAdapter(identity string) (*CrewAIAdapter, error) {
 // Returns error.
 // Produces errors: Explicit error handling.
 // Has no side effects.
-func (a *CrewAIAdapter) SyncState(ctx context.Context, state *State) error {
+func (a *CrewAIAdapter) SyncState(ctx context.Context, state *interop.State) error {
 	// Mock K8s/LangGraph state sync
 	if state == nil {
 		return fmt.Errorf("state cannot be nil")
@@ -46,7 +47,7 @@ func (a *CrewAIAdapter) SyncState(ctx context.Context, state *State) error {
 	state.Data["last_identity"] = a.Identity
 
 	// Ensure shared state via LangGraph is synchronized
-	LogCheckpoint(state, a.Identity)
+	interop.LogCheckpoint(state, a.Identity)
 	return nil
 }
 

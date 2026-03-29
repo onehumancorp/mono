@@ -1,0 +1,11 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "semantickernel",
+    srcs = ["semantickernel_adapter.go"],
+    importpath = "github.com/onehumancorp/mono/srcs/interop/semantickernel",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//srcs/interop:interop",
+    ],
+)

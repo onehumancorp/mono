@@ -1,7 +1,8 @@
-package interop
+package ironclaw
 
 import (
 	"context"
+	"github.com/onehumancorp/mono/srcs/interop"
 	"strings"
 	"testing"
 )
@@ -50,7 +51,7 @@ func TestIronClawAdapter_SyncState_Basic(t *testing.T) {
 		t.Fatalf("setup: %v", err)
 	}
 
-	state := &State{ID: "s1", Data: map[string]interface{}{}}
+	state := &interop.State{ID: "s1", Data: map[string]interface{}{}}
 	if err := a.SyncState(context.Background(), state); err != nil {
 		t.Fatalf("SyncState error: %v", err)
 	}
@@ -72,7 +73,7 @@ func TestIronClawAdapter_SyncState_NilState(t *testing.T) {
 
 func TestIronClawAdapter_SyncState_InitialisesNilData(t *testing.T) {
 	a, _ := NewIronClawAdapter("spiffe://ohc.local/agent/ironclaw-4")
-	state := &State{ID: "s2"}
+	state := &interop.State{ID: "s2"}
 	if err := a.SyncState(context.Background(), state); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -83,7 +84,7 @@ func TestIronClawAdapter_SyncState_InitialisesNilData(t *testing.T) {
 
 func TestIronClawAdapter_SyncState_LogsCheckpoint(t *testing.T) {
 	a, _ := NewIronClawAdapter("spiffe://ohc.local/agent/ironclaw-5")
-	state := &State{ID: "s3"}
+	state := &interop.State{ID: "s3"}
 	if err := a.SyncState(context.Background(), state); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -161,7 +162,7 @@ func TestIronClawAdapter_ImplementsUniversalAdapter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("setup: %v", err)
 	}
-	var _ UniversalAdapter = a
+	var _ interop.UniversalAdapter = a
 }
 
 // Test empty string in trimSPIFFEPath to cover the missing line.

@@ -1,11 +1,12 @@
-package interop
+package autogen
 
 import (
 	"context"
+	"github.com/onehumancorp/mono/srcs/interop"
 	"fmt"
 )
 
-// AutoGenAdapter implements UniversalAdapter for AutoGen.
+// AutoGenAdapter implements interop.UniversalAdapter for AutoGen.
 // Accepts no parameters.
 // Returns nothing.
 // Produces no errors.
@@ -20,7 +21,7 @@ type AutoGenAdapter struct {
 // Produces errors: Returns error if identity is invalid.
 // Has no side effects.
 func NewAutoGenAdapter(identity string) (*AutoGenAdapter, error) {
-	if err := ValidateSPIFFEID(identity); err != nil {
+	if err := interop.ValidateSPIFFEID(identity); err != nil {
 		return nil, fmt.Errorf("invalid identity for AutoGenAdapter: %w", err)
 	}
 	return &AutoGenAdapter{
@@ -33,7 +34,7 @@ func NewAutoGenAdapter(identity string) (*AutoGenAdapter, error) {
 // Returns error.
 // Produces errors: Explicit error handling.
 // Has no side effects.
-func (a *AutoGenAdapter) SyncState(ctx context.Context, state *State) error {
+func (a *AutoGenAdapter) SyncState(ctx context.Context, state *interop.State) error {
 	// Mock K8s/LangGraph state sync for AutoGen
 	if state == nil {
 		return fmt.Errorf("state cannot be nil")
@@ -45,7 +46,7 @@ func (a *AutoGenAdapter) SyncState(ctx context.Context, state *State) error {
 	state.Data["last_identity"] = a.Identity
 
 	// Ensure shared state via LangGraph is synchronized
-	LogCheckpoint(state, a.Identity)
+	interop.LogCheckpoint(state, a.Identity)
 	return nil
 }
 

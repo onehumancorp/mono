@@ -1,11 +1,12 @@
-package interop
+package openclaw
 
 import (
 	"context"
+	"github.com/onehumancorp/mono/srcs/interop"
 	"fmt"
 )
 
-// OpenClawAdapter implements UniversalAdapter for OpenClaw.
+// OpenClawAdapter implements interop.UniversalAdapter for OpenClaw.
 // Accepts no parameters.
 // Returns nothing.
 // Produces no errors.
@@ -20,7 +21,7 @@ type OpenClawAdapter struct {
 // Produces errors: Returns error if identity is invalid.
 // Has no side effects.
 func NewOpenClawAdapter(identity string) (*OpenClawAdapter, error) {
-	if err := ValidateSPIFFEID(identity); err != nil {
+	if err := interop.ValidateSPIFFEID(identity); err != nil {
 		return nil, fmt.Errorf("invalid identity for OpenClawAdapter: %w", err)
 	}
 	return &OpenClawAdapter{
@@ -33,7 +34,7 @@ func NewOpenClawAdapter(identity string) (*OpenClawAdapter, error) {
 // Returns error.
 // Produces errors: Explicit error handling.
 // Has no side effects.
-func (a *OpenClawAdapter) SyncState(ctx context.Context, state *State) error {
+func (a *OpenClawAdapter) SyncState(ctx context.Context, state *interop.State) error {
 	// Mock K8s/LangGraph state sync
 	if state == nil {
 		return fmt.Errorf("state cannot be nil")
@@ -46,7 +47,7 @@ func (a *OpenClawAdapter) SyncState(ctx context.Context, state *State) error {
 	state.Data["last_identity"] = a.Identity
 
 	// Ensure shared state via LangGraph is synchronized
-	LogCheckpoint(state, a.Identity)
+	interop.LogCheckpoint(state, a.Identity)
 	return nil
 }
 

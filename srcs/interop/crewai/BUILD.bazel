@@ -1,0 +1,11 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "crewai",
+    srcs = ["crewai_adapter.go"],
+    importpath = "github.com/onehumancorp/mono/srcs/interop/crewai",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//srcs/interop:interop",
+    ],
+)

@@ -42,7 +42,7 @@ func LogCheckpoint(state *State, identity string) {
 	state.Data["checkpoints"] = checkpoints
 }
 
-// UniversalAdapter defines the interface for interacting with different agent frameworks.
+// interop.UniversalAdapter defines the interface for interacting with different agent frameworks.
 // Accepts no parameters.
 // Returns nothing.
 // Produces no errors.
@@ -55,7 +55,7 @@ type UniversalAdapter interface {
 	ExecuteCommand(ctx context.Context, cmd string) (string, error)
 }
 
-// ValidateSPIFFEID strictly validates SPIFFE IDs for agent identity.
+// interop.ValidateSPIFFEID strictly validates SPIFFE IDs for agent identity.
 // Accepts parameters: id string (No Constraints).
 // Returns error.
 // Produces errors: Returns an error if the SPIFFE ID is invalid or spoofed.

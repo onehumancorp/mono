@@ -104,4 +104,22 @@ service HubService {
   rpc StreamMessages(StreamMessagesRequest) returns (stream Message);
   rpc Reason(ReasonRequest) returns (ReasonResponse);
   rpc DelegateSubTask(SubTask) returns (DelegateTaskResponse);
+  rpc RequestHandoff(HandoffRequest) returns (HandoffResponse);
+}
+
+message AgentHandoff {
+  string handoff_id = 1;
+  string source_agent_id = 2;
+  string target_agent_id = 3;
+  string intent = 4;
+  string payload = 5;
+  int64 timestamp = 6;
+}
+
+message HandoffRequest {
+  AgentHandoff handoff = 1;
+}
+
+message HandoffResponse {
+  bool success = 1;
 }

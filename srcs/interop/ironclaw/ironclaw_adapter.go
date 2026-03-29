@@ -1,12 +1,13 @@
-package interop
+package ironclaw
 
 import (
 	"context"
+	"github.com/onehumancorp/mono/srcs/interop"
 	"fmt"
 	"strings"
 )
 
-// IronClawAdapter implements UniversalAdapter for IronClaw.
+// IronClawAdapter implements interop.UniversalAdapter for IronClaw.
 // IronClaw is a security and audit-focused agent with deep static-analysis
 // capabilities.  The adapter bridges the IronClaw agent into the platform's
 // universal interop layer so it can participate in cross-framework swarms.
@@ -24,7 +25,7 @@ type IronClawAdapter struct {
 // Produces errors: Returns error if identity does not pass SPIFFE validation.
 // Has no side effects.
 func NewIronClawAdapter(identity string) (*IronClawAdapter, error) {
-	if err := ValidateSPIFFEID(identity); err != nil {
+	if err := interop.ValidateSPIFFEID(identity); err != nil {
 		return nil, fmt.Errorf("invalid identity for IronClawAdapter: %w", err)
 	}
 	return &IronClawAdapter{Identity: identity}, nil
@@ -32,11 +33,11 @@ func NewIronClawAdapter(identity string) (*IronClawAdapter, error) {
 
 // SyncState synchronises the IronClaw agent's local state with the
 // central shared state via LangGraph checkpoints.
-// Accepts parameters: a *IronClawAdapter (No Constraints), ctx context.Context, state *State.
+// Accepts parameters: a *IronClawAdapter (No Constraints), ctx context.Context, state *interop.State.
 // Returns error.
 // Produces errors: Returns error if state is nil.
 // Has side effects: Modifies state.Data – sets ironclaw_synced, last_identity, and appends a checkpoint.
-func (a *IronClawAdapter) SyncState(ctx context.Context, state *State) error {
+func (a *IronClawAdapter) SyncState(ctx context.Context, state *interop.State) error {
 	if state == nil {
 		return fmt.Errorf("state cannot be nil")
 	}
@@ -46,7 +47,7 @@ func (a *IronClawAdapter) SyncState(ctx context.Context, state *State) error {
 	state.Data["ironclaw_synced"] = true
 	state.Data["last_identity"] = a.Identity
 
-	LogCheckpoint(state, a.Identity)
+	interop.LogCheckpoint(state, a.Identity)
 	return nil
 }
 

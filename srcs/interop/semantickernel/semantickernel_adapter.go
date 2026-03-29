@@ -1,11 +1,12 @@
-package interop
+package semantickernel
 
 import (
 	"context"
+	"github.com/onehumancorp/mono/srcs/interop"
 	"fmt"
 )
 
-// SemanticKernelAdapter implements UniversalAdapter for Semantic Kernel.
+// SemanticKernelAdapter implements interop.UniversalAdapter for Semantic Kernel.
 // Accepts no parameters.
 // Returns nothing.
 // Produces no errors.
@@ -20,7 +21,7 @@ type SemanticKernelAdapter struct {
 // Produces errors: Returns error if identity is invalid.
 // Has no side effects.
 func NewSemanticKernelAdapter(identity string) (*SemanticKernelAdapter, error) {
-	if err := ValidateSPIFFEID(identity); err != nil {
+	if err := interop.ValidateSPIFFEID(identity); err != nil {
 		return nil, fmt.Errorf("invalid identity for SemanticKernelAdapter: %w", err)
 	}
 	return &SemanticKernelAdapter{
@@ -33,7 +34,7 @@ func NewSemanticKernelAdapter(identity string) (*SemanticKernelAdapter, error) {
 // Returns error.
 // Produces errors: Returns an error if state is nil.
 // Has side effects: Mutates state.Data by setting semantickernel_synced and last_identity.
-func (a *SemanticKernelAdapter) SyncState(ctx context.Context, state *State) error {
+func (a *SemanticKernelAdapter) SyncState(ctx context.Context, state *interop.State) error {
 	// Mock K8s/LangGraph state sync
 	if state == nil {
 		return fmt.Errorf("state cannot be nil")
@@ -46,7 +47,7 @@ func (a *SemanticKernelAdapter) SyncState(ctx context.Context, state *State) err
 	state.Data["last_identity"] = a.Identity
 
 	// Ensure shared state via LangGraph is synchronized
-	LogCheckpoint(state, a.Identity)
+	interop.LogCheckpoint(state, a.Identity)
 	return nil
 }
 
