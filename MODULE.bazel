@@ -85,7 +85,9 @@ use_repo(
     "pub_stream_channel",
     "pub_string_scanner",
     "pub_term_glyph",
+
     "pub_test_api",
+
     "pub_typed_data",
     "pub_uuid",
     "pub_vector_math",
@@ -151,3 +153,4 @@ oci.pull(
     tag = "latest",
 )
 use_repo(oci, "distroless_static", "distroless_static_linux_amd64")
+single_version_override(module_name = "rules_android", version = "0.1.1")
