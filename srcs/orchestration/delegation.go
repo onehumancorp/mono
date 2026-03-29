@@ -2,6 +2,7 @@ package orchestration
 
 import (
 	"context"
+	"github.com/onehumancorp/mono/srcs/domain"
 	"fmt"
 	"strings"
 	"time"
@@ -83,7 +84,7 @@ func (s *HubServiceServer) DelegateSubTask(ctx context.Context, req *pb.SubTask)
 		return nil, status.Errorf(codes.InvalidArgument, "parent_thread_id contains forbidden prompt injection sequences")
 	}
 
-	msg := Message{
+	msg := domain.Message{
 		ID:         fmt.Sprintf("msg-%s-%d", req.GetTaskId(), time.Now().UnixNano()),
 		FromAgent:  req.GetFromAgentId(),
 		ToAgent:    subAgentID,

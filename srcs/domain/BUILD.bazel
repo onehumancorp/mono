@@ -7,6 +7,7 @@ go_library(
         "blueprint.go",
         "compute.go",
         "federation.go",
+        "message.go",
         "organization.go",
         "sre.go",
     ],

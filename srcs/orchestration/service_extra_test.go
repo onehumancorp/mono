@@ -2,6 +2,7 @@ package orchestration
 
 import (
 	"context"
+	"github.com/onehumancorp/mono/srcs/domain"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -33,7 +34,7 @@ func TestPublish_ContextSummarization_Success(t *testing.T) {
 	meeting := hub.OpenMeeting("kickoff", []string{"pm-1", "swe-1"})
 
 	for i := 0; i < 16; i++ {
-		err := hub.Publish(Message{
+		err := hub.Publish(domain.Message{
 			ID:         "msg-" + string(rune(i)),
 			FromAgent:  "pm-1",
 			ToAgent:    "", // Broadcast to meeting
@@ -86,7 +87,7 @@ func TestPublish_ChannelFull(t *testing.T) {
 
 	ch <- struct{}{}
 
-	err := hub.Publish(Message{
+	err := hub.Publish(domain.Message{
 		ID:         "msg-1",
 		FromAgent:  "pm-1",
 		ToAgent:    "swe-1",
@@ -113,7 +114,7 @@ func TestPublish_MeetingChannelFull(t *testing.T) {
 
 	hub.OpenMeeting("kickoff", []string{"pm-1", "swe-1"})
 
-	err := hub.Publish(Message{
+	err := hub.Publish(domain.Message{
 		ID:         "msg-1",
 		FromAgent:  "pm-1",
 		ToAgent:    "swe-1",
@@ -158,11 +159,11 @@ func TestStreamMessages_SendErrorOnInitialSend(t *testing.T) {
 	hub.RegisterAgent(Agent{ID: "receiver", Name: "Receiver", Role: "R2", OrganizationID: "O1"})
 	server := NewHubServiceServer(hub)
 
-	_ = hub.Publish(Message{
+	_ = hub.Publish(domain.Message{
 		ID:         "msg-1",
 		FromAgent:  "sender",
 		ToAgent:    "receiver",
-		Type:       EventTask,
+		Type:       domain.EventTask,
 		Content:    "Hello Streaming",
 		OccurredAt: time.Now(),
 	})
@@ -201,11 +202,11 @@ func TestStreamMessages_ErrorOnLaterSend(t *testing.T) {
 	}()
 
 	time.Sleep(10 * time.Millisecond) // Let stream setup
-	_ = hub.Publish(Message{
+	_ = hub.Publish(domain.Message{
 		ID:         "msg-2",
 		FromAgent:  "sender",
 		ToAgent:    "receiver",
-		Type:       EventTask,
+		Type:       domain.EventTask,
 		Content:    "Hello Streaming",
 		OccurredAt: time.Now(),
 	})
@@ -236,7 +237,7 @@ func TestPublish_ContextSummarization_Failure(t *testing.T) {
 	meeting := hub.OpenMeeting("kickoff", []string{"pm-1", "swe-1"})
 
 	for i := 0; i < 16; i++ {
-		err := hub.Publish(Message{
+		err := hub.Publish(domain.Message{
 			ID:         "msg-" + string(rune(i)),
 			FromAgent:  "pm-1",
 			ToAgent:    "", // Broadcast to meeting
@@ -288,7 +289,7 @@ func TestService_CoverageExt(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	err = hub.DelegateTask("del-sender", "del-receiver", Message{ID: "msg-del"})
+	err = hub.DelegateTask("del-sender", "del-receiver", domain.Message{ID: "msg-del"})
 	if err != nil {
 		t.Errorf("DelegateTask failed: %v", err)
 	}
@@ -307,7 +308,7 @@ func TestService_CoverageExt(t *testing.T) {
 	}
 
 	// 5. putMessageSlice with cap > 1024
-	largeSlice := make([]Message, 0, 2048)
+	largeSlice := make([]domain.Message, 0, 2048)
 	putMessageSlice(largeSlice) // should just return, no assertion needed
 
 	// 6. ToAgent in CentrifugeNode
@@ -316,7 +317,7 @@ func TestService_CoverageExt(t *testing.T) {
 		t.Fatalf("Failed to create centrifuge node: %v", err)
 	}
 	hub.SetCentrifugeNode(cn)
-	err = hub.Publish(Message{FromAgent: "del-sender", ToAgent: "del-receiver"})
+	err = hub.Publish(domain.Message{FromAgent: "del-sender", ToAgent: "del-receiver"})
 	if err != nil {
 		t.Errorf("Publish failed: %v", err)
 	}
