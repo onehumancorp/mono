@@ -93,11 +93,18 @@ def _ensure_pub_deps(repository_ctx, package_name, package_dir):
         ) or (
             # Catch-all for SDK version-solving failures (e.g. _macros not in SDK).
             "version solving failed" in lower_stderr
+        ) or (
+            "workspace" in lower_stderr
         ):
             repository_ctx.report_progress(
                 "Skipping pub deps generation for {} due to unsupported dependency source; falling back to pubspec.yaml".format(package_name),
             )
             return False
+
+        # Another catch-all fallback if pub deps fails for any other obscure reason
+        repository_ctx.report_progress("Warning: `{tool} pub deps --json` failed. Falling back to pubspec.yaml".format(tool=tool))
+        return False
+
         fail("Failed to run `{tool} pub deps --json` for package '{pkg}' (dir: {dir}).\nstdout: {stdout}\nstderr: {stderr}".format(
             tool = tool,
             pkg = package_name,
