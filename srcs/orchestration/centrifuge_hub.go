@@ -21,10 +21,24 @@ import (
 	"github.com/centrifugal/centrifuge"
 )
 
+// Node is an interface for Centrifuge operations to allow mocking in tests.
+type Node interface {
+	Publish(channel string, data []byte, opts ...centrifuge.PublishOption) (centrifuge.PublishResult, error)
+	Shutdown(ctx context.Context) error
+	Run() error
+	OnConnecting(h centrifuge.ConnectingHandler)
+	OnConnect(h centrifuge.ConnectHandler)
+}
+
 // CentrifugeNode wraps a centrifuge.Node with OHC-specific configuration and
 // channel-permission rules that map directly to the Hub's meeting/chat model.
 type CentrifugeNode struct {
-	node *centrifuge.Node
+	node Node
+}
+
+// createNode is a package-level hook to allow mocking centrifuge.New in tests.
+var createNode = func(cfg centrifuge.Config) (Node, error) {
+	return centrifuge.New(cfg)
 }
 
 // NewCentrifugeNode creates and configures a centrifuge Node ready to serve
@@ -36,7 +50,7 @@ type CentrifugeNode struct {
 //   - "agent:" prefix    – client may only subscribe to its own agent channel
 func NewCentrifugeNode() (*CentrifugeNode, error) {
 	cfg := centrifuge.Config{}
-	node, err := centrifuge.New(cfg)
+	node, err := createNode(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -76,8 +90,14 @@ func NewCentrifugeNode() (*CentrifugeNode, error) {
 // Handler returns an http.Handler that serves the Centrifuge WebSocket endpoint.
 // Mount this at /connection/websocket in your HTTP mux.
 func (cn *CentrifugeNode) Handler() http.Handler {
-	return centrifuge.NewWebsocketHandler(cn.node, centrifuge.WebsocketConfig{
-		CheckOrigin: func(r *http.Request) bool { return true },
+	// If the node is mock, just return an empty handler
+	if realNode, ok := cn.node.(*centrifuge.Node); ok {
+		return centrifuge.NewWebsocketHandler(realNode, centrifuge.WebsocketConfig{
+			CheckOrigin: func(r *http.Request) bool { return true },
+		})
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest) // mimic missing WS headers behavior
 	})
 }
 
