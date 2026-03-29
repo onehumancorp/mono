@@ -146,6 +146,18 @@ sh_test(
     tags = ["requires-network"],  # browser download may need network on first run
 )
 
+sh_test(
+    name = "app_chaos_e2e_test",
+    srcs = ["test/flutter_web_e2e_test.sh"],
+    data = [
+        ":app",
+        "e2e/playwright.config.ts",
+        "e2e/chaos.spec.ts",
+        "//:node_modules/@playwright/test",
+    ],
+    tags = ["requires-network"],  # browser download may need network on first run
+)
+
 # ── Local Development targets ─────────────────────────────────────────────────
 
 sh_binary(

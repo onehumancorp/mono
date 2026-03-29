@@ -151,3 +151,4 @@ oci.pull(
     tag = "latest",
 )
 use_repo(oci, "distroless_static", "distroless_static_linux_amd64")
+bazel_dep(name = "rules_android", version = "0.7.1")
