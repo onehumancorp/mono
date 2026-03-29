@@ -23,6 +23,9 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
+      - name: Workaround Node 20 deprecation
+        run: echo "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true" >> $GITHUB_ENV
+
 
       - name: Set up Bazel
         uses: bazel-contrib/setup-bazel@0.8.5
