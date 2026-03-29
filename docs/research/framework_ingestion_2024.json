@@ -64,7 +64,7 @@
       "feature": "Agentic UI Generation",
       "industry_traffic_score": 93,
       "technical_feasibility": "High",
-      "ohc_implementation": "Next.js dynamic component rendering"
+      "ohc_implementation": "Flutter/Dart dynamic component rendering"
     },
     {
       "rank": 9,
@@ -127,7 +127,7 @@
       "feature": "Streaming Output / Typing Effect",
       "industry_traffic_score": 84,
       "technical_feasibility": "Medium",
-      "ohc_implementation": "WebSocket/gRPC streams to Next.js"
+      "ohc_implementation": "WebSocket/gRPC streams to Flutter/Dart"
     },
     {
       "rank": 18,

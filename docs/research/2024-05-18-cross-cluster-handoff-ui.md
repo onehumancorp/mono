@@ -53,4 +53,4 @@ sequenceDiagram
 
 - **K8s Operator:** Must support dynamic resource requests across distinct namespaces or federated clusters for target pods.
 - **SSE Stream:** The Gateway (`/api/v1/handoff/stream`) will aggregate and push the handoff events.
-- **Next.js Rendering:** The visual graph must use a lightweight SVG/Canvas overlay to render the "Neon Arteries" (the connecting curves) between agent DOM nodes, utilizing React Server Components where feasible to minimize client payload.
+- **Flutter/Dart Rendering:** The visual graph must use a lightweight SVG/Canvas overlay to render the "Neon Arteries" (the connecting curves) between agent DOM nodes, utilizing Flutter where feasible to minimize client payload.

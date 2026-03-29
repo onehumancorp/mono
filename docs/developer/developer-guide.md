@@ -60,8 +60,8 @@ mono/
     ├── cmd/ohc/             Backend binary entrypoint
     ├── dashboard/           REST API handlers
     ├── domain/              Domain model (Org / Dept / Role)
-    ├── frontend/            React SPA + vitest + Playwright tests
-    ├── frontend/server/     Go server that serves the SPA
+    ├── frontend/            Flutter SPA + flutter_test + Playwright tests
+    ├── app/server/     Go server that serves the SPA
     ├── integration/         Go integration tests
     ├── integrations/        Integration registry
     ├── orchestration/       Agent hub and meeting rooms
@@ -82,7 +82,7 @@ bazel build //...
 bazel build //srcs/cmd/ohc
 
 # Build just the frontend Go server
-bazel build //srcs/frontend/server
+bazel build //srcs/app/server
 ```
 
 ### Test
@@ -94,11 +94,11 @@ bazel test //...
 # Run all Go unit tests
 bazel test //srcs/...
 
-# Run frontend npm unit tests (vitest)
-bazel test //srcs/frontend:frontend_unit_test
+# Run frontend npm unit tests (flutter_test)
+bazel test //srcs/app:app_layout_test
 
 # Run frontend Playwright e2e tests
-bazel test //srcs/frontend:frontend_e2e_test
+bazel test //srcs/app:app_web_e2e_test
 
 # Run deploy artefact verification
 bazel test //deploy:deploy_artifacts_test
@@ -120,7 +120,7 @@ bazel test //... --cache_test_results=no
 bazel build //... --keep_going
 
 # TypeScript type-check (npm, outside Bazel)
-cd srcs/frontend && npm run typecheck
+cd srcs/app && npm run typecheck
 ```
 
 ---
@@ -133,21 +133,21 @@ cd srcs/frontend && npm run typecheck
 bazel test //srcs/billing/... //srcs/domain/... //srcs/orchestration/... //srcs/integrations/...
 ```
 
-### Frontend Unit Tests (vitest)
+### Frontend Unit Tests (flutter_test)
 
 ```bash
-bazel test //srcs/frontend:frontend_unit_test
+bazel test //srcs/app:app_layout_test
 ```
 
 ### Frontend Playwright E2E Tests
 
-The Bazel target `//srcs/frontend:frontend_e2e_test` starts the backend and frontend dev servers automatically then runs all `tests/*.spec.ts` files.
+The Bazel target `//srcs/app:app_web_e2e_test` starts the backend and frontend dev servers automatically then runs all `tests/*.spec.ts` files.
 
 ```bash
-bazel test //srcs/frontend:frontend_e2e_test
+bazel test //srcs/app:app_web_e2e_test
 ```
 
-> Screenshots are written to `srcs/frontend/tests/screenshots/` during the test run.
+> Screenshots are written to `srcs/app/tests/screenshots/` during the test run.
 
 ### Kind End-to-End Test
 
@@ -224,13 +224,13 @@ docker compose -f deploy/docker-compose.yml down -v
 | `GEMINI_API_KEY` | *(empty)* | Google Gemini API key for AI model calls |
 | `LOG_LEVEL` | `info` | Structured log level (`debug`/`info`/`warn`/`error`) |
 
-### Frontend server (`srcs/frontend/server`)
+### Frontend server (`srcs/app/server`)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `FRONTEND_ADDR` | `:8081` | HTTP listen address |
 | `BACKEND_URL` | `http://localhost:8080` | Upstream backend for `/api/*` proxy |
-| `FRONTEND_STATIC_DIR` | `./dist` | Path to built React static files |
+| `FRONTEND_STATIC_DIR` | `./dist` | Path to built Flutter static files |
 
 ---
 
@@ -296,7 +296,7 @@ Check Docker is running and has enough resources (≥ 4 GB RAM, 2 CPUs).
 
 Install Playwright browsers:
 ```bash
-cd srcs/frontend && npx playwright install --with-deps chromium
+cd srcs/app && npx playwright install --with-deps chromium
 ```
 
 The Bazel `frontend_e2e_test` target handles this automatically.

@@ -239,7 +239,7 @@ Defines how autonomous agents communicate, collaborate, and resolve conflicts.
 - **Snapshotting**: Configure the K8s CSI Snapshotter to allow point-in-time organization backups.
 
 #### Phase 3: Hybrid Handoff UI & Dashboard (Months 5-6)
-- **CEO Dashboard**: Build a Next.js control plane that visualizes the `alphabet.yaml` hierarchy and displays real-time agent "Virtual Standups."
+- **CEO Dashboard**: Build a Flutter/Dart control plane that visualizes the `alphabet.yaml` hierarchy and displays real-time agent "Virtual Standups."
 - **Handoff Gateway**: Integrate Mattermost or Slack webhooks to deliver HITL (Human-in-the-Loop) approval requests to human managers.
 
 ### 5. Operational Health Metrics
@@ -260,7 +260,7 @@ Defines how autonomous agents communicate, collaborate, and resolve conflicts.
   * **Status:** Ready
 * **Task 3.2: Apply Design Tokens (Frontend)**
   * **Owner:** UI Developer Agent
-  * **Description:** Update the OHC Next.js dashboard with Glassmorphism tokens (`blur(15px)`, `rgba` backgrounds, smooth data transitions).
+  * **Description:** Update the OHC Flutter/Dart dashboard with Glassmorphism tokens (`blur(15px)`, `rgba` backgrounds, smooth data transitions).
   * **Dependencies:** Task 3.1
   * **Status:** Ready
 * **Task 3.3: Visual Prototyping (Design)**

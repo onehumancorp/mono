@@ -33,7 +33,7 @@ This document provides an overview of the Critical User Journeys (CUJs) for the 
 
 ## Verification
 All CUJs are verified via automated Playwright tests and Kind e2e smoke tests.
-- **Frontend E2E**: `bazel test //srcs/frontend:frontend_e2e_test`
+- **Frontend E2E**: `bazel test //srcs/app:app_web_e2e_test`
 - **Kind E2E**: `bazel test //deploy:kind_e2e_test`
 
 ## Implementation Details

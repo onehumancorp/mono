@@ -18,7 +18,7 @@ A high-level view of how the human CEO navigates the "One Human Corp" Marketplac
 
 ## 3. Implementation Details
 - **Architecture**: A centralized index of `SkillBlueprints` (JSON) that the `ohc-operator` fetches and provisions as `RoleProfile` CRDs in the local Kubernetes cluster.
-- **Stack**: Go backend serving Next.js frontend pages. External Marketplace Index via HTTP APIs.
+- **Stack**: Go backend serving Flutter/Dart frontend pages. External Marketplace Index via HTTP APIs.
 - **Security Check**: The downloaded payload is parsed for malicious scripts and strictly validated against the internal schema before being saved to Postgres.
 
 ## 4. Edge Cases
