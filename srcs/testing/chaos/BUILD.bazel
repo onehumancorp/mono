@@ -1,0 +1,10 @@
+load("@rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "chaos_test",
+    srcs = ["chaos_e2e_test.go"],
+    deps = [
+        "//srcs/orchestration",
+        "@org_modernc_sqlite//:sqlite",
+    ],
+)
