@@ -1173,3 +1173,50 @@ func TestSPIFFEAuthInterceptor_SubTask_Spoofing(t *testing.T) {
 		t.Fatalf("Expected PermissionDenied, got: %v", err)
 	}
 }
+
+func TestSPIFFEAuthInterceptor_UnknownPayload(t *testing.T) {
+	interceptor := SPIFFEAuthInterceptor()
+	ctx := mockSPIFFEContext("spiffe://onehumancorp.io/org-1/attacker-agent")
+
+	// Pass an unknown message type (e.g. an empty message) to bypass explicit switch blocks
+	req := &pb.Message{}
+
+	_, err := interceptor(ctx, req, nil, func(ctx context.Context, req interface{}) (interface{}, error) {
+		return nil, nil
+	})
+
+	if err == nil {
+		t.Fatal("expected error due to unknown payload bypass")
+	}
+	st, ok := status.FromError(err)
+	if !ok || st.Code() != codes.PermissionDenied {
+		t.Errorf("expected PermissionDenied, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "cannot perform unauthorized action") {
+		t.Errorf("expected unauthorized action error message, got %v", err)
+	}
+}
+
+func TestSPIFFEStreamInterceptor_UnknownPayload(t *testing.T) {
+	interceptor := SPIFFEStreamInterceptor()
+
+	ss := &mockServerStream{
+		ctx: mockSPIFFEContext("spiffe://onehumancorp.io/org-1/agent-1"),
+		req: &pb.Message{}, // Unknown type for streaming
+	}
+
+	err := interceptor(nil, ss, nil, func(srv interface{}, stream grpc.ServerStream) error {
+		return stream.RecvMsg(ss.req)
+	})
+
+	if err == nil {
+		t.Fatal("expected error due to unknown stream payload bypass")
+	}
+	st, ok := status.FromError(err)
+	if !ok || st.Code() != codes.PermissionDenied {
+		t.Errorf("expected PermissionDenied, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "cannot stream unauthorized action") {
+		t.Errorf("expected unauthorized stream action error message, got %v", err)
+	}
+}
