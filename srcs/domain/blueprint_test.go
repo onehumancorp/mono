@@ -41,6 +41,46 @@ roles:
 	}
 }
 
+func TestParseBlueprint_AdvancedFeatures_Success(t *testing.T) {
+	yamlData := `
+domain: "Engineering"
+roles:
+  - id: "tech_lead"
+    title: "Technical Lead"
+    context: "Lead development."
+    dynamic_mcp: true
+    mcp_capabilities: ["github", "aws"]
+    isolate_context: true
+    max_sub_agents: 5
+    hierarchical_memory: true
+`
+	bp, err := ParseBlueprint([]byte(yamlData), true)
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	if len(bp.Roles) != 1 {
+		t.Fatalf("expected 1 role, got: %d", len(bp.Roles))
+	}
+
+	role := bp.Roles[0]
+	if !role.DynamicMCP {
+		t.Errorf("expected DynamicMCP to be true")
+	}
+	if len(role.MCPCapabilities) != 2 || role.MCPCapabilities[0] != "github" {
+		t.Errorf("expected MCPCapabilities to be populated, got: %v", role.MCPCapabilities)
+	}
+	if !role.IsolateContext {
+		t.Errorf("expected IsolateContext to be true")
+	}
+	if role.MaxSubAgents != 5 {
+		t.Errorf("expected MaxSubAgents to be 5, got: %d", role.MaxSubAgents)
+	}
+	if !role.HierarchicalMemory {
+		t.Errorf("expected HierarchicalMemory to be true")
+	}
+}
+
 func TestParseBlueprint_JSON_Success(t *testing.T) {
 	jsonData := `{
 		"domain": "Sales",
