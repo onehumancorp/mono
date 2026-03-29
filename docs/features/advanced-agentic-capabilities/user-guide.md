@@ -1,5 +1,11 @@
 # User Guide: Advanced Agentic Capabilities
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## 1. Introduction & Value Proposition
 The Advanced Agentic Capabilities feature set represents a paradigm shift in how One Human Corp handles complex, long-running workflows. It directly addresses "Agent Amnesia" and static tool limitations by introducing Stateful Episodic Memory, Dynamic Tool Discovery, and Native Multimodal Reasoning. For the CEO, this means massive epics can be delegated with confidence, knowing agents will retain context across disjointed sessions, autonomously bind to required tools, and effectively parse visual data without context bloat or runaway token costs.
 

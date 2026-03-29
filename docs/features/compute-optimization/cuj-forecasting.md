@@ -1,5 +1,11 @@
 # CUJ: Token Burn-Rate Forecasting
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 **Persona:** CEO / Finance Manager
 **Context:** Managing costs and enterprise adoption across the AI workforce.
 **Success Metrics:** Burn rate predicted accurately, quotas enforced successfully.

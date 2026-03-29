@@ -1,5 +1,11 @@
 # Design Document: Hierarchical Task Delegation
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## 1. Executive Summary
 **Objective:** Reduce context bloat and improve token efficiency by enabling agents to dynamically spawn specialized sub-agents for distinct parallelizable workstreams.
 **Scope:** Implement the `DelegationService` within the Orchestration Hub and integrate it with the Kubernetes Operator to dynamically provision agent pods.

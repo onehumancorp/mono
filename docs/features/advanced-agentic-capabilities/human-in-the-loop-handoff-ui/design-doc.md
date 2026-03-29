@@ -1,5 +1,11 @@
 # Design Document: Human-in-the-Loop Handoff UI
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## 1. Executive Summary
 **Objective:** Provide a secure, verifiable UI for agents to pause execution and request human manager approval for high-risk actions, preventing unauthorized agent actions.
 **Scope:** Implement the `HandoffService` within the Orchestration Hub and the corresponding React components in the CEO Dashboard.

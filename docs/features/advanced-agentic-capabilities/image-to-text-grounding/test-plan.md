@@ -1,5 +1,11 @@
 # Test Plan: Image-to-Text Grounding
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## 1. Testing Strategy
 Validate the correct routing of image payloads, accurate text grounding, and proper error handling for oversized or malformed images.
 

@@ -1,5 +1,11 @@
 # User Guide: Core Orchestration Engine
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## 1. Introduction & Value Proposition
 The Core Orchestration Engine is the "brain" of One Human Corp. It transforms high-level CEO mandates into actionable, multi-agent workflows. By automating task delegation, context propagation, and meeting management, it allows a single human to operate with the capacity of a 50-person department.
 

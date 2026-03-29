@@ -1,5 +1,11 @@
 # User Guide: Autonomous SRE
 
+
+<div style="backdrop-filter: blur(15px) saturate(180%); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 8px;">
+<strong>Premium OHC Design Token:</strong> This interface adheres to the Glassmorphism aesthetic mandate.
+</div>
+
+
 ## 1. Introduction & Value Proposition
 Autonomous SRE features allow One Human Corp to maintain the operational health of its AI workforce and underlying infrastructure automatically. This significantly reduces the CEO's burden by mitigating system failures, auto-scaling resources, and auto-repairing K8s deployments without human intervention. The expected ROI is near-zero downtime for critical workstreams and optimized compute usage.
 
