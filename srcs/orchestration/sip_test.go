@@ -192,12 +192,16 @@ func TestSIPDB_PruneStaleMissions(t *testing.T) {
 	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status, created_at) VALUES ('1', 'ROLE', 'task', 'PENDING', datetime('now'))")
 	if err != nil { t.Fatal(err) }
 
-	// 2. Completed (should be deleted regardless of age)
+	// 2. Completed but new (should NOT be deleted)
 	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status, created_at) VALUES ('2', 'ROLE', 'task', 'COMPLETED', datetime('now'))")
 	if err != nil { t.Fatal(err) }
 
-	// 3. Pending but old (should be deleted)
+	// 3. Pending but old (should NOT be deleted, only completed ones get deleted)
 	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status, created_at) VALUES ('3', 'ROLE', 'task', 'PENDING', datetime('now', '-2 days'))")
+	if err != nil { t.Fatal(err) }
+
+	// 4. Completed and old (should be deleted)
+	_, err = db.db.ExecContext(ctx, "INSERT INTO agent_missions (id, role, task, status, created_at) VALUES ('4', 'ROLE', 'task', 'COMPLETED', datetime('now', '-2 days'))")
 	if err != nil { t.Fatal(err) }
 
 	// Prune missions older than 24 hours
@@ -210,17 +214,24 @@ func TestSIPDB_PruneStaleMissions(t *testing.T) {
 	err = db.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM agent_missions").Scan(&count)
 	if err != nil { t.Fatal(err) }
 
-	if count != 1 {
-		t.Fatalf("Expected 1 mission remaining, got %d", count)
+	if count != 3 {
+		t.Fatalf("Expected 3 missions remaining, got %d", count)
 	}
 
-	// Verify the remaining mission is the correct one
-	var id string
-	err = db.db.QueryRowContext(ctx, "SELECT id FROM agent_missions").Scan(&id)
+	// Verify the remaining missions are correct
+	rows, err := db.db.QueryContext(ctx, "SELECT id FROM agent_missions ORDER BY id ASC")
 	if err != nil { t.Fatal(err) }
+	defer rows.Close()
 
-	if id != "1" {
-		t.Fatalf("Expected remaining mission to be '1', got '%s'", id)
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil { t.Fatal(err) }
+		ids = append(ids, id)
+	}
+
+	if len(ids) != 3 || ids[0] != "1" || ids[1] != "2" || ids[2] != "3" {
+		t.Fatalf("Expected remaining missions to be [1, 2, 3], got %v", ids)
 	}
 }
 
