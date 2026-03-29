@@ -2,8 +2,8 @@ package orchestration
 
 import (
 	"context"
-	"testing"
 	"path/filepath"
+	"testing"
 )
 
 func TestSIPDB_CapabilityPlugins(t *testing.T) {
@@ -60,14 +60,14 @@ func TestSIPDB_CapabilityPlugins(t *testing.T) {
 		t.Fatalf("expected 0 INACTIVE plugins, got %d", len(plugins))
 	}
 
-    // Test Update / Conflict
+	// Test Update / Conflict
 	plugin.Status = "INACTIVE"
-    err = db.RegisterCapabilityPlugin(ctx, plugin)
+	err = db.RegisterCapabilityPlugin(ctx, plugin)
 	if err != nil {
 		t.Fatalf("RegisterCapabilityPlugin (update) failed: %v", err)
 	}
 
-    plugins, err = db.GetCapabilityPlugins(ctx, "INACTIVE")
+	plugins, err = db.GetCapabilityPlugins(ctx, "INACTIVE")
 	if err != nil {
 		t.Fatalf("GetCapabilityPlugins (INACTIVE) failed: %v", err)
 	}
@@ -110,9 +110,9 @@ func TestSIPDB_EpisodicMemory(t *testing.T) {
 	if memories[0].MemoryID != "mem-123" {
 		t.Fatalf("expected MemoryID 'mem-123', got '%s'", memories[0].MemoryID)
 	}
-    if len(memories[0].VectorEmbedding) != 4 {
+	if len(memories[0].VectorEmbedding) != 4 {
 		t.Fatalf("expected 4 bytes of vector embedding, got %d", len(memories[0].VectorEmbedding))
-    }
+	}
 
 	// Retrieve by Source Plugin
 	memories, err = db.GetEpisodicMemoriesByPlugin(ctx, "mcp-github")
@@ -132,16 +132,16 @@ func TestSIPDB_EpisodicMemory(t *testing.T) {
 		t.Fatalf("expected 0 memories for plugin 'mcp-unknown', got %d", len(memories))
 	}
 
-    // Update memory
-    memory.Context = "Updated context."
-    err = db.StoreEpisodicMemory(ctx, memory)
+	// Update memory
+	memory.Context = "Updated context."
+	err = db.StoreEpisodicMemory(ctx, memory)
 	if err != nil {
 		t.Fatalf("StoreEpisodicMemory (update) failed: %v", err)
 	}
-    memories, _ = db.GetEpisodicMemoriesByPlugin(ctx, "mcp-github")
-    if memories[0].Context != "Updated context." {
+	memories, _ = db.GetEpisodicMemoriesByPlugin(ctx, "mcp-github")
+	if memories[0].Context != "Updated context." {
 		t.Fatalf("expected Context 'Updated context.', got '%s'", memories[0].Context)
-    }
+	}
 }
 
 func TestSIPDB_CapabilityPlugins_DBError(t *testing.T) {
