@@ -12,3 +12,12 @@ go_test(
     srcs = ["server_test.go"],
     embed = [":server_lib"],
 )
+
+filegroup(
+    name = "srcs",
+    srcs = [
+        "server.go",
+        "server_test.go",
+    ],
+    visibility = ["//srcs/frontend:__pkg__"],
+)

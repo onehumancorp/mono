@@ -77,7 +77,7 @@ func TestNewUsesDefaultsWhenEnvUnset(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error: %v", err)
 	}
-	if srv.staticDir != "srcs/frontend/dist" {
+	if srv.staticDir != "srcs/app/build/web" {
 		t.Fatalf("expected default static dir, got %q", srv.staticDir)
 	}
 }
