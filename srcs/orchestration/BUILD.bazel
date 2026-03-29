@@ -35,6 +35,7 @@ go_test(
         "auth_interceptor_test.go",
         "benchmark_test.go",
         "centrifuge_hub_test.go",
+        "chaos_test.go",
         "delegation_test.go",
         "eventlog_test.go",
         "minimax_client_test.go",

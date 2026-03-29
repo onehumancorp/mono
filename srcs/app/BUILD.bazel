@@ -169,3 +169,14 @@ sh_binary(
     ],
     visibility = ["//visibility:public"],
 )
+
+sh_test(
+    name = "chaos_test",
+    srcs = ["test/flutter_web_chaos_test.sh"],
+    data = [
+        "e2e/playwright.config.ts",
+        "e2e/chaos_test.spec.ts",
+        "//:node_modules/@playwright/test",
+    ],
+    tags = ["requires-network"],  # browser download may need network on first run
+)
