@@ -44,7 +44,7 @@ func New() (*Server, error) {
 
 	staticDir := os.Getenv("FRONTEND_STATIC_DIR")
 	if staticDir == "" {
-		staticDir = "srcs/frontend/dist"
+		staticDir = "srcs/app/build/web"
 	}
 
 	return &Server{

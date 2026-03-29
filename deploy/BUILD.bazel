@@ -89,19 +89,34 @@ oci_push(
     visibility = ["//visibility:public"],
 )
 
-# Build frontend static assets in a rule
-# Note: npm build in a genrule is slightly discouraged but kept here for simplicity
-# unless we move to rules_js.
+# Package Flutter web static assets for the frontend image.
+# The React frontend has been migrated to Flutter – the Flutter web app is now
+# the canonical frontend and runs on web, mobile, and desktop from a single
+# codebase.
 genrule(
     name = "frontend_static_assets",
-    srcs = ["//srcs/frontend:all_srcs"],
+    srcs = ["//srcs/app:app_web.web"],
     outs = ["frontend_dist.tar"],
-    cmd = "export HOME=/tmp && cd srcs/frontend && npm install --engine-strict=false && npm run build && tar -C dist -cf ../../$@ .",
-    tags = [
-        "local",
-        "no-remote-exec",
-        "requires-network",
-    ],
+    cmd = """
+set -e
+# Find the Flutter web build artifacts directory produced by the flutter_app rule.
+artifacts_dir=""
+for src in $(SRCS); do
+  case "$$src" in
+    *_build_artifacts)
+      if [ -d "$$src" ]; then
+        artifacts_dir="$$src"
+        break
+      fi
+      ;;
+  esac
+done
+if [ -z "$$artifacts_dir" ]; then
+  echo "ERROR: Flutter web build_artifacts directory not found in genrule sources" >&2
+  exit 1
+fi
+tar -C "$$artifacts_dir" -cf $@ .
+""",
 )
 
 pkg_tar(

@@ -21,3 +21,9 @@ go_test(
     embed = [":frontend_lib"],
     deps = ["//srcs/frontend/server:server_lib"],
 )
+
+filegroup(
+    name = "srcs",
+    srcs = ["main.go"],
+    visibility = ["//srcs/frontend:__pkg__"],
+)
