@@ -1,6 +1,7 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/domain"
 	"context"
 	"fmt"
 	"net/http"
@@ -35,8 +36,8 @@ func BenchmarkStreamLatency(b *testing.B) {
 	hub := NewHub()
 	srv := NewHubServiceServer(hub)
 
-	hub.RegisterAgent(Agent{ID: "agent1", Status: StatusIdle})
-	hub.RegisterAgent(Agent{ID: "agent2", Status: StatusIdle})
+	hub.RegisterAgent(domain.Agent{ID: "agent1", Status: domain.StatusIdle})
+	hub.RegisterAgent(domain.Agent{ID: "agent2", Status: domain.StatusIdle})
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -53,7 +54,7 @@ func BenchmarkStreamLatency(b *testing.B) {
 	// wait for stream to start
 	time.Sleep(10 * time.Millisecond)
 
-	msg := Message{
+	msg := domain.Message{
 		ID:         "msg1",
 		FromAgent:  "agent1",
 		ToAgent:    "agent2",
@@ -73,12 +74,12 @@ func BenchmarkPublish_Concurrent(b *testing.B) {
 	hub := NewHub()
 	numAgents := 100
 	for i := 0; i < numAgents; i++ {
-		hub.RegisterAgent(Agent{ID: fmt.Sprintf("agent%d", i), Status: StatusIdle})
+		hub.RegisterAgent(domain.Agent{ID: fmt.Sprintf("agent%d", i), Status: domain.StatusIdle})
 	}
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
-		msg := Message{
+		msg := domain.Message{
 			ID:         "msg1",
 			FromAgent:  "agent1",
 			ToAgent:    "agent2",
@@ -94,9 +95,9 @@ func BenchmarkPublish_Concurrent(b *testing.B) {
 
 func BenchmarkInbox(b *testing.B) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "agent1", Status: StatusIdle})
+	hub.RegisterAgent(domain.Agent{ID: "agent1", Status: domain.StatusIdle})
 
-	msg := Message{
+	msg := domain.Message{
 		ID:         "msg1",
 		FromAgent:  "agent1",
 		ToAgent:    "agent1",

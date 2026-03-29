@@ -9,6 +9,7 @@ go_library(
         "federation.go",
         "organization.go",
         "sre.go",
+        "types.go",
     ],
     importpath = "github.com/onehumancorp/mono/srcs/domain",
     visibility = ["//visibility:public"],

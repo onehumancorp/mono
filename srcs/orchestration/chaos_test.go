@@ -1,9 +1,10 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/domain"
+	"github.com/onehumancorp/mono/srcs/sip"
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -14,12 +15,13 @@ import (
 // to verify the exponential backoff retry logic in withRetry.
 func TestSIPDB_Chaos(t *testing.T) {
 	tmpDir := t.TempDir()
-	dbPath := filepath.Join(tmpDir, "chaos.db")
+	dbPath := filepath.Join(tmpDir, "chaos.db") + "?_journal_mode=WAL&_busy_timeout=15000&_txlock=immediate"
 
-	db, err := NewSIPDB(dbPath)
+	db, err := sip.NewSIPDB(dbPath)
 	if err != nil {
-		t.Fatalf("Failed to create SIPDB: %v", err)
+		t.Fatalf("Failed to create sip.SIPDB: %v", err)
 	}
+	db.DB().SetMaxOpenConns(1)
 	defer db.Close()
 
 	ctx := context.Background()
@@ -38,10 +40,10 @@ func TestSIPDB_Chaos(t *testing.T) {
 			defer wg.Done()
 			for j := 0; j < missionsPerAgent; j++ {
 				missionID := fmt.Sprintf("mission-%d-%d", agentIdx, j)
-				task := Message{
+				task := domain.Message{
 					ID:      missionID,
 					Content: "Stress test task",
-					Type:    EventTask,
+					Type:    domain.EventTask,
 				}
 				if err := db.DelegateMission(ctx, missionID, "SOFTWARE_ENGINEER", task); err != nil {
 					errs <- fmt.Errorf("agent %d failed to delegate mission %d: %v", agentIdx, j, err)
@@ -64,7 +66,7 @@ func TestSIPDB_Chaos(t *testing.T) {
 	// then we'll try to write to it from another goroutine which should trigger retries.
 
 	// Open a raw connection to lock the database
-	tx, err := db.db.Begin()
+	tx, err := db.DB().Begin()
 	if err != nil {
 		t.Fatalf("Failed to begin transaction: %v", err)
 	}
@@ -88,10 +90,10 @@ func TestSIPDB_Chaos(t *testing.T) {
 	// This should retry in the background
 	go func() {
 		defer retryWg.Done()
-		task := Message{
+		task := domain.Message{
 			ID:      "chaos-mission-1",
 			Content: "Chaos test task",
-			Type:    EventTask,
+			Type:    domain.EventTask,
 		}
 
 		// This will block and retry while the DB is locked
