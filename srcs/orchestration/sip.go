@@ -34,6 +34,11 @@ func withRetry(ctx context.Context, op func() error) error {
 			return nil
 		}
 
+		// Fast fail on explicit errors that should not be retried
+		if err == sql.ErrNoRows {
+			return err
+		}
+
 		// If context is done, abort retries
 		select {
 		case <-ctx.Done():
