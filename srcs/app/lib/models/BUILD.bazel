@@ -19,14 +19,92 @@ filegroup(
 )
 
 flutter_library(
-    name = "models_lib",
-    srcs = glob(
-        ["*.dart"],
-        exclude = ["*_test.dart"],
-    ),
+    name = "agent_model",
+    srcs = ["agent.dart"],
     pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+)
+
+flutter_library(
+    name = "ai_provider_model",
+    srcs = ["ai_provider.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+)
+
+flutter_library(
+    name = "channel_model",
+    srcs = ["channel.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+)
+
+flutter_library(
+    name = "dashboard_model",
+    srcs = ["dashboard.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [":agent_model"],
+)
+
+flutter_library(
+    name = "handoff_model",
+    srcs = ["handoff.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+)
+
+flutter_library(
+    name = "pipeline_model",
+    srcs = ["pipeline.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+)
+
+flutter_library(
+    name = "security_issue_model",
+    srcs = ["security_issue.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+)
+
+flutter_library(
+    name = "settings_model",
+    srcs = ["settings.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+)
+
+flutter_library(
+    name = "skill_model",
+    srcs = ["skill.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+)
+
+flutter_library(
+    name = "user_model",
+    srcs = ["user.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+)
+
+flutter_library(
+    name = "models_lib",
+    srcs = [],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
     deps = [
-        "@flutter_sdk//flutter/packages/flutter",
+        ":agent_model",
+        ":ai_provider_model",
+        ":channel_model",
+        ":dashboard_model",
+        ":handoff_model",
+        ":pipeline_model",
+        ":security_issue_model",
+        ":settings_model",
+        ":skill_model",
+        ":user_model",
     ],
 )
 

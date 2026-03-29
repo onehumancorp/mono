@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:flutter_svg/flutter_svg.dart'; // Temporarily disabled for Bazel build
+import 'package:ohc_app/models/dashboard.dart';
 import 'package:ohc_app/services/api_service.dart';
 
-final _dashboardProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final _dashboardProvider = FutureProvider<DashboardSnapshot>((ref) async {
   final api = ref.watch(apiServiceProvider);
-  if (api == null) return {};
+  if (api == null) throw Exception('API not available');
   return api.getDashboard();
 });
 
@@ -33,7 +34,7 @@ class DashboardScreen extends ConsumerWidget {
 }
 
 class _DashboardContent extends StatelessWidget {
-  final Map<String, dynamic> data;
+  final DashboardSnapshot data;
   const _DashboardContent({required this.data});
 
   @override
@@ -49,26 +50,26 @@ class _DashboardContent extends StatelessWidget {
           children: [
             _StatCard(
               label: 'Active Agents',
-              value: data['active_agents']?.toString() ?? '—',
+              value: data.agents.where((a) => a.isRunning).length.toString(),
               icon: Icons.smart_toy,
               color: Colors.indigo,
             ),
             _StatCard(
-              label: 'Pending Tasks',
-              value: data['pending_tasks']?.toString() ?? '—',
+              label: 'Dashboard Updates',
+              value: data.statuses.length.toString(),
               icon: Icons.pending_actions,
               color: Colors.orange,
             ),
             _StatCard(
               label: 'Open Meetings',
-              value: data['open_meetings']?.toString() ?? '—',
+              value: data.meetings.length.toString(),
               icon: Icons.video_call,
               color: Colors.teal,
             ),
             _StatCard(
-              label: 'Unread Messages',
-              value: data['unread_messages']?.toString() ?? '—',
-              icon: Icons.chat,
+              label: 'Total Org Members',
+              value: data.organization.members.length.toString(),
+              icon: Icons.people,
               color: Colors.purple,
             ),
           ],

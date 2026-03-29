@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:ohc_app/services/settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Currently authenticated user info.
@@ -69,13 +70,18 @@ class AuthService {
 
 // ── Providers ──────────────────────────────────────────────────────────────
 
+
 final _prefsProvider = FutureProvider<SharedPreferences>(
   (_) => SharedPreferences.getInstance(),
 );
 
-final backendUrlProvider = StateProvider<String>((ref) {
-  // We'll manage this in a more complex way in a real app, but for now:
-  return 'http://localhost:18789'; 
+final backendUrlProvider = Provider<String>((ref) {
+  final settings = ref.watch(clientSettingsProvider).valueOrNull;
+  if (settings != null) return settings.backendUrl;
+  
+  // Fallback to environment variable if provided at compile time (Web/Desktop)
+  const envUrl = String.fromEnvironment('BACKEND_URL', defaultValue: 'http://localhost:18789');
+  return envUrl;
 });
 
 final authServiceProvider = Provider<AuthService>((ref) {

@@ -1,6 +1,16 @@
-"""Flutter command execution actions for Bazel rules."""
+def compute_relative_to_package(ctx, file):
+    """Compute the path of a file relative to the package directory."""
+    pkg_path = ctx.label.package
+    if not pkg_path:
+        return file.basename
+    
+    path = file.short_path
+    if path.startswith(pkg_path + "/"):
+        return path[len(pkg_path) + 1:]
+    
+    return file.basename
 
-def create_flutter_working_dir(ctx, pubspec_file, dart_files, other_files, data_files):
+def create_flutter_working_dir(ctx, pubspec_file, dart_files, other_files, data_files, workspace_pubspec = None):
     """Create a working directory structure for Flutter commands.
 
     Args:
@@ -9,40 +19,38 @@ def create_flutter_working_dir(ctx, pubspec_file, dart_files, other_files, data_
         dart_files: List of .dart source files
         other_files: List of other source files declared in srcs
         data_files: List of additional data files that must be available in the workspace
+        workspace_pubspec: Optional root pubspec.yaml for workspace-aware projects
 
     Returns:
         Tuple of (working_dir, input_files)
     """
     working_dir = ctx.actions.declare_directory(ctx.label.name + "_workspace_seed")
 
-    # Build a manifest of files that should be available inside the workspace with
-    # paths relative to the package root so code generation tools see the expected
-    # project layout (e.g. lib/, test/, l10n/, web/).
-    package = ctx.label.package
-    package_prefix = package + "/" if package else ""
-
     workspace_entries = {}
-    seen = {}
 
-    def add_entry(file, rel_path = None):
+    def add_entry(file, dest = None):
         if file == None:
             return
-        if file.path in seen:
-            return
-        seen[file.path] = True
-
-        if rel_path == None:
-            short_path = file.short_path
-            if package_prefix and short_path.startswith(package_prefix):
-                rel_path = short_path[len(package_prefix):]
+            
+        if not dest:
+            # If we are in Workspace Mode, use the full relative path from the project root.
+            # Otherwise, use the package-relative path for backward compatibility.
+            if workspace_pubspec:
+                dest = file.short_path
             else:
-                rel_path = file.basename
+                dest = compute_relative_to_package(ctx, file)
+        
+        if dest in workspace_entries:
+            return
+        workspace_entries[dest] = file
 
-        workspace_entries[rel_path] = file
-
-    add_entry(pubspec_file, "pubspec.yaml")
+    # Populate the layout
+    add_entry(pubspec_file)
+    if workspace_pubspec:
+        add_entry(workspace_pubspec)
 
     for f in dart_files + other_files + data_files:
+        add_entry(f)
         add_entry(f)
 
     manifest = ctx.actions.declare_file(ctx.label.name + "_workspace_manifest.txt")
@@ -60,9 +68,9 @@ def create_flutter_working_dir(ctx, pubspec_file, dart_files, other_files, data_
         content = manifest_payload,
     )
 
-    workspace_script = ctx.actions.declare_file(ctx.label.name + "_setup_workspace.sh")
+    setup_script = ctx.actions.declare_file(ctx.label.name + "_setup_workspace.sh")
     ctx.actions.write(
-        output = workspace_script,
+        output = setup_script,
         content = """#!/bin/bash
 set -euo pipefail
 
@@ -85,9 +93,9 @@ done < "$MANIFEST_FILE"
     )
 
     # Collect unique input files for the action
-    input_files = []
+    input_files = [manifest]
     seen_inputs = {}
-    for f in [pubspec_file] + dart_files + other_files + data_files:
+    for f in [pubspec_file, workspace_pubspec] + dart_files + other_files + data_files:
         if f == None:
             continue
         if f.path in seen_inputs:
@@ -97,9 +105,9 @@ done < "$MANIFEST_FILE"
 
     # Run the workspace setup
     ctx.actions.run(
-        inputs = input_files + [manifest],
+        inputs = input_files,
         outputs = [working_dir],
-        executable = workspace_script,
+        executable = setup_script,
         arguments = [working_dir.path, manifest.path],
         mnemonic = "SetupFlutterWorkspace",
         progress_message = "Setting up Flutter workspace for %s" % ctx.label.name,
@@ -107,7 +115,15 @@ done < "$MANIFEST_FILE"
 
     return working_dir, input_files
 
-def flutter_pub_get_action(ctx, flutter_toolchain, working_dir, pubspec_file, dependency_pub_caches = [], codegen_commands = [], is_pub_package = False):
+def flutter_pub_get_action(
+        ctx,
+        flutter_toolchain,
+        working_dir,
+        pubspec_file,
+        dependency_pub_caches = [],
+        codegen_commands = [],
+        is_pub_package = False,
+        workspace_pubspec = None):
     """Prepare Flutter/Dart dependencies without running pub get.
 
     Args:
@@ -118,10 +134,18 @@ def flutter_pub_get_action(ctx, flutter_toolchain, working_dir, pubspec_file, de
         dependency_pub_caches: Files or depsets with pub cache directories from dependencies.
         codegen_commands: Optional list of code generation commands (package:script).
         is_pub_package: Whether the target represents a hosted pub.dev package.
+        workspace_pubspec: Optional root pubspec.yaml.
 
     Returns:
         Tuple of (prepared_workspace, pub_get_output, pub_cache_dir, pub_deps, dart_tool_dir).
     """
+
+    # Calculate the package directory within the working_dir
+    # If workspace_pubspec is present, the package is at its real relative path.
+    # Otherwise, it's at the root.
+    package_dir = ""
+    if workspace_pubspec:
+        package_dir = ctx.label.package
 
     if not flutter_toolchain.flutterinfo.tool_files:
         fail("No tool files found in Flutter toolchain")
@@ -160,7 +184,12 @@ IS_PUB_PACKAGE="{is_pub_package}"
 ORIGINAL_PWD="$PWD"
 
 WORKSPACE_SRC_ABS="$ORIGINAL_PWD/$WORKSPACE_SRC"
-WORKSPACE_DIR_ABS="$ORIGINAL_PWD/$WORKSPACE_DIR"
+# The sandbox layout depends on whether we are in Workspace Mode
+WORKSPACE_DIR_ABS="$ORIGINAL_PWD/{working_dir_path}"
+PACKAGE_DIR="{package_dir}"
+WORKSPACE_DIR_ABS="${{WORKSPACE_DIR_ABS:+$WORKSPACE_DIR_ABS/}}${{PACKAGE_DIR:+$PACKAGE_DIR}}"
+
+# Use the calculated WORKSPACE_DIR_ABS for everything else
 PUB_CACHE_DIR_ABS="$ORIGINAL_PWD/$PUB_CACHE_DIR"
 DART_TOOL_DIR_ABS="$ORIGINAL_PWD/$DART_TOOL_DIR"
 
@@ -178,48 +207,6 @@ PYTHON_BIN="$(command -v python3 || command -v python || true)"
 if [ -z "$PYTHON_BIN" ]; then
     echo "✗ FATAL ERROR: python interpreter not found on PATH" >&2
     exit 1
-fi
-
-if [ -f "$WORKSPACE_DIR_ABS/pubspec.yaml" ]; then
-    PUBSPEC_SECTIONS="dependency_overrides"
-    if [ "$IS_PUB_PACKAGE" = "1" ]; then
-        PUBSPEC_SECTIONS="$PUBSPEC_SECTIONS dev_dependencies"
-    fi
-    PUBSPEC_PATH="$WORKSPACE_DIR_ABS/pubspec.yaml" PUBSPEC_SECTIONS="$PUBSPEC_SECTIONS" "$PYTHON_BIN" - <<'PY'
-import os
-import sys
-
-path = os.environ.get("PUBSPEC_PATH")
-sections = set(filter(None, (os.environ.get("PUBSPEC_SECTIONS") or "").split()))
-if not path or not os.path.exists(path) or not sections:
-    sys.exit(0)
-
-with open(path, "r", encoding="utf-8") as fh:
-    lines = fh.readlines()
-
-output = []
-skip = False
-skip_indent = 0
-for line in lines:
-    stripped = line.rstrip()
-    indent = len(line) - len(line.lstrip(" "))
-    if skip:
-        if stripped and not stripped.startswith("#") and indent <= skip_indent:
-            skip = False
-        else:
-            continue
-
-    key = stripped.rstrip(":")
-    if not skip and stripped.endswith(":") and key in sections:
-        skip = True
-        skip_indent = indent
-        continue
-
-    output.append(line)
-
-with open(path, "w", encoding="utf-8") as fh:
-    fh.writelines(output)
-PY
 fi
 
 export PUB_CACHE="$PUB_CACHE_DIR_ABS"
@@ -257,39 +244,29 @@ path = os.environ.get("PUBSPEC_PATH")
 name = ""
 version = ""
 language = ""
+
 if path and os.path.exists(path):
     with open(path, "r", encoding="utf-8") as fh:
-        for line in fh:
+        lines = fh.readlines()
+        for line in lines:
             stripped = line.strip()
-            if stripped.startswith("#"):
-                continue
             if stripped.startswith("name:") and not name:
-                value = stripped.split(":", 1)[1].strip()
-                value = value.strip("\\\"").strip("'")
-                name = value
+                name = stripped.split(":", 1)[1].strip().strip('"').strip("'")
             elif stripped.startswith("version:") and not version:
-                value = stripped.split(":", 1)[1].strip()
-                value = value.strip("\\\"").strip("'")
-                version = value
-            elif stripped.startswith("environment:"):
+                version = stripped.split(":", 1)[1].strip().strip('"').strip("'")
+        
+        for i, line in enumerate(lines):
+            if line.strip().startswith("environment:"):
+                for j in range(i + 1, len(lines)):
+                    subline = lines[j].strip()
+                    if subline.startswith("sdk:"):
+                        language = subline.split(":", 1)[1].strip().strip('"').strip("'")
+                        break
+                    if subline and not subline.startswith("#") and ":" in subline and not subline.startswith(("flutter:", "flutter_test:", "dart:")):
+                        break
                 break
-        fh.seek(0)
-        capture = False
-        for line in fh:
-            stripped = line.strip()
-            if stripped.startswith("environment:"):
-                capture = True
-                continue
-            if capture:
-                if stripped.startswith("sdk:"):
-                    value = stripped.split(":", 1)[1].strip()
-                    value = value.strip("\\\"").strip("'")
-                    language = value
-                    break
-                if stripped and not stripped.startswith("#") and not stripped.startswith(("flutter:", "flutter_test:", "dart:")):
-                    break
-values = [name or "", version or "", language or ""]
-print("|".join(values))
+
+print(f"{{name}}|{{version}}|{{language}}")
 PY
 )"
 
@@ -461,6 +438,8 @@ echo "=== Dependency preparation complete ==="
 """.format(
         workspace_src = working_dir.path,
         workspace_dir = prepared_workspace.path,
+        working_dir_path = prepared_workspace.path,
+        package_dir = package_dir,
         pub_cache_dir = pub_cache_dir.path,
         pub_deps = pub_deps.path,
         dart_tool_dir = dart_tool_dir.path,
@@ -471,7 +450,7 @@ echo "=== Dependency preparation complete ==="
     )
 
     ctx.actions.run_shell(
-        inputs = [working_dir, pubspec_file] + dep_pub_cache_files + flutter_toolchain.flutterinfo.tool_files + flutter_toolchain.flutterinfo.sdk_files,
+        inputs = [working_dir, pubspec_file] + dep_pub_cache_files + ([workspace_pubspec] if workspace_pubspec else []) + flutter_toolchain.flutterinfo.tool_files + flutter_toolchain.flutterinfo.sdk_files,
         outputs = [pub_get_output, pub_deps, pub_cache_dir, dart_tool_dir, prepared_workspace],
         command = script_content + """
 
@@ -534,16 +513,15 @@ echo "Status: Prepared dependencies without pub get" >> "$LOG_FILE"
 
     return prepared_workspace, pub_get_output, pub_cache_dir, pub_deps, dart_tool_dir
 
-def flutter_build_action(ctx, flutter_toolchain, working_dir, target, pub_cache_dir, dart_tool_dir):
-    """Execute flutter build command for the specified target.
-
-    Args:
-        ctx: The rule context
-        flutter_toolchain: The Flutter toolchain
-        working_dir: Flutter project working directory
-        target: Build target (web, apk, ios, etc.)
-        pub_cache_dir: Assembled pub cache directory used for offline resolution
-        dart_tool_dir: Prepared .dart_tool directory containing package_config metadata
+def flutter_build_action(
+        ctx,
+        flutter_toolchain,
+        working_dir,
+        target,
+        pub_cache_dir,
+        dart_tool_dir,
+        package_dir = ""):
+    """Run a Flutter build command.
 
     Returns:
         Tuple of (build_output, build_artifacts_dir)
@@ -663,6 +641,18 @@ fi
 # Run flutter build
 echo "=== Flutter Build {target} ==="
 echo "Working directory: $(pwd)"
+
+# Calculate the package directory from original execroot
+# If package_dir is set, we must cd into it.
+PACKAGE_DIR="{package_dir}"
+if [ -n "$PACKAGE_DIR" ] && [ -d "$PACKAGE_DIR" ]; then
+    cd "$PACKAGE_DIR"
+    echo "Entered package directory: $(pwd)"
+fi
+
+# Redefine FLUTTER_BIN_ABS relative to the new CWD
+FLUTTER_BIN_ABS="$ORIGINAL_PWD/$FLUTTER_BIN"
+
 echo "Flutter binary: $FLUTTER_BIN"
 echo "Target: {target}"
 echo ""
@@ -718,6 +708,7 @@ fi
         build_command = config["command"],
         build_output_dir = config["output_dir"],
         target = target,
+        package_dir = package_dir,
     )
 
     # Execute build

@@ -4,7 +4,9 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.3.0 <4.0.0"
+  sdk: "^3.7.2"
+
+resolution: workspace
 
 dependencies:
   flutter:
@@ -30,7 +32,7 @@ dependencies:
   # Utilities
   intl: ^0.19.0
   uuid: ^4.4.2
-  flutter_svg: ^2.0.10
+  # flutter_svg: ^2.0.10 # Disabled for Bazel build compatibility
 
 dev_dependencies:
   flutter_test:

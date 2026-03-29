@@ -64,3 +64,7 @@ srcs/app/macos/Pods/
 node_modules/
 *.log
 srcs/frontend/coverage/
+.vscode/
+*.tgz
+*.tar.gz
+Chart.lock

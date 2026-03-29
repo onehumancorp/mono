@@ -6,6 +6,11 @@ import 'package:ohc_app/models/ai_provider.dart';
 import 'package:ohc_app/models/channel.dart';
 import 'package:ohc_app/models/security_issue.dart';
 import 'package:ohc_app/models/skill.dart';
+import 'package:ohc_app/models/handoff.dart';
+import 'package:ohc_app/models/pipeline.dart';
+import 'package:ohc_app/models/dashboard.dart';
+import 'package:ohc_app/models/settings.dart';
+import 'package:ohc_app/models/user.dart';
 import 'package:ohc_app/services/auth_service.dart';
 
 /// API client for the OHC backend.
@@ -34,14 +39,21 @@ class ApiService {
     return list.map((e) => Agent.fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  Future<Agent> hireAgent(String name, String role) async {
+  Future<Agent> hireAgent(String name, String role, {String providerType = 'openclaw'}) async {
     final res = await _client.post(
       Uri.parse('$baseUrl/api/agents/hire'),
       headers: _headers,
-      body: jsonEncode({'name': name, 'role': role}),
+      body: jsonEncode({'name': name, 'role': role, 'providerType': providerType}),
     );
     _checkStatus(res);
     return Agent.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  Future<List<AgentProvider>> listAgentProviders() async {
+    final res = await _client.get(Uri.parse('$baseUrl/api/agents/providers'), headers: _headers);
+    _checkStatus(res);
+    final list = jsonDecode(res.body) as List<dynamic>;
+    return list.map((e) => AgentProvider.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<void> fireAgent(String agentId) async {
@@ -53,12 +65,127 @@ class ApiService {
     _checkStatus(res);
   }
 
-  // ── Dashboard ────────────────────────────────────────────────────────────
+  Future<void> scaleAgents(String role, int count) async {
+    final res = await _client.post(
+      Uri.parse('$baseUrl/api/scale'),
+      headers: _headers,
+      body: jsonEncode({'role': role, 'count': count}),
+    );
+    _checkStatus(res);
+  }
 
-  Future<Map<String, dynamic>> getDashboard() async {
+  // ── Dashboard & Analytics ────────────────────────────────────────────────
+
+  Future<DashboardSnapshot> getDashboard() async {
     final res = await _client.get(Uri.parse('$baseUrl/api/dashboard'), headers: _headers);
     _checkStatus(res);
-    return jsonDecode(res.body) as Map<String, dynamic>;
+    return DashboardSnapshot.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  Future<void> seedScenario(String scenario) async {
+    final res = await _client.post(
+      Uri.parse('$baseUrl/api/seed'),
+      headers: _headers,
+      body: jsonEncode({'scenario': scenario}),
+    );
+    _checkStatus(res);
+  }
+
+  // ── Handoffs & Approvals ─────────────────────────────────────────────────
+
+  Future<List<HandoffPackage>> listHandoffs() async {
+    final res = await _client.get(Uri.parse('$baseUrl/api/handoffs'), headers: _headers);
+    _checkStatus(res);
+    final list = jsonDecode(res.body) as List<dynamic>;
+    return list.map((e) => HandoffPackage.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<void> resolveHandoff(String handoffId, String resolution) async {
+    final res = await _client.post(
+      Uri.parse('$baseUrl/api/handoffs/$handoffId/resolve'),
+      headers: _headers,
+      body: jsonEncode({'resolution': resolution}),
+    );
+    _checkStatus(res);
+  }
+
+  Future<void> decideApproval(String approvalId, String decision) async {
+    final res = await _client.post(
+      Uri.parse('$baseUrl/api/approvals/$approvalId/decide'),
+      headers: _headers,
+      body: jsonEncode({'decision': decision}),
+    );
+    _checkStatus(res);
+  }
+
+  // ── Pipelines ─────────────────────────────────────────────────────────────
+
+  Future<List<Pipeline>> listPipelines() async {
+    final res = await _client.get(Uri.parse('$baseUrl/api/pipelines'), headers: _headers);
+    _checkStatus(res);
+    final list = jsonDecode(res.body) as List<dynamic>;
+    return list.map((e) => Pipeline.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<Pipeline> createPipeline(String name, String branch) async {
+    final res = await _client.post(
+      Uri.parse('$baseUrl/api/pipelines'),
+      headers: _headers,
+      body: jsonEncode({'name': name, 'branch': branch}),
+    );
+    _checkStatus(res);
+    return Pipeline.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  Future<void> promotePipeline(String pipelineId) async {
+    final res = await _client.post(
+      Uri.parse('$baseUrl/api/pipelines/$pipelineId/promote'),
+      headers: _headers,
+    );
+    _checkStatus(res);
+  }
+
+  // ── Users & RBAC ─────────────────────────────────────────────────────────
+
+  Future<List<UserPublic>> listUsers() async {
+    final res = await _client.get(Uri.parse('$baseUrl/api/users'), headers: _headers);
+    _checkStatus(res);
+    final list = jsonDecode(res.body) as List<dynamic>;
+    return list.map((e) => UserPublic.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<UserPublic> createUser(Map<String, dynamic> data) async {
+    final res = await _client.post(
+      Uri.parse('$baseUrl/api/users'),
+      headers: _headers,
+      body: jsonEncode(data),
+    );
+    _checkStatus(res);
+    return UserPublic.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  Future<void> deleteUser(String userId) async {
+    final res = await _client.delete(Uri.parse('$baseUrl/api/users/$userId'), headers: _headers);
+    _checkStatus(res);
+  }
+
+  // ── MCP Tools ────────────────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> listMCPTools() async {
+    final res = await _client.get(Uri.parse('$baseUrl/api/mcp/tools'), headers: _headers);
+    _checkStatus(res);
+    final list = jsonDecode(res.body) as List<dynamic>;
+    return list.cast<Map<String, dynamic>>();
+  }
+
+  Future<dynamic> invokeMCPTool(String toolId, String action, Map<String, dynamic> params) async {
+    final res = await _client.post(
+      Uri.parse('$baseUrl/api/mcp/tools/$toolId/invoke'),
+      headers: _headers,
+      body: jsonEncode({'action': action, 'params': params}),
+    );
+    _checkStatus(res);
+    return jsonDecode(res.body);
   }
 
   // ── Meetings ─────────────────────────────────────────────────────────────
@@ -122,6 +249,32 @@ class ApiService {
     _checkStatus(res);
   }
 
+  // ── Settings ─────────────────────────────────────────────────────────────
+
+  Future<Settings> getSettings() async {
+    final res = await _client.get(Uri.parse('$baseUrl/api/settings'), headers: _headers);
+    _checkStatus(res);
+    return Settings.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  Future<void> saveSettings(Settings settings) async {
+    final res = await _client.post(
+      Uri.parse('$baseUrl/api/settings'),
+      headers: _headers,
+      body: jsonEncode(settings.toJson()),
+    );
+    _checkStatus(res);
+  }
+
+  Future<void> saveAiProviderKey(String providerId, String apiKey) async {
+    final res = await _client.patch(
+      Uri.parse('$baseUrl/api/ai/providers/$providerId'),
+      headers: _headers,
+      body: jsonEncode({'api_key': apiKey}),
+    );
+    _checkStatus(res);
+  }
+
   // ── AI Providers ──────────────────────────────────────────────────────────
 
   Future<List<AiProvider>> listAiProviders() async {
@@ -151,15 +304,6 @@ class ApiService {
     );
     _checkStatus(res);
     return AiProvider.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
-  }
-
-  Future<void> saveAiProviderKey(String providerId, String apiKey) async {
-    final res = await _client.patch(
-      Uri.parse('$baseUrl/api/ai/providers/$providerId'),
-      headers: _headers,
-      body: jsonEncode({'api_key': apiKey}),
-    );
-    _checkStatus(res);
   }
 
   // ── Skills ────────────────────────────────────────────────────────────────

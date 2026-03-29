@@ -13,6 +13,13 @@ import 'package:ohc_app/screens/security_screen.dart';
 import 'package:ohc_app/screens/settings_screen.dart';
 import 'package:ohc_app/screens/service_screen.dart';
 import 'package:ohc_app/screens/wizard_screen.dart';
+import 'package:ohc_app/screens/handoffs_screen.dart';
+import 'package:ohc_app/screens/cost_dashboard_screen.dart';
+import 'package:ohc_app/screens/scaling_screen.dart';
+import 'package:ohc_app/screens/pipelines_screen.dart';
+import 'package:ohc_app/screens/integrations_screen.dart';
+import 'package:ohc_app/screens/user_management_screen.dart';
+import 'package:ohc_app/screens/agent_hire_wizard_screen.dart';
 import 'package:ohc_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
@@ -85,6 +92,34 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/wizard',
             builder: (context, state) => const SetupWizardScreen(),
           ),
+          GoRoute(
+            path: '/handoffs',
+            builder: (context, state) => const HandoffsScreen(),
+          ),
+          GoRoute(
+            path: '/cost',
+            builder: (context, state) => const CostDashboardScreen(),
+          ),
+          GoRoute(
+            path: '/scaling',
+            builder: (context, state) => const ScalingScreen(),
+          ),
+          GoRoute(
+            path: '/pipelines',
+            builder: (context, state) => const PipelinesScreen(),
+          ),
+          GoRoute(
+            path: '/integrations',
+            builder: (context, state) => const IntegrationsScreen(),
+          ),
+          GoRoute(
+            path: '/users',
+            builder: (context, state) => const UserManagementScreen(),
+          ),
+          GoRoute(
+            path: '/agents/hire',
+            builder: (context, state) => const AgentHireWizardScreen(),
+          ),
         ],
       ),
     ],
@@ -127,6 +162,12 @@ class _Sidebar extends StatelessWidget {
         _NavItem(icon: Icons.smart_toy, label: 'Agents', path: '/agents'),
         _NavItem(icon: Icons.video_call, label: 'Meetings', path: '/meetings'),
         _NavItem(icon: Icons.chat, label: 'Chat', path: '/chat'),
+        _NavItem(icon: Icons.transfer_within_a_station, label: 'Handoffs', path: '/handoffs'),
+        _NavItem(icon: Icons.bar_chart, label: 'Cost & Usage', path: '/cost'),
+        _NavItem(icon: Icons.rocket_launch, label: 'Dynamic Scaling', path: '/scaling'),
+        _NavItem(icon: Icons.alt_route, label: 'Pipelines', path: '/pipelines'),
+        _NavItem(icon: Icons.extension, label: 'Integrations & Tools', path: '/integrations'),
+        _NavItem(icon: Icons.people_outline, label: 'User Management', path: '/users'),
         _NavItem(icon: Icons.chat_bubble_outline, label: 'Channels', path: '/channels'),
         const Divider(),
         _NavItem(icon: Icons.psychology, label: 'AI Providers', path: '/ai-config'),

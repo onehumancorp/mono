@@ -24,11 +24,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-
       - name: Set up Bazel
         uses: bazel-contrib/setup-bazel@0.18.0
         with:
@@ -40,7 +35,7 @@ jobs:
         env:
           BAZEL_DISK_CACHE: ${{ env.BAZEL_DISK_CACHE }}
           BAZEL_REPOSITORY_CACHE: ${{ env.BAZEL_REPOSITORY_CACHE }}
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_OFFICIAL_API_KEY }}
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           bazelisk test //... \
             --test_output=errors \

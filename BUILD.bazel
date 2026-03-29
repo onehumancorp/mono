@@ -9,6 +9,7 @@ exports_files(["tsconfig.json"])
 exports_files([
     "go.mod",
     "go.sum",
+    "pubspec.yaml",
 ])
 
 # gazelle:exclude srcs/proto
@@ -42,10 +43,10 @@ alias(
     actual = ":deploy_dev",
 )
 
-# Alias to start the web app (React)
+# Alias to start the primary Flutter Web Gateway
 alias(
     name = "start-web",
-    actual = "//srcs/frontend:start",
+    actual = "//srcs/app:start",
     visibility = ["//visibility:public"],
 )
 

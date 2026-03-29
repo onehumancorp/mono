@@ -65,18 +65,49 @@ export KUBECONFIG="/tmp/kind-kubeconfig-$$"
 log "Waiting for cluster nodes ..."
 kubectl wait --for=condition=Ready node --all --timeout=120s
 
-# ── Build and load Docker images ───────────────────────────────────────────────
-log "Building backend image ..."
-docker build \
-  -f "${REPO_ROOT}/deploy/docker/backend/Dockerfile" \
-  -t onehumancorp/mono-backend:e2e \
-  "${REPO_ROOT}"
+# ── Locating Images ────────────────────────────────────────────────────────────
+# If running under Bazel, we use the pre-built image loaders.
+# In a manual run, we fallback to docker build (for dev convenience).
+if [[ -n "${TEST_SRCDIR:-}" ]]; then
+  log "Bazel environment detected. Loading images from bazel-bin..."
+  # Locate the load scripts
+  BACKEND_LOADER="${REPO_ROOT}/deploy/backend_load"
+  UI_LOADER="${REPO_ROOT}/deploy/ui_load"
+  
+  if [[ ! -x "${BACKEND_LOADER}" || ! -x "${UI_LOADER}" ]]; then
+    # In some sandboxes, we might need to find them in the runfiles tree
+    BACKEND_LOADER="$(find "${TEST_SRCDIR}" -name "backend_load" -type f -executable | head -1)"
+    UI_LOADER="$(find "${TEST_SRCDIR}" -name "ui_load" -type f -executable | head -1)"
+  fi
+  
+  log "Executing backend loader: ${BACKEND_LOADER}"
+  "${BACKEND_LOADER}"
+  
+  log "Executing UI loader: ${UI_LOADER}"
+  "${UI_LOADER}"
+  
+  # Standardize tags for the test
+  docker tag onehumancorp/mono-backend:bazel onehumancorp/mono-backend:e2e
+  docker tag onehumancorp/ui:bazel onehumancorp/mono-frontend:e2e
+else
+  log "Manual run detected. Building images via Dockerfiles..."
+  log "Building backend image ..."
+  docker build \
+    -f "${REPO_ROOT}/deploy/docker/backend/Dockerfile" \
+    -t onehumancorp/mono-backend:e2e \
+    "${REPO_ROOT}"
 
-log "Building frontend image ..."
-docker build \
-  -f "${REPO_ROOT}/deploy/docker/frontend/Dockerfile" \
-  -t onehumancorp/mono-frontend:e2e \
-  "${REPO_ROOT}"
+  log "Building frontend image ..."
+  docker build \
+    -f "${REPO_ROOT}/deploy/docker/frontend/Dockerfile" \
+    -t onehumancorp/mono-frontend:e2e \
+    "${REPO_ROOT}"
+fi
+
+# ── Helm Verification ──────────────────────────────────────────────────────────
+log "Verifying Helm chart ..."
+helm lint "${REPO_ROOT}/deploy/helm/ohc"
+helm template "${RELEASE_NAME}" "${REPO_ROOT}/deploy/helm/ohc" > /dev/null
 
 log "Loading images into Kind cluster ..."
 kind load docker-image onehumancorp/mono-backend:e2e --name "${CLUSTER_NAME}"

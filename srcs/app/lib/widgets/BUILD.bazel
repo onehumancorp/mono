@@ -1,0 +1,51 @@
+load("@rules_flutter//flutter:defs.bzl", "flutter_library")
+
+package(default_visibility = ["//srcs/app:__subpackages__"])
+
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.dart"], allow_empty = True) + ["BUILD.bazel"],
+    visibility = ["//srcs/app:__pkg__"],
+)
+
+filegroup(
+    name = "dart_srcs",
+    srcs = glob(
+        ["*.dart"],
+        exclude = ["*_test.dart"],
+        allow_empty = True,
+    ),
+    visibility = ["//srcs/app:__pkg__"],
+)
+
+flutter_library(
+    name = "org_tree_widget",
+    srcs = ["org_tree_widget.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        "//srcs/app/lib/models:dashboard_model",
+        "@flutter_sdk//flutter/packages/flutter",
+    ],
+)
+
+flutter_library(
+    name = "slide_to_approve",
+    srcs = ["slide_to_approve.dart"],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        "@flutter_sdk//flutter/packages/flutter",
+    ],
+)
+
+flutter_library(
+    name = "widgets_lib",
+    srcs = [],
+    pubspec = "//srcs/app:pubspec.yaml",
+    workspace_pubspec = "//:pubspec.yaml",
+    deps = [
+        ":org_tree_widget",
+        ":slide_to_approve",
+    ],
+)
