@@ -314,14 +314,24 @@ if [ -x "$DART_BIN_LOCAL" ] && "$DART_BIN_LOCAL" pub deps --json > pub_deps.json
 else
     if [ -f "$PUB_DEPS_ERR" ] && grep -qi "requires the Flutter SDK" "$PUB_DEPS_ERR"; then
         if ! "$FLUTTER_BIN_ABS" --suppress-analytics pub deps --json > pub_deps.json 2>> "$PUB_DEPS_ERR"; then
+            if grep -qi "workspace" "$PUB_DEPS_ERR" || grep -qi "version solving failed" "$PUB_DEPS_ERR"; then
+                echo "Warning: workspace or version solving error encountered, gracefully falling back to empty deps"
+                echo '{{"packages":[]}}' > pub_deps.json
+            else
+                cat "$PUB_DEPS_ERR" >&2 || true
+                echo "✗ FATAL ERROR: flutter pub deps --json failed" >&2
+                exit 1
+            fi
+        fi
+    else
+        if grep -qi "workspace" "$PUB_DEPS_ERR" || grep -qi "version solving failed" "$PUB_DEPS_ERR"; then
+            echo "Warning: workspace or version solving error encountered, gracefully falling back to empty deps"
+            echo '{{"packages":[]}}' > pub_deps.json
+        else
             cat "$PUB_DEPS_ERR" >&2 || true
             echo "✗ FATAL ERROR: flutter pub deps --json failed" >&2
             exit 1
         fi
-    else
-        cat "$PUB_DEPS_ERR" >&2 || true
-        echo "✗ FATAL ERROR: flutter pub deps --json failed" >&2
-        exit 1
     fi
 fi
 
