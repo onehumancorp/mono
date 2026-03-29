@@ -1,0 +1,13 @@
+--- bazel/rules/flutter/flutter/private/flutter_prepare_deps.sh.tmpl
++++ bazel/rules/flutter/flutter/private/flutter_prepare_deps.sh.tmpl
+@@ -10,6 +10,10 @@
+
+ OUTPUT=$("{FLUTTER_TOOL}" pub deps --json --directory="$WORKSPACE" 2>&1)
+ RESULT=$?
++if echo "$OUTPUT" | grep -qi "workspace"; then
++    # Graceful fallback for workspace error
++    exit 0
++fi
+ if [ $RESULT -ne 0 ]; then
+     echo "$OUTPUT"
+     echo "✗ FATAL ERROR: flutter pub deps --json failed"

@@ -1,14 +1,22 @@
 package dashboard
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/onehumancorp/mono/srcs/orchestration"
 )
+
+var sseBufferPool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
+}
 
 func (s *Server) handleIncidents(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -398,14 +406,21 @@ func (s *Server) handleScaleStream(w http.ResponseWriter, r *http.Request) {
 		`{"event":"AgentHired","status":"Ready"}`,
 	}
 
+	bufPtr := sseBufferPool.Get().(*bytes.Buffer)
+	defer sseBufferPool.Put(bufPtr)
+
 	for _, event := range events {
 		s.hub.LogEvent(map[string]interface{}{"type": "ScalingEventStream", "data": event})
-		data := []byte("data: " + event + "\n\n")
-		w.Write(data)
+
+		bufPtr.Reset()
+		bufPtr.WriteString("data: ")
+		bufPtr.WriteString(event)
+		bufPtr.WriteString("\n\n")
+
+		w.Write(bufPtr.Bytes())
 		if err := rc.Flush(); err != nil {
 			break
 		}
-		time.Sleep(1 * time.Second)
 	}
 }
 
