@@ -11,6 +11,7 @@ go_library(
         "handlers_org.go",
         "handlers_mcp.go",
         "handlers_scheduler.go",
+        "handlers_seed.go",
         "handlers_wizard.go",
         "seeder.go",
         "server.go",
