@@ -29,6 +29,18 @@ go_library(
     ],
 )
 
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+sh_test(
+    name = "chaos_test",
+    srcs = ["chaos_verifier.sh"],
+    data = [
+        "verify_chaos_visual.js",
+        "//:node_modules/@playwright/test",
+    ],
+    tags = ["requires-network"],
+)
+
 go_test(
     name = "orchestration_test",
     srcs = [
