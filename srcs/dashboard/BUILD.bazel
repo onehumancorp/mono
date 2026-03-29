@@ -39,6 +39,7 @@ go_test(
         "handlers_mcp_test.go",
         "handlers_ops_extra_test.go",
         "handlers_ops_test.go",
+        "handlers_scheduler_test.go",
         "handlers_wizard_test.go",
         "server_missing_test.go",
         "server_rate_limit_test.go",
@@ -52,6 +53,7 @@ go_test(
         "//srcs/domain",
         "//srcs/integrations",
         "//srcs/orchestration",
+        "//srcs/scheduler",
         "//srcs/settings",
     ],
 )
