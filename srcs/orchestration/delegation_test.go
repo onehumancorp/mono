@@ -1,6 +1,7 @@
 package orchestration
 
 import (
+	"github.com/onehumancorp/mono/srcs/domain"
 	"context"
 	"fmt"
 	"strings"
@@ -15,7 +16,7 @@ import (
 
 func TestDelegateSubTask_Success(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "sender-1", Name: "Sender", Role: "PM", Status: StatusIdle})
+	hub.RegisterAgent(domain.Agent{ID: "sender-1", Name: "Sender", Role: "PM", Status: domain.StatusIdle})
 	server := NewHubServiceServer(hub)
 	ctx := context.Background()
 
@@ -41,13 +42,14 @@ func TestDelegateSubTask_Success(t *testing.T) {
 
 	var subAgentID string
 	for id := range hub.agents {
-		if id != "SYSTEM" {
+		if strings.HasPrefix(id, "sub-agent-SWE-") {
 			subAgentID = id
+			break
 		}
 	}
 
-	if !strings.HasPrefix(subAgentID, "sub-agent-SWE-") {
-		t.Fatalf("unexpected agent ID: %s", subAgentID)
+	if subAgentID == "" {
+		t.Fatalf("sub-agent not found")
 	}
 
 	msgs := hub.inbox[subAgentID]
@@ -70,12 +72,12 @@ func TestDelegateSubTask_QuotaExhaustion(t *testing.T) {
 
 	// Fill the hub to reach the quota limit (10)
 	for i := 0; i < 10; i++ {
-		hub.RegisterAgent(Agent{
+		hub.RegisterAgent(domain.Agent{
 			ID:             fmt.Sprintf("filler-%d", i),
-			Name:           "Filler Agent",
+			Name:           "Filler domain.Agent",
 			Role:           "FILLER",
 			OrganizationID: "org-1",
-			Status:         StatusIdle,
+			Status:         domain.StatusIdle,
 		})
 	}
 
@@ -139,7 +141,7 @@ func TestDelegateSubTask_MissingFields(t *testing.T) {
 // TestDelegateSubTask_Integration checks the real data law by seeing if the message gets processed properly
 func TestDelegateSubTask_Integration(t *testing.T) {
 	hub := NewHub()
-	hub.RegisterAgent(Agent{ID: "sender-1", Name: "Sender", Role: "PM", Status: StatusIdle})
+	hub.RegisterAgent(domain.Agent{ID: "sender-1", Name: "Sender", Role: "PM", Status: domain.StatusIdle})
 	server := NewHubServiceServer(hub)
 	ctx := context.Background()
 
@@ -165,8 +167,9 @@ func TestDelegateSubTask_Integration(t *testing.T) {
 
 	var subAgentID string
 	for id := range hub.agents {
-		if id != "SYSTEM" {
+		if strings.HasPrefix(id, "sub-agent-") {
 			subAgentID = id
+			break
 		}
 	}
 
@@ -178,7 +181,7 @@ func TestDelegateSubTask_Integration(t *testing.T) {
 	if agent.ProviderType != "builtin" {
 		t.Fatalf("expected ProviderType builtin, got %s", agent.ProviderType)
 	}
-	if agent.Status != StatusIdle {
-		t.Fatalf("expected StatusIdle, got %s", agent.Status)
+	if agent.Status != domain.StatusIdle {
+		t.Fatalf("expected domain.StatusIdle, got %s", agent.Status)
 	}
 }
