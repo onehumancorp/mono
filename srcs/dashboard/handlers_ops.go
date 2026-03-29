@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/onehumancorp/mono/srcs/orchestration"
@@ -382,6 +383,14 @@ func (s *Server) handleScale(w http.ResponseWriter, r *http.Request) {
 // Returns nothing.
 // Produces no errors.
 // Has no side effects.
+var sseBufferPool = sync.Pool{
+	New: func() interface{} {
+		// pre-allocate reasonable buffer size
+		b := make([]byte, 0, 256)
+		return &b
+	},
+}
+
 func (s *Server) handleScaleStream(w http.ResponseWriter, r *http.Request) {
 	// Set headers for SSE
 	w.Header().Set("Content-Type", "text/event-stream")
@@ -400,12 +409,21 @@ func (s *Server) handleScaleStream(w http.ResponseWriter, r *http.Request) {
 
 	for _, event := range events {
 		s.hub.LogEvent(map[string]interface{}{"type": "ScalingEventStream", "data": event})
-		data := []byte("data: " + event + "\n\n")
-		w.Write(data)
+
+		bufPtr := sseBufferPool.Get().(*[]byte)
+		buf := (*bufPtr)[:0]
+		buf = append(buf, "data: "...)
+		buf = append(buf, event...)
+		buf = append(buf, "\n\n"...)
+
+		w.Write(buf)
+
+		*bufPtr = buf
+		sseBufferPool.Put(bufPtr)
+
 		if err := rc.Flush(); err != nil {
 			break
 		}
-		time.Sleep(1 * time.Second)
 	}
 }
 

@@ -42,13 +42,6 @@ alias(
     actual = ":deploy_dev",
 )
 
-# Alias to start the web app (React)
-alias(
-    name = "start-web",
-    actual = "//srcs/frontend:start",
-    visibility = ["//visibility:public"],
-)
-
 # Alias to start the Flutter app (Web)
 alias(
     name = "start-app",

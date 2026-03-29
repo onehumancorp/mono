@@ -92,6 +92,7 @@ flutter_app(
     name = "app_web",
     embed = [":app_lib"],
     web = glob(["web/**"], allow_empty = True),
+    visibility = ["//visibility:public"],
 )
 
 # ── Web E2E tests (Playwright) ────────────────────────────────────────────────
