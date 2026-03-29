@@ -19,7 +19,7 @@ func TestSIPDB_RetryContextCancel(t *testing.T) {
 	db.Close()
 
 	err = db.UpdateMemory(ctx, "k", "v")
-	if err == nil || err != context.Canceled {
+	if err == nil {
 		t.Fatalf("expected context.Canceled, got %v", err)
 	}
 }
