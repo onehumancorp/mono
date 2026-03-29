@@ -3,6 +3,14 @@ module(
     version = "0.1.0",
 )
 
+# rules_android@0.6.4 (pulled in transitively via protobuf->rules_jvm_external->rules_kotlin)
+# uses CcInfo without a load statement, which was removed as a Bazel builtin in Bazel 9.
+# Upgrade to 0.7.1 which has the proper load("@rules_cc//cc/common:cc_info.bzl", "CcInfo").
+single_version_override(
+    module_name = "rules_android",
+    version = "0.7.1",
+)
+
 bazel_dep(name = "rules_go", version = "0.60.0")
 bazel_dep(name = "gazelle", version = "0.47.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")

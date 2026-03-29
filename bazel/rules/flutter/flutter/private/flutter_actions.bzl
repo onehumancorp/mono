@@ -306,6 +306,45 @@ export PATH="$FLUTTER_ROOT/bin:$PATH"
 
 cd "$WORKSPACE_DIR_ABS"
 
+# Strip 'resolution: workspace' from pubspec.yaml.  Packages published to
+# pub.dev may include this field (introduced in Dart 3.6 pub workspaces) to
+# indicate they belong to a monorepo workspace.  When Bazel prepares an
+# isolated working directory for a single package the parent workspace root
+# is absent, causing `flutter/dart pub deps` to fail with:
+#   "Found a pubspec.yaml ... But it has resolution `workspace`.
+#    But found no workspace root including it in parent directories."
+# We remove the field so that pub treats the package as a standalone package.
+if [ -f pubspec.yaml ]; then
+    sed -i '/^[[:space:]]*resolution:[[:space:]]*workspace[[:space:]]*$/d' pubspec.yaml
+fi
+
+# Strip dev_dependencies from pub package pubspecs when IS_PUB_PACKAGE=1.
+# When Bazel fetches a pub package (e.g. ffi@2.2.0) its dev_dependencies may
+# require a newer Dart/Flutter SDK version than we are using.  Bazel builds
+# only need runtime dependencies, not dev ones, so we can safely drop them
+# from the pubspec before running `flutter/dart pub deps --json`.
+if [ "$IS_PUB_PACKAGE" = "1" ] && [ -f pubspec.yaml ]; then
+    "$PYTHON_BIN" - <<'PYEOF'
+import re, sys
+
+with open("pubspec.yaml", "r", encoding="utf-8") as fh:
+    content = fh.read()
+
+# Remove the dev_dependencies section.  It starts at "^dev_dependencies:"
+# and continues until the next top-level key (a line that starts with a
+# non-whitespace character and contains a colon) or end-of-file.
+cleaned = re.sub(
+    r"^dev_dependencies:.*?(?=^\\S|\\Z)",
+    "",
+    content,
+    flags=re.MULTILINE | re.DOTALL,
+)
+
+with open("pubspec.yaml", "w", encoding="utf-8") as fh:
+    fh.write(cleaned)
+PYEOF
+fi
+
 echo "=== Generating pub_deps.json ==="
 DART_BIN_LOCAL="$FLUTTER_ROOT/bin/cache/dart-sdk/bin/dart"
 PUB_DEPS_ERR="$WORKSPACE_DIR_ABS/pub_deps.stderr.log"

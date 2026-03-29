@@ -109,6 +109,7 @@ flutter_test(
     name = "app_desktop_e2e_test",
     srcs = ["test/desktop_e2e_test.dart"],
     embed = [":app_lib"],
+    tags = ["manual"],  # requires a desktop display / GUI environment
     test_files = ["test/desktop_e2e_test.dart"],
     workspace_pubspec = "//:pubspec.yaml",
 )
@@ -143,7 +144,10 @@ sh_test(
         "e2e/web.spec.ts",
         "//:node_modules/@playwright/test",
     ],
-    tags = ["requires-network"],  # browser download may need network on first run
+    tags = [
+        "manual",  # excluded from //... — requires system python3, node, playwright, and Chromium
+        "requires-network",  # browser download may need network on first run
+    ],
 )
 
 # ── Local Development targets ─────────────────────────────────────────────────
