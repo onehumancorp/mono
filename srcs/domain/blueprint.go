@@ -15,11 +15,16 @@ import (
 // Produces no errors.
 // Has no side effects.
 type RoleDefinition struct {
-	ID        string   `yaml:"id" json:"id"`
-	Title     string   `yaml:"title" json:"title"`
-	Context   string   `yaml:"context" json:"context"`
-	Tools     []string `yaml:"tools,omitempty" json:"tools,omitempty"`
-	ReportsTo string   `yaml:"reports_to,omitempty" json:"reports_to,omitempty"`
+	ID                 string   `yaml:"id" json:"id"`
+	Title              string   `yaml:"title" json:"title"`
+	Context            string   `yaml:"context" json:"context"`
+	Tools              []string `yaml:"tools,omitempty" json:"tools,omitempty"`
+	ReportsTo          string   `yaml:"reports_to,omitempty" json:"reports_to,omitempty"`
+	DynamicMCP         bool     `yaml:"dynamic_mcp,omitempty" json:"dynamic_mcp,omitempty"`
+	MCPCapabilities    []string `yaml:"mcp_capabilities,omitempty" json:"mcp_capabilities,omitempty"`
+	IsolateContext     bool     `yaml:"isolate_context,omitempty" json:"isolate_context,omitempty"`
+	MaxSubAgents       int      `yaml:"max_sub_agents,omitempty" json:"max_sub_agents,omitempty"`
+	HierarchicalMemory bool     `yaml:"hierarchical_memory,omitempty" json:"hierarchical_memory,omitempty"`
 }
 
 // SkillBlueprint represents a domain-specific organizational structure imported by the CEO.
