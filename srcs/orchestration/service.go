@@ -580,6 +580,63 @@ func (h *Hub) RegisterAgent(agent Agent) {
 	}
 }
 
+// sipWorker runs a background polling loop that fulfills OHC-SIP mandates.
+func (h *Hub) sipWorker(ctx context.Context) {
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if h.sipDB != nil {
+				h.processSIPMissions(ctx)
+				h.heartbeatSIPAgents(ctx)
+				h.syncSIPMemory(ctx)
+			}
+		}
+	}
+}
+
+func (h *Hub) processSIPMissions(ctx context.Context) {
+	h.mu.RLock()
+	var activeAgents []Agent
+	for _, a := range h.agents {
+		if a.Status == StatusIdle || a.Status == StatusActive {
+			activeAgents = append(activeAgents, a)
+		}
+	}
+	h.mu.RUnlock()
+
+	for _, a := range activeAgents {
+		missions, _ := h.sipDB.GetPendingMissions(ctx, a.Role)
+		for _, m := range missions {
+			m.ToAgent = a.ID
+			m.FromAgent = "system"
+			m.OccurredAt = time.Now().UTC()
+			if err := h.Publish(m); err == nil {
+				_ = h.sipDB.CompleteMission(ctx, m.ID)
+			}
+		}
+	}
+}
+
+func (h *Hub) heartbeatSIPAgents(ctx context.Context) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	for _, a := range h.agents {
+		_ = h.sipDB.Heartbeat(ctx, a.ID, a.Role, string(a.Status))
+	}
+}
+
+func (h *Hub) syncSIPMemory(ctx context.Context) {
+	// Optional sync method to read from swarm_memory
+	val, err := h.sipDB.SyncMemory(ctx, "architectural_alignment")
+	if err == nil && val != "" {
+		slog.Debug("synced sip memory", "value", val)
+	}
+}
+
 // SetMinimaxAPIKey functionality.
 // Accepts parameters: h *Hub (No Constraints).
 // Returns nothing.
